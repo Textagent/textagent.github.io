@@ -3302,28 +3302,8 @@ This is a fully client-side application. Your content never leaves your browser 
   const newDocBtn = document.getElementById('new-document-btn');
   if (newDocBtn) {
     newDocBtn.addEventListener('click', () => {
-      if (markdownEditor.value.trim() && !confirm('Start a new document? Current content will be cloud-saved.')) {
-        return;
-      }
-      // Trigger a final cloud save of current content before clearing
-      if (markdownEditor.value.trim() && typeof cloudAutoSave === 'function') {
-        cloudAutoSave();
-      }
-      // Clear editor
-      markdownEditor.value = '';
-      // Clear localStorage save data
-      localStorage.removeItem(AUTOSAVE_KEY);
-      localStorage.removeItem(AUTOSAVE_TIME_KEY);
-      // Clear cloud doc references so next save creates a new doc
-      localStorage.removeItem(CLOUD_DOC_KEY);
-      localStorage.removeItem(CLOUD_KEY_KEY);
-      // Clear URL hash
-      history.replaceState(null, '', window.location.pathname);
-      // Reset the preview
-      if (typeof renderMarkdown === 'function') renderMarkdown();
-      // Update indicator
-      if (autosaveText) autosaveText.textContent = 'New';
-      if (autosaveIndicator) autosaveIndicator.style.display = 'flex';
+      // Open a fresh blank instance in a new tab
+      window.open(window.location.pathname, '_blank');
     });
   }
 
