@@ -117,7 +117,7 @@ async function loadModel() {
 /**
  * Generate text based on a prompt with system instructions
  */
-async function generate(taskType, context, userPrompt, messageId) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false) {
     if (!model || !processor) {
         self.postMessage({
             type: "error",
@@ -131,14 +131,15 @@ async function generate(taskType, context, userPrompt, messageId) {
         // Build messages array based on task type
         const messages = buildMessages(taskType, context, userPrompt);
 
-        // Use task-specific token limit for faster responses
-        const maxTokens = TOKEN_LIMITS[taskType] || 512;
+        // Use task-specific token limit; thinking mode needs more tokens
+        let maxTokens = TOKEN_LIMITS[taskType] || 512;
+        if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
         // Apply chat template
         const text = processor.tokenizer.apply_chat_template(messages, {
             tokenize: false,
             add_generation_prompt: true,
-            enable_thinking: false, // Skip thinking for speed
+            enable_thinking: enableThinking,
         });
 
         const inputs = processor.tokenizer(text, {
@@ -246,14 +247,14 @@ function buildMessages(taskType, context, userPrompt) {
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (event) => {
-    const { type, taskType, context, userPrompt, messageId } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
 
     switch (type) {
         case "load":
             await loadModel();
             break;
         case "generate":
-            await generate(taskType, context, userPrompt, messageId);
+            await generate(taskType, context, userPrompt, messageId, enableThinking);
             break;
         case "ping":
             self.postMessage({ type: "pong" });

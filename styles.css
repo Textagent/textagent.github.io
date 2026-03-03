@@ -1753,6 +1753,22 @@ body.zen-mode #markdown-editor {
   line-height: 1.8;
 }
 
+/* Zen mode for preview view — show preview centered instead of editor */
+body.zen-mode-preview .preview-pane {
+  display: block !important;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  border: none !important;
+  flex: none;
+  height: 100%;
+  padding: 40px 20px;
+}
+
+body.zen-mode-preview .editor-pane {
+  display: none !important;
+}
+
 .zen-exit-hint {
   position: fixed;
   bottom: 20px;
@@ -2365,7 +2381,48 @@ body.focus-mode #markdown-editor {
 
 .ai-panel-controls {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+/* Thinking mode toggle */
+.ai-thinking-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.6;
+  transition: all 0.2s;
+  user-select: none;
+  margin-right: 4px;
+}
+
+.ai-thinking-toggle:hover {
+  opacity: 1;
+  background: var(--button-hover);
+}
+
+.ai-thinking-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.ai-thinking-toggle input[type="checkbox"]:checked+.ai-thinking-label {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+.ai-thinking-toggle:has(input:checked) {
+  opacity: 1;
+  background: rgba(167, 139, 250, 0.15);
+}
+
+.ai-thinking-label {
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .ai-panel-btn {

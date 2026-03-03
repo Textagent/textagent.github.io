@@ -2526,12 +2526,17 @@ This is a fully client-side application. Your content never leaves your browser 
   function toggleZenMode() {
     isZenMode = !isZenMode;
     document.body.classList.toggle('zen-mode', isZenMode);
+    // In preview mode, use a different zen class so preview pane stays visible
+    document.body.classList.toggle('zen-mode-preview', isZenMode && currentViewMode === 'preview');
 
     if (isZenMode) {
+      // Close AI panel if open
+      if (aiPanelOpen) closeAiPanel();
       zenExitHint.style.display = 'block';
       setTimeout(() => { zenExitHint.style.display = 'none'; }, 4000);
       try { document.documentElement.requestFullscreen(); } catch (e) { /* ignore */ }
     } else {
+      document.body.classList.remove('zen-mode-preview');
       zenExitHint.style.display = 'none';
       try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* ignore */ }
     }
@@ -3635,6 +3640,10 @@ This is a fully client-side application. Your content never leaves your browser 
     aiSendBtn.disabled = true;
     const messageId = ++aiMessageIdCounter;
 
+    // Check thinking mode toggle
+    const thinkingToggle = document.getElementById('ai-thinking-toggle');
+    const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
+
     // Show user message in chat
     const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
     addUserMessage(displayText);
@@ -3645,7 +3654,8 @@ This is a fully client-side application. Your content never leaves your browser 
       taskType,
       context,
       userPrompt,
-      messageId
+      messageId,
+      enableThinking
     });
   }
 
@@ -3708,6 +3718,109 @@ This is a fully client-side application. Your content never leaves your browser 
     return fullText.substring(start, end);
   }
 
+  /**
+   * Split text into chunks of ~CHUNK_SIZE characters, breaking at newlines when possible.
+   */
+  function splitIntoChunks(text, chunkSize = 1500) {
+    if (text.length <= chunkSize) return [text];
+    const chunks = [];
+    let start = 0;
+    while (start < text.length) {
+      let end = Math.min(start + chunkSize, text.length);
+      // Try to break at a newline
+      if (end < text.length) {
+        const lastNewline = text.lastIndexOf('\n', end);
+        if (lastNewline > start + chunkSize * 0.5) end = lastNewline + 1;
+      }
+      chunks.push(text.substring(start, end));
+      start = end;
+    }
+    return chunks;
+  }
+
+  /**
+   * Process document in chunks like an agent — step by step, with progress.
+   * Returns a promise that resolves when done.
+   */
+  function processDocumentInChunks(action, fullText) {
+    const chunks = splitIntoChunks(fullText);
+    const totalChunks = chunks.length;
+
+    addAiMessage(`📄 Processing entire document (${fullText.length} chars) in ${totalChunks} chunk${totalChunks > 1 ? 's' : ''}...`, 'user');
+
+    let chunkIndex = 0;
+    const chunkResults = [];
+
+    function processNextChunk() {
+      if (chunkIndex >= totalChunks) {
+        // All chunks processed — combine results
+        if (action === 'summarize' && totalChunks > 1) {
+          // Final summary pass: combine chunk summaries
+          addAiMessage(`🔗 Combining ${totalChunks} chunk summaries into final summary...`);
+          const combined = chunkResults.map((r, i) => `### Part ${i + 1}\n${r}`).join('\n\n');
+          sendToAi('summarize', combined, 'Combine these section summaries into one concise final summary.');
+        } else if (totalChunks > 1) {
+          // For other actions, show combined results
+          const combined = chunkResults.join('\n\n---\n\n');
+          removeTypingIndicator();
+          addAiMessage(combined);
+          aiIsGenerating = false;
+          aiSendBtn.disabled = false;
+        }
+        return;
+      }
+
+      const chunkNum = chunkIndex + 1;
+      addAiMessage(`⏳ Processing chunk ${chunkNum}/${totalChunks}...`);
+
+      aiIsGenerating = true;
+      aiSendBtn.disabled = true;
+      const messageId = ++aiMessageIdCounter;
+
+      // Check thinking toggle
+      const thinkingToggle = document.getElementById('ai-thinking-toggle');
+      const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
+
+      // Set up one-time listener for this chunk's response
+      const chunkHandler = (e) => {
+        const msg = e.data;
+        if (msg.messageId !== messageId) return;
+
+        if (msg.type === 'complete') {
+          aiWorker.removeEventListener('message', chunkHandler);
+          chunkResults.push(msg.text);
+          removeTypingIndicator();
+          // Show intermediate result
+          addAiMessage(`✅ Chunk ${chunkNum}/${totalChunks}: ${msg.text.substring(0, 100)}...`);
+          addTypingIndicator();
+          chunkIndex++;
+          aiIsGenerating = false;
+          // Process next chunk after a small delay
+          setTimeout(processNextChunk, 100);
+        } else if (msg.type === 'error') {
+          aiWorker.removeEventListener('message', chunkHandler);
+          removeTypingIndicator();
+          addAiMessage(`❌ Error on chunk ${chunkNum}: ${msg.message}`);
+          aiIsGenerating = false;
+          aiSendBtn.disabled = false;
+        }
+      };
+      aiWorker.addEventListener('message', chunkHandler);
+      addTypingIndicator();
+
+      aiWorker.postMessage({
+        type: 'generate',
+        taskType: action,
+        context: chunks[chunkIndex],
+        userPrompt: null,
+        messageId,
+        enableThinking
+      });
+    }
+
+    processNextChunk();
+  }
+
   // --- Quick Action Chips ---
   document.querySelectorAll('.ai-action-chip').forEach(chip => {
     chip.addEventListener('click', function () {
@@ -3729,14 +3842,22 @@ This is a fully client-side application. Your content never leaves your browser 
         case 'expand':
         case 'rephrase':
         case 'grammar': {
-          // Use selected text, or a smart chunk around cursor
-          const textToProcess = selectedText || getSmartChunk(editorContent, savedSelection.start);
-          if (!textToProcess.trim()) {
+          if (!editorContent.trim() && !selectedText.trim()) {
             addAiMessage('Please add some text in the editor first.');
             return;
           }
-          addAiMessage(`Using ${selectedText ? 'selected text' : 'text around cursor'} (${textToProcess.length} chars)`, 'user');
-          sendToAi(action, textToProcess, null);
+          if (selectedText) {
+            // Selected text — process directly
+            addAiMessage(`Using selected text (${selectedText.length} chars)`, 'user');
+            sendToAi(action, selectedText, null);
+          } else if (editorContent.length > 1500) {
+            // Large document — agent-style chunked processing
+            processDocumentInChunks(action, editorContent);
+          } else {
+            // Small document — process all at once
+            addAiMessage(`Using entire document (${editorContent.length} chars)`, 'user');
+            sendToAi(action, editorContent, null);
+          }
           break;
         }
         case 'explain':
