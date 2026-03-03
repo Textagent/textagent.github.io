@@ -457,17 +457,16 @@ This is a fully client-side application. Your content never leaves your browser 
 
   function syncEditorToPreview() {
     if (!syncScrollingEnabled || isPreviewScrolling) return;
+    const editorScrollable = editorPane.scrollHeight - editorPane.clientHeight;
+    if (editorScrollable <= 0) return;
 
     isEditorScrolling = true;
     clearTimeout(scrollSyncTimeout);
 
     scrollSyncTimeout = setTimeout(() => {
-      const editorScrollRatio =
-        editorPane.scrollTop /
-        (editorPane.scrollHeight - editorPane.clientHeight);
-      const previewScrollPosition =
-        (previewPane.scrollHeight - previewPane.clientHeight) *
-        editorScrollRatio;
+      const editorScrollRatio = editorPane.scrollTop / editorScrollable;
+      const previewScrollable = previewPane.scrollHeight - previewPane.clientHeight;
+      const previewScrollPosition = previewScrollable * editorScrollRatio;
 
       if (!isNaN(previewScrollPosition) && isFinite(previewScrollPosition)) {
         previewPane.scrollTop = previewScrollPosition;
@@ -481,17 +480,16 @@ This is a fully client-side application. Your content never leaves your browser 
 
   function syncPreviewToEditor() {
     if (!syncScrollingEnabled || isEditorScrolling) return;
+    const previewScrollable = previewPane.scrollHeight - previewPane.clientHeight;
+    if (previewScrollable <= 0) return;
 
     isPreviewScrolling = true;
     clearTimeout(scrollSyncTimeout);
 
     scrollSyncTimeout = setTimeout(() => {
-      const previewScrollRatio =
-        previewPane.scrollTop /
-        (previewPane.scrollHeight - previewPane.clientHeight);
-      const editorScrollPosition =
-        (editorPane.scrollHeight - editorPane.clientHeight) *
-        previewScrollRatio;
+      const previewScrollRatio = previewPane.scrollTop / previewScrollable;
+      const editorScrollable = editorPane.scrollHeight - editorPane.clientHeight;
+      const editorScrollPosition = editorScrollable * previewScrollRatio;
 
       if (!isNaN(editorScrollPosition) && isFinite(editorScrollPosition)) {
         editorPane.scrollTop = editorScrollPosition;
@@ -1323,12 +1321,14 @@ This is a fully client-side application. Your content never leaves your browser 
   // ============================================
 
   exportPdf.addEventListener("click", async function () {
+    let progressContainer = null;
+    let tempElement = null;
     try {
       const originalText = exportPdf.innerHTML;
       exportPdf.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
       exportPdf.disabled = true;
 
-      const progressContainer = document.createElement('div');
+      progressContainer = document.createElement('div');
       progressContainer.style.position = 'fixed';
       progressContainer.style.top = '50%';
       progressContainer.style.left = '50%';
@@ -1352,7 +1352,7 @@ This is a fully client-side application. Your content never leaves your browser 
         ADD_ATTR: ['id', 'class', 'style', 'viewBox', 'd', 'fill', 'stroke', 'transform', 'marker-end', 'marker-start']
       });
 
-      const tempElement = document.createElement("div");
+      tempElement = document.createElement("div");
       tempElement.className = "markdown-body pdf-export";
       tempElement.innerHTML = sanitizedHtml;
       tempElement.style.padding = "20px";
@@ -1478,9 +1478,12 @@ This is a fully client-side application. Your content never leaves your browser 
       exportPdf.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Export';
       exportPdf.disabled = false;
 
-      const progressContainer = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
-      if (progressContainer) {
-        document.body.removeChild(progressContainer);
+      // Clean up progress overlay and temp element reliably
+      if (progressContainer && progressContainer.parentNode) {
+        progressContainer.parentNode.removeChild(progressContainer);
+      }
+      if (tempElement && tempElement.parentNode) {
+        tempElement.parentNode.removeChild(tempElement);
       }
     }
   });
@@ -1599,10 +1602,7 @@ This is a fully client-side application. Your content never leaves your browser 
         toggleSyncScrolling();
       }
     }
-    // Close Mermaid zoom modal with Escape
-    if (e.key === "Escape") {
-      closeMermaidModal();
-    }
+    // Mermaid modal escape is handled by the unified Escape handler below
   });
 
   // ========================================
@@ -1935,17 +1935,27 @@ This is a fully client-side application. Your content never leaves your browser 
 
   function addHeadingAnchors(container) {
     const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const usedIds = new Set();
     headings.forEach(heading => {
       if (heading.querySelector('.heading-anchor')) return;
       let id = heading.id;
       if (!id) {
         id = heading.textContent.trim().toLowerCase()
           .replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-        heading.id = id;
       }
+      // Deduplicate IDs
+      let uniqueId = id;
+      let counter = 1;
+      while (usedIds.has(uniqueId)) {
+        uniqueId = id + '-' + counter;
+        counter++;
+      }
+      usedIds.add(uniqueId);
+      heading.id = uniqueId;
+
       const anchor = document.createElement('a');
       anchor.className = 'heading-anchor';
-      anchor.href = '#' + id;
+      anchor.href = '#' + uniqueId;
       anchor.textContent = '🔗';
       anchor.setAttribute('aria-label', 'Link to ' + heading.textContent);
       heading.prepend(anchor);
@@ -2030,6 +2040,7 @@ This is a fully client-side application. Your content never leaves your browser 
 
     let footnoteIndex = 0;
     const usedFootnotes = [];
+    const usedFootnoteIds = new Set();
 
     textNodes.forEach(textNode => {
       const text = textNode.nodeValue;
@@ -2043,8 +2054,16 @@ This is a fully client-side application. Your content never leaves your browser 
         const id = match[1];
         if (!definitions[id]) continue;
         hasRefs = true;
-        footnoteIndex++;
-        usedFootnotes.push({ id, index: footnoteIndex, content: definitions[id] });
+        // Only assign a new index if this footnote hasn't been used yet
+        let fnIndex;
+        if (usedFootnoteIds.has(id)) {
+          fnIndex = usedFootnotes.find(fn => fn.id === id).index;
+        } else {
+          footnoteIndex++;
+          fnIndex = footnoteIndex;
+          usedFootnoteIds.add(id);
+          usedFootnotes.push({ id, index: fnIndex, content: definitions[id] });
+        }
 
         // Text before the reference
         if (match.index > lastIndex) {
@@ -2055,8 +2074,8 @@ This is a fully client-side application. Your content never leaves your browser 
         const sup = document.createElement('a');
         sup.className = 'footnote-ref';
         sup.href = '#fn-' + id;
-        sup.id = 'fnref-' + id;
-        sup.textContent = '[' + footnoteIndex + ']';
+        sup.id = 'fnref-' + id + '-' + fnIndex;
+        sup.textContent = '[' + fnIndex + ']';
         sup.title = definitions[id];
         fragment.appendChild(sup);
 
@@ -2124,9 +2143,9 @@ This is a fully client-side application. Your content never leaves your browser 
   }
 
   function restoreFromLocalStorage() {
-    // Don't restore if loading a shared document
+    // Don't restore if loading a shared document (URL or Firebase)
     const hash = window.location.hash;
-    if (hash && hash.includes('d=') && hash.includes('k=')) return false;
+    if (hash && (hash.includes('d=') || hash.includes('id=')) && hash.includes('k=')) return false;
 
     const saved = localStorage.getItem(AUTOSAVE_KEY);
     if (saved && saved.trim()) {
@@ -2182,9 +2201,12 @@ This is a fully client-side application. Your content never leaves your browser 
       return;
     }
 
+    // Don't cloud-save if in read-only shared-view mode
+    if (markdownEditor.readOnly) return;
+
     // Don't cloud-save if we're just viewing someone else's shared content
     const hash = window.location.hash;
-    if (hash && hash.includes('id=') && !localStorage.getItem(CLOUD_DOC_KEY)) return;
+    if (hash && (hash.includes('id=') || hash.includes('d=')) && !localStorage.getItem(CLOUD_DOC_KEY)) return;
 
     try {
       // Compress & encrypt
@@ -2333,6 +2355,42 @@ This is a fully client-side application. Your content never leaves your browser 
     markdownEditor.dispatchEvent(new Event('input'));
   }
 
+  // --- Custom Undo/Redo Stack (replaces deprecated document.execCommand) ---
+  const undoStack = [];
+  const redoStack = [];
+  const MAX_UNDO_HISTORY = 100;
+  let lastUndoSnapshot = markdownEditor.value;
+
+  function pushUndoState() {
+    const currentValue = markdownEditor.value;
+    if (currentValue === lastUndoSnapshot) return;
+    undoStack.push(lastUndoSnapshot);
+    if (undoStack.length > MAX_UNDO_HISTORY) undoStack.shift();
+    redoStack.length = 0; // Clear redo on new edit
+    lastUndoSnapshot = currentValue;
+  }
+
+  function performUndo() {
+    if (undoStack.length === 0) return;
+    redoStack.push(markdownEditor.value);
+    const prev = undoStack.pop();
+    markdownEditor.value = prev;
+    lastUndoSnapshot = prev;
+    markdownEditor.dispatchEvent(new Event('input'));
+  }
+
+  function performRedo() {
+    if (redoStack.length === 0) return;
+    undoStack.push(markdownEditor.value);
+    const next = redoStack.pop();
+    markdownEditor.value = next;
+    lastUndoSnapshot = next;
+    markdownEditor.dispatchEvent(new Event('input'));
+  }
+
+  // Capture undo state on each input
+  markdownEditor.addEventListener('input', pushUndoState);
+
   // Formatting toolbar action handler
   const FORMATTING_ACTIONS = {
     bold: () => wrapSelection('**', '**', 'bold text'),
@@ -2349,8 +2407,8 @@ This is a fully client-side application. Your content never leaves your browser 
     quote: () => insertLinePrefix('> ', ''),
     hr: () => insertAtCursor('\n---\n'),
     table: () => insertAtCursor('\n| Header 1 | Header 2 | Header 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |\n'),
-    undo: () => { markdownEditor.focus(); document.execCommand('undo'); },
-    redo: () => { markdownEditor.focus(); document.execCommand('redo'); }
+    undo: () => { markdownEditor.focus(); performUndo(); },
+    redo: () => { markdownEditor.focus(); performRedo(); }
   };
 
   // Wire up formatting toolbar buttons
@@ -2371,7 +2429,17 @@ This is a fully client-side application. Your content never leaves your browser 
   markdownEditor.addEventListener('keydown', function (e) {
     if (!(e.ctrlKey || e.metaKey)) return;
 
-    if (e.key === 'b' || e.key === 'B') {
+    if (e.key === 'z' || e.key === 'Z') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        performRedo();
+      } else {
+        performUndo();
+      }
+    } else if (e.key === 'y' || e.key === 'Y') {
+      e.preventDefault();
+      performRedo();
+    } else if (e.key === 'b' || e.key === 'B') {
       e.preventDefault();
       FORMATTING_ACTIONS.bold();
     } else if (e.key === 'i' || e.key === 'I') {
@@ -2436,10 +2504,17 @@ This is a fully client-side application. Your content never leaves your browser 
 
     try {
       if (findRegexMode) {
+        // Safety: test regex with a small string first to detect catastrophic backtracking
         const regex = new RegExp(query, 'gi');
+        // Quick sanity test — abort if this tiny match takes too long
+        const testStr = text.substring(0, Math.min(text.length, 1000));
+        regex.exec(testStr);
+        // Reset regex state and run on full text
+        regex.lastIndex = 0;
         let m;
         while ((m = regex.exec(text)) !== null) {
           findMatches.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+          if (m[0].length === 0) { regex.lastIndex++; } // Prevent infinite loop on zero-length matches
           if (findMatches.length > 10000) break;
         }
       } else {
@@ -2506,6 +2581,10 @@ This is a fully client-side application. Your content never leaves your browser 
     performFind();
   }
 
+  function escapeRegExpChars(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   function replaceAll() {
     const query = findInput.value;
     const replacement = replaceInput.value;
@@ -2516,7 +2595,8 @@ This is a fully client-side application. Your content never leaves your browser 
       if (findRegexMode) {
         text = text.replace(new RegExp(query, 'gi'), replacement);
       } else {
-        text = text.split(query).join(replacement);
+        // Use case-insensitive replace to match the case-insensitive find
+        text = text.replace(new RegExp(escapeRegExpChars(query), 'gi'), replacement);
       }
     } catch (e) { return; }
 
@@ -2646,6 +2726,7 @@ This is a fully client-side application. Your content never leaves your browser 
     if (!document.fullscreenElement && isZenMode) {
       isZenMode = false;
       document.body.classList.remove('zen-mode');
+      document.body.classList.remove('zen-mode-preview');
       zenExitHint.style.display = 'none';
     }
   });
@@ -2732,7 +2813,13 @@ This is a fully client-side application. Your content never leaves your browser 
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       renderSlide(currentSlide - 1);
-    } else if (e.key === 'Escape') {
+    }
+    // Escape for presentation is handled by the unified Escape handler below
+  });
+
+  // Handle fullscreen exit while in presentation mode
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement && slideContainer.style.display !== 'none') {
       exitPresentation();
     }
   });
@@ -2785,14 +2872,7 @@ This is a fully client-side application. Your content never leaves your browser 
         openFindBar();
       }
     }
-    // Escape to close find bar
-    if (e.key === 'Escape' && findReplaceBar.style.display === 'block') {
-      closeFindBar();
-    }
-    // Escape to exit zen mode
-    if (e.key === 'Escape' && isZenMode) {
-      toggleZenMode();
-    }
+    // Escape handling for find bar and zen mode is done by the unified Escape handler
   });
 
   // ========================================
@@ -3729,7 +3809,11 @@ This is a fully client-side application. Your content never leaves your browser 
     // Line breaks
     html = html.replace(/\n/g, '<br>');
 
-    return html;
+    // Sanitize the final output to prevent any XSS
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['pre', 'code', 'strong', 'em', 'br'],
+      ALLOWED_ATTR: []
+    });
   }
 
   function escapeHtml(text) {
@@ -3820,8 +3904,18 @@ This is a fully client-side application. Your content never leaves your browser 
     if (!fullText.trim()) return '';
     const CHUNK_SIZE = 1500;
     if (fullText.length <= CHUNK_SIZE) return fullText;
-    const start = Math.max(0, cursorPos - Math.floor(CHUNK_SIZE / 2));
-    const end = Math.min(fullText.length, start + CHUNK_SIZE);
+    let start = Math.max(0, cursorPos - Math.floor(CHUNK_SIZE / 2));
+    let end = Math.min(fullText.length, start + CHUNK_SIZE);
+    // Snap start to a paragraph boundary (double newline) if possible
+    if (start > 0) {
+      const paraBreak = fullText.lastIndexOf('\n\n', start + 100);
+      if (paraBreak > start - 200 && paraBreak > 0) start = paraBreak + 2;
+    }
+    // Snap end to a paragraph boundary if possible
+    if (end < fullText.length) {
+      const paraBreak = fullText.indexOf('\n\n', end - 100);
+      if (paraBreak > 0 && paraBreak < end + 200) end = paraBreak;
+    }
     return fullText.substring(start, end);
   }
 
@@ -4109,13 +4203,44 @@ This is a fully client-side application. Your content never leaves your browser 
     });
   }
 
-  // --- Close AI panel with Escape ---
+  // --- Unified Escape Key Handler (priority-based, topmost overlay wins) ---
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && aiPanelOpen) {
-      closeAiPanel();
-    }
-    if (e.key === 'Escape' && aiConsentModal.style.display === 'flex') {
+    if (e.key !== 'Escape') return;
+
+    // Priority 1: AI consent modal (topmost dialog)
+    if (aiConsentModal.style.display === 'flex') {
       hideAiConsentDialog();
+      return;
+    }
+    // Priority 2: Mermaid zoom modal
+    if (mermaidZoomModal.classList.contains('active')) {
+      closeMermaidModal();
+      return;
+    }
+    // Priority 3: Presentation mode
+    if (slideContainer.style.display !== 'none') {
+      exitPresentation();
+      return;
+    }
+    // Priority 4: Share result modal
+    if (shareResultModal.classList.contains('active')) {
+      closeShareResultModal();
+      return;
+    }
+    // Priority 5: AI panel
+    if (aiPanelOpen) {
+      closeAiPanel();
+      return;
+    }
+    // Priority 6: Find/Replace bar
+    if (findReplaceBar.style.display === 'block') {
+      closeFindBar();
+      return;
+    }
+    // Priority 7: Zen mode
+    if (isZenMode) {
+      toggleZenMode();
+      return;
     }
   });
 

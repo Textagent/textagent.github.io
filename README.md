@@ -24,15 +24,35 @@ Markdown Viewer is a professional, full-featured Markdown editor and preview app
 - **Syntax highlighting** - Beautiful code highlighting for multiple programming languages
 - **LaTeX math support** - Render mathematical equations using LaTeX syntax
 - **Mermaid diagrams** - Create diagrams and flowcharts within your Markdown; hover over any diagram to reveal a toolbar for zooming, downloading (PNG/SVG), and copying to clipboard
+- **PlantUML diagrams** - Render PlantUML diagrams with live preview via the public PlantUML server
 - **Dark mode toggle** - Switch between light and dark themes for comfortable viewing
+- **Preview themes** - Multiple preview themes (GitHub, Academic, Solarized)
 - **Export options** - Download your content as Markdown, HTML, or PDF
+- **Smart PDF export** - Page-break detection, cascading adjustment, and automatic scaling of oversized graphics
 - **Import Markdown files** - Drag & drop or select files to open
 - **Copy to clipboard** - Quickly copy your Markdown content with one click
 - **Sync scrolling** - Keep editor and preview panes aligned (toggleable)
+- **View modes** - Split, Editor-only, and Preview-only views with a draggable resize divider
 - **Content statistics** - Track word count, character count, and reading time
-- **Fully responsive** - Works on desktop and mobile devices
+- **Formatting toolbar** - Bold, italic, heading, list, link, code, table, undo/redo shortcuts above the editor
+- **Find & Replace** - Search and replace text inside the editor with regex support (`Ctrl+F`)
+- **Table of Contents** - Auto-generated, clickable sidebar TOC from document headings
+- **Auto-save** - Content saved to localStorage and restored on reload
+- **☁️ Cloud auto-save** - Periodic encrypted backup to Firebase Firestore
+- **Zen mode** - Minimal full-screen editor view (`Ctrl+Shift+Z`)
+- **Focus mode** - Distraction-free writing with dimmed paragraphs outside the cursor
+- **Word wrap toggle** - Switch editor word-wrap on or off
+- **Slide presentation** - Present Markdown as slides using `---` separators
+- **New document** - One-click button to start a fresh document
+- **Callout blocks** - `> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, etc. rendered as styled callouts
+- **Footnotes** - `[^1]` footnote syntax with back-references
+- **Anchor links** - Click headings to copy anchor URLs
+- **Image paste** - Paste images from clipboard directly into the editor as base64
+- **🤖 AI Assistant** - Qwen 3.5 Small running 100% locally via WebGPU / WASM — summarize, rephrase, expand, grammar-check, explain, simplify, and auto-complete
+- **AI context menu** - Select text in the editor or preview and right-click for quick AI actions
+- **🔐 Encrypted sharing** - Share markdown via Firebase/GitHub with AES-256-GCM encryption; decryption key stays in the URL fragment (never sent to any server)
+- **Fully responsive** - Works on desktop and mobile with a dedicated mobile menu
 - **Emoji support** - Convert emoji shortcodes into actual emojis
-- **🔐 Encrypted sharing** - Share markdown via GitHub with AES-256-GCM encryption; decryption key stays in the URL fragment (never sent to any server)
 - **100% client-side** - No server processing, ensuring complete privacy and security
 - **No sign-up required** - Use instantly without any registration
 
@@ -58,7 +78,10 @@ Markdown Viewer is a professional, full-featured Markdown editor and preview app
 4. **Exporting Content** - Use the "Export" dropdown to download as MD, HTML, or PDF
 5. **Toggle Dark Mode** - Click the moon icon to switch between light and dark themes
 6. **Toggle Sync Scrolling** - Enable/disable synchronized scrolling between panels
-7. **Sharing Markdown** - Click "Share" to compress, encrypt, and store your markdown on GitHub. A unique link with the decryption key is generated for the recipient.
+7. **Sharing Markdown** - Click "Share" to compress, encrypt, and store your markdown via Firebase (with GitHub fallback). A unique link with the decryption key is generated for the recipient.
+8. **AI Assistant** - Click the ✨ AI button to open the AI panel. The model runs locally in your browser — no data leaves your device.
+9. **View Modes** - Switch between Split, Editor-only, and Preview-only views using the toolbar buttons
+10. **Zen Mode** - Press `Ctrl+Shift+Z` or click the Zen button for a minimal, full-screen writing experience
 
 ### Mermaid Diagram Toolbar
 
@@ -93,6 +116,10 @@ Inside the **zoom modal** you can:
 - Task lists
 - LaTeX equations (inline and block)
 - Mermaid diagrams
+- PlantUML diagrams
+- Callout / admonition blocks
+- Footnotes
+- Emoji shortcodes
 - And more!
 
 ## 🔧 Technologies Used
@@ -111,6 +138,9 @@ Inside the **zoom modal** you can:
 - [JoyPixels](https://www.joypixels.com/) - Emoji support
 - [pako](https://github.com/nicmart/pako) - Gzip compression for encrypted sharing
 - [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) - AES-256-GCM encryption (browser-native)
+- [Firebase Firestore](https://firebase.google.com/docs/firestore) - Cloud sharing & auto-save storage
+- [Transformers.js](https://huggingface.co/docs/transformers.js) - Local AI inference (Qwen 3.5 Small 0.8B)
+- [PlantUML Server](https://www.plantuml.com/) - PlantUML diagram rendering
 
 ## 🤝 Contributing
 
@@ -133,22 +163,29 @@ The Markdown Viewer has undergone significant evolution since its inception. Wha
 ## 📋 Release Notes
 
 | Date | Feature / Update |
-|------|-----------------|
+|------|-----------------| 
+| **2026-03-04** | 🤖 **AI Assistant (Qwen 3.5)** — local AI running via WebGPU/WASM: summarize, expand, rephrase, grammar-check, explain, simplify, auto-complete |
+| **2026-03-04** | 🧠 **AI context menu** — select text in editor or preview, right-click for quick AI actions |
+| **2026-03-04** | ☁️ **Cloud auto-save** — periodic encrypted backup to Firebase Firestore |
 | **2026-03-04** | 🌱 **PlantUML diagrams** — render PlantUML inside Markdown with live preview |
 | **2026-03-04** | 📝 **Word wrap toggle** — switch editor word-wrap on or off |
-| **2026-03-04** | 🎯 **Focus mode** — distraction-free writing with a centered editor |
+| **2026-03-04** | 🎯 **Focus mode** — distraction-free writing with dimmed surrounding paragraphs |
 | **2026-03-04** | 🔥 **Firebase Firestore sharing** — short share URLs via Firestore instead of long encoded strings |
-| **2026-03-04** | 🛠 **Formatting toolbar** — bold, italic, heading, list, link, and code shortcuts above the editor |
-| **2026-03-04** | 🔍 **Find & Replace** — search and replace text inside the editor |
-| **2026-03-04** | 📑 **Table of Contents** — auto-generated, clickable TOC from headings |
+| **2026-03-04** | 🛠 **Formatting toolbar** — bold, italic, strikethrough, heading, link, image, code, lists, table, undo/redo |
+| **2026-03-04** | 🔍 **Find & Replace** — search and replace text inside the editor with regex support |
+| **2026-03-04** | 📑 **Table of Contents** — auto-generated, clickable sidebar TOC from headings |
 | **2026-03-04** | 💾 **Auto-save** — content saved to localStorage and restored on reload |
-| **2026-03-04** | 🧘 **Zen mode** — minimal full-screen editor view |
+| **2026-03-04** | 🧘 **Zen mode** — minimal full-screen editor view (`Ctrl+Shift+Z`) |
 | **2026-03-04** | 🎞 **Slide presentation** — present Markdown as slides using `---` separators |
 | **2026-03-04** | 📌 **Callout blocks** — `> [!NOTE]`, `> [!WARNING]`, etc. rendered as styled callouts |
-| **2026-03-04** | 📝 **Footnotes** — `[^1]` footnote syntax support |
+| **2026-03-04** | 📝 **Footnotes** — `[^1]` footnote syntax with back-references |
 | **2026-03-04** | ⚓ **Anchor links** — click headings to copy anchor URLs |
 | **2026-03-04** | 🖼 **Image paste** — paste images from clipboard directly into the editor |
-| **2026-03-04** | 🎨 **Preview themes** — multiple preview themes (GitHub, Academic, etc.) |
+| **2026-03-04** | 🎨 **Preview themes** — multiple preview themes (GitHub, Academic, Solarized) |
+| **2026-03-04** | 🖥 **View modes** — Split, Editor-only, and Preview-only with draggable resize divider |
+| **2026-03-04** | 📄 **New document** — one-click button to start a fresh document |
+| **2026-03-04** | 📱 **Mobile menu** — dedicated responsive sidebar menu for mobile devices |
+| **2026-03-04** | 📑 **Smart PDF export** — page-break detection, cascading adjustments, oversized graphic scaling |
 | **2026-03-03** | 🔐 **Encrypted sharing** — AES-256-GCM encrypted markdown sharing via GitHub |
 | **2026-03-03** | 🌐 **GitHub Pages deployment** — hosted on `markdownview.github.io` |
 | **2026-03-03** | 📖 **README overhaul** — comprehensive docs with screenshots and usage guide |
