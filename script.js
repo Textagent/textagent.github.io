@@ -3825,8 +3825,12 @@ This is a fully client-side application. Your content never leaves your browser 
   document.querySelectorAll('.ai-action-chip').forEach(chip => {
     chip.addEventListener('click', function () {
       const action = this.dataset.action;
-      // Use saved selection (persists after focus moves to panel)
-      const selectedText = markdownEditor.value.substring(savedSelection.start, savedSelection.end);
+      // Check editor selection first, then preview selection
+      let selectedText = markdownEditor.value.substring(savedSelection.start, savedSelection.end);
+      if (!selectedText) {
+        const sel = window.getSelection();
+        selectedText = sel ? sel.toString().trim() : '';
+      }
       const editorContent = markdownEditor.value;
 
       if (!aiModelLoaded) {
@@ -3903,9 +3907,11 @@ This is a fully client-side application. Your content never leaves your browser 
     }
   });
 
-  // --- Editor Context Menu (on text selection) ---
+  // --- Context Menu (on text selection in editor OR preview) ---
   let contextMenuTimeout = null;
+  let savedContextText = ''; // Stores selected text from either pane
 
+  // Editor text selection
   markdownEditor.addEventListener('mouseup', (e) => {
     clearTimeout(contextMenuTimeout);
     contextMenuTimeout = setTimeout(() => {
@@ -3915,7 +3921,7 @@ This is a fully client-side application. Your content never leaves your browser 
       );
 
       if (selectedText && selectedText.length > 2 && aiModelLoaded) {
-        // Position the context menu near the mouse
+        savedContextText = selectedText;
         aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
         aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
         aiContextMenu.style.display = 'flex';
@@ -3925,6 +3931,26 @@ This is a fully client-side application. Your content never leaves your browser 
     }, 300);
   });
 
+  // Preview pane text selection
+  if (previewPane) {
+    previewPane.addEventListener('mouseup', (e) => {
+      clearTimeout(contextMenuTimeout);
+      contextMenuTimeout = setTimeout(() => {
+        const selection = window.getSelection();
+        const selectedText = selection ? selection.toString().trim() : '';
+
+        if (selectedText && selectedText.length > 2 && aiModelLoaded) {
+          savedContextText = selectedText;
+          aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+          aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
+          aiContextMenu.style.display = 'flex';
+        } else {
+          aiContextMenu.style.display = 'none';
+        }
+      }, 300);
+    });
+  }
+
   // Hide context menu on click elsewhere
   document.addEventListener('mousedown', (e) => {
     if (!aiContextMenu.contains(e.target)) {
@@ -3932,18 +3958,13 @@ This is a fully client-side application. Your content never leaves your browser 
     }
   });
 
-  // Context menu actions
+  // Context menu actions — uses savedContextText from either pane
   aiContextMenu.querySelectorAll('.ai-ctx-btn').forEach(btn => {
     btn.addEventListener('click', function () {
       const action = this.dataset.action;
-      const selectedText = markdownEditor.value.substring(
-        markdownEditor.selectionStart,
-        markdownEditor.selectionEnd
-      );
-
       aiContextMenu.style.display = 'none';
 
-      if (!selectedText) return;
+      if (!savedContextText) return;
 
       // Open panel if needed
       if (!aiPanelOpen) {
@@ -3956,9 +3977,9 @@ This is a fully client-side application. Your content never leaves your browser 
       }
 
       if (['summarize', 'expand', 'rephrase', 'grammar'].includes(action)) {
-        sendToAi(action, selectedText, null);
+        sendToAi(action, savedContextText, null);
       } else {
-        sendToAi(action, selectedText, `Please ${action} this text.`);
+        sendToAi(action, savedContextText, `Please ${action} this text.`);
       }
     });
   });
