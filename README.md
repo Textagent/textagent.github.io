@@ -8,6 +8,7 @@
     <a href="#-features">Features</a> • 
     <a href="#-screenshots">Screenshots</a> • 
     <a href="#-usage">Usage</a> • 
+    <a href="#-release-notes">Release Notes</a> • 
     <a href="#-recent-upgrades-by-ijbo">Upgrades</a> • 
     <a href="#-license">License</a>
 </div>
@@ -128,6 +129,37 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📈 Development Journey
 
 The Markdown Viewer has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, professional application with multiple advanced capabilities. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
+
+## 📋 Release Notes
+
+| Date | Feature / Update |
+|------|-----------------|
+| **2026-03-04** | 🌱 **PlantUML diagrams** — render PlantUML inside Markdown with live preview |
+| **2026-03-04** | 📝 **Word wrap toggle** — switch editor word-wrap on or off |
+| **2026-03-04** | 🎯 **Focus mode** — distraction-free writing with a centered editor |
+| **2026-03-04** | 🔥 **Firebase Firestore sharing** — short share URLs via Firestore instead of long encoded strings |
+| **2026-03-04** | 🛠 **Formatting toolbar** — bold, italic, heading, list, link, and code shortcuts above the editor |
+| **2026-03-04** | 🔍 **Find & Replace** — search and replace text inside the editor |
+| **2026-03-04** | 📑 **Table of Contents** — auto-generated, clickable TOC from headings |
+| **2026-03-04** | 💾 **Auto-save** — content saved to localStorage and restored on reload |
+| **2026-03-04** | 🧘 **Zen mode** — minimal full-screen editor view |
+| **2026-03-04** | 🎞 **Slide presentation** — present Markdown as slides using `---` separators |
+| **2026-03-04** | 📌 **Callout blocks** — `> [!NOTE]`, `> [!WARNING]`, etc. rendered as styled callouts |
+| **2026-03-04** | 📝 **Footnotes** — `[^1]` footnote syntax support |
+| **2026-03-04** | ⚓ **Anchor links** — click headings to copy anchor URLs |
+| **2026-03-04** | 🖼 **Image paste** — paste images from clipboard directly into the editor |
+| **2026-03-04** | 🎨 **Preview themes** — multiple preview themes (GitHub, Academic, etc.) |
+| **2026-03-03** | 🔐 **Encrypted sharing** — AES-256-GCM encrypted markdown sharing via GitHub |
+| **2026-03-03** | 🌐 **GitHub Pages deployment** — hosted on `markdownview.github.io` |
+| **2026-03-03** | 📖 **README overhaul** — comprehensive docs with screenshots and usage guide |
+| **2026-03-01** | 🐛 **Mermaid toolbar UX** — copy button label, toolbar order, modal size improvements |
+| **2026-02-28** | ✨ **Code review polish** — rounded dimensions, CSS variable backgrounds, timestamped filenames |
+| **2026-01-10** | 🔧 **Scroll & toolbar UI** — scroll behavior improvements, toolbar refinements, code cleanup |
+| **2025-09-30** | 📄 **PDF export refactor** — improved PDF generation and enhanced UI responsiveness |
+| **2025-05-09** | 🖨 **PDF rendering fixes** — PDF export bug fixes and rendering improvements |
+| **2025-05-01** | 🎨 **New UI & dark mode fixes** — refreshed interface, fixed dark-mode code-block coloring |
+| **2024-04-12** | 📊 **Reading stats** — word count, character count, and reading time |
+| **2024-04-09** | 🚀 **Initial commit** — Markdown Viewer project created |
 
 ## 🔄 Recent Upgrades by [@ijbo](https://github.com/ijbo)
 

@@ -3204,4 +3204,583 @@ This is a fully client-side application. Your content never leaves your browser 
   // --- Auto-load shared content on page load ---
   loadSharedMarkdown();
 
+  // ========================================
+  // AI ASSISTANT — Qwen 3.5 Small (0.8B) via Transformers.js
+  // Runs 100% locally in the browser via WebGPU / WASM
+  // ========================================
+
+  const aiPanel = document.getElementById('ai-panel');
+  const aiPanelOverlay = document.getElementById('ai-panel-overlay');
+  const aiToggleBtn = document.getElementById('ai-toggle-button');
+  const mobileAiBtn = document.getElementById('mobile-ai-button');
+  const aiPanelCloseBtn = document.getElementById('ai-panel-close');
+  const aiClearChatBtn = document.getElementById('ai-clear-chat');
+  const aiChatArea = document.getElementById('ai-chat-area');
+  const aiInput = document.getElementById('ai-input');
+  const aiSendBtn = document.getElementById('ai-send-btn');
+  const aiConsentModal = document.getElementById('ai-consent-modal');
+  const aiConsentCancel = document.getElementById('ai-consent-cancel');
+  const aiConsentDownload = document.getElementById('ai-consent-download');
+  const aiProgressSection = document.getElementById('ai-download-progress');
+  const aiProgressBar = document.getElementById('ai-progress-bar');
+  const aiProgressStatus = document.getElementById('ai-progress-status');
+  const aiProgressDetail = document.getElementById('ai-progress-detail');
+  const aiDeviceLabel = document.getElementById('ai-device-label');
+  const aiDeviceDetail = document.getElementById('ai-device-detail');
+  const aiContextMenu = document.getElementById('ai-context-menu');
+
+  let aiWorker = null;
+  let aiModelLoaded = false;
+  let aiIsGenerating = false;
+  let aiMessageIdCounter = 0;
+  let aiPanelOpen = false;
+
+  // --- Check WebGPU on page load (for consent dialog) ---
+  (async function checkGPU() {
+    if (navigator.gpu) {
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (adapter) {
+          aiDeviceLabel.textContent = 'WebGPU Available ✓';
+          aiDeviceDetail.textContent = 'Fast GPU-accelerated inference';
+          return;
+        }
+      } catch (e) { /* fall through */ }
+    }
+    aiDeviceLabel.textContent = 'WebGPU Not Available';
+    aiDeviceDetail.textContent = 'Will use WASM (slower but functional)';
+  })();
+
+  // --- Panel Toggle ---
+  function openAiPanel() {
+    if (!aiModelLoaded && !aiWorker) {
+      // Show consent dialog first
+      showAiConsentDialog();
+      return;
+    }
+    aiPanel.style.display = 'flex';
+    aiPanelOverlay.classList.add('active');
+    // Trigger reflow before adding class for animation
+    void aiPanel.offsetWidth;
+    aiPanel.classList.add('ai-panel-open');
+    aiToggleBtn.classList.add('ai-active');
+    aiPanelOpen = true;
+    aiInput.focus();
+  }
+
+  function closeAiPanel() {
+    aiPanel.classList.remove('ai-panel-open');
+    aiPanelOverlay.classList.remove('active');
+    aiToggleBtn.classList.remove('ai-active');
+    aiPanelOpen = false;
+    setTimeout(() => {
+      if (!aiPanelOpen) aiPanel.style.display = 'none';
+    }, 300);
+  }
+
+  function toggleAiPanel() {
+    if (aiPanelOpen) closeAiPanel();
+    else openAiPanel();
+  }
+
+  if (aiToggleBtn) aiToggleBtn.addEventListener('click', toggleAiPanel);
+  if (mobileAiBtn) mobileAiBtn.addEventListener('click', () => {
+    closeMobileMenu();
+    toggleAiPanel();
+  });
+  if (aiPanelCloseBtn) aiPanelCloseBtn.addEventListener('click', closeAiPanel);
+  if (aiPanelOverlay) aiPanelOverlay.addEventListener('click', closeAiPanel);
+
+  // --- Consent Dialog ---
+  function showAiConsentDialog() {
+    aiConsentModal.style.display = 'flex';
+    aiProgressSection.style.display = 'none';
+    aiConsentDownload.disabled = false;
+    aiConsentDownload.innerHTML = '<i class="bi bi-download me-1"></i> Download & Enable AI';
+  }
+
+  function hideAiConsentDialog() {
+    aiConsentModal.style.display = 'none';
+  }
+
+  aiConsentCancel.addEventListener('click', hideAiConsentDialog);
+  aiConsentModal.addEventListener('click', (e) => {
+    if (e.target === aiConsentModal) hideAiConsentDialog();
+  });
+
+  aiConsentDownload.addEventListener('click', () => {
+    aiConsentDownload.disabled = true;
+    aiConsentDownload.innerHTML = '<span class="ai-status-spinner"></span> Loading...';
+    aiProgressSection.style.display = 'block';
+    initAiWorker();
+  });
+
+  // --- Worker Lifecycle ---
+  function initAiWorker() {
+    if (aiWorker) return;
+
+    aiWorker = new Worker('ai-worker.js');
+
+    // Track download progress per file
+    const fileProgress = {};
+
+    aiWorker.addEventListener('message', (e) => {
+      const msg = e.data;
+
+      switch (msg.type) {
+        case 'progress': {
+          // Track per-file progress
+          fileProgress[msg.file] = {
+            loaded: msg.loaded || 0,
+            total: msg.total || 0,
+            progress: msg.progress || 0
+          };
+
+          // Calculate overall progress
+          let totalLoaded = 0, totalSize = 0;
+          Object.values(fileProgress).forEach(fp => {
+            totalLoaded += fp.loaded;
+            totalSize += fp.total;
+          });
+          const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
+
+          aiProgressBar.style.width = overallPercent + '%';
+          aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
+
+          const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
+          const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
+          aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB — ${msg.file}`;
+          break;
+        }
+
+        case 'status':
+          aiProgressStatus.textContent = msg.message;
+          break;
+
+        case 'loaded':
+          aiModelLoaded = true;
+          hideAiConsentDialog();
+          // Open the panel after successful load
+          aiPanel.style.display = 'flex';
+          aiPanelOverlay.classList.add('active');
+          void aiPanel.offsetWidth;
+          aiPanel.classList.add('ai-panel-open');
+          aiToggleBtn.classList.add('ai-active');
+          aiPanelOpen = true;
+          // Add a status bar to the panel
+          addAiStatusBar('ready', `Model loaded (${msg.device.toUpperCase()})`);
+          aiInput.focus();
+          break;
+
+        case 'complete':
+          handleAiResponse(msg.text, msg.messageId);
+          break;
+
+        case 'error':
+          handleAiError(msg.message, msg.messageId);
+          break;
+      }
+    });
+
+    aiWorker.postMessage({ type: 'load' });
+  }
+
+  // --- Status Bar ---
+  function addAiStatusBar(status, text) {
+    // Remove existing status bar
+    const existing = aiPanel.querySelector('.ai-status-bar');
+    if (existing) existing.remove();
+
+    const bar = document.createElement('div');
+    bar.className = 'ai-status-bar';
+    bar.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
+
+    // Insert after header
+    const header = aiPanel.querySelector('.ai-panel-header');
+    header.insertAdjacentElement('afterend', bar);
+  }
+
+  // --- Chat Messages ---
+  function addUserMessage(text) {
+    // Remove welcome message
+    const welcome = aiChatArea.querySelector('.ai-welcome-message');
+    if (welcome) welcome.remove();
+
+    const msg = document.createElement('div');
+    msg.className = 'ai-message ai-message-user';
+    msg.innerHTML = `
+      <span class="ai-msg-label">You</span>
+      <div class="ai-msg-bubble">${escapeHtml(text)}</div>
+    `;
+    aiChatArea.appendChild(msg);
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+  }
+
+  function addTypingIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'ai-message ai-message-ai';
+    indicator.id = 'ai-typing';
+    indicator.innerHTML = `
+      <span class="ai-msg-label">AI</span>
+      <div class="ai-typing-indicator">
+        <span class="ai-typing-dot"></span>
+        <span class="ai-typing-dot"></span>
+        <span class="ai-typing-dot"></span>
+      </div>
+    `;
+    aiChatArea.appendChild(indicator);
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+  }
+
+  function removeTypingIndicator() {
+    const indicator = document.getElementById('ai-typing');
+    if (indicator) indicator.remove();
+  }
+
+  function addAiMessage(text, messageId) {
+    removeTypingIndicator();
+
+    // Remove welcome message
+    const welcome = aiChatArea.querySelector('.ai-welcome-message');
+    if (welcome) welcome.remove();
+
+    const msg = document.createElement('div');
+    msg.className = 'ai-message ai-message-ai';
+
+    // Simple markdown-to-html for AI response (basic formatting)
+    const formattedText = formatAiResponse(text);
+
+    msg.innerHTML = `
+      <span class="ai-msg-label">AI</span>
+      <div class="ai-msg-bubble">${formattedText}</div>
+      <div class="ai-msg-actions">
+        <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
+          <i class="bi bi-box-arrow-in-down"></i> Insert
+        </button>
+        <button class="ai-msg-action-btn" data-action="copy" data-text="${encodeURIComponent(text)}" title="Copy to clipboard">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+        <button class="ai-msg-action-btn" data-action="replace" data-text="${encodeURIComponent(text)}" title="Replace selected text">
+          <i class="bi bi-arrow-left-right"></i> Replace
+        </button>
+      </div>
+    `;
+
+    aiChatArea.appendChild(msg);
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+
+    // Wire up action buttons
+    msg.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const action = this.dataset.action;
+        const rawText = decodeURIComponent(this.dataset.text);
+        handleAiAction(action, rawText, this);
+      });
+    });
+  }
+
+  function handleAiAction(action, text, btn) {
+    switch (action) {
+      case 'insert': {
+        const pos = markdownEditor.selectionStart;
+        const before = markdownEditor.value.substring(0, pos);
+        const after = markdownEditor.value.substring(pos);
+        markdownEditor.value = before + '\n' + text + '\n' + after;
+        markdownEditor.dispatchEvent(new Event('input'));
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Inserted';
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Insert'; }, 1500);
+        break;
+      }
+      case 'copy': {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+          setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 1500);
+        });
+        break;
+      }
+      case 'replace': {
+        const start = markdownEditor.selectionStart;
+        const end = markdownEditor.selectionEnd;
+        if (start === end) {
+          // No selection, insert instead
+          handleAiAction('insert', text, btn);
+          return;
+        }
+        markdownEditor.value = markdownEditor.value.substring(0, start) + text + markdownEditor.value.substring(end);
+        markdownEditor.dispatchEvent(new Event('input'));
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Replaced';
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-arrow-left-right"></i> Replace'; }, 1500);
+        break;
+      }
+    }
+  }
+
+  function handleAiResponse(text, messageId) {
+    aiIsGenerating = false;
+    aiSendBtn.disabled = false;
+    addAiMessage(text, messageId);
+  }
+
+  function handleAiError(message, messageId) {
+    aiIsGenerating = false;
+    aiSendBtn.disabled = false;
+    removeTypingIndicator();
+
+    const msg = document.createElement('div');
+    msg.className = 'ai-message ai-message-ai';
+    msg.innerHTML = `
+      <span class="ai-msg-label">AI</span>
+      <div class="ai-msg-bubble" style="border-color: var(--color-danger-fg); color: var(--color-danger-fg);">
+        <i class="bi bi-exclamation-triangle"></i> ${escapeHtml(message)}
+      </div>
+    `;
+    aiChatArea.appendChild(msg);
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+  }
+
+  function formatAiResponse(text) {
+    // Basic markdown formatting for AI responses
+    let html = escapeHtml(text);
+
+    // Code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // --- Send to AI ---
+  function sendToAi(taskType, context, userPrompt) {
+    if (!aiModelLoaded || !aiWorker) return;
+    if (aiIsGenerating) return;
+
+    aiIsGenerating = true;
+    aiSendBtn.disabled = true;
+    const messageId = ++aiMessageIdCounter;
+
+    // Show user message in chat
+    const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
+    addUserMessage(displayText);
+    addTypingIndicator();
+
+    aiWorker.postMessage({
+      type: 'generate',
+      taskType,
+      context,
+      userPrompt,
+      messageId
+    });
+  }
+
+  // --- Chat Input ---
+  aiInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChatMessage();
+    }
+  });
+
+  // Auto-resize textarea
+  aiInput.addEventListener('input', () => {
+    aiInput.style.height = 'auto';
+    aiInput.style.height = Math.min(aiInput.scrollHeight, 120) + 'px';
+  });
+
+  aiSendBtn.addEventListener('click', sendChatMessage);
+
+  function sendChatMessage() {
+    const text = aiInput.value.trim();
+    if (!text || aiIsGenerating) return;
+
+    aiInput.value = '';
+    aiInput.style.height = 'auto';
+
+    // Detect if it's a Q&A about the document or a generation request
+    const editorContent = markdownEditor.value;
+    const isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
+
+    if (isQuestion && editorContent.trim()) {
+      sendToAi('qa', editorContent, text);
+    } else {
+      sendToAi('generate', null, text);
+    }
+  }
+
+  // --- Quick Action Chips ---
+  document.querySelectorAll('.ai-action-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      const action = this.dataset.action;
+      const selectedText = markdownEditor.value.substring(
+        markdownEditor.selectionStart,
+        markdownEditor.selectionEnd
+      );
+      const editorContent = markdownEditor.value;
+
+      if (!aiModelLoaded) {
+        openAiPanel();
+        return;
+      }
+
+      // Ensure panel is open
+      if (!aiPanelOpen) openAiPanel();
+
+      switch (action) {
+        case 'summarize':
+        case 'expand':
+        case 'rephrase':
+        case 'grammar':
+          if (!selectedText) {
+            addAiMessage('Please select some text in the editor first, then try again.');
+            return;
+          }
+          sendToAi(action, selectedText, null);
+          break;
+        case 'explain':
+        case 'simplify':
+          if (!selectedText) {
+            addAiMessage('Please select some text in the editor to explain or simplify.');
+            return;
+          }
+          sendToAi(action, selectedText, `Please ${action} this text.`);
+          break;
+        case 'autocomplete': {
+          const textBeforeCursor = editorContent.substring(0, markdownEditor.selectionStart);
+          if (!textBeforeCursor.trim()) {
+            addAiMessage('Place your cursor after some text in the editor to auto-complete.');
+            return;
+          }
+          sendToAi('autocomplete', textBeforeCursor, null);
+          break;
+        }
+        case 'markdown':
+          // Focus the input for user to type their request
+          aiInput.placeholder = 'Describe what markdown to generate...';
+          aiInput.focus();
+          break;
+      }
+    });
+  });
+
+  // --- Ctrl+Space for Auto-Complete ---
+  markdownEditor.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === ' ') {
+      e.preventDefault();
+      if (!aiModelLoaded) {
+        openAiPanel();
+        return;
+      }
+      if (!aiPanelOpen) openAiPanel();
+
+      const textBeforeCursor = markdownEditor.value.substring(0, markdownEditor.selectionStart);
+      if (textBeforeCursor.trim()) {
+        sendToAi('autocomplete', textBeforeCursor, null);
+      }
+    }
+  });
+
+  // --- Editor Context Menu (on text selection) ---
+  let contextMenuTimeout = null;
+
+  markdownEditor.addEventListener('mouseup', (e) => {
+    clearTimeout(contextMenuTimeout);
+    contextMenuTimeout = setTimeout(() => {
+      const selectedText = markdownEditor.value.substring(
+        markdownEditor.selectionStart,
+        markdownEditor.selectionEnd
+      );
+
+      if (selectedText && selectedText.length > 2 && aiModelLoaded) {
+        // Position the context menu near the mouse
+        aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+        aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
+        aiContextMenu.style.display = 'flex';
+      } else {
+        aiContextMenu.style.display = 'none';
+      }
+    }, 300);
+  });
+
+  // Hide context menu on click elsewhere
+  document.addEventListener('mousedown', (e) => {
+    if (!aiContextMenu.contains(e.target)) {
+      aiContextMenu.style.display = 'none';
+    }
+  });
+
+  // Context menu actions
+  aiContextMenu.querySelectorAll('.ai-ctx-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const action = this.dataset.action;
+      const selectedText = markdownEditor.value.substring(
+        markdownEditor.selectionStart,
+        markdownEditor.selectionEnd
+      );
+
+      aiContextMenu.style.display = 'none';
+
+      if (!selectedText) return;
+
+      // Open panel if needed
+      if (!aiPanelOpen) {
+        aiPanel.style.display = 'flex';
+        aiPanelOverlay.classList.add('active');
+        void aiPanel.offsetWidth;
+        aiPanel.classList.add('ai-panel-open');
+        aiToggleBtn.classList.add('ai-active');
+        aiPanelOpen = true;
+      }
+
+      if (['summarize', 'expand', 'rephrase', 'grammar'].includes(action)) {
+        sendToAi(action, selectedText, null);
+      } else {
+        sendToAi(action, selectedText, `Please ${action} this text.`);
+      }
+    });
+  });
+
+  // --- Clear Chat ---
+  if (aiClearChatBtn) {
+    aiClearChatBtn.addEventListener('click', () => {
+      aiChatArea.innerHTML = `
+        <div class="ai-welcome-message">
+          <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>
+          <h5>Local AI Assistant</h5>
+          <p>Powered by Qwen 3.5 Small · Runs 100% in your browser</p>
+          <div class="ai-welcome-tips">
+            <div class="ai-tip"><i class="bi bi-cursor-text"></i> Select text + use quick actions</div>
+            <div class="ai-tip"><i class="bi bi-chat-dots"></i> Ask questions about your document</div>
+            <div class="ai-tip"><i class="bi bi-keyboard"></i> <kbd>Ctrl</kbd>+<kbd>Space</kbd> for auto-complete</div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  // --- Close AI panel with Escape ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aiPanelOpen) {
+      closeAiPanel();
+    }
+    if (e.key === 'Escape' && aiConsentModal.style.display === 'flex') {
+      hideAiConsentDialog();
+    }
+  });
+
 });

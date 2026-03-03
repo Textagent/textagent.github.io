@@ -159,6 +159,12 @@
                         <i class="bi bi-fullscreen"></i>
                     </button>
 
+                    <span class="toolbar-separator"></span>
+
+                    <button id="ai-toggle-button" class="tool-button ai-sparkle-btn" title="AI Assistant (Qwen 3.5)">
+                        <i class="bi bi-stars"></i>
+                    </button>
+
                     <div class="dropdown">
                         <button class="tool-button dropdown-toggle" type="button" id="themePickerDropdown"
                             data-bs-toggle="dropdown" aria-expanded="false" title="Preview Theme">
@@ -256,6 +262,10 @@
 
                             <button id="mobile-share-button" class="mobile-menu-item" title="Share Markdown">
                                 <i class="bi bi-share me-2"></i> Share
+                            </button>
+
+                            <button id="mobile-ai-button" class="mobile-menu-item" title="AI Assistant">
+                                <i class="bi bi-stars me-2"></i> AI Assistant
                             </button>
 
                             <button id="mobile-theme-toggle" class="mobile-menu-item" title="Toggle Dark Mode">
@@ -449,8 +459,139 @@
         </div>
     </div>
 
+    <!-- AI Assistant Panel -->
+    <div id="ai-panel" class="ai-panel" style="display:none">
+        <div class="ai-panel-header">
+            <div class="ai-panel-title">
+                <i class="bi bi-stars"></i>
+                <span>AI Assistant</span>
+                <span class="ai-badge">Qwen 3.5 · Local</span>
+            </div>
+            <div class="ai-panel-controls">
+                <button class="ai-panel-btn" id="ai-clear-chat" title="Clear chat"><i class="bi bi-trash3"></i></button>
+                <button class="ai-panel-btn" id="ai-panel-close" title="Close"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </div>
+
+        <div class="ai-quick-actions" id="ai-quick-actions">
+            <button class="ai-action-chip" data-action="summarize" title="Summarize selected text">
+                <i class="bi bi-card-text"></i> Summarize
+            </button>
+            <button class="ai-action-chip" data-action="expand" title="Expand selected text">
+                <i class="bi bi-arrows-angle-expand"></i> Expand
+            </button>
+            <button class="ai-action-chip" data-action="rephrase" title="Rephrase selected text">
+                <i class="bi bi-arrow-repeat"></i> Rephrase
+            </button>
+            <button class="ai-action-chip" data-action="grammar" title="Fix grammar">
+                <i class="bi bi-spellcheck"></i> Fix Grammar
+            </button>
+            <button class="ai-action-chip" data-action="explain" title="Explain selected text">
+                <i class="bi bi-lightbulb"></i> Explain
+            </button>
+            <button class="ai-action-chip" data-action="simplify" title="Simplify selected text">
+                <i class="bi bi-funnel"></i> Simplify
+            </button>
+            <button class="ai-action-chip" data-action="autocomplete" title="Auto-complete from cursor">
+                <i class="bi bi-lightning"></i> Complete
+            </button>
+            <button class="ai-action-chip" data-action="markdown" title="Generate markdown">
+                <i class="bi bi-markdown"></i> Markdown
+            </button>
+        </div>
+
+        <div class="ai-chat-area" id="ai-chat-area">
+            <div class="ai-welcome-message">
+                <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>
+                <h5>Local AI Assistant</h5>
+                <p>Powered by Qwen 3.5 Small · Runs 100% in your browser</p>
+                <div class="ai-welcome-tips">
+                    <div class="ai-tip"><i class="bi bi-cursor-text"></i> Select text + use quick actions</div>
+                    <div class="ai-tip"><i class="bi bi-chat-dots"></i> Ask questions about your document</div>
+                    <div class="ai-tip"><i class="bi bi-keyboard"></i> <kbd>Ctrl</kbd>+<kbd>Space</kbd> for
+                        auto-complete</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-input-area">
+            <div class="ai-input-wrapper">
+                <textarea id="ai-input" placeholder="Ask AI anything... (e.g. 'Write a README intro')"
+                    rows="1"></textarea>
+                <button id="ai-send-btn" class="ai-send-button" title="Send">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Panel Overlay (mobile) -->
+    <div id="ai-panel-overlay" class="ai-panel-overlay"></div>
+
+    <!-- AI Consent / Download Dialog -->
+    <div id="ai-consent-modal" class="ai-consent-modal" style="display:none">
+        <div class="ai-consent-content">
+            <div class="ai-consent-header">
+                <div class="ai-consent-icon"><i class="bi bi-stars"></i></div>
+                <h4>Enable AI Assistant</h4>
+                <p>Powered by <strong>Qwen 3.5 Small</strong> — runs 100% locally in your browser</p>
+            </div>
+            <div class="ai-consent-body">
+                <div class="ai-consent-info">
+                    <div class="ai-consent-row">
+                        <i class="bi bi-download"></i>
+                        <div>
+                            <strong>One-time download: ~500 MB</strong>
+                            <small>Cached in your browser for instant loading next time</small>
+                        </div>
+                    </div>
+                    <div class="ai-consent-row">
+                        <i class="bi bi-shield-lock"></i>
+                        <div>
+                            <strong>100% Private</strong>
+                            <small>No data ever leaves your browser — all AI runs locally</small>
+                        </div>
+                    </div>
+                    <div class="ai-consent-row" id="ai-consent-device-row">
+                        <i class="bi bi-gpu-card"></i>
+                        <div>
+                            <strong id="ai-device-label">Checking GPU support...</strong>
+                            <small id="ai-device-detail">WebGPU provides fastest inference</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress section (hidden until download starts) -->
+                <div id="ai-download-progress" class="ai-download-progress" style="display:none">
+                    <div class="ai-progress-status" id="ai-progress-status">Initializing...</div>
+                    <div class="ai-progress-bar-container">
+                        <div class="ai-progress-bar" id="ai-progress-bar" style="width:0%"></div>
+                    </div>
+                    <div class="ai-progress-detail" id="ai-progress-detail"></div>
+                </div>
+            </div>
+            <div class="ai-consent-footer">
+                <button id="ai-consent-cancel" class="ai-consent-btn ai-consent-btn-secondary">Cancel</button>
+                <button id="ai-consent-download" class="ai-consent-btn ai-consent-btn-primary">
+                    <i class="bi bi-download me-1"></i> Download & Enable AI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Editor Context Menu -->
+    <div id="ai-context-menu" class="ai-context-menu" style="display:none">
+        <button class="ai-ctx-btn" data-action="summarize"><i class="bi bi-card-text"></i> Summarize</button>
+        <button class="ai-ctx-btn" data-action="explain"><i class="bi bi-lightbulb"></i> Explain</button>
+        <button class="ai-ctx-btn" data-action="simplify"><i class="bi bi-funnel"></i> Simplify</button>
+        <button class="ai-ctx-btn" data-action="rephrase"><i class="bi bi-arrow-repeat"></i> Rephrase</button>
+        <button class="ai-ctx-btn" data-action="grammar"><i class="bi bi-spellcheck"></i> Fix Grammar</button>
+        <button class="ai-ctx-btn" data-action="expand"><i class="bi bi-arrows-angle-expand"></i> Expand</button>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
+    <!-- AI Worker is loaded dynamically by script.js, not here -->
 </body>
 
 </html>
