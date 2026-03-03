@@ -2148,10 +2148,108 @@ This is a fully client-side application. Your content never leaves your browser 
   function debouncedAutosave() {
     clearTimeout(autosaveTimeout);
     autosaveTimeout = setTimeout(saveToLocalStorage, AUTOSAVE_DELAY);
+    // Also schedule cloud save
+    scheduleCloudSave();
   }
 
   // Hook autosave into editor input
   markdownEditor.addEventListener('input', debouncedAutosave);
+
+  // ========================================
+  // FEATURE 5b: CLOUD AUTO-SAVE TO FIREBASE
+  // ========================================
+
+  const CLOUD_SAVE_INTERVAL = 60000; // 60 seconds
+  const CLOUD_DOC_KEY = 'md-viewer-cloud-doc-id';
+  const CLOUD_KEY_KEY = 'md-viewer-cloud-enc-key';
+  let cloudSaveTimer = null;
+  let cloudSaveDirty = false;
+  let lastCloudContent = '';
+
+  function scheduleCloudSave() {
+    cloudSaveDirty = true;
+    if (!cloudSaveTimer) {
+      cloudSaveTimer = setInterval(cloudAutoSave, CLOUD_SAVE_INTERVAL);
+    }
+  }
+
+  async function cloudAutoSave() {
+    // Skip if no changes, no db, editor empty, or viewing a shared doc
+    if (!cloudSaveDirty || typeof db === 'undefined') return;
+    const content = markdownEditor.value;
+    if (!content.trim() || content === lastCloudContent) {
+      cloudSaveDirty = false;
+      return;
+    }
+
+    // Don't cloud-save if we're just viewing someone else's shared content
+    const hash = window.location.hash;
+    if (hash && hash.includes('id=') && !localStorage.getItem(CLOUD_DOC_KEY)) return;
+
+    try {
+      // Compress & encrypt
+      const compressed = compressData(content);
+
+      // Reuse existing key or generate new one
+      let key;
+      const savedKeyStr = localStorage.getItem(CLOUD_KEY_KEY);
+      if (savedKeyStr) {
+        key = await base64UrlToKey(savedKeyStr);
+      } else {
+        key = await generateEncryptionKey();
+        const keyStr = await keyToBase64Url(key);
+        localStorage.setItem(CLOUD_KEY_KEY, keyStr);
+      }
+
+      const encrypted = await encryptData(key, compressed);
+      const dataString = uint8ArrayToBase64Url(encrypted);
+      const keyString = await keyToBase64Url(key);
+
+      // Reuse existing doc or create new one
+      const existingDocId = localStorage.getItem(CLOUD_DOC_KEY);
+
+      if (existingDocId) {
+        // Update existing doc
+        await db.collection('shares').doc(existingDocId).set({
+          d: dataString,
+          t: Date.now()
+        });
+      } else {
+        // Create new doc
+        const docRef = await db.collection('shares').add({
+          d: dataString,
+          t: Date.now()
+        });
+        localStorage.setItem(CLOUD_DOC_KEY, docRef.id);
+      }
+
+      // Update browser URL (preserves the same link)
+      const docId = existingDocId || localStorage.getItem(CLOUD_DOC_KEY);
+      const shareUrl = `#id=${docId}&k=${keyString}`;
+      if (window.location.hash !== shareUrl) {
+        history.replaceState(null, '', shareUrl);
+      }
+
+      lastCloudContent = content;
+      cloudSaveDirty = false;
+
+      // Update indicator
+      if (autosaveText) {
+        autosaveText.textContent = '☁️ Synced';
+        setTimeout(() => {
+          if (autosaveText.textContent === '☁️ Synced') {
+            autosaveText.textContent = 'Saved';
+          }
+        }, 3000);
+      }
+
+      console.log('☁️ Cloud auto-saved to Firebase:', docId);
+
+    } catch (e) {
+      console.warn('Cloud auto-save failed:', e);
+      // Silently fail — local save is still active
+    }
+  }
 
   // ========================================
   // FEATURE 12: IMAGE PASTE FROM CLIPBOARD
