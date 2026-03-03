@@ -339,6 +339,9 @@ This is a fully client-side application. Your content never leaves your browser 
         console.warn("Mermaid rendering failed:", e);
       }
 
+      // Feature 25: Render PlantUML diagrams
+      renderPlantUML(markdownPreview);
+
       if (window.MathJax) {
         try {
           MathJax.typesetPromise([markdownPreview]).catch((err) => {
@@ -2688,6 +2691,212 @@ This is a fully client-side application. Your content never leaves your browser 
       toggleZenMode();
     }
   });
+
+  // ========================================
+  // FEATURE 25: PLANTUML SUPPORT
+  // ========================================
+
+  const PLANTUML_SERVER = 'https://www.plantuml.com/plantuml/svg/';
+
+  /**
+   * Encode PlantUML text using the deflate+base64 encoding expected by the
+   * public PlantUML server. This produces the compact ~SoWkIImg... token.
+   */
+  function plantumlEncode(text) {
+    // Use pako (already loaded for sharing) to deflate
+    const data = pako.deflateRaw(new TextEncoder().encode(text), { level: 9, to: 'string' });
+    return plantumlBase64Encode(data);
+  }
+
+  function plantumlBase64Encode(data) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
+    let result = '';
+    for (let i = 0; i < data.length; i += 3) {
+      const b1 = data.charCodeAt(i) & 0xFF;
+      const b2 = i + 1 < data.length ? data.charCodeAt(i + 1) & 0xFF : 0;
+      const b3 = i + 2 < data.length ? data.charCodeAt(i + 2) & 0xFF : 0;
+      result += chars.charAt(b1 >> 2);
+      result += chars.charAt(((b1 & 0x3) << 4) | (b2 >> 4));
+      result += chars.charAt(((b2 & 0xF) << 2) | (b3 >> 6));
+      result += chars.charAt(b3 & 0x3F);
+    }
+    return result;
+  }
+
+  function renderPlantUML(container) {
+    // Find code blocks with 'plantuml' language class
+    const codeBlocks = container.querySelectorAll('pre code.language-plantuml, pre code.hljs.language-plantuml');
+    codeBlocks.forEach(codeEl => {
+      const pre = codeEl.parentElement;
+      if (pre._plantumlProcessed) return;
+      pre._plantumlProcessed = true;
+
+      const source = codeEl.textContent.trim();
+      if (!source) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'plantuml-container plantuml-loading';
+
+      try {
+        const encoded = plantumlEncode(source);
+        const imgUrl = PLANTUML_SERVER + encoded;
+
+        const img = document.createElement('img');
+        img.alt = 'PlantUML Diagram';
+        img.src = imgUrl;
+        img.onload = () => { wrapper.classList.remove('plantuml-loading'); };
+        img.onerror = () => {
+          wrapper.classList.remove('plantuml-loading');
+          wrapper.classList.add('plantuml-error');
+          wrapper.textContent = 'Failed to render PlantUML diagram';
+        };
+        wrapper.appendChild(img);
+      } catch (e) {
+        wrapper.classList.remove('plantuml-loading');
+        wrapper.classList.add('plantuml-error');
+        wrapper.textContent = 'PlantUML encoding error: ' + e.message;
+      }
+
+      pre.replaceWith(wrapper);
+    });
+  }
+
+  // ========================================
+  // FEATURE 26: WORD WRAP TOGGLE
+  // ========================================
+
+  const wordWrapBtn = document.getElementById('word-wrap-toggle');
+  let wordWrapEnabled = localStorage.getItem('md-viewer-word-wrap') !== 'false'; // default ON
+
+  function applyWordWrap() {
+    if (wordWrapEnabled) {
+      markdownEditor.classList.remove('no-wrap');
+      wordWrapBtn.classList.remove('wrap-active');
+      wordWrapBtn.title = 'Word Wrap: On (click to disable)';
+    } else {
+      markdownEditor.classList.add('no-wrap');
+      wordWrapBtn.classList.add('wrap-active');
+      wordWrapBtn.title = 'Word Wrap: Off (click to enable)';
+    }
+  }
+
+  applyWordWrap();
+
+  wordWrapBtn.addEventListener('click', function () {
+    wordWrapEnabled = !wordWrapEnabled;
+    localStorage.setItem('md-viewer-word-wrap', wordWrapEnabled.toString());
+    applyWordWrap();
+  });
+
+  // ========================================
+  // FEATURE 27: FOCUS MODE
+  // ========================================
+
+  const focusModeBtn = document.getElementById('focus-mode-toggle');
+  let focusModeEnabled = false;
+
+  function getCurrentParagraphRange() {
+    const text = markdownEditor.value;
+    const cursor = markdownEditor.selectionStart;
+
+    // Find paragraph boundaries (separated by blank lines)
+    let start = text.lastIndexOf('\n\n', cursor - 1);
+    start = start === -1 ? 0 : start + 2;
+
+    let end = text.indexOf('\n\n', cursor);
+    end = end === -1 ? text.length : end;
+
+    return { start, end };
+  }
+
+  function applyFocusMode() {
+    if (!focusModeEnabled) {
+      document.body.classList.remove('focus-mode');
+      focusModeBtn.classList.remove('focus-active');
+      focusModeBtn.title = 'Focus Mode: Off';
+      markdownEditor.style.color = '';
+      // Remove the highlight overlay if any
+      const overlay = document.getElementById('focus-overlay');
+      if (overlay) overlay.remove();
+      return;
+    }
+
+    document.body.classList.add('focus-mode');
+    focusModeBtn.classList.add('focus-active');
+    focusModeBtn.title = 'Focus Mode: On (click to disable)';
+    updateFocusHighlight();
+  }
+
+  function updateFocusHighlight() {
+    if (!focusModeEnabled) return;
+
+    const range = getCurrentParagraphRange();
+    const text = markdownEditor.value;
+
+    // Dim everything except the current paragraph by using a trick:
+    // Set the textarea text to dim, and use a highlight overlay for the active paragraph
+    const computedStyle = getComputedStyle(markdownEditor);
+    const textColor = computedStyle.color;
+
+    // Create or update the focus highlight
+    // We simply change the opacity of text via the textarea's color
+    markdownEditor.style.color = 'rgba(128, 128, 128, 0.35)';
+
+    // Use the textarea's native selection highlight to show the active paragraph
+    // But that conflicts with actual selection, so instead we'll use a simple approach:
+    // Show a subtle background behind the active line area
+    // For simplicity and reliability: we'll briefly highlight by scrolling to and selecting the paragraph text
+
+    // Better approach: use text-shadow to make the active paragraph visible
+    // This works by setting the main text color to dim and computing a text-shadow
+    // that effectively "re-colors" just the active paragraph... but that's complex.
+
+    // Simplest reliable approach: use CSS variable with the cursor line
+    const linesBeforeCursor = text.substring(0, range.start).split('\n').length;
+    const linesInParagraph = text.substring(range.start, range.end).split('\n').length;
+    const lineHeight = parseFloat(computedStyle.lineHeight) || 20;
+    const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+
+    let overlay = document.getElementById('focus-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'focus-overlay';
+      overlay.style.cssText = `
+        position: absolute;
+        pointer-events: none;
+        background-color: rgba(88, 166, 255, 0.06);
+        border-left: 2px solid var(--accent-color);
+        transition: top 0.1s ease, height 0.1s ease;
+        z-index: 1;
+      `;
+      // Insert overlay into editor pane
+      const editorPane = markdownEditor.closest('.editor-pane');
+      if (editorPane) {
+        editorPane.style.position = 'relative';
+        editorPane.appendChild(overlay);
+      }
+    }
+
+    const top = paddingTop + (linesBeforeCursor - 1) * lineHeight - markdownEditor.scrollTop;
+    overlay.style.top = Math.max(0, top) + 'px';
+    overlay.style.height = (linesInParagraph * lineHeight) + 'px';
+    overlay.style.left = '0';
+    overlay.style.right = '0';
+  }
+
+  focusModeBtn.addEventListener('click', function () {
+    focusModeEnabled = !focusModeEnabled;
+    applyFocusMode();
+  });
+
+  // Update focus highlight on cursor movement
+  markdownEditor.addEventListener('click', updateFocusHighlight);
+  markdownEditor.addEventListener('keyup', function (e) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Backspace', 'Delete'].includes(e.key)) {
+      updateFocusHighlight();
+    }
+  });
+  markdownEditor.addEventListener('scroll', updateFocusHighlight);
 
   // ========================================
   // ENCRYPTED SHARING VIA FIREBASE + URL FALLBACK

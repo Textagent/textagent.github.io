@@ -2197,3 +2197,67 @@ body.zen-mode #markdown-editor {
 .theme-option.active-theme::before {
   content: '✓ ';
 }
+
+/* ========================================
+   FOCUS MODE
+   ======================================== */
+
+body.focus-mode #markdown-editor {
+  color: rgba(var(--text-color-rgb, 200, 200, 200), 0.35);
+}
+
+
+.tool-button.focus-active {
+  background-color: var(--accent-color) !important;
+  color: #fff !important;
+  border-color: var(--accent-color) !important;
+}
+
+.tool-button.wrap-active {
+  background-color: var(--accent-color) !important;
+  color: #fff !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* ========================================
+   WORD WRAP TOGGLE
+   ======================================== */
+
+#markdown-editor.no-wrap {
+  white-space: pre;
+  overflow-x: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+}
+
+/* ========================================
+   PLANTUML SUPPORT
+   ======================================== */
+
+.plantuml-container {
+  text-align: center;
+  margin: 16px 0;
+  overflow-x: auto;
+  position: relative;
+}
+
+.plantuml-container img {
+  max-width: 100%;
+  height: auto;
+}
+
+.plantuml-container.plantuml-loading::after {
+  content: 'Rendering PlantUML...';
+  display: block;
+  padding: 20px;
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+.plantuml-container.plantuml-error {
+  border: 1px solid var(--color-danger-fg, #d73a49);
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--color-danger-fg, #d73a49);
+  font-size: 13px;
+}
