@@ -3,11 +3,16 @@
  * Uses Qwen 3.5 Small (0.8B) running locally via WebGPU/WASM
  *
  * This is an ES Module worker (loaded with { type: "module" }).
+ * Uses Transformers.js v4 (next) which supports the qwen3_5 architecture.
  */
 
-import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
+import {
+    AutoProcessor,
+    Qwen3_5ForConditionalGeneration,
+    TextStreamer,
+} from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.5";
 
-// Model config — Qwen 3.5 Small 0.8B (the latest and best for browser)
+// Model config — Qwen 3.5 Small 0.8B
 const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
 
 // Task-specific token limits to keep responses fast
@@ -25,14 +30,11 @@ const TOKEN_LIMITS = {
     chat: 512,
 };
 
-let generator = null;
-
-// Allow loading from remote
-env.allowRemoteModels = true;
-env.allowLocalModels = false;
+let processor = null;
+let model = null;
 
 /**
- * Initialize the text-generation pipeline
+ * Initialize the model and processor
  */
 async function loadModel() {
     try {
@@ -51,30 +53,53 @@ async function loadModel() {
 
         self.postMessage({
             type: "status",
-            message: `Initializing Qwen 3.5 (using ${device.toUpperCase()})...`,
+            message: `Loading Qwen 3.5 processor...`,
         });
 
-        generator = await pipeline("text-generation", MODEL_ID, {
-            device: device,
-            dtype: device === "webgpu" ? "q4f16" : "q4",
+        processor = await AutoProcessor.from_pretrained(MODEL_ID, {
             progress_callback: (progress) => {
                 if (progress.status === "progress") {
                     self.postMessage({
                         type: "progress",
-                        file: progress.file,
-                        loaded: progress.loaded,
-                        total: progress.total,
-                        progress: progress.progress,
-                    });
-                } else if (progress.status === "ready") {
-                    self.postMessage({
-                        type: "status",
-                        message: "Model loaded successfully!",
+                        file: progress.file || "processor",
+                        loaded: progress.loaded || 0,
+                        total: progress.total || 0,
+                        progress: progress.progress || 0,
                     });
                 } else if (progress.status === "initiate") {
                     self.postMessage({
                         type: "status",
-                        message: `Downloading ${progress.file}...`,
+                        message: `Downloading ${progress.file || "processor"}...`,
+                    });
+                }
+            },
+        });
+
+        self.postMessage({
+            type: "status",
+            message: `Loading Qwen 3.5 model (${device.toUpperCase()})...`,
+        });
+
+        model = await Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
+            dtype: {
+                embed_tokens: "q4",
+                vision_encoder: "fp16",
+                decoder_model_merged: "q4",
+            },
+            device: device,
+            progress_callback: (progress) => {
+                if (progress.status === "progress") {
+                    self.postMessage({
+                        type: "progress",
+                        file: progress.file || "model",
+                        loaded: progress.loaded || 0,
+                        total: progress.total || 0,
+                        progress: progress.progress || 0,
+                    });
+                } else if (progress.status === "initiate") {
+                    self.postMessage({
+                        type: "status",
+                        message: `Downloading ${progress.file || "model"}...`,
                     });
                 }
             },
@@ -93,7 +118,7 @@ async function loadModel() {
  * Generate text based on a prompt with system instructions
  */
 async function generate(taskType, context, userPrompt, messageId) {
-    if (!generator) {
+    if (!model || !processor) {
         self.postMessage({
             type: "error",
             message: "Model not loaded. Please wait for the model to finish loading.",
@@ -109,21 +134,38 @@ async function generate(taskType, context, userPrompt, messageId) {
         // Use task-specific token limit for faster responses
         const maxTokens = TOKEN_LIMITS[taskType] || 512;
 
-        // Generate
-        const output = await generator(messages, {
-            max_new_tokens: maxTokens,
-            do_sample: true,
-            temperature: 0.7,
-            top_p: 0.9,
-            return_full_text: false,
+        // Apply chat template
+        const text = processor.tokenizer.apply_chat_template(messages, {
+            tokenize: false,
+            add_generation_prompt: true,
+            enable_thinking: false, // Skip thinking for speed
         });
 
-        const generatedText =
-            output[0].generated_text[output[0].generated_text.length - 1].content;
+        const inputs = processor.tokenizer(text, {
+            return_tensors: "pt",
+        });
+
+        // Collect streamed text
+        let fullText = "";
+        const streamer = new TextStreamer(processor.tokenizer, {
+            skip_prompt: true,
+            skip_special_tokens: true,
+            callback_function: (token) => {
+                fullText += token;
+            },
+        });
+
+        // Generate
+        await model.generate({
+            ...inputs,
+            do_sample: false,
+            max_new_tokens: maxTokens,
+            streamer,
+        });
 
         self.postMessage({
             type: "complete",
-            text: generatedText,
+            text: fullText.trim(),
             messageId,
         });
     } catch (error) {
@@ -167,7 +209,8 @@ function buildMessages(taskType, context, userPrompt) {
     const messages = [{ role: "system", content: systemMessage }];
 
     // Limit context size based on task — shorter context = faster inference
-    const contextLimit = taskType === "summarize" || taskType === "grammar" ? 1500 : 2500;
+    const contextLimit =
+        taskType === "summarize" || taskType === "grammar" ? 1500 : 2500;
 
     // For tasks that need context (selected text or document)
     if (
