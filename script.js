@@ -3254,13 +3254,27 @@ This is a fully client-side application. Your content never leaves your browser 
   // --- Panel Toggle ---
   function openAiPanel() {
     if (!aiModelLoaded && !aiWorker) {
-      // Show consent dialog first
+      // Check if user previously consented (model cached in browser)
+      if (localStorage.getItem('md-viewer-ai-consented')) {
+        // Auto-load — skip consent dialog, model is cached
+        initAiWorker();
+        // Show panel with loading status
+        aiPanel.style.display = 'flex';
+        aiPanelOverlay.classList.add('active');
+        void aiPanel.offsetWidth;
+        aiPanel.classList.add('ai-panel-open');
+        aiToggleBtn.classList.add('ai-active');
+        aiPanelOpen = true;
+        addAiStatusBar('loading', 'Loading cached model...');
+        aiInput.focus();
+        return;
+      }
+      // First time — show consent dialog
       showAiConsentDialog();
       return;
     }
     aiPanel.style.display = 'flex';
     aiPanelOverlay.classList.add('active');
-    // Trigger reflow before adding class for animation
     void aiPanel.offsetWidth;
     aiPanel.classList.add('ai-panel-open');
     aiToggleBtn.classList.add('ai-active');
@@ -3367,6 +3381,8 @@ This is a fully client-side application. Your content never leaves your browser 
 
         case 'loaded':
           aiModelLoaded = true;
+          // Remember consent so we skip the dialog next time
+          localStorage.setItem('md-viewer-ai-consented', 'true');
           hideAiConsentDialog();
           // Open the panel after successful load
           aiPanel.style.display = 'flex';
@@ -3386,12 +3402,19 @@ This is a fully client-side application. Your content never leaves your browser 
 
         case 'error':
           if (!aiModelLoaded) {
+            // Clear consent so user gets the dialog again
+            localStorage.removeItem('md-viewer-ai-consented');
             // Model failed to load — show error in consent dialog and allow retry
-            aiProgressStatus.textContent = '❌ ' + msg.message;
-            aiProgressBar.style.width = '0%';
-            aiProgressBar.style.background = '#f87171';
-            aiConsentDownload.disabled = false;
-            aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
+            if (aiConsentModal.style.display === 'flex') {
+              aiProgressStatus.textContent = '❌ ' + msg.message;
+              aiProgressBar.style.width = '0%';
+              aiProgressBar.style.background = '#f87171';
+              aiConsentDownload.disabled = false;
+              aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
+            } else {
+              // Was auto-loading from cache — show error in panel
+              addAiStatusBar('error', msg.message);
+            }
             // Reset worker so user can retry
             if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
           } else {
@@ -3682,13 +3705,16 @@ This is a fully client-side application. Your content never leaves your browser 
         case 'summarize':
         case 'expand':
         case 'rephrase':
-        case 'grammar':
-          if (!selectedText) {
-            addAiMessage('Please select some text in the editor first, then try again.');
+        case 'grammar': {
+          // Use selected text, or fall back to entire document
+          const textToProcess = selectedText || editorContent;
+          if (!textToProcess.trim()) {
+            addAiMessage('Please add some text in the editor first.');
             return;
           }
-          sendToAi(action, selectedText, null);
+          sendToAi(action, textToProcess, null);
           break;
+        }
         case 'explain':
         case 'simplify':
           if (!selectedText) {
