@@ -2887,6 +2887,7 @@ body.focus-mode #markdown-editor {
   border-radius: 10px;
   background: var(--button-bg);
   border: 1px solid var(--border-color);
+  min-height: 80px;
 }
 
 .ai-progress-status {
@@ -2894,6 +2895,10 @@ body.focus-mode #markdown-editor {
   font-weight: 500;
   color: var(--text-color);
   margin-bottom: 10px;
+  height: 20px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .ai-progress-bar-container {
@@ -2916,6 +2921,10 @@ body.focus-mode #markdown-editor {
   color: var(--text-color);
   opacity: 0.5;
   margin-top: 6px;
+  height: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .ai-consent-footer {

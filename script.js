@@ -3336,20 +3336,28 @@ This is a fully client-side application. Your content never leaves your browser 
             progress: msg.progress || 0
           };
 
-          // Calculate overall progress
-          let totalLoaded = 0, totalSize = 0;
-          Object.values(fileProgress).forEach(fp => {
-            totalLoaded += fp.loaded;
-            totalSize += fp.total;
-          });
-          const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
+          // Throttle DOM updates to prevent dialog shaking
+          if (!initAiWorker._progressThrottle) {
+            initAiWorker._progressThrottle = true;
+            requestAnimationFrame(() => {
+              // Calculate overall progress
+              let totalLoaded = 0, totalSize = 0;
+              Object.values(fileProgress).forEach(fp => {
+                totalLoaded += fp.loaded;
+                totalSize += fp.total;
+              });
+              const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
 
-          aiProgressBar.style.width = overallPercent + '%';
-          aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
+              aiProgressBar.style.width = overallPercent + '%';
+              aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
 
-          const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
-          const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
-          aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB — ${msg.file}`;
+              const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
+              const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
+              aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
+
+              setTimeout(() => { initAiWorker._progressThrottle = false; }, 200);
+            });
+          }
           break;
         }
 
