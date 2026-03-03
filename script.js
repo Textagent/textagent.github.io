@@ -1912,23 +1912,10 @@ This is a fully client-side application. Your content never leaves your browser 
   }
 
   // ========================================
-  // ENCRYPTED SHARING VIA GITHUB
+  // ENCRYPTED SHARING VIA URL
   // ========================================
 
   const SHARE_BASE_URL = 'https://markdownview.github.io/';
-  const GITHUB_API_BASE = 'https://api.github.com';
-
-  // --- Built-in GitHub Config (no user setup needed) ---
-  // XOR-encoded to prevent automated detection
-  const _d = [10, 8, 6, 3, 17, 13, 40, 30, 23, 29, 58, 70, 84, 51, 59, 43, 51, 38, 35, 123, 0, 5, 71, 0, 10, 10, 60, 22, 56, 42, 86, 65, 100, 126, 33, 36, 38, 32, 62, 54, 21, 8, 62, 24, 7, 2, 0, 39, 31, 62, 15, 52, 17, 66, 123, 74, 113, 7, 49, 83, 55, 34, 32, 60, 33, 28, 64, 16, 42, 41, 8, 51, 32, 4, 59, 58, 67, 95, 60, 64, 52, 61, 35, 63, 59, 67, 15, 87, 92, 99, 81, 63, 46];
-  const _s = 'markdownviewershare2024secretkey!!';
-  const _k = _d.map((c, i) => String.fromCharCode(c ^ _s.charCodeAt(i % _s.length))).join('');
-  const GITHUB_CONFIG = {
-    pat: _k,
-    owner: 'markdownview',
-    repo: 'markdownview.github.io',
-    branch: 'main'
-  };
 
   // --- Compression Helpers ---
 
@@ -1979,15 +1966,15 @@ This is a fully client-side application. Your content never leaves your browser 
     return new Uint8Array(decrypted);
   }
 
-  async function keyToBase64Url(key) {
-    const exported = await crypto.subtle.exportKey('raw', key);
-    const bytes = new Uint8Array(exported);
+  // --- Base64 URL-safe helpers ---
+
+  function uint8ArrayToBase64Url(data) {
     let binary = '';
-    bytes.forEach(b => binary += String.fromCharCode(b));
+    data.forEach(b => binary += String.fromCharCode(b));
     return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  async function base64UrlToKey(base64url) {
+  function base64UrlToUint8Array(base64url) {
     const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
     const binary = atob(padded);
@@ -1995,6 +1982,16 @@ This is a fully client-side application. Your content never leaves your browser 
     for (let i = 0; i < binary.length; i++) {
       bytes[i] = binary.charCodeAt(i);
     }
+    return bytes;
+  }
+
+  async function keyToBase64Url(key) {
+    const exported = await crypto.subtle.exportKey('raw', key);
+    return uint8ArrayToBase64Url(new Uint8Array(exported));
+  }
+
+  async function base64UrlToKey(base64url) {
+    const bytes = base64UrlToUint8Array(base64url);
     return crypto.subtle.importKey(
       'raw',
       bytes,
@@ -2004,70 +2001,7 @@ This is a fully client-side application. Your content never leaves your browser 
     );
   }
 
-  function uint8ArrayToBase64(data) {
-    let binary = '';
-    data.forEach(b => binary += String.fromCharCode(b));
-    return btoa(binary);
-  }
-
-  function base64ToUint8Array(base64) {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  // --- Generate File ID ---
-
-  async function generateFileId(content) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(content + Date.now().toString());
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = new Uint8Array(hash);
-    let hex = '';
-    hashArray.forEach(b => hex += b.toString(16).padStart(2, '0'));
-    return hex.substring(0, 12);
-  }
-
-  // --- GitHub API ---
-
-  async function pushToGitHub(config, fileId, base64Content) {
-    const url = `${GITHUB_API_BASE}/repos/${config.owner}/${config.repo}/contents/shared/${fileId}.enc`;
-
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${config.pat}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json'
-      },
-      body: JSON.stringify({
-        message: `Add shared markdown: ${fileId}`,
-        content: base64Content,
-        branch: config.branch || 'main'
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `GitHub API error: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  async function fetchFromGitHub(owner, repo, branch, fileId) {
-    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/shared/${fileId}.enc`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Shared file not found (${response.status})`);
-    }
-    return response.text();
-  }
-
-  // --- Share Flow ---
+  // --- Share Flow (URL-based, no server needed) ---
 
   async function shareMarkdown() {
     const shareButton = document.getElementById('share-button');
@@ -2079,9 +2013,6 @@ This is a fully client-side application. Your content never leaves your browser 
         alert('Nothing to share — the editor is empty.');
         return;
       }
-
-      // Use built-in config
-      const config = GITHUB_CONFIG;
 
       // Show progress
       shareButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Sharing...';
@@ -2096,20 +2027,19 @@ This is a fully client-side application. Your content never leaves your browser 
       // Step 3: Encrypt
       const encrypted = await encryptData(key, compressed);
 
-      // Step 4: Encode to base64 for GitHub storage
-      const base64Content = uint8ArrayToBase64(encrypted);
-
-      // Step 5: Generate file ID
-      const fileId = await generateFileId(markdownContent);
-
-      // Step 6: Push to GitHub
-      await pushToGitHub(config, fileId, btoa(base64Content));
-
-      // Step 7: Generate share URL
+      // Step 4: Encode data and key to base64url
+      const dataString = uint8ArrayToBase64Url(encrypted);
       const keyString = await keyToBase64Url(key);
-      const shareUrl = `${SHARE_BASE_URL}?id=${fileId}#${keyString}`;
 
-      // Step 8: Show share result
+      // Step 5: Build URL with content in fragment (never sent to server)
+      const shareUrl = `${SHARE_BASE_URL}#d=${dataString}&k=${keyString}`;
+
+      // Check URL length
+      if (shareUrl.length > 65000) {
+        throw new Error('Content too large to share via URL. Try sharing a smaller document.');
+      }
+
+      // Step 6: Show share result
       showShareResult(shareUrl);
 
       shareButton.innerHTML = '<i class="bi bi-check-lg"></i> Shared!';
@@ -2124,44 +2054,41 @@ This is a fully client-side application. Your content never leaves your browser 
     }
   }
 
-  // --- Load Shared Flow ---
+  // --- Load Shared Flow (from URL fragment) ---
 
   async function loadSharedMarkdown() {
-    const params = new URLSearchParams(window.location.search);
-    const fileId = params.get('id');
-    const keyString = window.location.hash.substring(1); // Remove leading #
+    const hash = window.location.hash.substring(1); // Remove leading #
+    if (!hash) return;
 
-    if (!fileId || !keyString) return;
+    // Parse fragment: #d=<data>&k=<key>
+    const params = new URLSearchParams(hash);
+    const dataString = params.get('d');
+    const keyString = params.get('k');
+
+    if (!dataString || !keyString) return;
 
     try {
-      const owner = GITHUB_CONFIG.owner;
-      const repo = GITHUB_CONFIG.repo;
-      const branch = GITHUB_CONFIG.branch;
-
       // Show loading state
       markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-lock"></i> Decrypting shared content...</div>';
       setViewMode('preview');
 
-      // Step 1: Fetch encrypted file from GitHub
-      const base64Content = await fetchFromGitHub(owner, repo, branch, fileId);
+      // Step 1: Decode data from base64url
+      const encrypted = base64UrlToUint8Array(dataString);
 
-      // Step 2: Decode from base64
-      const encrypted = base64ToUint8Array(base64Content);
-
-      // Step 3: Import decryption key
+      // Step 2: Import decryption key
       const key = await base64UrlToKey(keyString);
 
-      // Step 4: Decrypt
+      // Step 3: Decrypt
       const compressed = await decryptData(key, encrypted);
 
-      // Step 5: Decompress
+      // Step 4: Decompress
       const markdownContent = decompressData(compressed);
 
-      // Step 6: Display in editor + preview
+      // Step 5: Display in editor + preview
       markdownEditor.value = markdownContent;
       renderMarkdown();
 
-      // Step 7: Show read-only banner and switch to preview mode
+      // Step 6: Show read-only banner and switch to preview mode
       setViewMode('preview');
       showSharedBanner();
 
@@ -2171,7 +2098,7 @@ This is a fully client-side application. Your content never leaves your browser 
         <h3 style="color: var(--color-danger-fg);">
           <i class="bi bi-shield-exclamation"></i> Decryption Failed
         </h3>
-        <p style="opacity: 0.7;">The link may be invalid, expired, or the key is incorrect.</p>
+        <p style="opacity: 0.7;">The link may be invalid or the key is incorrect.</p>
         <p style="font-size: 13px; opacity: 0.5;">${error.message}</p>
       </div>`;
       setViewMode('preview');
