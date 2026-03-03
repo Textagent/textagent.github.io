@@ -1,0 +1,79 @@
+name: Build Desktop App Binaries
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Setup Neutralinojs binaries
+        working-directory: desktop-app
+        run: npm run setup
+
+      - name: Build all binaries (embedded + portable)
+        working-directory: desktop-app
+        run: npm run build:all
+
+      - name: Stage release assets
+        working-directory: desktop-app
+        run: |
+          VERSION="${GITHUB_REF_NAME#desktop-}"
+          STAGING="release-assets"
+          mkdir -p "$STAGING"
+
+          # --- Embedded single-file executables ---
+          for bin in dist/markdown-viewer/markdown-viewer-*; do
+            [ -f "$bin" ] || continue
+            filename=$(basename "$bin")
+
+            if [[ "$filename" == *.exe ]]; then
+              # Windows .exe — ship as-is
+              cp "$bin" "$STAGING/$filename"
+            else
+              # Linux/macOS — tar.gz for Unix convention
+              tar -czf "$STAGING/${filename}.tar.gz" -C "$(dirname "$bin")" "$filename"
+            fi
+          done
+
+          # --- Portable ZIP bundle (from neu build --release) ---
+          for zip in dist/*.zip; do
+            [ -f "$zip" ] || continue
+            cp "$zip" "$STAGING/"
+          done
+
+          # --- Source archives ---
+          cd ..
+          tar -czf "desktop-app/$STAGING/source.tar.gz" \
+            --exclude='desktop-app/dist' \
+            --exclude='desktop-app/bin' \
+            --exclude='desktop-app/node_modules' \
+            --exclude='desktop-app/output' \
+            --exclude='.git' \
+            desktop-app/
+          cd desktop-app
+
+          # --- SHA256 checksums ---
+          cd "$STAGING"
+          sha256sum * > SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Markdown Viewer Desktop ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: desktop-app/release-assets/*

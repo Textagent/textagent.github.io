@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Developer tools' files
+.lite_workspace.lua
+
+# Neutralinojs binaries and builds
+/bin
+/dist
+
+# Neutralinojs client (minified)
+neutralino.js
+
+# Build-generated resources (copied from root by prepare.js)
+/resources/js/script.js
+/resources/styles.css
+/resources/assets/
+/resources/index.html
+
+# Neutralinojs related files
+.storage
+*.log
+
+# neutralinojs tmp files
+.tmp
+
+# Docker build output
+/output

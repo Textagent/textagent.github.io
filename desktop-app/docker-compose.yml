@@ -1,0 +1,14 @@
+services:
+  desktop-build:
+    build:
+      context: ..
+      dockerfile: desktop-app/Dockerfile
+    container_name: markdown-viewer-desktop-build
+    volumes:
+      - ./output:/export
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "cp -r /output/* /export/ && echo '✓ Build artifacts copied to desktop-app/output/'",
+      ]

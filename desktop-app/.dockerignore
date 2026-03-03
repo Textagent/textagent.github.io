@@ -1,0 +1,21 @@
+# Build-generated resources
+resources/js/script.js
+resources/styles.css
+resources/assets/
+resources/index.html
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Neutralinojs builds and binaries
+bin/
+dist/
+node_modules/
+
+# Logs and temp files
+*.log
+.storage
+.tmp
+.lite_workspace.lua
