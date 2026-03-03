@@ -3319,7 +3319,7 @@ This is a fully client-side application. Your content never leaves your browser 
   function initAiWorker() {
     if (aiWorker) return;
 
-    aiWorker = new Worker('ai-worker.js');
+    aiWorker = new Worker('ai-worker.js', { type: 'module' });
 
     // Track download progress per file
     const fileProgress = {};
@@ -3377,8 +3377,37 @@ This is a fully client-side application. Your content never leaves your browser 
           break;
 
         case 'error':
-          handleAiError(msg.message, msg.messageId);
+          if (!aiModelLoaded) {
+            // Model failed to load — show error in consent dialog and allow retry
+            aiProgressStatus.textContent = '❌ ' + msg.message;
+            aiProgressBar.style.width = '0%';
+            aiProgressBar.style.background = '#f87171';
+            aiConsentDownload.disabled = false;
+            aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
+            // Reset worker so user can retry
+            if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+          } else {
+            handleAiError(msg.message, msg.messageId);
+          }
           break;
+      }
+    });
+
+    // Handle worker-level crashes (network failure, script error, etc.)
+    aiWorker.addEventListener('error', (e) => {
+      console.error('AI Worker error:', e);
+      aiModelLoaded = false;
+      if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+      // If consent dialog is open, show error there
+      if (aiConsentModal.style.display === 'flex') {
+        aiProgressStatus.textContent = '❌ Worker failed to initialize. Check your connection and retry.';
+        aiProgressBar.style.width = '0%';
+        aiConsentDownload.disabled = false;
+        aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
+      } else {
+        // Panel is open but model died — show re-download notice
+        addAiStatusBar('error', 'Model unavailable — click AI button to re-download');
+        aiModelLoaded = false;
       }
     });
 

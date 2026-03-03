@@ -1,17 +1,35 @@
 /**
  * AI Worker — Handles Transformers.js model loading and text generation
- * Uses Qwen 3.5 Small 0.8B (ONNX) running locally via WebGPU/WASM
+ * Uses Qwen 3.5 Small (0.8B) running locally via WebGPU/WASM
+ *
+ * This is an ES Module worker (loaded with { type: "module" }).
  */
 
-// Import Transformers.js from CDN
-importScripts("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3");
+import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
 
-// Model config
-const MODEL_ID = "onnx-community/Qwen2.5-0.5B-Instruct";
-const MAX_NEW_TOKENS = 1024;
+// Model config — Qwen 3.5 Small 0.8B (the latest and best for browser)
+const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+
+// Task-specific token limits to keep responses fast
+const TOKEN_LIMITS = {
+    summarize: 256,
+    expand: 512,
+    rephrase: 384,
+    grammar: 384,
+    autocomplete: 128,
+    generate: 512,
+    markdown: 512,
+    explain: 384,
+    simplify: 384,
+    qa: 384,
+    chat: 512,
+};
 
 let generator = null;
-let tokenizer = null;
+
+// Allow loading from remote
+env.allowRemoteModels = true;
+env.allowLocalModels = false;
 
 /**
  * Initialize the text-generation pipeline
@@ -33,15 +51,8 @@ async function loadModel() {
 
         self.postMessage({
             type: "status",
-            message: `Initializing AI model (using ${device.toUpperCase()})...`,
+            message: `Initializing Qwen 3.5 (using ${device.toUpperCase()})...`,
         });
-
-        // Create the text-generation pipeline with progress callback
-        const { pipeline, env } = self.transformers;
-
-        // Allow loading from remote
-        env.allowRemoteModels = true;
-        env.allowLocalModels = false;
 
         generator = await pipeline("text-generation", MODEL_ID, {
             device: device,
@@ -95,9 +106,12 @@ async function generate(taskType, context, userPrompt, messageId) {
         // Build messages array based on task type
         const messages = buildMessages(taskType, context, userPrompt);
 
-        // Generate with streaming
+        // Use task-specific token limit for faster responses
+        const maxTokens = TOKEN_LIMITS[taskType] || 512;
+
+        // Generate
         const output = await generator(messages, {
-            max_new_tokens: MAX_NEW_TOKENS,
+            max_new_tokens: maxTokens,
             do_sample: true,
             temperature: 0.7,
             top_p: 0.9,
@@ -127,47 +141,55 @@ async function generate(taskType, context, userPrompt, messageId) {
 function buildMessages(taskType, context, userPrompt) {
     const systemPrompts = {
         summarize:
-            "You are a helpful assistant. Summarize the following text concisely while keeping the key points. Output in markdown format.",
+            "You are a helpful assistant. Summarize the following text concisely while keeping the key points. Be brief. Output in markdown format.",
         expand:
             "You are a helpful writing assistant. Expand the following text with more details, examples, and explanations. Keep the same tone and style. Output in markdown format.",
         rephrase:
             "You are a helpful writing assistant. Rephrase the following text to improve clarity and readability while preserving the meaning. Output in markdown format.",
         grammar:
-            "You are a helpful writing assistant. Fix any grammar, spelling, and punctuation errors in the following text. Only output the corrected text in markdown format, nothing else.",
+            "You are a helpful writing assistant. Fix any grammar, spelling, and punctuation errors in the following text. Only output the corrected text, nothing else.",
         autocomplete:
-            "You are a helpful writing assistant. Continue writing the text naturally. Only output the continuation, do not repeat the existing text. Write 1-3 sentences.",
+            "You are a helpful writing assistant. Continue writing the text naturally. Only output the continuation, do not repeat the existing text. Write 1-2 sentences.",
         generate:
             "You are a helpful content generation assistant. Generate content based on the user's request. Output in well-formatted markdown.",
         markdown:
             "You are a markdown expert. Generate well-formatted markdown content based on the user's request. Use headings, lists, tables, code blocks, and other markdown features as appropriate.",
         explain:
-            "You are a helpful assistant. Explain the following text in simple, easy-to-understand terms. Use examples if helpful. Output in markdown format.",
+            "You are a helpful assistant. Explain the following text in simple, easy-to-understand terms. Be concise. Output in markdown format.",
         simplify:
             "You are a helpful writing assistant. Simplify the following text to make it easier to understand. Use shorter sentences and simpler words. Output in markdown format.",
-        qa: "You are a helpful assistant. Answer the user's question based on the provided document context. If the answer cannot be found in the context, say so. Output in markdown format.",
-        chat: "You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Output in markdown format.",
+        qa: "You are a helpful assistant. Answer the user's question based on the provided document context. Be concise. If the answer cannot be found in the context, say so.",
+        chat: "You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Be concise. Output in markdown format.",
     };
 
-    const systemMessage =
-        systemPrompts[taskType] || systemPrompts.chat;
+    const systemMessage = systemPrompts[taskType] || systemPrompts.chat;
 
     const messages = [{ role: "system", content: systemMessage }];
 
+    // Limit context size based on task — shorter context = faster inference
+    const contextLimit = taskType === "summarize" || taskType === "grammar" ? 1500 : 2500;
+
     // For tasks that need context (selected text or document)
-    if (context && (taskType === "qa" || taskType === "explain" || taskType === "simplify")) {
+    if (
+        context &&
+        (taskType === "qa" || taskType === "explain" || taskType === "simplify")
+    ) {
         messages.push({
             role: "user",
-            content: `Context:\n\`\`\`\n${context.substring(0, 3000)}\n\`\`\`\n\n${userPrompt || "Please process this text."}`,
+            content: `Context:\n\`\`\`\n${context.substring(0, contextLimit)}\n\`\`\`\n\n${userPrompt || "Please process this text."}`,
         });
-    } else if (context && ["summarize", "expand", "rephrase", "grammar"].includes(taskType)) {
+    } else if (
+        context &&
+        ["summarize", "expand", "rephrase", "grammar"].includes(taskType)
+    ) {
         messages.push({
             role: "user",
-            content: context.substring(0, 3000),
+            content: context.substring(0, contextLimit),
         });
     } else if (context && taskType === "autocomplete") {
         messages.push({
             role: "user",
-            content: `Continue this text:\n${context.substring(Math.max(0, context.length - 1500))}`,
+            content: `Continue this text:\n${context.substring(Math.max(0, context.length - 800))}`,
         });
     } else {
         messages.push({
