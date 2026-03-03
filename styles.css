@@ -2385,39 +2385,82 @@ body.focus-mode #markdown-editor {
   gap: 4px;
 }
 
-/* Thinking mode toggle */
+/* Input options row (below textarea) */
+.ai-input-options {
+  display: flex;
+  align-items: center;
+  padding: 6px 4px 2px;
+  gap: 8px;
+}
+
+/* Thinking mode toggle — slider style */
 .ai-thinking-toggle {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
   font-size: 12px;
   color: var(--text-color);
-  opacity: 0.6;
-  transition: all 0.2s;
+  opacity: 0.7;
+  transition: all 0.25s;
   user-select: none;
-  margin-right: 4px;
+  border: 1px solid var(--border-color);
+  background: transparent;
 }
 
 .ai-thinking-toggle:hover {
   opacity: 1;
-  background: var(--button-hover);
+  border-color: #a78bfa;
 }
 
 .ai-thinking-toggle input[type="checkbox"] {
   display: none;
 }
 
-.ai-thinking-toggle input[type="checkbox"]:checked+.ai-thinking-label {
+/* Toggle slider track */
+.ai-thinking-slider {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: var(--border-color);
+  border-radius: 9px;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.ai-thinking-slider::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.25s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state when checked */
+.ai-thinking-toggle input:checked~.ai-thinking-slider {
+  background: #a78bfa;
+}
+
+.ai-thinking-toggle input:checked~.ai-thinking-slider::after {
+  transform: translateX(14px);
+}
+
+.ai-thinking-toggle input:checked~.ai-thinking-label {
   color: #a78bfa;
   font-weight: 600;
 }
 
 .ai-thinking-toggle:has(input:checked) {
   opacity: 1;
-  background: rgba(167, 139, 250, 0.15);
+  border-color: #a78bfa;
+  background: rgba(167, 139, 250, 0.1);
 }
 
 .ai-thinking-label {
