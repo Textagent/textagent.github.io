@@ -3683,14 +3683,37 @@ This is a fully client-side application. Your content never leaves your browser 
     }
   }
 
+  // --- Track editor selection so it persists when focus moves to AI panel ---
+  let savedSelection = { start: 0, end: 0 };
+  markdownEditor.addEventListener('select', () => {
+    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
+  });
+  markdownEditor.addEventListener('click', () => {
+    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
+  });
+  markdownEditor.addEventListener('keyup', () => {
+    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
+  });
+
+  /**
+   * Get a smart text chunk around cursor when no text is selected.
+   * Takes ~1500 chars around the cursor position to avoid overloading the model.
+   */
+  function getSmartChunk(fullText, cursorPos) {
+    if (!fullText.trim()) return '';
+    const CHUNK_SIZE = 1500;
+    if (fullText.length <= CHUNK_SIZE) return fullText;
+    const start = Math.max(0, cursorPos - Math.floor(CHUNK_SIZE / 2));
+    const end = Math.min(fullText.length, start + CHUNK_SIZE);
+    return fullText.substring(start, end);
+  }
+
   // --- Quick Action Chips ---
   document.querySelectorAll('.ai-action-chip').forEach(chip => {
     chip.addEventListener('click', function () {
       const action = this.dataset.action;
-      const selectedText = markdownEditor.value.substring(
-        markdownEditor.selectionStart,
-        markdownEditor.selectionEnd
-      );
+      // Use saved selection (persists after focus moves to panel)
+      const selectedText = markdownEditor.value.substring(savedSelection.start, savedSelection.end);
       const editorContent = markdownEditor.value;
 
       if (!aiModelLoaded) {
@@ -3706,12 +3729,13 @@ This is a fully client-side application. Your content never leaves your browser 
         case 'expand':
         case 'rephrase':
         case 'grammar': {
-          // Use selected text, or fall back to entire document
-          const textToProcess = selectedText || editorContent;
+          // Use selected text, or a smart chunk around cursor
+          const textToProcess = selectedText || getSmartChunk(editorContent, savedSelection.start);
           if (!textToProcess.trim()) {
             addAiMessage('Please add some text in the editor first.');
             return;
           }
+          addAiMessage(`Using ${selectedText ? 'selected text' : 'text around cursor'} (${textToProcess.length} chars)`, 'user');
           sendToAi(action, textToProcess, null);
           break;
         }
@@ -3724,7 +3748,7 @@ This is a fully client-side application. Your content never leaves your browser 
           sendToAi(action, selectedText, `Please ${action} this text.`);
           break;
         case 'autocomplete': {
-          const textBeforeCursor = editorContent.substring(0, markdownEditor.selectionStart);
+          const textBeforeCursor = editorContent.substring(0, savedSelection.start);
           if (!textBeforeCursor.trim()) {
             addAiMessage('Place your cursor after some text in the editor to auto-complete.');
             return;
