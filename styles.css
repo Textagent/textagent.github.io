@@ -1724,7 +1724,9 @@ body.zen-mode .find-replace-bar,
 body.zen-mode .dropzone,
 body.zen-mode .toc-panel,
 body.zen-mode .preview-pane,
-body.zen-mode .resize-divider {
+body.zen-mode .resize-divider,
+body.zen-mode .ai-panel,
+body.zen-mode .ai-panel-overlay {
   display: none !important;
 }
 
@@ -2311,6 +2313,8 @@ body.focus-mode #markdown-editor {
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  /* Panel itself is interactive even though overlay passes through */
 }
 
 .ai-panel.ai-panel-open {
@@ -2748,8 +2752,11 @@ body.focus-mode #markdown-editor {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  /* No background — keep editor fully visible and interactive */
+  background: transparent;
   z-index: 1040;
+  pointer-events: none;
+  /* Let all clicks pass through to the editor */
   opacity: 0;
   transition: opacity 0.3s;
 }

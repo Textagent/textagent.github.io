@@ -3303,7 +3303,7 @@ This is a fully client-side application. Your content never leaves your browser 
     toggleAiPanel();
   });
   if (aiPanelCloseBtn) aiPanelCloseBtn.addEventListener('click', closeAiPanel);
-  if (aiPanelOverlay) aiPanelOverlay.addEventListener('click', closeAiPanel);
+  // Overlay is pass-through — panel closes via the X button only
 
   // --- Consent Dialog ---
   function showAiConsentDialog() {
