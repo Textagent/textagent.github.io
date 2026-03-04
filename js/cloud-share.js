@@ -76,6 +76,20 @@
     M.keyToBase64Url = keyToBase64Url;
     M.base64UrlToKey = base64UrlToKey;
 
+    // --- PBKDF2 Passphrase Key Derivation ---
+    async function deriveKeyFromPassphrase(passphrase, salt) {
+        var enc = new TextEncoder();
+        var keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            true,
+            ['encrypt', 'decrypt']
+        );
+    }
+    M.deriveKeyFromPassphrase = deriveKeyFromPassphrase;
+
     // ========================================
     // AUTO-SAVE TO LOCALSTORAGE
     // ========================================
@@ -173,41 +187,51 @@
     // ========================================
     // SHARE FLOW
     // ========================================
-    M.shareMarkdown = async function () {
-        var shareButton = document.getElementById('share-button');
-        var originalText = shareButton.innerHTML;
-        try {
-            var markdownContent = M.markdownEditor.value;
-            if (!markdownContent.trim()) { alert('Nothing to share — the editor is empty.'); return; }
-            shareButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Sharing...'; shareButton.disabled = true;
-            var compressed = compressData(markdownContent);
-            var key = await generateEncryptionKey();
-            var encrypted = await encryptData(key, compressed);
-            var dataString = uint8ArrayToBase64Url(encrypted);
-            var keyString = await keyToBase64Url(key);
-            var shareUrl;
-            try {
-                var docRef = await db.collection('shares').add({ d: dataString, t: Date.now() });
-                shareUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&k=' + keyString;
-            } catch (fbError) {
-                console.warn('Firebase unavailable, using URL fallback:', fbError);
-                shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
-                if (shareUrl.length > 65000) throw new Error('Content too large to share. Try a smaller document.');
-            }
-            showShareResult(shareUrl);
-            shareButton.innerHTML = '<i class="bi bi-check-lg"></i> Shared!';
-            setTimeout(function () { shareButton.innerHTML = originalText; }, 2000);
-            shareButton.disabled = false;
-        } catch (error) {
-            console.error('Share failed:', error);
-            alert('Share failed: ' + error.message);
-            shareButton.innerHTML = originalText; shareButton.disabled = false;
-        }
+    var lastSharePassphrase = '';
+    var isSecureShareMode = false;
+
+    M.shareMarkdown = function () {
+        var markdownContent = M.markdownEditor.value;
+        if (!markdownContent.trim()) { alert('Nothing to share — the editor is empty.'); return; }
+        openShareOptionsModal();
     };
+
+    async function doQuickShare() {
+        var markdownContent = M.markdownEditor.value;
+        var compressed = compressData(markdownContent);
+        var key = await generateEncryptionKey();
+        var encrypted = await encryptData(key, compressed);
+        var dataString = uint8ArrayToBase64Url(encrypted);
+        var keyString = await keyToBase64Url(key);
+        var shareUrl;
+        try {
+            var docRef = await db.collection('shares').add({ d: dataString, t: Date.now() });
+            shareUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&k=' + keyString;
+        } catch (fbError) {
+            console.warn('Firebase unavailable, using URL fallback:', fbError);
+            shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
+            if (shareUrl.length > 65000) throw new Error('Content too large to share. Try a smaller document.');
+        }
+        return shareUrl;
+    }
+
+    async function doSecureShare(passphrase) {
+        var markdownContent = M.markdownEditor.value;
+        var compressed = compressData(markdownContent);
+        var salt = crypto.getRandomValues(new Uint8Array(16));
+        var key = await deriveKeyFromPassphrase(passphrase, salt);
+        var encrypted = await encryptData(key, compressed);
+        var dataString = uint8ArrayToBase64Url(encrypted);
+        var saltString = uint8ArrayToBase64Url(salt);
+        var docRef = await db.collection('shares').add({ d: dataString, salt: saltString, secure: true, t: Date.now() });
+        return SHARE_BASE_URL + '#id=' + docRef.id + '&secure=1';
+    }
 
     // ========================================
     // LOAD SHARED MARKDOWN
     // ========================================
+    var pendingSecureDoc = null; // { dataString, saltString, docId }
+
     M.loadSharedMarkdown = async function () {
         var hash = window.location.hash.substring(1);
         if (!hash) return;
@@ -215,6 +239,27 @@
         var docId = params.get('id');
         var inlineData = params.get('d');
         var keyString = params.get('k');
+        var isSecure = params.get('secure') === '1';
+
+        // Secure share: no key in URL, passphrase needed
+        if (isSecure && docId && !keyString) {
+            try {
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-shield-lock"></i> Loading protected document...</div>';
+                M.setViewMode('preview');
+                var doc = await db.collection('shares').doc(docId).get();
+                if (!doc.exists) throw new Error('Shared document not found.');
+                var data = doc.data();
+                pendingSecureDoc = { dataString: data.d, saltString: data.salt, docId: docId };
+                showPassphrasePrompt();
+            } catch (error) {
+                console.error('Failed to load secure shared markdown:', error);
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Document Not Found</h3><p style="opacity: 0.7;">The shared document may have been deleted or the link is invalid.</p></div>';
+                M.setViewMode('preview');
+            }
+            return;
+        }
+
+        // Quick share: key in URL
         if (!keyString || (!docId && !inlineData)) return;
         try {
             M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-lock"></i> Decrypting shared content...</div>';
@@ -241,6 +286,26 @@
             M.setViewMode('preview');
         }
     };
+
+    async function unlockSecureDoc(passphrase) {
+        if (!pendingSecureDoc) return;
+        try {
+            var salt = base64UrlToUint8Array(pendingSecureDoc.saltString);
+            var key = await deriveKeyFromPassphrase(passphrase, salt);
+            var encrypted = base64UrlToUint8Array(pendingSecureDoc.dataString);
+            var compressed = await decryptData(key, encrypted);
+            var markdownContent = decompressData(compressed);
+            hidePassphrasePrompt();
+            M.markdownEditor.value = markdownContent;
+            M.renderMarkdown();
+            M.setViewMode('preview');
+            M.isViewingSharedDoc = true;
+            showSharedBanner();
+            pendingSecureDoc = null;
+        } catch (e) {
+            throw new Error('Wrong passphrase. Please try again.');
+        }
+    }
 
     // --- Shared View Banner ---
     function showSharedBanner() {
@@ -272,10 +337,123 @@
         window.history.replaceState({}, document.title, window.location.pathname);
     });
 
+    // --- Share Options Modal ---
+    var shareOptionsModal = document.getElementById('share-options-modal');
+    var shareSecureSection = document.getElementById('share-secure-section');
+    var shareDescQuick = document.getElementById('share-desc-quick');
+    var sharePassInput = document.getElementById('share-passphrase-input');
+    var sharePassConfirm = document.getElementById('share-passphrase-confirm');
+    var sharePassError = document.getElementById('share-passphrase-error');
+
+    function openShareOptionsModal() {
+        isSecureShareMode = false;
+        sharePassInput.value = '';
+        sharePassConfirm.value = '';
+        sharePassError.style.display = 'none';
+        shareSecureSection.style.display = 'none';
+        shareDescQuick.style.display = '';
+        document.getElementById('share-mode-quick').classList.add('active');
+        document.getElementById('share-mode-secure').classList.remove('active');
+        shareOptionsModal.classList.add('active');
+        document.getElementById('share-do-share').disabled = false;
+        document.getElementById('share-do-share').innerHTML = '<i class="bi bi-share me-1"></i> Share';
+    }
+
+    function closeShareOptionsModal() {
+        shareOptionsModal.classList.remove('active');
+    }
+
+    // Mode toggle
+    document.querySelectorAll('.share-mode-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.share-mode-btn').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var mode = btn.dataset.mode;
+            isSecureShareMode = (mode === 'secure');
+            shareSecureSection.style.display = isSecureShareMode ? '' : 'none';
+            shareDescQuick.style.display = isSecureShareMode ? 'none' : '';
+            sharePassError.style.display = 'none';
+            if (isSecureShareMode) setTimeout(function () { sharePassInput.focus(); }, 100);
+        });
+    });
+
+    // Close handlers
+    document.getElementById('share-options-close').addEventListener('click', closeShareOptionsModal);
+    document.getElementById('share-options-cancel').addEventListener('click', closeShareOptionsModal);
+    shareOptionsModal.addEventListener('click', function (e) { if (e.target === shareOptionsModal) closeShareOptionsModal(); });
+
+    // Password visibility toggle
+    function wirePassToggle(toggleId, inputId) {
+        var toggle = document.getElementById(toggleId);
+        if (!toggle) return;
+        toggle.addEventListener('click', function () {
+            var inp = document.getElementById(inputId);
+            var isPassword = inp.type === 'password';
+            inp.type = isPassword ? 'text' : 'password';
+            toggle.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    }
+    wirePassToggle('share-pass-toggle', 'share-passphrase-input');
+    wirePassToggle('passphrase-unlock-toggle', 'passphrase-unlock-input');
+
+    // Do share button
+    document.getElementById('share-do-share').addEventListener('click', async function () {
+        var btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sharing...';
+        sharePassError.style.display = 'none';
+        try {
+            var shareUrl;
+            if (isSecureShareMode) {
+                var pass = sharePassInput.value;
+                var passConfirm = sharePassConfirm.value;
+                if (!pass || pass.length < 4) {
+                    sharePassError.textContent = 'Passphrase must be at least 4 characters.';
+                    sharePassError.style.display = '';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';
+                    return;
+                }
+                if (pass !== passConfirm) {
+                    sharePassError.textContent = 'Passphrases do not match.';
+                    sharePassError.style.display = '';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';
+                    return;
+                }
+                lastSharePassphrase = pass;
+                shareUrl = await doSecureShare(pass);
+            } else {
+                lastSharePassphrase = '';
+                shareUrl = await doQuickShare();
+            }
+            closeShareOptionsModal();
+            showShareResult(shareUrl, isSecureShareMode);
+        } catch (error) {
+            console.error('Share failed:', error);
+            sharePassError.textContent = 'Share failed: ' + error.message;
+            sharePassError.style.display = '';
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';
+    });
+
     // --- Share Result Modal ---
     var shareResultModal = document.getElementById('share-result-modal');
-    function showShareResult(url) {
+    function showShareResult(url, isSecure) {
         document.getElementById('share-link-input').value = url;
+        var desc = document.getElementById('share-result-desc');
+        var note = document.getElementById('share-result-note');
+        var dlSection = document.getElementById('share-download-section');
+        if (isSecure) {
+            desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Passphrase-protected. The link alone cannot decrypt the content.';
+            note.innerHTML = '<i class="bi bi-info-circle me-1"></i>No key material is in the URL — only the passphrase holder can open this.';
+            dlSection.style.display = '';
+        } else {
+            desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Content is encrypted. Only this link can unlock it.';
+            note.innerHTML = '<i class="bi bi-info-circle me-1"></i>The decryption key is in the URL fragment — it\'s never sent to any server.';
+            dlSection.style.display = 'none';
+        }
         shareResultModal.classList.add('active');
     }
     M.closeShareResultModal = function () { shareResultModal.classList.remove('active'); };
@@ -287,6 +465,89 @@
         try { await navigator.clipboard.writeText(linkInput.value); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
         catch (e) { linkInput.select(); document.execCommand('copy'); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
         setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+    });
+
+    // --- Download Credentials ---
+    document.getElementById('share-download-credentials').addEventListener('click', function () {
+        var url = document.getElementById('share-link-input').value;
+        var pass = lastSharePassphrase;
+        // Extract heading from markdown
+        var content = M.markdownEditor.value;
+        var heading = 'untitled';
+        var headingMatch = content.match(/^#+\s+(.+)/m);
+        if (headingMatch) heading = headingMatch[1].trim();
+        // Sanitize filename
+        var safeName = heading.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50);
+        var filename = 'markdownview-' + safeName + '.txt';
+        var fileContent = '===================================\n';
+        fileContent += '  MDview — Secure Share Credentials\n';
+        fileContent += '===================================\n\n';
+        fileContent += 'Document: ' + heading + '\n';
+        fileContent += 'Created:  ' + new Date().toISOString() + '\n\n';
+        fileContent += '-----------------------------------\n';
+        fileContent += 'URL:\n' + url + '\n\n';
+        fileContent += 'Passphrase:\n' + pass + '\n';
+        fileContent += '-----------------------------------\n\n';
+        fileContent += 'IMPORTANT:\n';
+        fileContent += '• Share the URL and passphrase SEPARATELY for maximum security.\n';
+        fileContent += '• Anyone with both the URL and passphrase can view the document.\n';
+        fileContent += '• Delete this file after sharing the credentials.\n';
+        var blob = new Blob([fileContent], { type: 'text/plain' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+
+    // --- Passphrase Prompt Modal ---
+    var passphrasePromptModal = document.getElementById('passphrase-prompt-modal');
+    var passphraseUnlockInput = document.getElementById('passphrase-unlock-input');
+    var passphraseUnlockError = document.getElementById('passphrase-unlock-error');
+
+    function showPassphrasePrompt() {
+        passphraseUnlockInput.value = '';
+        passphraseUnlockError.style.display = 'none';
+        passphrasePromptModal.classList.add('active');
+        setTimeout(function () { passphraseUnlockInput.focus(); }, 150);
+    }
+
+    function hidePassphrasePrompt() {
+        passphrasePromptModal.classList.remove('active');
+    }
+
+    document.getElementById('passphrase-unlock-btn').addEventListener('click', async function () {
+        var btn = this;
+        var pass = passphraseUnlockInput.value;
+        if (!pass) {
+            passphraseUnlockError.textContent = 'Please enter the passphrase.';
+            passphraseUnlockError.style.display = '';
+            return;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Decrypting...';
+        passphraseUnlockError.style.display = 'none';
+        try {
+            await unlockSecureDoc(pass);
+        } catch (e) {
+            passphraseUnlockError.textContent = e.message || 'Decryption failed. Wrong passphrase?';
+            passphraseUnlockError.style.display = '';
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-unlock me-1"></i> Unlock';
+    });
+
+    // Enter key to unlock
+    passphraseUnlockInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') document.getElementById('passphrase-unlock-btn').click();
+    });
+
+    // Escape to close share modals
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (shareOptionsModal.classList.contains('active')) closeShareOptionsModal();
+            if (shareResultModal.classList.contains('active')) M.closeShareResultModal();
+        }
     });
 
     // --- New Document Button ---

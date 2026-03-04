@@ -626,17 +626,78 @@
     </div>
 
 
+    <!-- Share Options Modal (Quick / Secure) -->
+    <div id="share-options-modal" class="share-modal" role="dialog" aria-modal="true" aria-label="Share Options">
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <h5><i class="bi bi-share me-2"></i>Share Document</h5>
+                <button class="share-modal-close" id="share-options-close" title="Close" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="share-modal-body">
+                <!-- Share Mode Toggle -->
+                <div class="share-mode-toggle">
+                    <button class="share-mode-btn active" data-mode="quick" id="share-mode-quick">
+                        <i class="bi bi-link-45deg"></i> Quick Share
+                    </button>
+                    <button class="share-mode-btn" data-mode="secure" id="share-mode-secure">
+                        <i class="bi bi-shield-lock"></i> Secure Share
+                    </button>
+                </div>
+
+                <!-- Quick share description -->
+                <p class="share-modal-desc" id="share-desc-quick">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Link contains the encryption key — anyone with the link can view.
+                </p>
+
+                <!-- Secure share description + passphrase input -->
+                <div id="share-secure-section" style="display:none">
+                    <p class="share-modal-desc">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Content is protected by a passphrase. The link alone cannot decrypt it.
+                    </p>
+                    <div class="share-form-group">
+                        <label for="share-passphrase-input">Passphrase</label>
+                        <div class="share-passphrase-wrapper">
+                            <input type="password" id="share-passphrase-input" placeholder="Enter a strong passphrase"
+                                autocomplete="off" />
+                            <button type="button" class="share-pass-toggle" id="share-pass-toggle" title="Show/Hide">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <small>Choose something memorable. You'll need to share this separately.</small>
+                    </div>
+                    <div class="share-form-group">
+                        <label for="share-passphrase-confirm">Confirm Passphrase</label>
+                        <input type="password" id="share-passphrase-confirm" placeholder="Re-enter passphrase"
+                            autocomplete="off" />
+                    </div>
+                    <div id="share-passphrase-error" class="share-error" style="display:none"></div>
+                </div>
+            </div>
+            <div class="share-modal-footer">
+                <button class="share-btn-secondary" id="share-options-cancel">Cancel</button>
+                <button class="share-btn-primary" id="share-do-share">
+                    <i class="bi bi-share me-1"></i> Share
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Share Result Modal -->
     <div id="share-result-modal" class="share-modal" role="dialog" aria-modal="true" aria-label="Share Link">
         <div class="share-modal-content share-result-content">
             <div class="share-modal-header">
-                <h5><i class="bi bi-link-45deg me-2"></i>Share Link Generated</h5>
+                <h5><i class="bi bi-check-circle me-2" style="color:#2ea043"></i>Link Generated</h5>
                 <button class="share-modal-close" id="share-result-close" title="Close" aria-label="Close">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             <div class="share-modal-body">
-                <p class="share-modal-desc"><i class="bi bi-shield-lock me-1"></i> Content is encrypted. Only this link
+                <p class="share-modal-desc" id="share-result-desc"><i class="bi bi-shield-lock me-1"></i> Content is
+                    encrypted. Only this link
                     can unlock it.</p>
                 <div class="share-link-container">
                     <input type="text" id="share-link-input" readonly>
@@ -644,8 +705,43 @@
                         <i class="bi bi-clipboard"></i>
                     </button>
                 </div>
-                <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>The decryption key is in the URL
+                <small class="share-link-note" id="share-result-note"><i class="bi bi-info-circle me-1"></i>The
+                    decryption key is in the URL
                     fragment — it's never sent to any server.</small>
+                <!-- Download credentials (visible only for secure share) -->
+                <div id="share-download-section" style="display:none">
+                    <button class="share-btn-download" id="share-download-credentials">
+                        <i class="bi bi-download me-1"></i> Download Credentials (.txt)
+                    </button>
+                    <small class="share-link-note"><i class="bi bi-exclamation-triangle me-1"></i>Send the passphrase
+                        separately from the link for maximum security.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passphrase Prompt Modal (for opening secure links) -->
+    <div id="passphrase-prompt-modal" class="share-modal" role="dialog" aria-modal="true" aria-label="Enter Passphrase">
+        <div class="share-modal-content passphrase-prompt-content">
+            <div class="passphrase-prompt-icon">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h5 class="passphrase-prompt-title">This document is protected</h5>
+            <p class="passphrase-prompt-desc">Enter the passphrase to unlock and view this shared document.</p>
+            <div class="share-form-group">
+                <div class="share-passphrase-wrapper">
+                    <input type="password" id="passphrase-unlock-input" placeholder="Enter passphrase"
+                        autocomplete="off" />
+                    <button type="button" class="share-pass-toggle" id="passphrase-unlock-toggle" title="Show/Hide">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="passphrase-unlock-error" class="share-error" style="display:none"></div>
+            <div class="passphrase-prompt-actions">
+                <button class="share-btn-primary passphrase-unlock-btn" id="passphrase-unlock-btn">
+                    <i class="bi bi-unlock me-1"></i> Unlock
+                </button>
             </div>
         </div>
     </div>
@@ -689,6 +785,18 @@
             </button>
             <button class="ai-action-chip" data-action="markdown" title="Generate markdown">
                 <i class="bi bi-markdown"></i> Markdown
+            </button>
+            <button class="ai-action-chip ai-chip-writing" data-action="polish" title="Polish writing">
+                <i class="bi bi-brush"></i> Polish
+            </button>
+            <button class="ai-action-chip ai-chip-writing" data-action="formalize" title="Make text more formal">
+                <i class="bi bi-mortarboard"></i> Formalize
+            </button>
+            <button class="ai-action-chip ai-chip-writing" data-action="elaborate" title="Add more detail">
+                <i class="bi bi-textarea-resize"></i> Elaborate
+            </button>
+            <button class="ai-action-chip ai-chip-writing" data-action="shorten" title="Make text more concise">
+                <i class="bi bi-scissors"></i> Shorten
             </button>
         </div>
 

@@ -21,6 +21,10 @@ const TOKEN_LIMITS = {
     expand: 512,
     rephrase: 384,
     grammar: 384,
+    polish: 384,
+    formalize: 384,
+    elaborate: 512,
+    shorten: 256,
     autocomplete: 128,
     generate: 512,
     markdown: 512,
@@ -201,6 +205,14 @@ function buildMessages(taskType, context, userPrompt) {
             "You are a helpful assistant. Explain the following text in simple, easy-to-understand terms. Be concise. Output in markdown format.",
         simplify:
             "You are a helpful writing assistant. Simplify the following text to make it easier to understand. Use shorter sentences and simpler words. Output in markdown format.",
+        polish:
+            "You are a skilled writing editor. Polish the following text to improve flow, word choice, and overall quality while preserving the meaning and tone. Only output the polished text.",
+        formalize:
+            "You are a professional writing assistant. Rewrite the following text in a more formal, professional tone suitable for business or academic contexts. Only output the formalized text.",
+        elaborate:
+            "You are a helpful writing assistant. Elaborate on the following text by adding more details, examples, and explanations to make it more comprehensive. Output in markdown format.",
+        shorten:
+            "You are a concise writing editor. Shorten the following text while preserving all key information. Remove redundancy and use fewer words. Only output the shortened text.",
         qa: "You are a helpful assistant. Answer the user's question based on the provided document context. Be concise. If the answer cannot be found in the context, say so.",
         chat: "You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Be concise. Output in markdown format.",
     };
@@ -224,7 +236,7 @@ function buildMessages(taskType, context, userPrompt) {
         });
     } else if (
         context &&
-        ["summarize", "expand", "rephrase", "grammar"].includes(taskType)
+        ["summarize", "expand", "rephrase", "grammar", "polish", "formalize", "elaborate", "shorten"].includes(taskType)
     ) {
         messages.push({
             role: "user",
