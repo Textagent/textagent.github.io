@@ -9,7 +9,6 @@
     <a href="#-screenshots">Screenshots</a> • 
     <a href="#-usage">Usage</a> • 
     <a href="#-release-notes">Release Notes</a> • 
-    <a href="#-recent-upgrades-by-ijbo">Upgrades</a> • 
     <a href="#-license">License</a>
 </div>
 
@@ -49,7 +48,14 @@ Markdown Viewer is a professional, full-featured Markdown editor and preview app
 - **Anchor links** - Click headings to copy anchor URLs
 - **Image paste** - Paste images from clipboard directly into the editor as base64
 - **🤖 AI Assistant** - Qwen 3.5 Small running 100% locally via WebGPU / WASM — summarize, rephrase, expand, grammar-check, explain, simplify, and auto-complete
+- **☁️ Groq Cloud AI** - Llama 3.3 70B via Groq API as a fast cloud alternative to the local model
+- **🌐 Google Gemini 2.0 Flash** - Free-tier Gemini model with 1 M tokens/min and SSE streaming
+- **🔀 OpenRouter** - Access free models (auto-routed) via OpenRouter API
+- **Resizable AI panel** - Drag the AI panel edge to resize; three-column layout (Editor | Preview | AI) with independent width control
 - **AI context menu** - Select text in the editor or preview and right-click for quick AI actions
+- **🖥️ Executable code blocks** - Run bash commands directly in the preview — powered by [just-bash](https://justbash.dev/)
+- **📂 File format converters** - Import DOCX, XLSX/XLS, CSV, HTML, JSON, XML, and PDF files — auto-converted to Markdown
+- **🖥 Desktop app** - Native desktop version via Neutralino.js with system tray, file-open, and offline support
 - **🔐 Encrypted sharing** - Share markdown via Firebase/GitHub with AES-256-GCM encryption; decryption key stays in the URL fragment (never sent to any server)
 - **Fully responsive** - Works on desktop and mobile with a dedicated mobile menu
 - **Emoji support** - Convert emoji shortcodes into actual emojis
@@ -120,6 +126,7 @@ Inside the **zoom modal** you can:
 - Callout / admonition blocks
 - Footnotes
 - Emoji shortcodes
+- Executable bash code blocks
 - And more!
 
 ## 🔧 Technologies Used
@@ -140,7 +147,15 @@ Inside the **zoom modal** you can:
 - [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) - AES-256-GCM encryption (browser-native)
 - [Firebase Firestore](https://firebase.google.com/docs/firestore) - Cloud sharing & auto-save storage
 - [Transformers.js](https://huggingface.co/docs/transformers.js) - Local AI inference (Qwen 3.5 Small 0.8B)
+- [Groq API](https://groq.com/) - Cloud AI inference (Llama 3.3 70B)
+- [Google Gemini API](https://ai.google.dev/) - Cloud AI inference (Gemini 2.0 Flash)
+- [OpenRouter API](https://openrouter.ai/) - Multi-model AI routing
 - [PlantUML Server](https://www.plantuml.com/) - PlantUML diagram rendering
+- [Mammoth.js](https://github.com/mwilliamson/mammoth.js) + [Turndown.js](https://github.com/mixmark-io/turndown) - DOCX-to-Markdown conversion
+- [SheetJS](https://sheetjs.com/) - XLSX/XLS spreadsheet parsing
+- [pdf.js](https://mozilla.github.io/pdf.js/) - Client-side PDF text extraction
+- [Neutralino.js](https://neutralino.js.org/) - Lightweight desktop app framework
+- [just-bash](https://justbash.dev/) - In-browser bash execution for code blocks
 
 ## 🤝 Contributing
 
@@ -163,7 +178,14 @@ The Markdown Viewer has undergone significant evolution since its inception. Wha
 ## 📋 Release Notes
 
 | Date | Feature / Update |
-|------|-----------------| 
+|------|-----------------|
+| **2026-03-04** | 🌐 **Google Gemini 2.0 Flash** — free-tier Gemini AI model with SSE streaming and 1 M tokens/min |
+| **2026-03-04** | 🔀 **OpenRouter AI** — access free auto-routed models via OpenRouter API |
+| **2026-03-04** | 📂 **File format converters** — import DOCX, XLSX/XLS, CSV, HTML, JSON, XML, and PDF; auto-converted to Markdown |
+| **2026-03-04** | 🖥 **Desktop app** — native desktop version via Neutralino.js with system tray and offline support |
+| **2026-03-04** | 📐 **Resizable AI panel** — three-column layout (Editor ∣ Preview ∣ AI) with draggable resize divider on the AI panel edge; width persisted across sessions |
+| **2026-03-04** | ☁️ **Groq Llama 3.3 70B** — cloud AI model via Groq API as a fast alternative to the local Qwen model; model selector to switch between Local and Cloud |
+| **2026-03-04** | 🖥️ **Executable bash blocks** — run bash commands directly in the preview powered by [just-bash](https://justbash.dev/); hover over any bash code block and click ▶ Run |
 | **2026-03-04** | 🤖 **AI Assistant (Qwen 3.5)** — local AI running via WebGPU/WASM: summarize, expand, rephrase, grammar-check, explain, simplify, auto-complete |
 | **2026-03-04** | 🧠 **AI context menu** — select text in editor or preview, right-click for quick AI actions |
 | **2026-03-04** | ☁️ **Cloud auto-save** — periodic encrypted backup to Firebase Firestore |
@@ -198,29 +220,8 @@ The Markdown Viewer has undergone significant evolution since its inception. Wha
 | **2024-04-12** | 📊 **Reading stats** — word count, character count, and reading time |
 | **2024-04-09** | 🚀 **Initial commit** — Markdown Viewer project created |
 
-## 🔄 Recent Upgrades by [@ijbo](https://github.com/ijbo)
-
-### 🔐 Encrypted Markdown Sharing
-- Share markdown securely via GitHub — content is **gzip compressed** and **AES-256-GCM encrypted** before storage
-- Encryption key lives in the URL fragment (`#key`) — **never sent to any server**
-- GitHub Config modal for PAT setup (stored in localStorage only)
-- Read-only preview mode for recipients with "Edit Copy" option
-- Share link auto-copies to clipboard
-
-### 🐛 30 Bug Fixes & Improvements
-
-| Category | Key Fixes |
-|----------|----------|
-| **Security** | XSS in error handler patched, `style` removed from DOMPurify allowlist, Mermaid `securityLevel` tightened to `strict` |
-| **Bugs** | Sync toggle labels were inverted, `Ctrl+C` hijacked native copy, PDF error cleanup selector was broken, deprecated `mermaid.init()` replaced with `mermaid.run()` |
-| **Performance** | `initMermaid()` no longer called on every keystroke, moved to theme-change only |
-| **Accessibility** | Added `aria-label` to editor, Escape key exits Tab trap, keyboard arrow-key support on resize divider |
-| **UX** | Theme preference persisted to localStorage, mobile theme label shows correct mode, dropzone `rgba()` CSS fix |
-| **Docker** | Removed deprecated `version` key, selective file COPY, extracted nginx config to separate file |
-| **Code Quality** | Removed debug `console.log`s, fixed misleading error messages, removed deprecated `sanitize` option |
-
 ---
 
 <div align="center">
-    <p>Created by <a href="https://github.com/ThisIs-Developer">ThisIs-Developer</a> • Upgraded by <a href="https://github.com/ijbo">ijbo</a></p>
+    <p>Created with ❤️ by the <a href="https://github.com/markdownview">Markdown Viewer</a> team</p>
 </div>
