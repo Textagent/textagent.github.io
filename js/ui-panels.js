@@ -366,11 +366,20 @@
 
         // Apply background
         if (slide.background) {
-            if (slide.background.startsWith('#') || slide.background.startsWith('rgb')) {
-                slideContent.style.backgroundColor = slide.background;
+            var bg = slide.background;
+            if (bg.startsWith('#') || bg.startsWith('rgb') || bg.startsWith('hsl')) {
+                // Solid color
+                slideContent.style.backgroundColor = bg;
                 slideContent.style.backgroundImage = '';
+            } else if (bg.startsWith('linear-gradient') || bg.startsWith('radial-gradient') || bg.startsWith('conic-gradient')) {
+                // CSS gradient — apply directly as backgroundImage
+                slideContent.style.backgroundImage = bg;
+                slideContent.style.backgroundColor = '';
             } else {
-                slideContent.style.backgroundImage = 'url(' + slide.background + ')';
+                // Image URL
+                slideContent.style.backgroundImage = 'url(' + bg + ')';
+                slideContent.style.backgroundSize = 'cover';
+                slideContent.style.backgroundPosition = 'center';
                 slideContent.style.backgroundColor = '';
             }
             slideContent.setAttribute('data-bg', 'true');
