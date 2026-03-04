@@ -14,7 +14,7 @@
 
 ## 🚀 Overview
 
-**MDview** is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a split-screen interface, AI-powered writing assistance, multi-format file import, encrypted sharing, slide presentations, and powerful export options — all without any server-side processing.
+**MDview** is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a split-screen interface, AI-powered writing assistance, voice dictation, multi-format file import, encrypted sharing, slide presentations, executable code & math blocks, and powerful export options — all without any server-side processing.
 
 **No sign-up. No server. No data leaves your device.**
 
@@ -25,14 +25,16 @@
 | **Editor** | Live preview, split/editor/preview modes, sync scrolling, formatting toolbar, find & replace (regex), word wrap toggle, draggable resize divider |
 | **Writing Modes** | Zen mode (distraction-free fullscreen), Focus mode (dimmed paragraphs), Dark mode, multiple preview themes (GitHub, GitLab, Notion, Dracula, Solarized) |
 | **Rendering** | GitHub-style Markdown, syntax highlighting (180+ languages), LaTeX math (MathJax), Mermaid diagrams (zoom/pan/export), PlantUML diagrams, callout blocks, footnotes, emoji, anchor links |
-| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM), Gemini 2.0 Flash, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete |
+| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM), Gemini 2.0 Flash, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten) |
+| **🎤 Voice Dictation** | Speech-to-text with Markdown-aware commands — hash headings, bold, italic, lists, code blocks, links, and more |
 | **Import** | MD, DOCX, XLSX/XLS, CSV, HTML, JSON, XML, PDF — drag & drop or click to import |
 | **Export** | Markdown, HTML, PDF (smart page-breaks), LLM Memory (4 formats + shareable link) |
-| **Sharing** | AES-256-GCM encrypted sharing via Firebase; decryption key stays in URL fragment (never sent to server) |
-| **Presentation** | Slide mode using `---` separators with keyboard navigation |
+| **Sharing** | AES-256-GCM encrypted sharing via Firebase; read-only shared links — decryption key stays in URL fragment (never sent to server) |
+| **Presentation** | Slide mode using `---` separators, keyboard navigation, multiple layouts & transitions, speaker notes, overview grid, 20+ PPT templates with image backgrounds |
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
-| **Code Execution** | Run bash commands directly in preview via [just-bash](https://justbash.dev/) |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, templates, content statistics (words/chars/reading time), fully responsive mobile UI |
+| **Code Execution** | Run bash commands in preview via [just-bash](https://justbash.dev/); executable math blocks with live evaluation (Nerdamer) |
+| **Security** | SRI integrity hashes, XSS sanitization, ReDoS protection, encrypted API key storage, Firestore security rules |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 30+ templates (Coding, Maths, PPT categories), content statistics, modular codebase (13 JS modules), fully responsive mobile UI |
 
 ## 🤖 AI Assistant
 
@@ -45,7 +47,7 @@ MDview includes a built-in AI assistant panel with **four model options**:
 | **Llama 3.3 70B** | Groq (free tier) | ☁️ Cloud — ultra-low latency | ⚡ Ultra Fast |
 | **Auto · Best Free** | OpenRouter (free tier) | ☁️ Cloud — multi-model routing | 🧠 Powerful |
 
-**AI Actions:** Summarize · Expand · Rephrase · Fix Grammar · Explain · Simplify · Auto-complete · Generate Markdown
+**AI Actions:** Summarize · Expand · Rephrase · Fix Grammar · Explain · Simplify · Auto-complete · Generate Markdown · Polish · Formalize · Elaborate · Shorten
 
 > [!TIP]
 > Click the ✨ **AI** button in the toolbar to open the assistant. Select text and right-click for quick AI actions via the context menu.
@@ -186,6 +188,19 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-05** | 🔒 **Read-only shared links** — shared documents are now protected; Edit Copy creates a local fork instead of overwriting the original |
+| **2026-03-05** | 🖼️ **Image backgrounds for PPT templates** — 5 presentation templates with Unsplash image backgrounds |
+| **2026-03-05** | 🧮 **LaTeX evaluation improvements** — reserved constant handling (E, π), unsupported construct detection (limits, integrals, partials) |
+| **2026-03-05** | 🎬 **Enhanced presentation mode** — multiple layouts (title, section, two-column, image), transitions, speaker notes, overview grid |
+| **2026-03-05** | 📊 **20+ PPT templates** — new PPT category with professional slide decks and background rendering |
+| **2026-03-05** | 🎤 **Voice dictation** — speech-to-text with Markdown-aware commands (hash headings, bold, italic, lists, code, links) |
+| **2026-03-05** | 🛡️ **Security hardening** — SRI integrity hashes, XSS fixes, ReDoS protection, encrypted API key storage, Firestore security rules |
+| **2026-03-05** | 🧱 **Codebase modularization** — `script.js` refactored into 13 focused modules for maintainability |
+| **2026-03-05** | 🧮 **Executable math blocks** — evaluate math expressions in preview using Nerdamer (algebra, calculus, trig) |
+| **2026-03-05** | 📚 **6 new templates** — Coding and Maths categories with interactive bash and math blocks |
+| **2026-03-05** | 🎨 **Template UI polish** — category pill tabs, improved card layout, better spacing |
+| **2026-03-05** | ✨ **AI writing tags** — Polish, Formalize, Elaborate, Shorten actions for selected text or full document |
+| **2026-03-05** | 📄 **Feature Showcase as default** — comprehensive showcase loads on first visit |
 | **2026-03-04** | 🏷️ **Rebranded to MDview** — new display name across all pages, meta tags, and templates |
 | **2026-03-04** | 🔄 **Non-blocking AI panel** — AI panel opens instantly; Qwen download deferred until first use |
 | **2026-03-04** | 🧩 **Multi-model AI selector** — switch between Qwen (local), Groq Llama 3.3, Gemini 2.0 Flash, and OpenRouter |
