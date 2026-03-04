@@ -395,6 +395,89 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     }
   }
 
+  // ============================================
+  // File Format Converters (MarkItDown-inspired)
+  // ============================================
+
+  const SUPPORTED_EXTENSIONS = {
+    md: 'markdown', markdown: 'markdown',
+    docx: 'docx',
+    xlsx: 'xlsx', xls: 'xlsx',
+    csv: 'csv',
+    html: 'html', htm: 'html',
+    json: 'json',
+    xml: 'xml',
+    pdf: 'pdf'
+  };
+
+  const conversionOverlay = document.getElementById('conversion-overlay');
+  const conversionTitle = document.getElementById('conversion-title');
+  const conversionDetail = document.getElementById('conversion-detail');
+
+  function showConversionOverlay(title, detail) {
+    conversionTitle.textContent = title || 'Converting...';
+    conversionDetail.textContent = detail || 'Processing your file';
+    conversionOverlay.style.display = 'flex';
+  }
+
+  function hideConversionOverlay() {
+    conversionOverlay.style.display = 'none';
+  }
+
+  function showConversionToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'conversion-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function getFileExtension(filename) {
+    return (filename.split('.').pop() || '').toLowerCase();
+  }
+
+  async function importFile(file) {
+    const ext = getFileExtension(file.name);
+    const type = SUPPORTED_EXTENSIONS[ext];
+
+    if (!type) {
+      alert(`Unsupported file format: .${ext}\n\nSupported: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF`);
+      return;
+    }
+
+    if (type === 'markdown') {
+      importMarkdownFile(file);
+      return;
+    }
+
+    showConversionOverlay(`Converting ${file.name}`, `${ext.toUpperCase()} \u2192 Markdown`);
+
+    try {
+      let markdown;
+      switch (type) {
+        case 'docx': markdown = await convertDocxToMarkdown(file); break;
+        case 'xlsx': markdown = await convertXlsxToMarkdown(file); break;
+        case 'csv': markdown = await convertCsvToMarkdown(file); break;
+        case 'html': markdown = await convertHtmlToMarkdown(file); break;
+        case 'json': markdown = await convertJsonToMarkdown(file); break;
+        case 'xml': markdown = await convertXmlToMarkdown(file); break;
+        case 'pdf': markdown = await convertPdfToMarkdown(file); break;
+        default:
+          throw new Error(`No converter found for type: ${type}`);
+      }
+
+      markdownEditor.value = markdown;
+      renderMarkdown();
+      dropzone.style.display = 'none';
+      showConversionToast(`\u2713 Converted ${file.name} to Markdown`);
+    } catch (err) {
+      console.error('File conversion failed:', err);
+      alert(`Failed to convert ${file.name}:\n${err.message}`);
+    } finally {
+      hideConversionOverlay();
+    }
+  }
+
   function importMarkdownFile(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -404,6 +487,255 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     };
     reader.readAsText(file);
   }
+
+  // --- DOCX Converter (Mammoth.js + Turndown.js) ---
+  async function convertDocxToMarkdown(file) {
+    if (typeof mammoth === 'undefined') throw new Error('Mammoth.js library not loaded');
+    if (typeof TurndownService === 'undefined') throw new Error('Turndown.js library not loaded');
+
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer });
+
+    if (result.messages && result.messages.length > 0) {
+      console.warn('Mammoth warnings:', result.messages);
+    }
+
+    const turndown = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+      bulletListMarker: '-',
+      emDelimiter: '*'
+    });
+
+    // Improve table conversion
+    turndown.addRule('tables', {
+      filter: 'table',
+      replacement: function (content, node) {
+        return htmlTableToMarkdown(node);
+      }
+    });
+
+    const markdown = turndown.turndown(result.value);
+    const header = `> *Converted from: ${file.name}*\n\n---\n\n`;
+    return header + markdown;
+  }
+
+  // --- XLSX/XLS Converter (SheetJS) ---
+  async function convertXlsxToMarkdown(file) {
+    if (typeof XLSX === 'undefined') throw new Error('SheetJS (XLSX) library not loaded');
+
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    let markdown = `> *Converted from: ${file.name}*\n\n`;
+
+    workbook.SheetNames.forEach((sheetName, idx) => {
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (jsonData.length === 0) return;
+
+      if (workbook.SheetNames.length > 1) {
+        markdown += `## Sheet: ${sheetName}\n\n`;
+      }
+
+      markdown += arrayToMarkdownTable(jsonData) + '\n\n';
+    });
+
+    return markdown;
+  }
+
+  // --- CSV Converter (native) ---
+  async function convertCsvToMarkdown(file) {
+    const text = await file.text();
+    const rows = parseCsv(text);
+
+    if (rows.length === 0) return `> *Empty CSV file: ${file.name}*`;
+
+    let markdown = `> *Converted from: ${file.name}*\n\n`;
+    markdown += arrayToMarkdownTable(rows);
+    return markdown;
+  }
+
+  // --- HTML Converter (Turndown.js) ---
+  async function convertHtmlToMarkdown(file) {
+    if (typeof TurndownService === 'undefined') throw new Error('Turndown.js library not loaded');
+
+    const html = await file.text();
+    const turndown = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+      bulletListMarker: '-',
+      emDelimiter: '*'
+    });
+
+    // Extract body content if full HTML document
+    let content = html;
+    const bodyRegex = new RegExp('<body[^>]*>([\\s\\S]*?)<\\/body>', 'i');
+    const bodyMatch = html.match(bodyRegex);
+    if (bodyMatch) {
+      content = bodyMatch[1];
+    }
+
+    const markdown = turndown.turndown(content);
+    const header = `> *Converted from: ${file.name}*\n\n---\n\n`;
+    return header + markdown;
+  }
+
+  // --- JSON Converter (native) ---
+  async function convertJsonToMarkdown(file) {
+    const text = await file.text();
+    let formatted;
+    try {
+      const parsed = JSON.parse(text);
+      formatted = JSON.stringify(parsed, null, 2);
+    } catch (e) {
+      formatted = text; // Show raw if invalid JSON
+    }
+
+    return `> *Converted from: ${file.name}*\n\n\`\`\`json\n${formatted}\n\`\`\``;
+  }
+
+  // --- XML Converter (native) ---
+  async function convertXmlToMarkdown(file) {
+    const text = await file.text();
+    let formatted = text;
+    try {
+      // Pretty-print XML
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, 'text/xml');
+      const errors = xmlDoc.getElementsByTagName('parsererror');
+      if (errors.length === 0) {
+        const serializer = new XMLSerializer();
+        formatted = serializer.serializeToString(xmlDoc);
+        // Basic indentation
+        formatted = formatted.replace(/(>)(<)(\/*)/g, '$1\n$2$3');
+      }
+    } catch (e) {
+      // Use raw text on error
+    }
+
+    return `> *Converted from: ${file.name}*\n\n\`\`\`xml\n${formatted}\n\`\`\``;
+  }
+
+  // --- PDF Converter (pdf.js) ---
+  async function convertPdfToMarkdown(file) {
+    // pdf.js is loaded as ESM module; check window.pdfjsLib
+    let pdfjsLib = window.pdfjsLib;
+    if (!pdfjsLib) {
+      // Try to dynamically import
+      try {
+        const mod = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+        pdfjsLib = mod;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+      } catch (e) {
+        throw new Error('PDF.js library could not be loaded. PDF conversion requires a modern browser.');
+      }
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let markdown = `> *Converted from: ${file.name} (${pdf.numPages} pages)*\n\n---\n\n`;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+
+      if (pdf.numPages > 1) {
+        markdown += `## Page ${i}\n\n`;
+      }
+      markdown += pageText.trim() + '\n\n';
+    }
+
+    return markdown;
+  }
+
+  // ============================================
+  // Converter Utility Functions
+  // ============================================
+
+  function arrayToMarkdownTable(rows) {
+    if (!rows || rows.length === 0) return '';
+
+    // First row as headers
+    const headers = rows[0].map(h => String(h).trim() || ' ');
+    const separator = headers.map(() => '---');
+    const dataRows = rows.slice(1);
+
+    let table = `| ${headers.join(' | ')} |\n`;
+    table += `| ${separator.join(' | ')} |\n`;
+
+    for (const row of dataRows) {
+      const cells = headers.map((_, i) => {
+        const val = row[i] !== undefined ? String(row[i]).trim() : '';
+        return val.replace(/\|/g, '\\|'); // Escape pipes
+      });
+      table += `| ${cells.join(' | ')} |\n`;
+    }
+
+    return table;
+  }
+
+  function parseCsv(text) {
+    const rows = [];
+    let current = '';
+    let inQuotes = false;
+    const result = [];
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"' && text[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = false;
+        } else {
+          current += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ',') {
+          result.push(current);
+          current = '';
+        } else if (ch === '\n' || (ch === '\r' && text[i + 1] === '\n')) {
+          result.push(current);
+          rows.push(result.slice());
+          result.length = 0;
+          current = '';
+          if (ch === '\r') i++;
+        } else {
+          current += ch;
+        }
+      }
+    }
+    if (current || result.length > 0) {
+      result.push(current);
+      rows.push(result);
+    }
+
+    return rows;
+  }
+
+  function htmlTableToMarkdown(tableNode) {
+    const rows = [];
+    const trs = tableNode.querySelectorAll('tr');
+    trs.forEach(tr => {
+      const cells = [];
+      tr.querySelectorAll('th, td').forEach(cell => {
+        cells.push(cell.textContent.trim().replace(/\|/g, '\\|'));
+      });
+      rows.push(cells);
+    });
+
+    if (rows.length === 0) return '';
+    return arrayToMarkdownTable(rows);
+  }
+
+  // ============================================
+  // End File Format Converters
+  // ============================================
 
   function processEmojis(element) {
     const walker = document.createTreeWalker(
@@ -841,7 +1173,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
   fileInput.addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (file) {
-      importMarkdownFile(file);
+      importFile(file);
     }
     this.value = "";
   });
@@ -1604,14 +1936,11 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     const files = dt.files;
     if (files.length) {
       const file = files[0];
-      const isMarkdownFile =
-        file.type === "text/markdown" ||
-        file.name.endsWith(".md") ||
-        file.name.endsWith(".markdown");
-      if (isMarkdownFile) {
-        importMarkdownFile(file);
+      const ext = getFileExtension(file.name);
+      if (SUPPORTED_EXTENSIONS[ext]) {
+        importFile(file);
       } else {
-        alert("Please upload a Markdown file (.md or .markdown)");
+        alert(`Unsupported file format: .${ext}\n\nSupported: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF`);
       }
     }
   }
@@ -3551,8 +3880,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
   loadSharedMarkdown();
 
   // ========================================
-  // AI ASSISTANT — Qwen 3.5 Small (0.8B) via Transformers.js
-  // Runs 100% locally in the browser via WebGPU / WASM
+  // AI ASSISTANT — Multi-model: Qwen 3.5 (local) + Groq Llama 3.3 70B (cloud)
   // ========================================
 
   const aiPanel = document.getElementById('ai-panel');
@@ -3574,12 +3902,111 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
   const aiDeviceLabel = document.getElementById('ai-device-label');
   const aiDeviceDetail = document.getElementById('ai-device-detail');
   const aiContextMenu = document.getElementById('ai-context-menu');
+  const aiModelBadge = document.getElementById('ai-model-badge');
+  const aiModelBtn = document.getElementById('ai-model-btn');
+  const aiModelLabel = document.getElementById('ai-model-label');
+  const aiModelBtnIcon = document.getElementById('ai-model-btn-icon');
+  const aiModelDropdown = document.getElementById('ai-model-dropdown');
+  const aiModelSelector = aiModelBtn ? aiModelBtn.closest('.ai-model-selector') : null;
+  const aiApikeyModal = document.getElementById('ai-apikey-modal');
+  const aiApikeyCancel = document.getElementById('ai-apikey-cancel');
+  const aiApikeySave = document.getElementById('ai-apikey-save');
+  const aiGroqKeyInput = document.getElementById('ai-groq-key-input');
+  const aiApikeyError = document.getElementById('ai-apikey-error');
 
-  let aiWorker = null;
-  let aiModelLoaded = false;
+  let aiWorker = null;       // Qwen local worker
+  let groqWorker = null;     // Groq cloud worker
+  let openrouterWorker = null; // OpenRouter cloud worker
+  let geminiWorker = null;   // Gemini cloud worker
+  let aiModelLoaded = false; // Qwen loaded flag
+  let groqModelLoaded = false;
+  let openrouterModelLoaded = false;
+  let geminiModelLoaded = false;
   let aiIsGenerating = false;
   let aiMessageIdCounter = 0;
   let aiPanelOpen = false;
+  let currentAiModel = localStorage.getItem('md-viewer-ai-model') || 'qwen-local';
+  let groqApiKey = localStorage.getItem('md-viewer-groq-key') || null;
+  let openrouterApiKey = localStorage.getItem('md-viewer-openrouter-key') || null;
+  let geminiApiKey = localStorage.getItem('md-viewer-gemini-key') || null;
+  let streamingMessageId = null;
+  let pendingProviderForKey = null; // Which provider the API key modal is open for
+
+  // Provider configuration map
+  const CLOUD_PROVIDERS = {
+    'groq-llama': {
+      label: 'Llama 3.3 · Groq',
+      badge: 'Llama 3.3 · Groq',
+      icon: 'bi bi-cloud',
+      statusReady: 'Llama 3.3 70B · Groq Cloud',
+      workerFile: 'ai-worker-groq.js',
+      keyStorageKey: 'md-viewer-groq-key',
+      dialogTitle: 'Connect to Groq',
+      dialogDesc: 'Enter your free API key to use <strong>Llama 3.3 70B</strong>',
+      dialogPlaceholder: 'gsk_xxxxxxxxxxxxxxxxxxxx',
+      dialogLink: 'https://console.groq.com/keys',
+      dialogLinkText: 'console.groq.com/keys',
+      dialogIcon: 'bi bi-cloud',
+      getKey: () => groqApiKey,
+      setKey: (k) => { groqApiKey = k; },
+      getWorker: () => groqWorker,
+      setWorker: (w) => { groqWorker = w; },
+      isLoaded: () => groqModelLoaded,
+      setLoaded: (v) => { groqModelLoaded = v; },
+    },
+    'gemini-flash': {
+      label: 'Gemini 2.0 · Google',
+      badge: 'Gemini 2.0 · Google',
+      icon: 'bi bi-google',
+      statusReady: 'Gemini 2.0 Flash · Google',
+      workerFile: 'ai-worker-gemini.js',
+      keyStorageKey: 'md-viewer-gemini-key',
+      dialogTitle: 'Connect to Gemini',
+      dialogDesc: 'Enter your free API key to use <strong>Gemini 2.0 Flash</strong>',
+      dialogPlaceholder: 'AIzaSy_xxxxxxxxxxxxxxxxxxxxx',
+      dialogLink: 'https://aistudio.google.com/apikey',
+      dialogLinkText: 'aistudio.google.com/apikey',
+      dialogIcon: 'bi bi-google',
+      getKey: () => geminiApiKey,
+      setKey: (k) => { geminiApiKey = k; },
+      getWorker: () => geminiWorker,
+      setWorker: (w) => { geminiWorker = w; },
+      isLoaded: () => geminiModelLoaded,
+      setLoaded: (v) => { geminiModelLoaded = v; },
+    },
+    'openrouter-free': {
+      label: 'Auto · OpenRouter',
+      badge: 'Auto · OpenRouter',
+      icon: 'bi bi-globe2',
+      statusReady: 'Auto Model · OpenRouter',
+      workerFile: 'ai-worker-openrouter.js',
+      keyStorageKey: 'md-viewer-openrouter-key',
+      dialogTitle: 'Connect to OpenRouter',
+      dialogDesc: 'Enter your free API key for <strong>300+ AI models</strong>',
+      dialogPlaceholder: 'sk-or-xxxxxxxxxxxxxxxxxxxx',
+      dialogLink: 'https://openrouter.ai/keys',
+      dialogLinkText: 'openrouter.ai/keys',
+      dialogIcon: 'bi bi-globe2',
+      getKey: () => openrouterApiKey,
+      setKey: (k) => { openrouterApiKey = k; },
+      getWorker: () => openrouterWorker,
+      setWorker: (w) => { openrouterWorker = w; },
+      isLoaded: () => openrouterModelLoaded,
+      setLoaded: (v) => { openrouterModelLoaded = v; },
+    },
+  };
+
+  // Unified helpers
+  function getActiveWorker() {
+    if (currentAiModel === 'qwen-local') return aiWorker;
+    const p = CLOUD_PROVIDERS[currentAiModel];
+    return p ? p.getWorker() : null;
+  }
+  function isCurrentModelReady() {
+    if (currentAiModel === 'qwen-local') return aiModelLoaded;
+    const p = CLOUD_PROVIDERS[currentAiModel];
+    return p ? p.isLoaded() : false;
+  }
 
   // --- Check WebGPU on page load (for consent dialog) ---
   (async function checkGPU() {
@@ -3597,9 +4024,195 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     aiDeviceDetail.textContent = 'Will use WASM (slower but functional)';
   })();
 
+  // --- Initialize model selector UI on load ---
+  function initModelSelectorUI() {
+    // Restore last selected model
+    updateModelUI(currentAiModel);
+    // Mark the correct option as active
+    if (aiModelDropdown) {
+      aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.model === currentAiModel);
+      });
+    }
+  }
+  initModelSelectorUI();
+
+  function updateModelUI(modelId) {
+    const p = CLOUD_PROVIDERS[modelId];
+    if (p) {
+      if (aiModelLabel) aiModelLabel.textContent = p.label;
+      if (aiModelBtnIcon) { aiModelBtnIcon.className = p.icon; }
+      if (aiModelBadge) aiModelBadge.textContent = p.badge;
+    } else {
+      if (aiModelLabel) aiModelLabel.textContent = 'Qwen 3.5 · Local';
+      if (aiModelBtnIcon) { aiModelBtnIcon.className = 'bi bi-pc-display'; }
+      if (aiModelBadge) aiModelBadge.textContent = 'Qwen 3.5 · Local';
+    }
+  }
+
+  // --- Model Selector Dropdown ---
+  if (aiModelBtn) {
+    aiModelBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      aiModelSelector.classList.toggle('open');
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (aiModelSelector && !aiModelSelector.contains(e.target)) {
+      aiModelSelector.classList.remove('open');
+    }
+  });
+
+  // Model option click
+  if (aiModelDropdown) {
+    aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const model = opt.dataset.model;
+        aiModelSelector.classList.remove('open');
+        if (model === currentAiModel) return;
+
+        const provider = CLOUD_PROVIDERS[model];
+        if (provider) {
+          // Cloud model — need API key
+          if (!provider.getKey()) {
+            showApiKeyModal(model);
+            return;
+          }
+          switchToModel(model);
+        } else {
+          // Qwen local
+          switchToModel('qwen-local');
+        }
+      });
+    });
+  }
+
+  function switchToModel(modelId) {
+    currentAiModel = modelId;
+    localStorage.setItem('md-viewer-ai-model', modelId);
+    updateModelUI(modelId);
+
+    // Update active option
+    if (aiModelDropdown) {
+      aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.model === modelId);
+      });
+    }
+
+    const provider = CLOUD_PROVIDERS[modelId];
+    if (provider) {
+      if (!provider.isLoaded() && !provider.getWorker()) {
+        initCloudWorker(modelId);
+      }
+      if (provider.isLoaded()) {
+        addAiStatusBar('ready', provider.statusReady);
+      }
+    } else {
+      // Qwen local
+      if (!aiModelLoaded && !aiWorker) {
+        if (localStorage.getItem('md-viewer-ai-consented')) {
+          initAiWorker();
+          addAiStatusBar('loading', 'Loading cached model...');
+        } else {
+          addAiStatusBar('loading', 'Qwen not loaded — click AI button to download');
+        }
+      } else if (aiModelLoaded) {
+        addAiStatusBar('ready', 'Qwen 3.5 · Local');
+      }
+    }
+  }
+
+  // --- API Key Modal (shared by all cloud providers) ---
+  const aiApikeyTitle = document.getElementById('ai-apikey-title');
+  const aiApikeyDesc = document.getElementById('ai-apikey-desc');
+  const aiApikeyIcon = document.getElementById('ai-apikey-icon');
+  const aiApikeyLink = document.getElementById('ai-apikey-link');
+
+  function showApiKeyModal(providerId) {
+    pendingProviderForKey = providerId;
+    const provider = CLOUD_PROVIDERS[providerId];
+    if (!provider) return;
+
+    // Update dialog with provider-specific info
+    if (aiApikeyTitle) aiApikeyTitle.textContent = provider.dialogTitle;
+    if (aiApikeyDesc) aiApikeyDesc.innerHTML = provider.dialogDesc;
+    if (aiApikeyIcon) aiApikeyIcon.className = provider.dialogIcon;
+    if (aiApikeyLink) {
+      aiApikeyLink.href = provider.dialogLink;
+      aiApikeyLink.textContent = provider.dialogLinkText;
+    }
+    aiGroqKeyInput.placeholder = provider.dialogPlaceholder;
+    aiGroqKeyInput.value = provider.getKey() || '';
+
+    aiApikeyModal.style.display = 'flex';
+    aiApikeyError.style.display = 'none';
+    aiApikeySave.disabled = false;
+    aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
+    setTimeout(() => aiGroqKeyInput.focus(), 100);
+  }
+
+  function hideApiKeyModal() {
+    aiApikeyModal.style.display = 'none';
+    pendingProviderForKey = null;
+  }
+
+  if (aiApikeyCancel) aiApikeyCancel.addEventListener('click', hideApiKeyModal);
+  if (aiApikeyModal) {
+    aiApikeyModal.addEventListener('click', (e) => {
+      if (e.target === aiApikeyModal) hideApiKeyModal();
+    });
+  }
+
+  if (aiApikeySave) {
+    aiApikeySave.addEventListener('click', () => {
+      const key = aiGroqKeyInput.value.trim();
+      const providerId = pendingProviderForKey;
+      const provider = CLOUD_PROVIDERS[providerId];
+      if (!key || !provider) {
+        aiApikeyError.textContent = 'Please enter your API key.';
+        aiApikeyError.style.display = 'block';
+        return;
+      }
+
+      aiApikeySave.disabled = true;
+      aiApikeySave.innerHTML = '<span class="ai-status-spinner"></span> Validating...';
+      aiApikeyError.style.display = 'none';
+
+      // Save key
+      provider.setKey(key);
+      localStorage.setItem(provider.keyStorageKey, key);
+
+      // Init worker to validate key
+      initCloudWorker(providerId, () => {
+        hideApiKeyModal();
+        switchToModel(providerId);
+        if (!aiPanelOpen) openAiPanel();
+      }, (errorMsg) => {
+        aiApikeySave.disabled = false;
+        aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
+        aiApikeyError.textContent = errorMsg;
+        aiApikeyError.style.display = 'block';
+        provider.setKey(null);
+        localStorage.removeItem(provider.keyStorageKey);
+      });
+    });
+  }
+
+  // Handle Enter key in API key input
+  if (aiGroqKeyInput) {
+    aiGroqKeyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        aiApikeySave.click();
+      }
+    });
+  }
+
   // --- Panel Toggle ---
   function openAiPanel() {
-    if (!aiModelLoaded && !aiWorker) {
+    if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
       // Check if user previously consented (model cached in browser)
       if (localStorage.getItem('md-viewer-ai-consented')) {
         // Auto-load — skip consent dialog, model is cached
@@ -3611,6 +4224,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
         aiPanel.classList.add('ai-panel-open');
         aiToggleBtn.classList.add('ai-active');
         aiPanelOpen = true;
+        document.body.classList.add('ai-panel-active');
         addAiStatusBar('loading', 'Loading cached model...');
         aiInput.focus();
         return;
@@ -3619,12 +4233,24 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       showAiConsentDialog();
       return;
     }
+
+    // Any cloud model — check if ready
+    const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
+    if (cloudProvider && !cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
+      if (!cloudProvider.getKey()) {
+        showApiKeyModal(currentAiModel);
+        return;
+      }
+      initCloudWorker(currentAiModel);
+    }
+
     aiPanel.style.display = 'flex';
     aiPanelOverlay.classList.add('active');
     void aiPanel.offsetWidth;
     aiPanel.classList.add('ai-panel-open');
     aiToggleBtn.classList.add('ai-active');
     aiPanelOpen = true;
+    document.body.classList.add('ai-panel-active');
     aiInput.focus();
   }
 
@@ -3633,6 +4259,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     aiPanelOverlay.classList.remove('active');
     aiToggleBtn.classList.remove('ai-active');
     aiPanelOpen = false;
+    document.body.classList.remove('ai-panel-active');
     setTimeout(() => {
       if (!aiPanelOpen) aiPanel.style.display = 'none';
     }, 300);
@@ -3650,6 +4277,66 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
   });
   if (aiPanelCloseBtn) aiPanelCloseBtn.addEventListener('click', closeAiPanel);
   // Overlay is pass-through — panel closes via the X button only
+
+  // --- AI Panel Resize (drag left edge) ---
+  const aiResizeDivider = document.getElementById('ai-resize-divider');
+
+  // Restore saved width
+  const savedAiWidth = localStorage.getItem('md-viewer-ai-panel-width');
+  if (savedAiWidth) {
+    const w = parseInt(savedAiWidth, 10);
+    if (w >= 250 && w <= window.innerWidth * 0.6) {
+      document.documentElement.style.setProperty('--ai-panel-width', w + 'px');
+    }
+  }
+
+  if (aiResizeDivider) {
+    let aiResizing = false;
+    let aiResizeStartX = 0;
+    let aiResizeStartWidth = 0;
+
+    function startAiResize(e) {
+      e.preventDefault();
+      aiResizing = true;
+      aiResizeStartX = e.clientX || e.touches[0].clientX;
+      aiResizeStartWidth = aiPanel.offsetWidth;
+      aiResizeDivider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', handleAiResize);
+      document.addEventListener('mouseup', stopAiResize);
+      document.addEventListener('touchmove', handleAiResize, { passive: false });
+      document.addEventListener('touchend', stopAiResize);
+    }
+
+    function handleAiResize(e) {
+      if (!aiResizing) return;
+      e.preventDefault();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      if (clientX == null) return;
+      const delta = aiResizeStartX - clientX;
+      const newWidth = Math.min(Math.max(aiResizeStartWidth + delta, 250), window.innerWidth * 0.6);
+      document.documentElement.style.setProperty('--ai-panel-width', newWidth + 'px');
+    }
+
+    function stopAiResize() {
+      if (!aiResizing) return;
+      aiResizing = false;
+      aiResizeDivider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleAiResize);
+      document.removeEventListener('mouseup', stopAiResize);
+      document.removeEventListener('touchmove', handleAiResize);
+      document.removeEventListener('touchend', stopAiResize);
+      // Persist width
+      const currentWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ai-panel-width'));
+      if (currentWidth) localStorage.setItem('md-viewer-ai-panel-width', currentWidth);
+    }
+
+    aiResizeDivider.addEventListener('mousedown', startAiResize);
+    aiResizeDivider.addEventListener('touchstart', startAiResize, { passive: false });
+  }
 
   // --- Consent Dialog ---
   function showAiConsentDialog() {
@@ -3737,8 +4424,11 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
           aiPanel.classList.add('ai-panel-open');
           aiToggleBtn.classList.add('ai-active');
           aiPanelOpen = true;
-          // Add a status bar to the panel
-          addAiStatusBar('ready', `Model loaded (${msg.device.toUpperCase()})`);
+          document.body.classList.add('ai-panel-active');
+          // Add a status bar — show current model name
+          if (currentAiModel === 'qwen-local') {
+            addAiStatusBar('ready', `Qwen 3.5 · Local (${msg.device.toUpperCase()})`);
+          }
           aiInput.focus();
           break;
 
@@ -3789,6 +4479,161 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     });
 
     aiWorker.postMessage({ type: 'load' });
+  }
+
+  // --- Groq Worker Lifecycle ---
+  // --- Generic Cloud Worker Initializer (works for any provider) ---
+  function initCloudWorker(providerId, onSuccess, onError) {
+    const provider = CLOUD_PROVIDERS[providerId];
+    if (!provider) return;
+
+    if (provider.getWorker()) {
+      if (provider.isLoaded()) {
+        if (onSuccess) onSuccess();
+        return;
+      }
+    }
+
+    // Terminate existing worker if re-initializing
+    if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
+    provider.setLoaded(false);
+
+    const worker = new Worker(provider.workerFile);
+    provider.setWorker(worker);
+
+    worker.addEventListener('message', (e) => {
+      const msg = e.data;
+
+      switch (msg.type) {
+        case 'status':
+          addAiStatusBar('loading', msg.message);
+          break;
+
+        case 'loaded':
+          provider.setLoaded(true);
+          if (currentAiModel === providerId) {
+            addAiStatusBar('ready', provider.statusReady);
+          }
+          if (onSuccess) { onSuccess(); onSuccess = null; }
+          break;
+
+        case 'token':
+          handleStreamingToken(msg.token, msg.messageId);
+          break;
+
+        case 'complete':
+          handleGroqComplete(msg.text, msg.messageId);
+          break;
+
+        case 'error':
+          if (!provider.isLoaded()) {
+            if (onError) { onError(msg.message); onError = null; }
+            else { addAiStatusBar('error', msg.message); }
+            if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
+            if (msg.message.includes('Invalid API key') || msg.message.includes('API key')) {
+              provider.setKey(null);
+              localStorage.removeItem(provider.keyStorageKey);
+            }
+          } else {
+            handleAiError(msg.message, msg.messageId);
+          }
+          break;
+      }
+    });
+
+    worker.addEventListener('error', (e) => {
+      console.error(`${providerId} worker error:`, e);
+      provider.setLoaded(false);
+      if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
+      const errorMsg = `${provider.dialogTitle.replace('Connect to ', '')} worker failed to initialize.`;
+      if (onError) { onError(errorMsg); onError = null; }
+      else { addAiStatusBar('error', errorMsg); }
+    });
+
+    // Send API key and load
+    worker.postMessage({ type: 'setApiKey', apiKey: provider.getKey() });
+    worker.postMessage({ type: 'load' });
+  }
+
+  // --- Streaming Token Handling ---
+  function handleStreamingToken(token, messageId) {
+    // Find or create the streaming bubble
+    let bubble = document.getElementById('ai-streaming-bubble-' + messageId);
+
+    if (!bubble) {
+      // First token — replace typing indicator with an empty AI bubble
+      removeTypingIndicator();
+
+      // Remove welcome message
+      const welcome = aiChatArea.querySelector('.ai-welcome-message');
+      if (welcome) welcome.remove();
+
+      const msg = document.createElement('div');
+      msg.className = 'ai-message ai-message-ai';
+      msg.id = 'ai-streaming-msg-' + messageId;
+      msg.innerHTML = `
+        <span class="ai-msg-label">AI</span>
+        <div class="ai-msg-bubble" id="ai-streaming-bubble-${messageId}"></div>
+      `;
+      aiChatArea.appendChild(msg);
+      bubble = document.getElementById('ai-streaming-bubble-' + messageId);
+    }
+
+    // Append token text (accumulate raw text, then format)
+    if (!bubble._rawText) bubble._rawText = '';
+    bubble._rawText += token;
+    bubble.innerHTML = formatAiResponse(bubble._rawText);
+
+    // Auto-scroll
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+  }
+
+  function handleGroqComplete(text, messageId) {
+    aiIsGenerating = false;
+    aiSendBtn.disabled = false;
+    streamingMessageId = null;
+
+    // Find the streaming message and add action buttons
+    const msgEl = document.getElementById('ai-streaming-msg-' + messageId);
+    if (msgEl) {
+      // Remove the streaming IDs (no longer needed)
+      const bubble = document.getElementById('ai-streaming-bubble-' + messageId);
+      if (bubble) {
+        bubble.removeAttribute('id');
+        bubble.innerHTML = formatAiResponse(text);
+      }
+      msgEl.removeAttribute('id');
+
+      // Add action buttons
+      const actions = document.createElement('div');
+      actions.className = 'ai-msg-actions';
+      actions.innerHTML = `
+        <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
+          <i class="bi bi-box-arrow-in-down"></i> Insert
+        </button>
+        <button class="ai-msg-action-btn" data-action="copy" data-text="${encodeURIComponent(text)}" title="Copy to clipboard">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+        <button class="ai-msg-action-btn" data-action="replace" data-text="${encodeURIComponent(text)}" title="Replace selected text">
+          <i class="bi bi-arrow-left-right"></i> Replace
+        </button>
+      `;
+      msgEl.appendChild(actions);
+
+      // Wire up action buttons
+      actions.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const action = this.dataset.action;
+          const rawText = decodeURIComponent(this.dataset.text);
+          handleAiAction(action, rawText, this);
+        });
+      });
+    } else {
+      // Fallback if no streaming element found
+      removeTypingIndicator();
+      addAiMessage(text, messageId);
+    }
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
   }
 
   // --- Status Bar ---
@@ -3976,14 +4821,18 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     return div.innerHTML;
   }
 
-  // --- Send to AI ---
+  // --- Send to AI (routes to active model's worker) ---
   function sendToAi(taskType, context, userPrompt) {
-    if (!aiModelLoaded || !aiWorker) return;
+    const activeWorker = getActiveWorker();
+    const isReady = isCurrentModelReady();
+
+    if (!isReady || !activeWorker) return;
     if (aiIsGenerating) return;
 
     aiIsGenerating = true;
     aiSendBtn.disabled = true;
     const messageId = ++aiMessageIdCounter;
+    streamingMessageId = messageId;
 
     // Check thinking mode toggle
     const thinkingToggle = document.getElementById('ai-thinking-toggle');
@@ -3994,7 +4843,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     addUserMessage(displayText);
     addTypingIndicator();
 
-    aiWorker.postMessage({
+    activeWorker.postMessage({
       type: 'generate',
       taskType,
       context,
@@ -4136,13 +4985,16 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       const thinkingToggle = document.getElementById('ai-thinking-toggle');
       const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
 
+      // Route to correct worker
+      const activeWorker = getActiveWorker();
+
       // Set up one-time listener for this chunk's response
       const chunkHandler = (e) => {
         const msg = e.data;
         if (msg.messageId !== messageId) return;
 
         if (msg.type === 'complete') {
-          aiWorker.removeEventListener('message', chunkHandler);
+          activeWorker.removeEventListener('message', chunkHandler);
           chunkResults.push(msg.text);
           removeTypingIndicator();
           // Show intermediate result
@@ -4153,17 +5005,17 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
           // Process next chunk after a small delay
           setTimeout(processNextChunk, 100);
         } else if (msg.type === 'error') {
-          aiWorker.removeEventListener('message', chunkHandler);
+          activeWorker.removeEventListener('message', chunkHandler);
           removeTypingIndicator();
           addAiMessage(`❌ Error on chunk ${chunkNum}: ${msg.message}`);
           aiIsGenerating = false;
           aiSendBtn.disabled = false;
         }
       };
-      aiWorker.addEventListener('message', chunkHandler);
+      activeWorker.addEventListener('message', chunkHandler);
       addTypingIndicator();
 
-      aiWorker.postMessage({
+      activeWorker.postMessage({
         type: 'generate',
         taskType: action,
         context: chunks[chunkIndex],
@@ -4188,7 +5040,8 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       }
       const editorContent = markdownEditor.value;
 
-      if (!aiModelLoaded) {
+      const isCurrentModelReady2 = isCurrentModelReady();
+      if (!isCurrentModelReady2) {
         openAiPanel();
         return;
       }
@@ -4249,7 +5102,8 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
   markdownEditor.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === ' ') {
       e.preventDefault();
-      if (!aiModelLoaded) {
+      const isCurrentReady = isCurrentModelReady();
+      if (!isCurrentReady) {
         openAiPanel();
         return;
       }
@@ -4275,7 +5129,8 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
         markdownEditor.selectionEnd
       );
 
-      if (selectedText && selectedText.length > 2 && aiModelLoaded) {
+      const isEditorCtxReady = isCurrentModelReady();
+      if (selectedText && selectedText.length > 2 && isEditorCtxReady) {
         savedContextText = selectedText;
         aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
         aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
@@ -4294,7 +5149,8 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
         const selection = window.getSelection();
         const selectedText = selection ? selection.toString().trim() : '';
 
-        if (selectedText && selectedText.length > 2 && aiModelLoaded) {
+        const isCurrentReady3 = isCurrentModelReady();
+        if (selectedText && selectedText.length > 2 && isCurrentReady3) {
           savedContextText = selectedText;
           aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
           aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
@@ -4345,8 +5201,8 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       aiChatArea.innerHTML = `
         <div class="ai-welcome-message">
           <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>
-          <h5>Local AI Assistant</h5>
-          <p>Powered by Qwen 3.5 Small · Runs 100% in your browser</p>
+          <h5>AI Assistant</h5>
+          <p>Switch models below · Local or Cloud</p>
           <div class="ai-welcome-tips">
             <div class="ai-tip"><i class="bi bi-cursor-text"></i> Select text + use quick actions</div>
             <div class="ai-tip"><i class="bi bi-chat-dots"></i> Ask questions about your document</div>
@@ -4357,10 +5213,300 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     });
   }
 
+  // ==============================================
+  // LLM MEMORY CONVERTER
+  // ==============================================
+
+  const MEMORY_TEMPLATES = {
+    standard: {
+      name: "Standard Memory",
+      prefix: "<context>\n<memory_document>\n",
+      suffix: "\n</memory_document>\n</context>",
+      sectionWrap: (title, content) => `<section name="${title}">\n${content}\n</section>`,
+    },
+    system: {
+      name: "System Prompt Block",
+      prefix: "<user_context>\nThe following is structured memory about the user and their projects:\n\n",
+      suffix: "\n</user_context>",
+      sectionWrap: (title, content) => `## ${title}\n${content}\n`,
+    },
+    openai: {
+      name: "OpenAI Custom Instructions",
+      prefix: "# About Me & My Projects\n\n",
+      suffix: "",
+      sectionWrap: (title, content) => `## ${title}\n${content}\n`,
+    },
+    raw: {
+      name: "Raw Structured",
+      prefix: "---BEGIN CONTEXT---\n",
+      suffix: "\n---END CONTEXT---",
+      sectionWrap: (title, content) => `[${title.toUpperCase()}]\n${content}\n`,
+    },
+  };
+
+  function parseMarkdownToSections(md) {
+    const lines = md.split("\n");
+    const sections = [];
+    let currentSection = null;
+    let currentContent = [];
+    for (const line of lines) {
+      const h1 = line.match(/^#\s+(.+)/);
+      const h2 = line.match(/^##\s+(.+)/);
+      if (h1 || h2) {
+        if (currentSection) {
+          sections.push({ title: currentSection, content: currentContent.join("\n").trim() });
+        }
+        currentSection = (h1 || h2)[1];
+        currentContent = [];
+      } else {
+        currentContent.push(line);
+      }
+    }
+    if (currentSection) {
+      sections.push({ title: currentSection, content: currentContent.join("\n").trim() });
+    }
+    return sections;
+  }
+
+  function generateMemoryOutput(md, templateKey, meta) {
+    const t = MEMORY_TEMPLATES[templateKey];
+    const sections = parseMarkdownToSections(md);
+    let output = t.prefix;
+
+    if (meta.title || meta.author || meta.tags) {
+      let metaBlock = "<metadata>\n";
+      if (meta.title) metaBlock += `  title: ${meta.title}\n`;
+      if (meta.author) metaBlock += `  author: ${meta.author}\n`;
+      if (meta.tags) metaBlock += `  tags: ${meta.tags}\n`;
+      metaBlock += `  generated: ${new Date().toISOString().split("T")[0]}\n`;
+      metaBlock += `  format: llm-memory-v1\n`;
+      metaBlock += "</metadata>\n\n";
+      output += metaBlock;
+    }
+
+    if (meta.summary) {
+      output += `<summary>\n${meta.summary}\n</summary>\n\n`;
+    }
+
+    for (const sec of sections) {
+      if (sec.content) {
+        output += t.sectionWrap(sec.title, sec.content) + "\n";
+      }
+    }
+
+    output += t.suffix;
+    return output.trim();
+  }
+
+  // --- Memory Modal UI ---
+  const memoryModal = document.getElementById('memory-modal');
+  const memoryCloseBtn = document.getElementById('memory-modal-close');
+  const memoryOutputPre = document.getElementById('memory-output-pre');
+  const memoryOutputLabel = document.getElementById('memory-output-label');
+  const memoryCopyOutputBtn = document.getElementById('memory-copy-output');
+  const memoryCopyBlockBtn = document.getElementById('memory-copy-block');
+  const memoryDownloadMd = document.getElementById('memory-download-md');
+  const memoryDownloadTxt = document.getElementById('memory-download-txt');
+  const memoryGenLink = document.getElementById('memory-gen-link');
+  const memoryShareResult = document.getElementById('memory-share-result');
+  const memoryToggleApi = document.getElementById('memory-toggle-api');
+  const memoryApiExample = document.getElementById('memory-api-example');
+
+  let memoryTemplate = 'standard';
+  let memoryModalOpen = false;
+
+  function getMemoryMeta() {
+    return {
+      title: document.getElementById('memory-meta-title').value.trim(),
+      author: document.getElementById('memory-meta-author').value.trim(),
+      tags: document.getElementById('memory-meta-tags').value.trim(),
+      summary: document.getElementById('memory-meta-summary').value.trim(),
+    };
+  }
+
+  function getCurrentMemoryOutput() {
+    return generateMemoryOutput(markdownEditor.value, memoryTemplate, getMemoryMeta());
+  }
+
+  function updateMemoryStats() {
+    const md = markdownEditor.value;
+    const output = getCurrentMemoryOutput();
+    const wordCount = md.split(/\s+/).filter(Boolean).length;
+    const tokenEstimate = Math.round(output.split(/\s+/).filter(Boolean).length * 1.3);
+    const sectionCount = parseMarkdownToSections(md).length;
+
+    document.getElementById('memory-word-count').textContent = wordCount + ' words';
+    document.getElementById('memory-token-count').textContent = '~' + tokenEstimate + ' tokens';
+    document.getElementById('memory-section-count').textContent = sectionCount + ' sections';
+
+    const sizeLabel = document.getElementById('memory-size-label');
+    if (tokenEstimate < 2000) {
+      sizeLabel.textContent = 'compact';
+      sizeLabel.className = 'memory-size-compact';
+    } else if (tokenEstimate < 8000) {
+      sizeLabel.textContent = 'medium';
+      sizeLabel.className = 'memory-size-medium';
+    } else {
+      sizeLabel.textContent = 'large';
+      sizeLabel.className = 'memory-size-large';
+    }
+  }
+
+  function refreshMemoryOutput() {
+    const output = getCurrentMemoryOutput();
+    memoryOutputPre.textContent = output;
+    memoryOutputLabel.textContent = 'Generated Memory · ' + MEMORY_TEMPLATES[memoryTemplate].name;
+    updateMemoryStats();
+  }
+
+  function openMemoryModal() {
+    memoryModal.style.display = 'flex';
+    memoryModalOpen = true;
+    refreshMemoryOutput();
+  }
+
+  function closeMemoryModal() {
+    memoryModal.style.display = 'none';
+    memoryModalOpen = false;
+  }
+
+  // Open from export dropdown
+  const exportLlmBtn = document.getElementById('export-llm-memory');
+  if (exportLlmBtn) {
+    exportLlmBtn.addEventListener('click', openMemoryModal);
+  }
+  const mobileExportLlm = document.getElementById('mobile-export-llm-memory');
+  if (mobileExportLlm) {
+    mobileExportLlm.addEventListener('click', () => {
+      // Close mobile menu
+      const mobilePanel = document.getElementById('mobile-menu-panel');
+      const mobileOverlay = document.getElementById('mobile-menu-overlay');
+      if (mobilePanel) mobilePanel.classList.remove('show');
+      if (mobileOverlay) mobileOverlay.classList.remove('show');
+      openMemoryModal();
+    });
+  }
+
+  // Close
+  memoryCloseBtn.addEventListener('click', closeMemoryModal);
+  memoryModal.addEventListener('click', (e) => {
+    if (e.target === memoryModal) closeMemoryModal();
+  });
+
+  // Tabs
+  document.querySelectorAll('.memory-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.memory-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.memory-tab-content').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      const tabId = 'memory-tab-' + this.dataset.tab;
+      document.getElementById(tabId).classList.add('active');
+
+      if (this.dataset.tab === 'output' || this.dataset.tab === 'share') {
+        refreshMemoryOutput();
+      }
+    });
+  });
+
+  // Template selection
+  document.querySelectorAll('.memory-template-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.memory-template-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      memoryTemplate = this.dataset.template;
+      refreshMemoryOutput();
+    });
+  });
+
+  // Metadata fields → live refresh
+  ['memory-meta-title', 'memory-meta-author', 'memory-meta-tags', 'memory-meta-summary'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', refreshMemoryOutput);
+  });
+
+  // Copy helpers
+  function memoryCopyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const origHtml = btn.innerHTML;
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = origHtml;
+      }, 2000);
+    }).catch(() => { });
+  }
+
+  memoryCopyOutputBtn.addEventListener('click', () => {
+    memoryCopyText(getCurrentMemoryOutput(), memoryCopyOutputBtn);
+  });
+
+  memoryCopyBlockBtn.addEventListener('click', () => {
+    memoryCopyText(getCurrentMemoryOutput(), memoryCopyBlockBtn);
+  });
+
+  // Download
+  function memoryDownload(ext) {
+    const output = getCurrentMemoryOutput();
+    const meta = getMemoryMeta();
+    const blob = new Blob([output], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `memory-${meta.title || "context"}-${Date.now()}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  memoryDownloadMd.addEventListener('click', () => memoryDownload('md'));
+  memoryDownloadTxt.addEventListener('click', () => memoryDownload('txt'));
+
+  // Generate shareable link
+  memoryGenLink.addEventListener('click', () => {
+    const output = getCurrentMemoryOutput();
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(output)));
+      if (encoded.length > 8000) {
+        memoryShareResult.style.display = 'block';
+        memoryShareResult.className = 'error';
+        memoryShareResult.innerHTML = 'Content too large for URL encoding. Use download or copy instead.';
+      } else {
+        const dataUrl = `data:text/plain;base64,${encoded}`;
+        memoryShareResult.style.display = 'flex';
+        memoryShareResult.className = 'success';
+        memoryShareResult.innerHTML = `<input readonly value="${dataUrl}"><button class="memory-action-btn" id="memory-copy-link"><i class="bi bi-clipboard"></i> Copy</button>`;
+        document.getElementById('memory-copy-link').addEventListener('click', function () {
+          memoryCopyText(dataUrl, this);
+        });
+      }
+    } catch {
+      memoryShareResult.style.display = 'block';
+      memoryShareResult.className = 'error';
+      memoryShareResult.innerHTML = 'Failed to encode content.';
+    }
+  });
+
+  // API example toggle
+  memoryToggleApi.addEventListener('click', () => {
+    const showing = memoryApiExample.style.display !== 'none';
+    memoryApiExample.style.display = showing ? 'none' : 'block';
+    memoryToggleApi.textContent = showing ? 'Show Code' : 'Hide Code';
+  });
+
   // --- Unified Escape Key Handler (priority-based, topmost overlay wins) ---
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
 
+    // Priority 0: Memory modal
+    if (memoryModalOpen) {
+      closeMemoryModal();
+      return;
+    }
+    // Priority 0b: API key modal
+    if (aiApikeyModal && aiApikeyModal.style.display === 'flex') {
+      hideApiKeyModal();
+      return;
+    }
     // Priority 1: AI consent modal (topmost dialog)
     if (aiConsentModal.style.display === 'flex') {
       hideAiConsentDialog();

@@ -64,6 +64,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- File format converters (MarkItDown-inspired) -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
     <!-- just-bash: sandboxed bash interpreter for executable code blocks -->
     <script type="module">
         try {
@@ -133,10 +138,11 @@
                     <button id="toc-toggle" class="tool-button" title="Table of Contents">
                         <i class="bi bi-list-nested"></i>
                     </button>
-                    <button id="import-button" class="tool-button" title="Import Markdown">
+                    <button id="import-button" class="tool-button" title="Import File">
                         <i class="bi bi-upload"></i>
                     </button>
-                    <input type="file" id="file-input" class="file-input" accept=".md,.markdown,text/markdown">
+                    <input type="file" id="file-input" class="file-input"
+                        accept=".md,.markdown,.docx,.xlsx,.xls,.csv,.html,.htm,.json,.xml,.pdf,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/html,application/json,text/xml,application/pdf">
 
                     <div class="dropdown">
                         <button class="tool-button dropdown-toggle" type="button" id="exportDropdown"
@@ -147,6 +153,11 @@
                             <li><button class="dropdown-item" type="button" id="export-md">Markdown (.md)</button></li>
                             <li><button class="dropdown-item" type="button" id="export-html">HTML</button></li>
                             <li><button class="dropdown-item" type="button" id="export-pdf">PDF</button></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><button class="dropdown-item" type="button" id="export-llm-memory"><i
+                                        class="bi bi-cpu me-1"></i>LLM Memory</button></li>
                         </ul>
                     </div>
 
@@ -176,7 +187,7 @@
 
                     <span class="toolbar-separator"></span>
 
-                    <button id="ai-toggle-button" class="tool-button ai-sparkle-btn" title="AI Assistant (Qwen 3.5)">
+                    <button id="ai-toggle-button" class="tool-button ai-sparkle-btn" title="AI Assistant">
                         <i class="bi bi-stars"></i> <span>AI</span>
                     </button>
 
@@ -255,8 +266,8 @@
                                 <i class="bi bi-link"></i> Sync On
                             </button>
 
-                            <button id="mobile-import-button" class="mobile-menu-item" title="Import Markdown">
-                                <i class="bi bi-upload me-2"></i> Import Markdown
+                            <button id="mobile-import-button" class="mobile-menu-item" title="Import File">
+                                <i class="bi bi-upload me-2"></i> Import File
                             </button>
 
                             <button id="mobile-export-md" class="mobile-menu-item" title="Export as Markdown">
@@ -269,6 +280,10 @@
 
                             <button id="mobile-export-pdf" class="mobile-menu-item" title="Export as PDF">
                                 <i class="bi bi-file-earmark-pdf me-2"></i> Export as PDF
+                            </button>
+
+                            <button id="mobile-export-llm-memory" class="mobile-menu-item" title="Export as LLM Memory">
+                                <i class="bi bi-cpu me-2"></i> LLM Memory
                             </button>
 
                             <button id="mobile-copy-markdown" class="mobile-menu-item" title="Copy Markdown">
@@ -298,7 +313,8 @@
             <button id="close-dropzone" class="close-btn" title="Close dropzone">
                 <i class="bi bi-x-lg"></i>
             </button>
-            <p class="mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Drop your Markdown file here or click to browse</p>
+            <p class="mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Drop your file here or click to browse</p>
+            <small class="text-muted mt-1 d-block">Supports: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF</small>
         </div>
 
         <!-- Formatting Toolbar -->
@@ -476,11 +492,12 @@
 
     <!-- AI Assistant Panel -->
     <div id="ai-panel" class="ai-panel" style="display:none">
+        <div id="ai-resize-divider" class="ai-resize-divider" title="Drag to resize AI panel"></div>
         <div class="ai-panel-header">
             <div class="ai-panel-title">
                 <i class="bi bi-stars"></i>
                 <span>AI Assistant</span>
-                <span class="ai-badge">Qwen 3.5 · Local</span>
+                <span class="ai-badge" id="ai-model-badge">Qwen 3.5 · Local</span>
             </div>
             <div class="ai-panel-controls">
                 <button class="ai-panel-btn" id="ai-clear-chat" title="Clear chat"><i class="bi bi-trash3"></i></button>
@@ -518,8 +535,8 @@
         <div class="ai-chat-area" id="ai-chat-area">
             <div class="ai-welcome-message">
                 <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>
-                <h5>Local AI Assistant</h5>
-                <p>Powered by Qwen 3.5 Small · Runs 100% in your browser</p>
+                <h5>AI Assistant</h5>
+                <p>Switch models below · Local or Cloud</p>
                 <div class="ai-welcome-tips">
                     <div class="ai-tip"><i class="bi bi-cursor-text"></i> Select text + use quick actions</div>
                     <div class="ai-tip"><i class="bi bi-chat-dots"></i> Ask questions about your document</div>
@@ -530,6 +547,43 @@
         </div>
 
         <div class="ai-input-area">
+            <div class="ai-model-selector">
+                <button class="ai-model-btn" id="ai-model-btn" title="Switch AI model">
+                    <span class="ai-model-btn-icon"><i class="bi bi-pc-display" id="ai-model-btn-icon"></i></span>
+                    <span id="ai-model-label">Qwen 3.5 · Local</span>
+                    <i class="bi bi-chevron-up ai-model-chevron"></i>
+                </button>
+                <div class="ai-model-dropdown" id="ai-model-dropdown">
+                    <button class="ai-model-option active" data-model="qwen-local">
+                        <i class="bi bi-pc-display"></i>
+                        <div>
+                            <strong>Qwen 3.5 Small</strong>
+                            <small>Local · Private · No API key needed</small>
+                        </div>
+                    </button>
+                    <button class="ai-model-option" data-model="groq-llama">
+                        <i class="bi bi-cloud"></i>
+                        <div>
+                            <strong>Llama 3.3 70B</strong>
+                            <small>Groq Cloud · Fast · Free tier</small>
+                        </div>
+                    </button>
+                    <button class="ai-model-option" data-model="gemini-flash">
+                        <i class="bi bi-google"></i>
+                        <div>
+                            <strong>Gemini 2.0 Flash</strong>
+                            <small>Google · 15 RPM · Free tier</small>
+                        </div>
+                    </button>
+                    <button class="ai-model-option" data-model="openrouter-free">
+                        <i class="bi bi-globe2"></i>
+                        <div>
+                            <strong>Auto · Best Free</strong>
+                            <small>OpenRouter · Multi-model · Free</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
             <div class="ai-input-wrapper">
                 <textarea id="ai-input" placeholder="Ask AI anything... (e.g. 'Write a README intro')"
                     rows="1"></textarea>
@@ -594,6 +648,36 @@
         </div>
     </div>
 
+    <!-- Cloud API Key Dialog (shared by Groq / Gemini / OpenRouter) -->
+    <div id="ai-apikey-modal" class="ai-consent-modal" style="display:none">
+        <div class="ai-consent-content ai-apikey-content">
+            <div class="ai-consent-header">
+                <div class="ai-consent-icon"><i class="bi bi-cloud" id="ai-apikey-icon"></i></div>
+                <h4 id="ai-apikey-title">Connect to Cloud AI</h4>
+                <p id="ai-apikey-desc">Enter your free API key</p>
+            </div>
+            <div class="ai-consent-body">
+                <div class="ai-apikey-input-group">
+                    <label for="ai-groq-key-input">API Key</label>
+                    <input type="password" id="ai-groq-key-input" class="ai-apikey-input"
+                        placeholder="sk_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+                    <small class="ai-apikey-hint">
+                        <i class="bi bi-info-circle"></i>
+                        Get your free key at <a id="ai-apikey-link" href="#" target="_blank"
+                            rel="noopener noreferrer">provider console</a>
+                    </small>
+                </div>
+                <div id="ai-apikey-error" class="ai-apikey-error" style="display:none"></div>
+            </div>
+            <div class="ai-consent-footer">
+                <button id="ai-apikey-cancel" class="ai-consent-btn ai-consent-btn-secondary">Cancel</button>
+                <button id="ai-apikey-save" class="ai-consent-btn ai-consent-btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Connect
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- AI Editor Context Menu -->
     <div id="ai-context-menu" class="ai-context-menu" style="display:none">
         <button class="ai-ctx-btn" data-action="summarize"><i class="bi bi-card-text"></i> Summarize</button>
@@ -602,6 +686,184 @@
         <button class="ai-ctx-btn" data-action="rephrase"><i class="bi bi-arrow-repeat"></i> Rephrase</button>
         <button class="ai-ctx-btn" data-action="grammar"><i class="bi bi-spellcheck"></i> Fix Grammar</button>
         <button class="ai-ctx-btn" data-action="expand"><i class="bi bi-arrows-angle-expand"></i> Expand</button>
+    </div>
+
+    <!-- File Conversion Progress Overlay -->
+    <div id="conversion-overlay" class="conversion-overlay" style="display:none">
+        <div class="conversion-modal">
+            <div class="conversion-spinner"></div>
+            <h5 id="conversion-title">Converting...</h5>
+            <p id="conversion-detail" class="conversion-detail">Processing your file</p>
+        </div>
+    </div>
+
+    <!-- LLM Memory Converter Modal -->
+    <div id="memory-modal" class="memory-modal" style="display:none">
+        <div class="memory-modal-content">
+            <div class="memory-modal-header">
+                <div class="memory-header-left">
+                    <div class="memory-logo">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <div>
+                        <h4>md→memory</h4>
+                        <p class="memory-subtitle">convert markdown into portable LLM context</p>
+                    </div>
+                </div>
+                <div class="memory-header-right">
+                    <div class="memory-stats">
+                        <span id="memory-word-count">0 words</span>
+                        <span id="memory-token-count">~0 tokens</span>
+                        <span id="memory-section-count">0 sections</span>
+                        <span id="memory-size-label" class="memory-size-compact">compact</span>
+                    </div>
+                    <button class="memory-close-btn" id="memory-modal-close" title="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="memory-tabs">
+                <button class="memory-tab active" data-tab="config"><i class="bi bi-sliders"></i> Configure</button>
+                <button class="memory-tab" data-tab="output"><i class="bi bi-code-square"></i> Output</button>
+                <button class="memory-tab" data-tab="share"><i class="bi bi-share"></i> Share</button>
+            </div>
+
+            <div class="memory-body">
+                <!-- CONFIG TAB -->
+                <div class="memory-tab-content active" id="memory-tab-config">
+                    <div class="memory-section">
+                        <label class="memory-label">Memory Format</label>
+                        <div class="memory-template-grid">
+                            <button class="memory-template-btn active" data-template="standard">
+                                <strong>Standard Memory</strong>
+                                <small>Clean structured context for any LLM</small>
+                            </button>
+                            <button class="memory-template-btn" data-template="system">
+                                <strong>System Prompt Block</strong>
+                                <small>Ready to paste into system prompts</small>
+                            </button>
+                            <button class="memory-template-btn" data-template="openai">
+                                <strong>OpenAI Custom Instructions</strong>
+                                <small>Formatted for ChatGPT memory/instructions</small>
+                            </button>
+                            <button class="memory-template-btn" data-template="raw">
+                                <strong>Raw Structured</strong>
+                                <small>Minimal formatting, maximum compatibility</small>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="memory-section">
+                        <label class="memory-label">Metadata (Optional)</label>
+                        <div class="memory-meta-grid">
+                            <div class="memory-field">
+                                <label>Title</label>
+                                <input type="text" id="memory-meta-title" placeholder="Memory title">
+                            </div>
+                            <div class="memory-field">
+                                <label>Author</label>
+                                <input type="text" id="memory-meta-author" placeholder="Your name">
+                            </div>
+                            <div class="memory-field">
+                                <label>Tags</label>
+                                <input type="text" id="memory-meta-tags" placeholder="ai, project, context">
+                            </div>
+                        </div>
+                        <div class="memory-field memory-field-full">
+                            <label>Summary</label>
+                            <textarea id="memory-meta-summary"
+                                placeholder="Brief summary of this context for the LLM..." rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OUTPUT TAB -->
+                <div class="memory-tab-content" id="memory-tab-output">
+                    <div class="memory-output-header">
+                        <span class="memory-output-label" id="memory-output-label">Generated Memory · Standard
+                            Memory</span>
+                        <button class="memory-copy-btn" id="memory-copy-output"><i class="bi bi-clipboard"></i> Copy
+                            All</button>
+                    </div>
+                    <pre class="memory-output-pre" id="memory-output-pre"></pre>
+                </div>
+
+                <!-- SHARE TAB -->
+                <div class="memory-tab-content" id="memory-tab-share">
+                    <div class="memory-share-card">
+                        <div class="memory-share-icon"><i class="bi bi-download"></i></div>
+                        <div>
+                            <strong>Download</strong>
+                            <small>Save as file, upload to any LLM</small>
+                        </div>
+                        <div class="memory-share-actions">
+                            <button class="memory-action-btn" id="memory-download-md">.md</button>
+                            <button class="memory-action-btn" id="memory-download-txt">.txt</button>
+                        </div>
+                    </div>
+
+                    <div class="memory-share-card">
+                        <div class="memory-share-icon"><i class="bi bi-clipboard"></i></div>
+                        <div>
+                            <strong>Copy as Prompt Block</strong>
+                            <small>Paste directly into system prompt or custom instructions</small>
+                        </div>
+                        <div class="memory-share-actions">
+                            <button class="memory-action-btn" id="memory-copy-block"><i class="bi bi-clipboard"></i>
+                                Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="memory-share-card">
+                        <div class="memory-share-icon"><i class="bi bi-link-45deg"></i></div>
+                        <div>
+                            <strong>Shareable Data URL</strong>
+                            <small>Base64-encoded link (works for small contexts &lt;6KB)</small>
+                        </div>
+                        <div class="memory-share-actions">
+                            <button class="memory-action-btn" id="memory-gen-link">Generate Link</button>
+                        </div>
+                    </div>
+                    <div id="memory-share-result" style="display:none"></div>
+
+                    <div class="memory-share-card memory-api-card">
+                        <div class="memory-share-icon"><i class="bi bi-code-slash"></i></div>
+                        <div>
+                            <strong>API Integration</strong>
+                            <small>Inject memory via API calls to any LLM provider</small>
+                        </div>
+                        <div class="memory-share-actions">
+                            <button class="memory-action-btn" id="memory-toggle-api">Show Code</button>
+                        </div>
+                    </div>
+                    <pre class="memory-api-example" id="memory-api-example" style="display:none">// Fetch and inject memory into any LLM call
+const memoryResponse = await fetch(MEMORY_URL);
+const memoryText = await memoryResponse.text();
+
+// Use with Anthropic
+const response = await fetch("https://api.anthropic.com/v1/messages", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
+  body: JSON.stringify({
+    model: "claude-sonnet-4-5-20250929",
+    system: memoryText,
+    messages: [{ role: "user", content: "..." }],
+    max_tokens: 1024
+  })
+});
+
+// Use with OpenAI
+const chatResponse = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [
+    { role: "system", content: memoryText },
+    { role: "user", content: "..." }
+  ]
+});</pre>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
