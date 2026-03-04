@@ -234,7 +234,8 @@
             showSharedBanner();
         } catch (error) {
             console.error('Failed to load shared markdown:', error);
-            M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;">' + error.message + '</p></div>';
+            M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
+            M.markdownPreview.querySelector('p:last-child').textContent = error.message;
             M.setViewMode('preview');
         }
     };

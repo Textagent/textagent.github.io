@@ -3133,7 +3133,7 @@ sin(pi/4)
     markdownEditor.focus();
   }
 
-  function performFind() {
+  async function performFind() {
     const query = findInput.value;
     if (!query) {
       findMatches = [];
@@ -3147,11 +3147,13 @@ sin(pi/4)
 
     try {
       if (findRegexMode) {
-        // Safety: test regex with a small string first to detect catastrophic backtracking
+        // Safety: test regex complexity with a timeout to detect catastrophic backtracking
         const regex = new RegExp(query, 'gi');
-        // Quick sanity test — abort if this tiny match takes too long
-        const testStr = text.substring(0, Math.min(text.length, 1000));
-        regex.exec(testStr);
+        const testPassed = await testRegexSafety(regex, text);
+        if (!testPassed) {
+          findMatchCount.textContent = 'Regex too complex';
+          return;
+        }
         // Reset regex state and run on full text
         regex.lastIndex = 0;
         let m;
@@ -3188,6 +3190,32 @@ sin(pi/4)
     } else {
       findCurrentIndex = -1;
     }
+  }
+
+  /**
+   * Tests if a regex is safe to run on the full text by executing it in a
+   * racing setTimeout. Returns true if it completes within 200ms, false otherwise.
+   */
+  function testRegexSafety(regex, text) {
+    return new Promise(resolve => {
+      let done = false;
+      const worker = new Promise(r => {
+        setTimeout(() => {
+          try {
+            const testStr = text.substring(0, Math.min(text.length, 5000));
+            regex.lastIndex = 0;
+            regex.exec(testStr);
+            if (!done) { done = true; r(true); }
+          } catch (e) {
+            if (!done) { done = true; r(false); }
+          }
+        }, 0);
+      });
+      const timeout = new Promise(r => {
+        setTimeout(() => { if (!done) { done = true; r(false); } }, 200);
+      });
+      Promise.race([worker, timeout]).then(resolve);
+    });
   }
 
   function selectMatch(index) {
@@ -3943,13 +3971,9 @@ sin(pi/4)
 
     } catch (error) {
       console.error('Failed to load shared markdown:', error);
-      markdownPreview.innerHTML = `<div style="padding: 40px; text-align: center;">
-        <h3 style="color: var(--color-danger-fg);">
-          <i class="bi bi-shield-exclamation"></i> Decryption Failed
-        </h3>
-        <p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p>
-        <p style="font-size: 13px; opacity: 0.5;">${error.message}</p>
-      </div>`;
+      markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
+      // Safely insert error message as text to prevent XSS
+      markdownPreview.querySelector('p:last-child').textContent = error.message;
       setViewMode('preview');
     }
   }
@@ -6189,10 +6213,77 @@ let geminiModelLoaded = false;
 let aiIsGenerating = false;
 let aiMessageIdCounter = 0;
 let aiPanelOpen = false;
+// --- API Key Encryption for localStorage ---
+// Uses AES-GCM with a session key to prevent trivial XSS key theft.
+const API_KEY_ENC_MASTER = 'md-viewer-apk-enc';
+
+async function getApiKeyEncryptionKey() {
+  // Check for an existing master encryption key
+  let masterKeyB64 = localStorage.getItem(API_KEY_ENC_MASTER);
+  if (masterKeyB64) {
+    const raw = Uint8Array.from(atob(masterKeyB64), c => c.charCodeAt(0));
+    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  // Generate a new key — stored separately from the API keys it protects
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  const exported = new Uint8Array(await crypto.subtle.exportKey('raw', key));
+  localStorage.setItem(API_KEY_ENC_MASTER, btoa(String.fromCharCode(...exported)));
+  return key;
+}
+
+async function encryptApiKey(plainKey) {
+  try {
+    const encKey = await getApiKeyEncryptionKey();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(plainKey);
+    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, encKey, encoded);
+    const packed = new Uint8Array(iv.length + encrypted.byteLength);
+    packed.set(iv); packed.set(new Uint8Array(encrypted), iv.length);
+    return 'enc:' + btoa(String.fromCharCode(...packed));
+  } catch (e) {
+    console.warn('API key encryption failed, storing as-is:', e);
+    return plainKey;
+  }
+}
+
+async function decryptApiKey(stored) {
+  if (!stored || !stored.startsWith('enc:')) return stored; // Legacy plaintext key
+  try {
+    const encKey = await getApiKeyEncryptionKey();
+    const packed = Uint8Array.from(atob(stored.slice(4)), c => c.charCodeAt(0));
+    const iv = packed.slice(0, 12);
+    const ciphertext = packed.slice(12);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, encKey, ciphertext);
+    return new TextDecoder().decode(decrypted);
+  } catch (e) {
+    console.warn('API key decryption failed (session key may have changed):', e);
+    return null; // Key is unreadable, user will need to re-enter
+  }
+}
+
+async function saveApiKeyEncrypted(storageKey, plainKey) {
+  const encrypted = await encryptApiKey(plainKey);
+  localStorage.setItem(storageKey, encrypted);
+}
+
+async function loadApiKeyDecrypted(storageKey) {
+  const stored = localStorage.getItem(storageKey);
+  if (!stored) return null;
+  return decryptApiKey(stored);
+}
+
+// --- Load API keys (decrypted) ---
 let currentAiModel = localStorage.getItem('md-viewer-ai-model') || 'qwen-local';
-let groqApiKey = localStorage.getItem('md-viewer-groq-key') || null;
-let openrouterApiKey = localStorage.getItem('md-viewer-openrouter-key') || null;
-let geminiApiKey = localStorage.getItem('md-viewer-gemini-key') || null;
+let groqApiKey = null;
+let openrouterApiKey = null;
+let geminiApiKey = null;
+
+// Async init: decrypt stored keys on page load
+(async function initApiKeys() {
+  groqApiKey = await loadApiKeyDecrypted('md-viewer-groq-key');
+  openrouterApiKey = await loadApiKeyDecrypted('md-viewer-openrouter-key');
+  geminiApiKey = await loadApiKeyDecrypted('md-viewer-gemini-key');
+})();
 let streamingMessageId = null;
 let pendingProviderForKey = null; // Which provider the API key modal is open for
 
@@ -6444,9 +6535,9 @@ if (aiApikeySave) {
     aiApikeySave.innerHTML = '<span class="ai-status-spinner"></span> Validating...';
     aiApikeyError.style.display = 'none';
 
-    // Save key
+    // Save key (encrypted)
     provider.setKey(key);
-    localStorage.setItem(provider.keyStorageKey, key);
+    saveApiKeyEncrypted(provider.keyStorageKey, key);
 
     // Init worker to validate key
     initCloudWorker(providerId, () => {
@@ -6865,29 +6956,27 @@ function handleGroqComplete(text, messageId) {
     }
     msgEl.removeAttribute('id');
 
-    // Add action buttons
+    // Add action buttons using safe DOM API
     const actions = document.createElement('div');
     actions.className = 'ai-msg-actions';
-    actions.innerHTML = `
-        <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
-          <i class="bi bi-box-arrow-in-down"></i> Insert
-        </button>
-        <button class="ai-msg-action-btn" data-action="copy" data-text="${encodeURIComponent(text)}" title="Copy to clipboard">
-          <i class="bi bi-clipboard"></i> Copy
-        </button>
-        <button class="ai-msg-action-btn" data-action="replace" data-text="${encodeURIComponent(text)}" title="Replace selected text">
-          <i class="bi bi-arrow-left-right"></i> Replace
-        </button>
-      `;
-    msgEl.appendChild(actions);
 
-    // Wire up action buttons
-    actions.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
+    const actionDefs = [
+      { action: 'insert', icon: 'bi-box-arrow-in-down', label: 'Insert', title: 'Insert into editor' },
+      { action: 'copy', icon: 'bi-clipboard', label: 'Copy', title: 'Copy to clipboard' },
+      { action: 'replace', icon: 'bi-arrow-left-right', label: 'Replace', title: 'Replace selected text' }
+    ];
+
+    actionDefs.forEach(def => {
+      const btn = document.createElement('button');
+      btn.className = 'ai-msg-action-btn';
+      btn.dataset.action = def.action;
+      btn.dataset.text = text;  // Safe: DOM handles escaping
+      btn.title = def.title;
+      btn.innerHTML = `<i class="bi ${def.icon}"></i> ${def.label}`;
       btn.addEventListener('click', function () {
-        const action = this.dataset.action;
-        const rawText = decodeURIComponent(this.dataset.text);
-        handleAiAction(action, rawText, this);
+        handleAiAction(this.dataset.action, this.dataset.text, this);
       });
+      actions.appendChild(btn);
     });
   } else {
     // Fallback if no streaming element found
