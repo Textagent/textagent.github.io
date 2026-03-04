@@ -107,10 +107,16 @@ document.addEventListener("DOMContentLoaded", function () {
       return `<div class="mermaid-container"><div class="mermaid" id="${uniqueId}">${code}</div></div>`;
     }
 
+    // Detect executable bash/sh/shell code blocks
+    const isExecutable = ['bash', 'sh', 'shell'].includes((language || '').toLowerCase());
     const validLanguage = hljs.getLanguage(language) ? language : "plaintext";
     const highlightedCode = hljs.highlight(code, {
-      language: validLanguage,
+      language: isExecutable ? 'bash' : validLanguage,
     }).value;
+
+    if (isExecutable) {
+      return `<div class="executable-code-container" data-lang="${language}"><pre><code class="hljs bash">${highlightedCode}</code></pre></div>`;
+    }
     return `<pre><code class="hljs ${validLanguage}">${highlightedCode}</code></pre>`;
   };
 
@@ -284,7 +290,24 @@ Quote someone famous:
 
 ## 🛡️ Security Note
 
-This is a fully client-side application. Your content never leaves your browser and stays secure on your device.`;
+This is a fully client-side application. Your content never leaves your browser and stays secure on your device.
+
+## 🖥️ Executable Code Blocks
+
+Run bash commands directly in the preview — powered by [just-bash](https://justbash.dev/). Hover over any bash code block and click **▶ Run**.
+
+\`\`\`bash
+echo "Hello from just-bash! 🎉"
+\`\`\`
+
+\`\`\`bash
+seq 1 5 | sort -r | tr '\\n' ' '
+\`\`\`
+
+\`\`\`bash
+echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
+\`\`\`
+`;
 
   markdownEditor.value = sampleMarkdown;
 
@@ -294,7 +317,7 @@ This is a fully client-side application. Your content never leaves your browser 
       const html = marked.parse(markdown);
       const sanitizedHtml = DOMPurify.sanitize(html, {
         ADD_TAGS: ['mjx-container'],
-        ADD_ATTR: ['id', 'class']
+        ADD_ATTR: ['id', 'class', 'data-lang']
       });
       markdownPreview.innerHTML = sanitizedHtml;
 
@@ -341,6 +364,9 @@ This is a fully client-side application. Your content never leaves your browser 
 
       // Feature 25: Render PlantUML diagrams
       renderPlantUML(markdownPreview);
+
+      // Executable code blocks (just-bash)
+      addCodeBlockToolbars();
 
       if (window.MathJax) {
         try {
@@ -1927,6 +1953,134 @@ This is a fully client-side application. Your content never leaves your browser 
       toolbar.appendChild(btnSvg);
       container.appendChild(toolbar);
     });
+  }
+
+  // ========================================
+  // EXECUTABLE CODE BLOCKS (just-bash)
+  // ========================================
+
+  let _sharedBashInstance = null;
+  let _justBashReady = !!window.JustBash;
+
+  if (!_justBashReady) {
+    window.addEventListener('just-bash-ready', () => { _justBashReady = true; }, { once: true });
+  }
+
+  function getSharedBash() {
+    if (!_justBashReady || !window.JustBash) return null;
+    if (!_sharedBashInstance) {
+      _sharedBashInstance = new window.JustBash();
+    }
+    return _sharedBashInstance;
+  }
+
+  /**
+   * Adds Run and Copy toolbar buttons to every executable code block container.
+   * Safe to call multiple times — existing toolbars are not duplicated.
+   */
+  function addCodeBlockToolbars() {
+    markdownPreview.querySelectorAll('.executable-code-container').forEach(container => {
+      if (container.querySelector('.code-block-toolbar')) return; // already added
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'code-block-toolbar';
+      toolbar.setAttribute('aria-label', 'Code block actions');
+
+      // Run button
+      const btnRun = document.createElement('button');
+      btnRun.className = 'code-toolbar-btn code-run-btn';
+      btnRun.title = 'Run in sandboxed bash';
+      btnRun.setAttribute('aria-label', 'Run code');
+      btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+      btnRun.addEventListener('click', () => executeCodeBlock(container, btnRun));
+
+      // Copy button
+      const btnCopy = document.createElement('button');
+      btnCopy.className = 'code-toolbar-btn code-copy-btn';
+      btnCopy.title = 'Copy code';
+      btnCopy.setAttribute('aria-label', 'Copy code');
+      btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
+      btnCopy.addEventListener('click', () => {
+        const codeEl = container.querySelector('code');
+        if (!codeEl) return;
+        navigator.clipboard.writeText(codeEl.textContent).then(() => {
+          btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
+          setTimeout(() => { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+        }).catch(() => {
+          btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
+          setTimeout(() => { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+        });
+      });
+
+      toolbar.appendChild(btnRun);
+      toolbar.appendChild(btnCopy);
+      container.insertBefore(toolbar, container.firstChild);
+    });
+  }
+
+  /**
+   * Executes the code inside an executable-code-container using just-bash.
+   */
+  async function executeCodeBlock(container, btnRun) {
+    const codeEl = container.querySelector('code');
+    if (!codeEl) return;
+    const code = codeEl.textContent;
+
+    // Create or find the output container
+    let outputEl = container.querySelector('.code-output');
+    if (!outputEl) {
+      outputEl = document.createElement('div');
+      outputEl.className = 'code-output';
+      container.appendChild(outputEl);
+    }
+
+    // Check if just-bash is loaded
+    if (!_justBashReady || !window.JustBash) {
+      outputEl.innerHTML = '<span class="code-output-error">⏳ just-bash is still loading. Please try again in a moment.</span>';
+      outputEl.style.display = 'block';
+      return;
+    }
+
+    // Show loading state
+    btnRun.disabled = true;
+    btnRun.innerHTML = '<i class="bi bi-hourglass-split"></i> Running...';
+    outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> Executing...</span>';
+    outputEl.style.display = 'block';
+
+    try {
+      const bash = getSharedBash();
+      const result = await bash.exec(code);
+
+      let outputHtml = '';
+      if (result.stdout) {
+        outputHtml += '<span class="code-output-stdout">' + escapeHtml(result.stdout) + '</span>';
+      }
+      if (result.stderr) {
+        outputHtml += '<span class="code-output-stderr">' + escapeHtml(result.stderr) + '</span>';
+      }
+      if (!result.stdout && !result.stderr) {
+        outputHtml = '<span class="code-output-muted">(no output)</span>';
+      }
+
+      // Exit code indicator
+      if (result.exitCode !== 0) {
+        outputHtml += '<span class="code-output-exit">Exit code: ' + result.exitCode + '</span>';
+      }
+
+      outputEl.innerHTML = outputHtml;
+    } catch (err) {
+      outputEl.innerHTML = '<span class="code-output-error">Error: ' + escapeHtml(err.message) + '</span>';
+    } finally {
+      btnRun.disabled = false;
+      btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+    }
+  }
+
+  // Helper to escape HTML in output
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   // ========================================

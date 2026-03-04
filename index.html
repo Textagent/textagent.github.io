@@ -64,6 +64,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- just-bash: sandboxed bash interpreter for executable code blocks -->
+    <script type="module">
+        try {
+            const mod = await import("https://esm.sh/just-bash@2?bundle&target=es2022");
+            window.JustBash = mod.Bash;
+            console.log('just-bash loaded successfully');
+            window.dispatchEvent(new Event('just-bash-ready'));
+        } catch (e) {
+            console.warn('just-bash failed to load:', e);
+        }
+    </script>
 </head>
 
 <body>
@@ -77,7 +88,7 @@
                         title="View on GitHub" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-github"></i>
                     </a>
-                    <div id="stats-container" class="stats-container d-flex align-items-center d-none d-lg-flex">
+                    <div id="stats-container" class="stats-container d-flex align-items-center d-none d-xl-flex">
                         <div class="stat-item me-3">
                             <i class="bi bi-clock me-1"></i> <span id="reading-time">0</span> Min Read
                         </div>
@@ -94,7 +105,7 @@
                 </div>
 
                 <!-- Center section: View Mode Buttons -->
-                <div class="view-mode-group d-none d-md-flex" role="group" aria-label="View mode">
+                <div class="view-mode-group d-none d-xl-flex" role="group" aria-label="View mode">
                     <button class="view-mode-btn" data-mode="editor" aria-pressed="false" title="Editor only">
                         <i class="bi bi-file-text"></i>
                         <span>Editor</span>
@@ -110,7 +121,7 @@
                 </div>
 
                 <!-- Right section: Toolbar -->
-                <div class="toolbar d-none d-md-flex header-right">
+                <div class="toolbar d-none d-xl-flex header-right">
                     <button id="new-document-btn" class="tool-button" title="New Document">
                         <i class="bi bi-file-earmark-plus"></i>
                     </button>
@@ -194,7 +205,7 @@
                 </div>
 
                 <!-- Hamburger menu for mobile -->
-                <div class="mobile-menu d-md-none">
+                <div class="mobile-menu d-xl-none">
                     <button id="mobile-menu-toggle" class="tool-button" title="Menu">
                         <i class="bi bi-list"></i>
                     </button>

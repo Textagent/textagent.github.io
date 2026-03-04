@@ -188,7 +188,9 @@ body {
 
 .toolbar {
   display: flex;
-  gap: 8px;
+  gap: 2px;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .tool-button {
@@ -196,13 +198,15 @@ body {
   border: 1px solid var(--border-color);
   color: var(--text-color);
   border-radius: 6px;
-  padding: 6px 12px;
+  padding: 5px 6px;
   font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tool-button:hover {
@@ -437,6 +441,162 @@ a:focus {
   color: #e8eaed;
 }
 
+/* ========================================
+   EXECUTABLE CODE BLOCKS (just-bash)
+   ======================================== */
+
+.executable-code-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.executable-code-container pre {
+  margin-bottom: 0;
+}
+
+/* Toolbar: top-right, visible on hover */
+.code-block-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+
+.executable-code-container:hover .code-block-toolbar {
+  opacity: 1;
+}
+
+/* Toolbar buttons */
+.code-toolbar-btn {
+  background-color: var(--button-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.code-toolbar-btn:hover {
+  background-color: var(--button-hover);
+}
+
+.code-toolbar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Run button — green accent */
+.code-run-btn {
+  background-color: #238636;
+  border-color: rgba(35, 134, 54, 0.6);
+  color: #fff;
+}
+
+.code-run-btn:hover {
+  background-color: #2ea043;
+}
+
+[data-theme="dark"] .code-run-btn {
+  background-color: #238636;
+  border-color: rgba(35, 134, 54, 0.5);
+}
+
+[data-theme="dark"] .code-run-btn:hover {
+  background-color: #2ea043;
+}
+
+/* Output area */
+.code-output {
+  display: none;
+  background-color: #1b1f23;
+  color: #c9d1d9;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 12px 16px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.code-output-stdout {
+  color: #adbac7;
+}
+
+.code-output-stderr {
+  color: #f47067;
+}
+
+.code-output-error {
+  color: #f47067;
+  font-style: italic;
+}
+
+.code-output-muted {
+  color: #636e7b;
+  font-style: italic;
+}
+
+.code-output-exit {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #30363d;
+  color: #f47067;
+  font-size: 12px;
+}
+
+.code-output-loading {
+  color: #58a6ff;
+}
+
+.code-output-loading i {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Light theme adjustments for output */
+:root .code-output {
+  background-color: #1b1f23;
+}
+
+[data-theme="dark"] .code-output {
+  background-color: #0d1117;
+  border-color: #21262d;
+}
+
+/* When output has rounded bottom, remove pre rounding */
+.executable-code-container .code-output[style*="display: block"]~pre,
+.executable-code-container:has(.code-output[style*="display: block"]) pre {
+  border-radius: 6px 6px 0 0;
+}
+
+
 .stats-container {
   font-size: 0.9rem;
   color: var(--text-color);
@@ -518,7 +678,7 @@ a:focus {
   z-index: 1001;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1199px) {
   .mobile-menu {
     display: block;
   }
@@ -642,11 +802,11 @@ a:focus {
   margin-bottom: 0;
 }
 
-/* hide desktop-only stats and toolbar on mobile */
-@media (max-width: 767px) {
+/* hide desktop-only stats and toolbar when hamburger takes over */
+@media (max-width: 1199px) {
 
-  .stats-container.d-none.d-md-flex,
-  .toolbar.d-none.d-md-flex {
+  .stats-container.d-none.d-xl-flex,
+  .toolbar.d-none.d-xl-flex {
     display: none !important;
   }
 }
@@ -680,14 +840,38 @@ a:focus {
 }
 
 .header-left {
-  flex: 1;
+  flex: 0 1 auto;
   justify-content: flex-start;
+  min-width: 0;
 }
 
 .header-right {
-  flex: 1;
+  flex: 1 1 auto;
   justify-content: flex-end;
 }
+
+/* ---- Responsive toolbar scaling ---- */
+
+/* Stage 1: Slightly tighter at <=1400px */
+@media (max-width: 1400px) {
+  .stats-container {
+    display: none !important;
+  }
+
+  .tool-button {
+    padding: 4px 5px;
+    font-size: 13px;
+  }
+
+  .tool-button i {
+    font-size: 14px;
+  }
+
+  .toolbar-separator {
+    margin: 0 2px;
+  }
+}
+
 
 /* View Mode Button Group */
 .view-mode-group {
