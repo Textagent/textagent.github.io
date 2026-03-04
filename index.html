@@ -190,6 +190,10 @@
                         <i class="bi bi-fullscreen"></i>
                     </button>
 
+                    <button id="speech-to-text-btn" class="tool-button" title="Voice Dictation (Speech to Text)">
+                        <i class="bi bi-mic"></i>
+                    </button>
+
                     <span class="toolbar-separator"></span>
 
                     <button id="ai-toggle-button" class="tool-button ai-sparkle-btn" title="AI Assistant">
@@ -303,6 +307,10 @@
                                 <i class="bi bi-share me-2"></i> Share
                             </button>
 
+                            <button id="mobile-speech-btn" class="mobile-menu-item" title="Voice Dictation">
+                                <i class="bi bi-mic me-2"></i> Voice Dictation
+                            </button>
+
                             <button id="mobile-ai-button" class="mobile-menu-item" title="AI Assistant">
                                 <i class="bi bi-stars me-2"></i> AI Assistant
                             </button>
@@ -354,6 +362,19 @@
             <span class="fmt-separator"></span>
             <button class="fmt-btn" data-action="hr" title="Horizontal Rule"><i class="bi bi-dash-lg"></i></button>
             <button class="fmt-btn" data-action="table" title="Insert Table"><i class="bi bi-table"></i></button>
+        </div>
+
+        <!-- Speech-to-Text Status Bar -->
+        <div id="speech-status-bar" class="speech-status-bar" style="display:none">
+            <span class="speech-pulse"></span>
+            <span class="speech-lang" id="speech-lang-label">EN</span>
+            <span class="speech-interim" id="speech-interim-text"></span>
+            <button id="speech-lang-btn" class="speech-control-btn" title="Change language">
+                <i class="bi bi-globe2"></i>
+            </button>
+            <button id="speech-stop-btn" class="speech-control-btn" title="Stop dictation">
+                <i class="bi bi-stop-circle"></i>
+            </button>
         </div>
 
         <!-- Find & Replace Bar -->
@@ -928,6 +949,7 @@ const chatResponse = await openai.chat.completions.create({
     <script src="js/templates.js"></script>
     <script src="js/ai-assistant.js"></script>
     <script src="js/llm-memory.js"></script>
+    <script src="js/speechToText.js"></script>
     <script src="js/app-init.js"></script>
     <!-- AI Worker is loaded dynamically, not here -->
 </body>
