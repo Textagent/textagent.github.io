@@ -2010,6 +2010,27 @@ norm(u)
 - Cross product of x̂ and ŷ unit vectors = **ẑ** = [0, 0, 1]
 - Norm of [3,4]: √(9+16) = **5**
 `
+    },
+    {
+      name: 'Geist — Tech Pitch',
+      category: 'ppt',
+      icon: 'bi-easel',
+      description: 'Clean Vercel-inspired tech presentation — cover slide, features, architecture, and closing',
+      content: 'layout: cover\n\n# Build Faster, Ship Smarter\n\nA modern approach to developer productivity\n\n<!-- Welcome everyone. Today I\'ll walk you through our vision for the next generation of developer tools. -->\n\n---\n\n# The Problem\n\n- **80%** of developer time is spent on repetitive tasks\n- Context switching kills flow state\n- Toolchains are fragmented and complex\n- Deployment pipelines are still painful\n\n> "The best tool is the one you don\'t notice."\n\n<!-- Key insight: developers want to build, not configure. Every minute spent on tooling is a minute not spent on the product. -->\n\n---\n\n# Our Solution\n\n| Feature | Before | After |\n|:--------|:-------|:------|\n| Build Time | 45 seconds | **2.3 seconds** |\n| Deploy | 12 steps | **`git push`** |\n| Config | 200 LOC | **Zero-config** |\n| Preview | Manual | **Automatic** |\n\n> [!TIP]\n> Framework-agnostic. Works with React, Vue, Svelte, and more.\n\n---\n\nlayout: center\n\n# Architecture\n\n```mermaid\nflowchart LR\n    A[Developer] --> B[Git Push]\n    B --> C{Build System}\n    C --> D[Edge Network]\n    C --> E[Serverless Functions]\n    D --> F[Global CDN]\n    E --> F\n    F --> G[Users Worldwide]\n```\n\n---\n\n# Traction & Metrics\n\n- 🚀 **50K+** projects deployed\n- ⚡ **99.99%** uptime SLA\n- 🌍 **200ms** average response time globally\n- 💜 **4.9/5** developer satisfaction score\n\n---\n\nlayout: cover\n\n# Let\'s Build Together\n\n**Start free** → Scale when ready\n\nQuestions?\n\n<!-- Thank you for your time. I\'m happy to take any questions. -->'
+    },
+    {
+      name: 'Startup Pitch Deck',
+      category: 'ppt',
+      icon: 'bi-rocket-takeoff',
+      description: 'Classic pitch deck — problem, solution, market, business model, team, and ask',
+      content: 'layout: cover\n\n# Acme AI\n\nIntelligent automation for the modern enterprise\n\n*Series A — Confidential*\n\n<!-- Good morning. I\'m excited to share what we\'re building at Acme AI. -->\n\n---\n\n# The Problem\n\n- Enterprises spend **$3.4T annually** on manual data processing\n- 67% of knowledge workers do repetitive tasks daily\n- Existing RPA tools are brittle and expensive\n- AI adoption remains slow due to integration complexity\n\n> "We\'re drowning in data but starving for insights."\n> — Fortune 500 CTO\n\n<!-- This is a massive market pain that hasn\'t been solved properly. -->\n\n---\n\n# Our Solution\n\n**AI-native workflow automation** that learns from your team.\n\n- 🧠 **Learns** — Watches how experts work, builds models\n- ⚡ **Automates** — Takes over repetitive decisions with 99.2% accuracy\n- 🔗 **Integrates** — Plugs into Slack, Jira, Salesforce, SAP, and 200+ tools\n- 📊 **Reports** — Real-time dashboards on time and cost savings\n\n> [!IMPORTANT]\n> No-code setup. Your team is productive in days, not months.\n\n---\n\n# Market Opportunity\n\n| Segment | TAM | SAM | SOM |\n|:--------|:----|:----|:----|\n| Enterprise AI | $150B | $25B | $2.5B |\n| Process Automation | $12B | $4B | $800M |\n| **Combined** | **$162B** | **$29B** | **$3.3B** |\n\n*Growing at 34% CAGR (2024–2030)*\n\n---\n\n# Business Model\n\n```mermaid\nflowchart TD\n    A[Free Tier] -->|Convert 12%| B[Team Plan $49/mo]\n    B -->|Expand 8%| C[Enterprise Custom]\n    C --> D[Annual Contracts]\n    D --> E[120% NDR]\n```\n\n**Unit Economics:**\n- CAC: $1,200 → LTV: $18,000\n- LTV/CAC Ratio: **15x**\n- Gross Margin: **82%**\n\n---\n\n# Traction\n\n- 📈 **$2.4M ARR** (3x YoY growth)\n- 🏢 **120 enterprise customers** including 3 Fortune 500\n- 🔄 **120% net dollar retention**\n- 👥 **Team of 28** from Google, Meta, and McKinsey\n\n---\n\nlayout: cover\n\n# The Ask\n\n**Raising $15M Series A** to:\n\n- Scale engineering team (ML + platform)\n- Expand to EU market\n- Achieve $10M ARR by Q4 2026\n\n*Contact: founders@acme-ai.com*\n\n<!-- We\'d love to have you on this journey. Let\'s talk. -->'
+    },
+    {
+      name: 'Team Retrospective',
+      category: 'ppt',
+      icon: 'bi-people',
+      description: 'Sprint retro slides — wins, challenges, learnings, and action items',
+      content: 'layout: cover\n\n# Sprint 24 Retrospective\n\nTeam Phoenix · $(date)\n\n---\n\n# 🎉 What Went Well\n\n- Shipped the new onboarding flow — **+23% activation**\n- Zero P0 incidents this sprint\n- Pair programming sessions boosted code review speed\n- Design-engineering handoff process is smoother\n\n> "Best sprint we\'ve had in Q1" — Team sentiment survey\n\n<!-- Let\'s celebrate these wins before diving into improvements. -->\n\n---\n\n# 😤 What Didn\'t Go Well\n\n- Payment integration took 3x the estimated time\n- Flaky E2E tests blocked deploys twice\n- Stakeholder requirements changed mid-sprint\n- Too many meetings on Wednesday (5 hours!)\n\n> [!WARNING]\n> We need to address the test flakiness — it\'s eroding team trust in CI.\n\n---\n\n# 📊 Sprint Metrics\n\n| Metric | Target | Actual | Status |\n|:-------|:-------|:-------|:-------|\n| Story Points | 34 | **31** | 🟡 91% |\n| Bug Fix Rate | 90% | **95%** | 🟢 Exceeded |\n| PR Review Time | <4h | **3.2h** | 🟢 On target |\n| Deploy Frequency | Daily | **1.8/day** | 🟢 Exceeded |\n| Test Coverage | 80% | **78%** | 🟡 Close |\n\n---\n\n# 💡 Key Learnings\n\n1. **Break down payment stories smaller** — anything touching external APIs needs a spike first\n2. **Quarantine flaky tests** — don\'t let them block the main pipeline\n3. **"No Meeting Wednesday"** — protect deep work time\n4. **Async standups** work well for distributed team members\n\n---\n\n# ✅ Action Items\n\n- [ ] **@alice** — Create test stability dashboard by Friday\n- [ ] **@bob** — Spike on payment provider SDK v3 migration\n- [ ] **@carol** — Propose "No Meeting Wednesday" policy to leadership\n- [ ] **@dave** — Set up async standup bot in Slack\n- [ ] **@team** — Review and groom backlog before Sprint 25 planning\n\n---\n\nlayout: center\n\n# Thank You! 🙌\n\nLet\'s make Sprint 25 even better.\n\n**Next planning session:** Monday 10:00 AM\n\n<!-- Great retrospective everyone. See you at planning! -->'
     }
   ];
 
@@ -2033,6 +2054,7 @@ norm(u)
       case 'creative': return 'creative';
       case 'coding': return 'technical';
       case 'maths': return 'doc';
+      case 'ppt': return 'creative';
       default: return 'doc';
     }
   }
@@ -2045,6 +2067,7 @@ norm(u)
       case 'creative': return 'bi-brush';
       case 'coding': return 'bi-terminal';
       case 'maths': return 'bi-calculator';
+      case 'ppt': return 'bi-easel';
       default: return 'bi-file-earmark';
     }
   }
