@@ -136,6 +136,13 @@
     }
 
     // ========================================
+    // EDITOR INPUT → RENDER PREVIEW
+    // ========================================
+    M.markdownEditor.addEventListener('input', function () {
+        M.debouncedRender();
+    });
+
+    // ========================================
     // SCROLL SYNC EVENT WIRING
     // ========================================
     M.editorPane.addEventListener('scroll', function () { M.syncEditorToPreview(); });

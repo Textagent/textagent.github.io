@@ -48,7 +48,12 @@
     // ── Voice-to-Markdown Replacements ─────────────
     function applyMarkdownCommands(text) {
         const replacements = [
-            // Headings
+            // Headings (hash-based: "hash", "hash hash", etc.)
+            [/\bhash hash hash hash\b/gi, '\n#### '],
+            [/\bhash hash hash\b/gi, '\n### '],
+            [/\bhash hash\b/gi, '\n## '],
+            [/\bhash\b/gi, '\n# '],
+            // Heading aliases (word-based)
             [/\bnew heading\b/gi, '\n# '],
             [/\bheading one\b/gi, '\n# '],
             [/\bheading two\b/gi, '\n## '],
@@ -130,6 +135,101 @@
     const langLabel = document.getElementById('speech-lang-label');
     const langBtn = document.getElementById('speech-lang-btn');
     const stopBtn = document.getElementById('speech-stop-btn');
+    const helpBtn = document.getElementById('speech-help-btn');
+
+    // ── Voice Commands Cheat Sheet Popup ──────────
+    let cheatSheetEl = null;
+
+    function buildCheatSheet() {
+        const commands = [
+            {
+                cat: 'Headings', items: [
+                    ['"hash"', '# Heading'],
+                    ['"hash hash"', '## Sub Heading'],
+                    ['"hash hash hash"', '### Heading 3'],
+                    ['"hash hash hash hash"', '#### Heading 4'],
+                ]
+            },
+            {
+                cat: 'Formatting', items: [
+                    ['"bold ... end bold"', '**text**'],
+                    ['"italic ... end italic"', '*text*'],
+                    ['"code ... end code"', '`text`'],
+                ]
+            },
+            {
+                cat: 'Structure', items: [
+                    ['"new line"', '↵ line break'],
+                    ['"new paragraph"', '↵↵ paragraph'],
+                    ['"bullet point"', '- list item'],
+                    ['"numbered list"', '1. list item'],
+                    ['"task list"', '- [ ] todo'],
+                    ['"block quote"', '> quote'],
+                    ['"code block" / "end block"', '``` fenced block'],
+                    ['"horizontal rule"', '--- divider'],
+                ]
+            },
+            {
+                cat: 'Punctuation', items: [
+                    ['"period"', '.'],
+                    ['"comma"', ','],
+                    ['"question mark"', '?'],
+                    ['"exclamation mark"', '!'],
+                    ['"colon"', ':'],
+                    ['"semicolon"', ';'],
+                    ['"open/close parenthesis"', '( )'],
+                    ['"hyphen"', '-'],
+                    ['"dash"', '—'],
+                ]
+            },
+        ];
+
+        let html = `<div class="speech-cheat-header">
+            <span><i class="bi bi-mic-fill"></i> Voice Commands</span>
+            <button class="speech-cheat-close" id="speech-cheat-close" title="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="speech-cheat-body">`;
+
+        for (const group of commands) {
+            html += `<div class="speech-cheat-group">
+                <div class="speech-cheat-cat">${group.cat}</div>`;
+            for (const [say, insert] of group.items) {
+                html += `<div class="speech-cheat-row">
+                    <span class="speech-cheat-say">${say}</span>
+                    <span class="speech-cheat-arrow">→</span>
+                    <span class="speech-cheat-insert">${insert}</span>
+                </div>`;
+            }
+            html += '</div>';
+        }
+
+        html += `</div>
+        <div class="speech-cheat-footer">
+            <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> to toggle mic · 3s pause = new paragraph
+        </div>`;
+
+        return html;
+    }
+
+    function showCheatSheet() {
+        if (cheatSheetEl) return; // already open
+        cheatSheetEl = document.createElement('div');
+        cheatSheetEl.className = 'speech-cheat-popup';
+        cheatSheetEl.innerHTML = buildCheatSheet();
+        document.body.appendChild(cheatSheetEl);
+        // Animate in
+        requestAnimationFrame(() => cheatSheetEl.classList.add('speech-cheat-show'));
+        // Close button
+        cheatSheetEl.querySelector('#speech-cheat-close').addEventListener('click', hideCheatSheet);
+    }
+
+    function hideCheatSheet() {
+        if (!cheatSheetEl) return;
+        cheatSheetEl.classList.remove('speech-cheat-show');
+        setTimeout(() => {
+            if (cheatSheetEl) { cheatSheetEl.remove(); cheatSheetEl = null; }
+        }, 250);
+    }
 
     // ── Language Dropdown ─────────────────────────
     let langDropdown = null;
@@ -291,6 +391,7 @@
         isListening = false;
         stopPauseDetection();
         closeLangDropdown();
+        hideCheatSheet();
         if (recognition) {
             try { recognition.stop(); } catch (e) { /* ignore */ }
         }
@@ -334,6 +435,10 @@
             const langObj = LANGUAGES.find(l => l.code === currentLang);
             langLabel.textContent = langObj ? langObj.short : currentLang.split('-')[0].toUpperCase();
         }
+        // Show cheat sheet on start
+        if (active) {
+            showCheatSheet();
+        }
     }
 
     // ── Toast Helper ──────────────────────────────
@@ -367,6 +472,10 @@
         else { createLangDropdown(); }
     });
     if (stopBtn) stopBtn.addEventListener('click', stopListening);
+    if (helpBtn) helpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (cheatSheetEl) { hideCheatSheet(); } else { showCheatSheet(); }
+    });
 
     // Keyboard shortcut: Ctrl+Shift+V to toggle
     document.addEventListener('keydown', (e) => {
