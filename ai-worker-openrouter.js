@@ -63,7 +63,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://markdownview.pages.dev',
+                'HTTP-Referer': 'https://markdownview.github.io',
                 'X-Title': 'MDview',
             },
             body: JSON.stringify({
