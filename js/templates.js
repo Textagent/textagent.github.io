@@ -20,37 +20,22 @@
         '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math · Mermaid Diagrams · Emoji |\n' +
         '| **AI** | Built-in AI Assistant — Local Qwen 3.5 + Cloud: Gemini, Groq, OpenRouter |\n' +
         '| **Voice** | 🎤 Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
-        '| **Code** | ▶ Bash (just-bash) · ▶ Math (math.js) · 🐍 Python (Pyodide) · 🌐 HTML Sandbox (iframe) |\n' +
+        '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) |\n' +
         '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
         '| **Export** | Markdown · HTML · PDF · LLM Memory Format |\n' +
         '| **Sharing** | ☁️ End-to-end encrypted cloud sharing via Firebase |\n' +
         '| **Extras** | Presentation Mode (PPT) · Preview Themes · Dark Mode · Templates (19+) |\n\n' +
         '---\n\n' +
-        '## 💻 Code with Syntax Highlighting\n\n' +
-        'Supports **180+ languages** via highlight.js. Every code block gets a copy button:\n\n' +
-        '```javascript\n' +
-        '// JavaScript — Live preview rendering\n' +
-        'function renderMarkdown() {\n' +
-        '  const html = marked.parse(editor.value);\n' +
-        '  preview.innerHTML = DOMPurify.sanitize(html);\n' +
-        '  hljs.highlightAll();\n' +
-        '}\n' +
-        '```\n\n' +
-        '```python\n' +
-        '# Python — Data processing\n' +
-        'import pandas as pd\n\n' +
-        'df = pd.read_csv("data.csv")\n' +
-        'summary = df.describe()\n' +
-        'print(summary.to_markdown())\n' +
-        '```\n\n' +
-        '```sql\n' +
-        '-- SQL — Query example\n' +
-        'SELECT users.name, COUNT(orders.id) AS total_orders\n' +
-        'FROM users\n' +
-        'LEFT JOIN orders ON users.id = orders.user_id\n' +
-        'GROUP BY users.name\n' +
-        'ORDER BY total_orders DESC;\n' +
-        '```\n\n' +
+        '## 💻 Six Executable Languages\n\n' +
+        'MDview can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
+        '| Language | Runtime | Button |\n' +
+        '|:---------|:--------|:-------|\n' +
+        '| **Bash** | [just-bash](https://justbash.dev/) (WASM) | ▶ Run |\n' +
+        '| **Math** | [math.js](https://mathjs.org/) | ▶ Evaluate |\n' +
+        '| **Python** | [Pyodide](https://pyodide.org/) (WASM CPython) | ▶ Run |\n' +
+        '| **HTML** | Sandboxed iframe | ▶ Preview |\n' +
+        '| **JavaScript** | Sandboxed iframe | ▶ Run |\n' +
+        '| **SQL** | [sql.js](https://sql.js.org/) (SQLite WASM) | ▶ Run |\n\n' +
         '---\n\n' +
         '## 🖥️ Executable Bash Blocks\n\n' +
         'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
@@ -129,6 +114,26 @@
         '<button onclick="document.getElementById(\'c\').textContent = ++n">Click me!</button>\n' +
         '<p>Count: <span id="c">0</span></p>\n' +
         '<script>let n = 0;</script>\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## ⚡ JavaScript Sandbox\n\n' +
+        'Run JavaScript code with **console.log capture** — output appears inline.\n' +
+        'Hover and click **▶ Run**:\n\n' +
+        '```javascript\n' +
+        '// JavaScript runs in a sandboxed iframe\n' +
+        'console.log("Hello from JavaScript!");\n' +
+        'console.log("2 + 2 =", 2 + 2);\n\n' +
+        'const arr = [5, 3, 8, 1, 9, 2];\n' +
+        'console.log("Sorted:", arr.sort((a, b) => a - b));\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🗄️ SQL Sandbox\n\n' +
+        'Run SQL queries on an **in-memory SQLite database** — results display as formatted tables.\n' +
+        'Tables persist across blocks on the same page, so you can CREATE in one block and SELECT in the next!\n\n' +
+        '```sql\n' +
+        'CREATE TABLE IF NOT EXISTS demo (id INTEGER PRIMARY KEY, name TEXT, score REAL);\n' +
+        'INSERT INTO demo VALUES (1, \'Alice\', 95.5), (2, \'Bob\', 87.3), (3, \'Carol\', 92.1);\n' +
+        'SELECT name, score FROM demo ORDER BY score DESC;\n' +
         '```\n\n' +
         '---\n\n' +
         '## 🧮 LaTeX Math Expressions\n\n' +
@@ -2303,7 +2308,7 @@ norm(u)
     },
     {
       name: 'Python Playground',
-      category: 'technical',
+      category: 'coding',
       icon: 'bi-filetype-py',
       description: 'Interactive Python examples — algorithms, data processing, and math — runnable in the browser via Pyodide',
       content: '# 🐍 Python Playground\n\n' +
@@ -2418,7 +2423,7 @@ norm(u)
     },
     {
       name: 'HTML Playground',
-      category: 'technical',
+      category: 'coding',
       icon: 'bi-filetype-html',
       description: 'Interactive HTML/CSS/JS demos — animations, interactive widgets, and canvas drawing — live in the preview',
       content: '# 🌐 HTML Playground\n\n' +
@@ -2536,6 +2541,351 @@ norm(u)
         '  function stop() { clearInterval(timer); timer=null; }\n' +
         '  function reset() { stop(); t=0; document.getElementById("display").textContent="00:00.00"; }\n' +
         '</script>\n' +
+        '```\n'
+    },
+    {
+      name: 'Bash Scripting',
+      category: 'coding',
+      icon: 'bi-terminal',
+      description: 'Executable bash examples — file operations, text processing, loops, and system commands',
+      content: '# 🖥️ Bash Scripting Playground\n\n' +
+        '> Run bash commands **directly in the browser** — powered by [just-bash](https://justbash.dev/) (WASM).\n\n' +
+        '> [!TIP]\n' +
+        '> Hover over any code block and click **▶ Run** to execute.\n\n' +
+        '---\n\n' +
+        '## 📝 Basics\n\n' +
+        '```bash\n' +
+        'echo "Hello from bash! 🎉"\n' +
+        'echo "Today is $(date +%A), $(date +%B\\ %d,\\ %Y)"\n' +
+        'echo "Shell: $SHELL"\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🔁 Loops & Logic\n\n' +
+        '```bash\n' +
+        '# Counting loop\n' +
+        'for i in $(seq 1 5); do\n' +
+        '  echo "Count: $i"\n' +
+        'done\n' +
+        '```\n\n' +
+        '```bash\n' +
+        '# FizzBuzz in bash\n' +
+        'for i in $(seq 1 20); do\n' +
+        '  if   [ $((i % 15)) -eq 0 ]; then echo "$i: FizzBuzz"\n' +
+        '  elif [ $((i % 3))  -eq 0 ]; then echo "$i: Fizz"\n' +
+        '  elif [ $((i % 5))  -eq 0 ]; then echo "$i: Buzz"\n' +
+        '  else echo "$i"\n' +
+        '  fi\n' +
+        'done\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 📊 Text Processing\n\n' +
+        '```bash\n' +
+        '# Create sample data and process it\n' +
+        'echo -e "Name,Score\\nAlice,95\\nBob,87\\nCarol,92\\nDave,78\\nEve,98" > /tmp/data.csv\n' +
+        'echo "=== Student Scores ==="\n' +
+        'cat /tmp/data.csv\n' +
+        'echo ""\n' +
+        'echo "Top scorer:"\n' +
+        'sort -t, -k2 -n -r /tmp/data.csv | head -2 | tail -1\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🔧 Functions\n\n' +
+        '```bash\n' +
+        '# Bash function\n' +
+        'greet() {\n' +
+        '  local name="$1"\n' +
+        '  echo "Hello, $name! Welcome to bash scripting."\n' +
+        '}\n\n' +
+        'greet "World"\n' +
+        'greet "MDview"\n' +
+        'greet "$(whoami)"\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🎨 ASCII Art\n\n' +
+        '```bash\n' +
+        '# Draw a box\n' +
+        'msg="MDview Bash Sandbox"\n' +
+        'len=${#msg}\n' +
+        'border=$(printf "%0.s─" $(seq 1 $((len + 2))))\n' +
+        'echo "┌${border}┐"\n' +
+        'echo "│ ${msg} │"\n' +
+        'echo "└${border}┘"\n' +
+        '```\n'
+    },
+    {
+      name: 'JavaScript Sandbox',
+      category: 'coding',
+      icon: 'bi-filetype-js',
+      description: 'Executable JavaScript examples — algorithms, DOM-free computations, and functional programming',
+      content: '# ⚡ JavaScript Sandbox\n\n' +
+        '> Run JavaScript **directly in the browser** with full console.log capture.\n\n' +
+        '> [!TIP]\n' +
+        '> Hover over any code block and click **▶ Run** to execute. Output from `console.log`, `console.warn`, and `console.error` is captured and displayed.\n\n' +
+        '---\n\n' +
+        '## 🔢 Basics\n\n' +
+        '```javascript\n' +
+        'console.log("Hello from JavaScript!");\n' +
+        'console.log("2 + 2 =", 2 + 2);\n' +
+        'console.log("Type of null:", typeof null);\n' +
+        'console.log("0.1 + 0.2 =", 0.1 + 0.2);\n' +
+        'console.log("NaN === NaN?", NaN === NaN);\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🧮 Algorithms\n\n' +
+        '```javascript\n' +
+        '// Fibonacci with memoization\n' +
+        'function fib(n, memo = {}) {\n' +
+        '  if (n <= 1) return n;\n' +
+        '  if (memo[n]) return memo[n];\n' +
+        '  return memo[n] = fib(n - 1, memo) + fib(n - 2, memo);\n' +
+        '}\n\n' +
+        'for (let i = 1; i <= 15; i++) {\n' +
+        '  console.log(`fib(${i}) = ${fib(i)}`);\n' +
+        '}\n' +
+        '```\n\n' +
+        '```javascript\n' +
+        '// Array methods showcase\n' +
+        'const data = [5, 12, 8, 130, 44, 3, 91, 17];\n\n' +
+        'console.log("Original:", data);\n' +
+        'console.log("Sorted:", [...data].sort((a, b) => a - b));\n' +
+        'console.log("Sum:", data.reduce((a, b) => a + b, 0));\n' +
+        'console.log("Average:", (data.reduce((a, b) => a + b) / data.length).toFixed(1));\n' +
+        'console.log("Even:", data.filter(n => n % 2 === 0));\n' +
+        'console.log("Doubled:", data.map(n => n * 2));\n' +
+        'console.log("Any > 100?", data.some(n => n > 100));\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 📦 Objects & JSON\n\n' +
+        '```javascript\n' +
+        'const users = [\n' +
+        '  { name: "Alice", age: 28, role: "engineer" },\n' +
+        '  { name: "Bob", age: 32, role: "designer" },\n' +
+        '  { name: "Carol", age: 25, role: "engineer" },\n' +
+        '  { name: "Dave", age: 35, role: "manager" },\n' +
+        '];\n\n' +
+        'const engineers = users.filter(u => u.role === "engineer");\n' +
+        'const avgAge = users.reduce((s, u) => s + u.age, 0) / users.length;\n' +
+        'const byRole = Object.groupBy?.(users, u => u.role) \n' +
+        '  || users.reduce((g, u) => ({...g, [u.role]: [...(g[u.role]||[]), u]}), {});\n\n' +
+        'console.log("Engineers:", engineers.map(u => u.name));\n' +
+        'console.log("Average age:", avgAge);\n' +
+        'console.log("Grouped by role:", byRole);\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## ⏱️ Async & Promises\n\n' +
+        '```javascript\n' +
+        '// Promise chain\n' +
+        'const delay = ms => new Promise(r => setTimeout(r, ms));\n\n' +
+        'console.log("Start");\n\n' +
+        'Promise.resolve()\n' +
+        '  .then(() => { console.log("Step 1: Processing..."); })\n' +
+        '  .then(() => { console.log("Step 2: Analyzing..."); })\n' +
+        '  .then(() => {\n' +
+        '    const result = Array.from({length: 10}, (_, i) => i * i);\n' +
+        '    console.log("Step 3: Results:", result);\n' +
+        '  })\n' +
+        '  .then(() => console.log("Done! ✅"));\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🎨 String Art\n\n' +
+        '```javascript\n' +
+        '// Generate a pattern\n' +
+        'for (let i = 1; i <= 9; i += 2) {\n' +
+        '  const spaces = " ".repeat((9 - i) / 2);\n' +
+        '  const stars = "★".repeat(i);\n' +
+        '  console.log(spaces + stars);\n' +
+        '}\n' +
+        'for (let i = 7; i >= 1; i -= 2) {\n' +
+        '  const spaces = " ".repeat((9 - i) / 2);\n' +
+        '  const stars = "★".repeat(i);\n' +
+        '  console.log(spaces + stars);\n' +
+        '}\n' +
+        '```\n'
+    },
+    {
+      name: 'HTML + JavaScript',
+      category: 'coding',
+      icon: 'bi-window-stack',
+      description: 'Interactive HTML/CSS/JS demos — games, widgets, and visual experiments you can preview live',
+      content: '# 🌐 HTML + JavaScript Interactive\n\n' +
+        '> Build interactive web demos with HTML, CSS, and JavaScript — all rendered live in a sandboxed iframe.\n\n' +
+        '> [!TIP]\n' +
+        '> Hover and click **▶ Preview** to render. Each block is a self-contained mini web page.\n\n' +
+        '---\n\n' +
+        '## 🎯 Click Game\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; text-align: center; padding: 20px;\n' +
+        '         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; margin: 0; }\n' +
+        '  .target { width: 50px; height: 50px; background: #ff6b6b; border-radius: 50%;\n' +
+        '            position: absolute; cursor: pointer; transition: transform 0.1s;\n' +
+        '            box-shadow: 0 4px 15px rgba(0,0,0,0.3); }\n' +
+        '  .target:hover { transform: scale(1.1); }\n' +
+        '  #score { font-size: 36px; font-weight: bold; }\n' +
+        '  #timer { font-size: 18px; opacity: 0.8; }\n' +
+        '</style>\n' +
+        '<div id="score">Score: 0</div>\n' +
+        '<div id="timer">Click the circles! 10s</div>\n' +
+        '<div id="area" style="position:relative;height:200px"></div>\n' +
+        '<button onclick="startGame()" style="padding:10px 24px;font-size:16px;border:none;border-radius:8px;cursor:pointer;background:#ffd700;color:#333;font-weight:bold">Start!</button>\n' +
+        '<script>\n' +
+        '  let score=0, timer=null, timeLeft=10;\n' +
+        '  function spawn() { let a=document.getElementById("area"); let d=document.createElement("div");\n' +
+        '    d.className="target"; d.style.left=Math.random()*(a.offsetWidth-50)+"px";\n' +
+        '    d.style.top=Math.random()*(a.offsetHeight-50)+"px";\n' +
+        '    d.onclick=function(){score++;document.getElementById("score").textContent="Score: "+score;this.remove();spawn()};\n' +
+        '    a.innerHTML="";a.appendChild(d); }\n' +
+        '  function startGame() { score=0;timeLeft=10;document.getElementById("score").textContent="Score: 0";spawn();\n' +
+        '    clearInterval(timer);timer=setInterval(()=>{timeLeft--;\n' +
+        '      document.getElementById("timer").textContent="Time: "+timeLeft+"s";\n' +
+        '      if(timeLeft<=0){clearInterval(timer);document.getElementById("area").innerHTML="";\n' +
+        '        document.getElementById("timer").textContent="Game Over! Score: "+score}},1000); }\n' +
+        '</script>\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 📊 Live Chart\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; padding: 20px; margin: 0; }\n' +
+        '  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 0 20px; }\n' +
+        '  .bar { flex: 1; background: linear-gradient(to top, #667eea, #764ba2);\n' +
+        '         border-radius: 4px 4px 0 0; transition: height 0.5s ease; min-width: 30px;\n' +
+        '         display: flex; align-items: flex-start; justify-content: center;\n' +
+        '         color: #fff; font-size: 12px; font-weight: bold; padding-top: 4px; }\n' +
+        '  .labels { display: flex; gap: 8px; padding: 4px 20px; }\n' +
+        '  .labels span { flex: 1; text-align: center; font-size: 12px; color: #666; min-width: 30px; }\n' +
+        '  button { padding: 8px 20px; border: none; border-radius: 6px; cursor: pointer;\n' +
+        '           background: #667eea; color: #fff; font-size: 14px; margin-top: 10px; }\n' +
+        '</style>\n' +
+        '<h3 style="text-align:center;margin:0 0 10px">📊 Random Data</h3>\n' +
+        '<div class="bar-chart" id="chart"></div>\n' +
+        '<div class="labels" id="labels"></div>\n' +
+        '<div style="text-align:center"><button onclick="randomize()">🔄 Randomize</button></div>\n' +
+        '<script>\n' +
+        '  const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];\n' +
+        '  function randomize(){let c=document.getElementById("chart"),l=document.getElementById("labels");\n' +
+        '    c.innerHTML="";l.innerHTML="";\n' +
+        '    days.forEach(d=>{let v=20+Math.random()*80;\n' +
+        '      c.innerHTML+=`<div class="bar" style="height:${v}%">${Math.round(v)}</div>`;\n' +
+        '      l.innerHTML+=`<span>${d}</span>`});}\n' +
+        '  randomize();\n' +
+        '</script>\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🎨 Gradient Generator\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; padding: 20px; margin: 0; text-align: center; }\n' +
+        '  #preview { height: 120px; border-radius: 12px; margin: 15px 0;\n' +
+        '             display: flex; align-items: center; justify-content: center;\n' +
+        '             color: #fff; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }\n' +
+        '  .controls { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }\n' +
+        '  input[type=color] { width: 50px; height: 35px; border: none; cursor: pointer; border-radius: 6px; }\n' +
+        '  select, button { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; font-size: 14px; }\n' +
+        '  button { background: #333; color: #fff; border: none; cursor: pointer; }\n' +
+        '  code { background: #f0f0f0; padding: 6px 12px; border-radius: 6px; font-size: 13px; display: inline-block; margin-top: 10px; }\n' +
+        '</style>\n' +
+        '<h3>🎨 CSS Gradient Generator</h3>\n' +
+        '<div class="controls">\n' +
+        '  <input type="color" id="c1" value="#667eea" onchange="update()">\n' +
+        '  <input type="color" id="c2" value="#764ba2" onchange="update()">\n' +
+        '  <select id="dir" onchange="update()">\n' +
+        '    <option value="to right">→</option><option value="to left">←</option>\n' +
+        '    <option value="to bottom">↓</option><option value="to top">↑</option>\n' +
+        '    <option value="135deg" selected>↘</option><option value="45deg">↗</option>\n' +
+        '  </select>\n' +
+        '  <button onclick="navigator.clipboard.writeText(document.getElementById(\'css\').textContent)">📋 Copy CSS</button>\n' +
+        '</div>\n' +
+        '<div id="preview"></div>\n' +
+        '<code id="css"></code>\n' +
+        '<script>\n' +
+        '  function update(){ let g=`linear-gradient(${document.getElementById("dir").value}, ${document.getElementById("c1").value}, ${document.getElementById("c2").value})`;\n' +
+        '    document.getElementById("preview").style.background=g;\n' +
+        '    document.getElementById("css").textContent=`background: ${g};`;\n' +
+        '    document.getElementById("preview").textContent=g; }\n' +
+        '  update();\n' +
+        '</script>\n' +
+        '```\n'
+    },
+    {
+      name: 'SQL Playground',
+      category: 'coding',
+      icon: 'bi-database',
+      description: 'Interactive SQL tutorial with CREATE, INSERT, SELECT, JOIN, and aggregate queries on in-memory SQLite',
+      content: '# 🗄️ SQL Playground\n\n' +
+        '> Run SQL queries on an **in-memory SQLite database** — powered by [sql.js](https://sql.js.org/).\n\n' +
+        '> [!TIP]\n' +
+        '> Tables persist across blocks on the same page. Run blocks in order to build up your database!\n\n' +
+        '> [!NOTE]\n' +
+        '> The database resets when you reload the page.\n\n' +
+        '---\n\n' +
+        '## 📋 Create Tables\n\n' +
+        '```sql\n' +
+        'CREATE TABLE IF NOT EXISTS employees (\n' +
+        '  id INTEGER PRIMARY KEY,\n' +
+        '  name TEXT NOT NULL,\n' +
+        '  department TEXT,\n' +
+        '  salary REAL,\n' +
+        '  hire_date TEXT\n' +
+        ');\n\n' +
+        'CREATE TABLE IF NOT EXISTS departments (\n' +
+        '  name TEXT PRIMARY KEY,\n' +
+        '  budget REAL,\n' +
+        '  location TEXT\n' +
+        ')\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 📝 Insert Data\n\n' +
+        '```sql\n' +
+        'INSERT OR REPLACE INTO departments VALUES\n' +
+        '  (\'Engineering\', 500000, \'Floor 3\'),\n' +
+        '  (\'Marketing\',   200000, \'Floor 2\'),\n' +
+        '  (\'Sales\',       300000, \'Floor 1\'),\n' +
+        '  (\'HR\',          150000, \'Floor 2\');\n\n' +
+        'INSERT OR REPLACE INTO employees VALUES\n' +
+        '  (1, \'Alice\',   \'Engineering\', 95000, \'2022-03-15\'),\n' +
+        '  (2, \'Bob\',     \'Marketing\',   72000, \'2021-07-01\'),\n' +
+        '  (3, \'Carol\',   \'Engineering\', 102000,\'2020-01-10\'),\n' +
+        '  (4, \'Dave\',    \'Sales\',       68000, \'2023-06-20\'),\n' +
+        '  (5, \'Eve\',     \'Engineering\', 115000,\'2019-11-05\'),\n' +
+        '  (6, \'Frank\',   \'HR\',          65000, \'2022-09-12\'),\n' +
+        '  (7, \'Grace\',   \'Marketing\',   78000, \'2021-03-28\'),\n' +
+        '  (8, \'Hank\',    \'Sales\',       71000, \'2020-08-14\')\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🔍 Basic Queries\n\n' +
+        '```sql\n' +
+        'SELECT * FROM employees ORDER BY salary DESC\n' +
+        '```\n\n' +
+        '```sql\n' +
+        'SELECT * FROM employees WHERE department = \'Engineering\' ORDER BY hire_date\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 📊 Aggregates & GROUP BY\n\n' +
+        '```sql\n' +
+        'SELECT \n' +
+        '  department,\n' +
+        '  COUNT(*) as headcount,\n' +
+        '  ROUND(AVG(salary), 0) as avg_salary,\n' +
+        '  MIN(salary) as min_salary,\n' +
+        '  MAX(salary) as max_salary\n' +
+        'FROM employees\n' +
+        'GROUP BY department\n' +
+        'ORDER BY avg_salary DESC\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🔗 JOINs\n\n' +
+        '```sql\n' +
+        'SELECT \n' +
+        '  e.name,\n' +
+        '  e.department,\n' +
+        '  e.salary,\n' +
+        '  d.budget,\n' +
+        '  d.location,\n' +
+        '  ROUND(e.salary * 100.0 / d.budget, 1) as pct_of_budget\n' +
+        'FROM employees e\n' +
+        'JOIN departments d ON e.department = d.name\n' +
+        'ORDER BY pct_of_budget DESC\n' +
         '```\n'
     },
   ];

@@ -31,6 +31,18 @@
             return `<div class="executable-python-container"><pre><code class="hljs python">${highlightedPy}</code></pre></div>`;
         }
 
+        // Detect executable JavaScript code blocks
+        if (langLower === 'javascript' || langLower === 'js') {
+            const highlightedJs = hljs.highlight(code, { language: 'javascript' }).value;
+            return `<div class="executable-js-container"><pre><code class="hljs javascript">${highlightedJs}</code></pre></div>`;
+        }
+
+        // Detect executable SQL code blocks
+        if (langLower === 'sql') {
+            const highlightedSql = hljs.highlight(code, { language: 'sql' }).value;
+            return `<div class="executable-sql-container"><pre><code class="hljs sql">${highlightedSql}</code></pre></div>`;
+        }
+
         // Detect executable bash/sh/shell code blocks
         const isExecutable = ['bash', 'sh', 'shell'].includes(langLower);
         const validLanguage = hljs.getLanguage(language) ? language : "plaintext";
@@ -168,11 +180,13 @@
             // Feature 25: Render PlantUML diagrams
             if (M.renderPlantUML) M.renderPlantUML(M.markdownPreview);
 
-            // Executable code blocks (just-bash), math, HTML sandbox, Python sandbox
+            // Executable code blocks (just-bash), math, HTML, Python, JS, SQL sandboxes
             if (M.addCodeBlockToolbars) M.addCodeBlockToolbars();
             if (M.addMathBlockToolbars) M.addMathBlockToolbars();
             if (M.addHtmlBlockToolbars) M.addHtmlBlockToolbars();
             if (M.addPythonBlockToolbars) M.addPythonBlockToolbars();
+            if (M.addJsBlockToolbars) M.addJsBlockToolbars();
+            if (M.addSqlBlockToolbars) M.addSqlBlockToolbars();
 
             if (window.MathJax) {
                 try {

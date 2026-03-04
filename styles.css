@@ -932,6 +932,176 @@ a:focus {
   border-radius: 6px 6px 0 0;
 }
 
+/* ========================================
+   EXECUTABLE JAVASCRIPT BLOCKS (iframe sandbox)
+   ======================================== */
+
+.executable-js-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.executable-js-container pre {
+  margin-bottom: 0;
+}
+
+.executable-js-container:hover .code-block-toolbar {
+  opacity: 1;
+}
+
+/* Run button — orange accent (JS brand) */
+.js-run-btn {
+  background-color: #d97706;
+  border-color: rgba(217, 119, 6, 0.6);
+  color: #fff;
+}
+
+.js-run-btn:hover {
+  background-color: #f59e0b;
+}
+
+[data-theme="dark"] .js-run-btn {
+  background-color: #d97706;
+  border-color: rgba(217, 119, 6, 0.5);
+}
+
+[data-theme="dark"] .js-run-btn:hover {
+  background-color: #f59e0b;
+}
+
+/* JS output */
+.js-output {
+  background-color: #1b1f23;
+  color: #c9d1d9;
+}
+
+[data-theme="dark"] .js-output {
+  background-color: #0d1117;
+  border-color: #21262d;
+}
+
+/* console.warn output */
+.code-output-warn {
+  color: #d29922;
+}
+
+.executable-js-container .code-output[style*="display: block"]~pre,
+.executable-js-container:has(.code-output[style*="display: block"]) pre {
+  border-radius: 6px 6px 0 0;
+}
+
+/* ========================================
+   EXECUTABLE SQL BLOCKS (sql.js SQLite WASM)
+   ======================================== */
+
+.executable-sql-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.executable-sql-container pre {
+  margin-bottom: 0;
+}
+
+.executable-sql-container:hover .code-block-toolbar {
+  opacity: 1;
+}
+
+/* Run button — blue accent (data/SQL brand) */
+.sql-run-btn {
+  background-color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.6);
+  color: #fff;
+}
+
+.sql-run-btn:hover {
+  background-color: #3b82f6;
+}
+
+[data-theme="dark"] .sql-run-btn {
+  background-color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.5);
+}
+
+[data-theme="dark"] .sql-run-btn:hover {
+  background-color: #3b82f6;
+}
+
+/* SQL output */
+.sql-output {
+  background-color: #f6f8fa;
+  color: #1f2328;
+  padding: 0;
+}
+
+[data-theme="dark"] .sql-output {
+  background-color: #0d1117;
+  color: #c9d1d9;
+  border-color: #21262d;
+}
+
+/* SQL result table */
+.sql-result-table-wrap {
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.sql-result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: 'SFMono-Regular', 'Menlo', monospace;
+}
+
+.sql-result-table th {
+  background-color: #e6edf3;
+  color: #1f2328;
+  font-weight: 600;
+  padding: 6px 12px;
+  text-align: left;
+  border-bottom: 2px solid #d1d9e0;
+  white-space: nowrap;
+}
+
+.sql-result-table td {
+  padding: 5px 12px;
+  border-bottom: 1px solid #e6edf3;
+}
+
+.sql-result-table tbody tr:hover {
+  background-color: rgba(37, 99, 235, 0.04);
+}
+
+[data-theme="dark"] .sql-result-table th {
+  background-color: #161b22;
+  color: #c9d1d9;
+  border-bottom-color: #30363d;
+}
+
+[data-theme="dark"] .sql-result-table td {
+  border-bottom-color: #21262d;
+}
+
+[data-theme="dark"] .sql-result-table tbody tr:hover {
+  background-color: rgba(56, 139, 253, 0.06);
+}
+
+.sql-row-count {
+  font-size: 11px;
+  color: #656d76;
+  padding: 4px 12px 6px;
+  text-align: right;
+}
+
+[data-theme="dark"] .sql-row-count {
+  color: #8b949e;
+}
+
+.executable-sql-container .code-output[style*="display: block"]~pre,
+.executable-sql-container:has(.code-output[style*="display: block"]) pre {
+  border-radius: 6px 6px 0 0;
+}
+
 .stats-container {
   font-size: 0.9rem;
   color: var(--text-color);
