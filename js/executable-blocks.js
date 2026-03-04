@@ -494,4 +494,274 @@
         btnEval.innerHTML = '<i class="bi bi-calculator"></i> Evaluate';
     }
 
+    // ========================================
+    // EXECUTABLE HTML BLOCKS (iframe sandbox)
+    // ========================================
+
+    M.addHtmlBlockToolbars = function () {
+        M.markdownPreview.querySelectorAll('.executable-html-container').forEach(function (container) {
+            if (container.querySelector('.code-block-toolbar')) return;
+
+            var toolbar = document.createElement('div');
+            toolbar.className = 'code-block-toolbar';
+            toolbar.setAttribute('aria-label', 'HTML sandbox actions');
+
+            var btnPreview = document.createElement('button');
+            btnPreview.className = 'code-toolbar-btn html-preview-btn';
+            btnPreview.title = 'Preview in sandboxed iframe';
+            btnPreview.setAttribute('aria-label', 'Preview HTML');
+            btnPreview.innerHTML = '<i class="bi bi-play-fill"></i> Preview';
+            btnPreview.addEventListener('click', function () { previewHtmlBlock(container, btnPreview); });
+
+            var btnCopy = document.createElement('button');
+            btnCopy.className = 'code-toolbar-btn code-copy-btn';
+            btnCopy.title = 'Copy code';
+            btnCopy.setAttribute('aria-label', 'Copy code');
+            btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
+            btnCopy.addEventListener('click', function () {
+                var codeEl = container.querySelector('code');
+                if (!codeEl) return;
+                navigator.clipboard.writeText(codeEl.textContent).then(function () {
+                    btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                }).catch(function () {
+                    btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                });
+            });
+
+            toolbar.appendChild(btnPreview);
+            toolbar.appendChild(btnCopy);
+            container.insertBefore(toolbar, container.firstChild);
+        });
+    };
+
+    function previewHtmlBlock(container, btnPreview) {
+        var codeEl = container.querySelector('code');
+        if (!codeEl) return;
+        var code = codeEl.textContent;
+
+        // Toggle: if preview is already visible, close it
+        var existingOutput = container.querySelector('.html-preview-output');
+        if (existingOutput && existingOutput.style.display === 'block') {
+            existingOutput.style.display = 'none';
+            btnPreview.innerHTML = '<i class="bi bi-play-fill"></i> Preview';
+            return;
+        }
+
+        var outputEl = existingOutput;
+        if (!outputEl) {
+            outputEl = document.createElement('div');
+            outputEl.className = 'html-preview-output';
+            container.appendChild(outputEl);
+        }
+
+        // Create sandboxed iframe
+        outputEl.innerHTML = '';
+        var iframe = document.createElement('iframe');
+        iframe.className = 'html-preview-frame';
+        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.srcdoc = code;
+        outputEl.appendChild(iframe);
+        outputEl.style.display = 'block';
+
+        // Auto-resize iframe to content height after load
+        iframe.addEventListener('load', function () {
+            try {
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                var height = Math.min(doc.body.scrollHeight + 20, 500);
+                iframe.style.height = Math.max(height, 60) + 'px';
+            } catch (e) {
+                iframe.style.height = '200px';
+            }
+        });
+
+        btnPreview.innerHTML = '<i class="bi bi-eye-slash"></i> Close';
+    }
+
+    // ========================================
+    // EXECUTABLE PYTHON BLOCKS (Pyodide WASM)
+    // ========================================
+
+    var _pyodideInstance = null;
+    var _pyodideLoading = false;
+    var _pyodideCallbacks = [];
+
+    function getPyodide(onReady, onProgress) {
+        if (_pyodideInstance) { onReady(_pyodideInstance); return; }
+        _pyodideCallbacks.push(onReady);
+        if (_pyodideLoading) return;
+        _pyodideLoading = true;
+
+        if (onProgress) onProgress('Loading Python runtime (~11 MB)...');
+
+        // Load Pyodide script dynamically
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+        script.onload = function () {
+            if (onProgress) onProgress('Initializing Python...');
+            window.loadPyodide({
+                indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/'
+            }).then(function (pyodide) {
+                _pyodideInstance = pyodide;
+                _pyodideLoading = false;
+                // Setup stdout/stderr capture
+                pyodide.runPython([
+                    'import sys',
+                    'from io import StringIO',
+                    ''
+                ].join('\n'));
+                var cbs = _pyodideCallbacks.splice(0);
+                cbs.forEach(function (cb) { cb(pyodide); });
+            }).catch(function (err) {
+                _pyodideLoading = false;
+                console.error('Pyodide load failed:', err);
+                var cbs = _pyodideCallbacks.splice(0);
+                cbs.forEach(function (cb) { cb(null, err); });
+            });
+        };
+        script.onerror = function () {
+            _pyodideLoading = false;
+            var cbs = _pyodideCallbacks.splice(0);
+            cbs.forEach(function (cb) { cb(null, new Error('Failed to load Pyodide CDN script')); });
+        };
+        document.head.appendChild(script);
+    }
+
+    M.addPythonBlockToolbars = function () {
+        M.markdownPreview.querySelectorAll('.executable-python-container').forEach(function (container) {
+            if (container.querySelector('.code-block-toolbar')) return;
+
+            var toolbar = document.createElement('div');
+            toolbar.className = 'code-block-toolbar';
+            toolbar.setAttribute('aria-label', 'Python sandbox actions');
+
+            var btnRun = document.createElement('button');
+            btnRun.className = 'code-toolbar-btn python-run-btn';
+            btnRun.title = 'Run in Python sandbox (Pyodide)';
+            btnRun.setAttribute('aria-label', 'Run Python');
+            btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+            btnRun.addEventListener('click', function () { executePythonBlock(container, btnRun); });
+
+            var btnCopy = document.createElement('button');
+            btnCopy.className = 'code-toolbar-btn code-copy-btn';
+            btnCopy.title = 'Copy code';
+            btnCopy.setAttribute('aria-label', 'Copy code');
+            btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
+            btnCopy.addEventListener('click', function () {
+                var codeEl = container.querySelector('code');
+                if (!codeEl) return;
+                navigator.clipboard.writeText(codeEl.textContent).then(function () {
+                    btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                }).catch(function () {
+                    btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                });
+            });
+
+            toolbar.appendChild(btnRun);
+            toolbar.appendChild(btnCopy);
+            container.insertBefore(toolbar, container.firstChild);
+        });
+    };
+
+    function executePythonBlock(container, btnRun) {
+        var codeEl = container.querySelector('code');
+        if (!codeEl) return;
+        var code = codeEl.textContent;
+
+        var outputEl = container.querySelector('.code-output');
+        if (!outputEl) {
+            outputEl = document.createElement('div');
+            outputEl.className = 'code-output python-output';
+            container.appendChild(outputEl);
+        }
+
+        btnRun.disabled = true;
+        btnRun.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+        outputEl.style.display = 'block';
+        outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> Loading Python runtime...</span>';
+
+        getPyodide(function (pyodide, err) {
+            if (!pyodide || err) {
+                outputEl.innerHTML = '<span class="code-output-error">Failed to load Python: ' + escapeHtml((err && err.message) || 'Unknown error') + '</span>';
+                btnRun.disabled = false;
+                btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+                return;
+            }
+
+            btnRun.innerHTML = '<i class="bi bi-hourglass-split"></i> Running...';
+            outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> Executing...</span>';
+
+            // Use setTimeout so UI updates before blocking execution
+            setTimeout(function () {
+                try {
+                    // Redirect stdout/stderr
+                    pyodide.runPython('sys.stdout = StringIO()\nsys.stderr = StringIO()');
+
+                    // Check if code uses matplotlib
+                    var usesMpl = /\bimport\s+matplotlib\b|\bfrom\s+matplotlib\b|\bplt\.\b/.test(code);
+                    if (usesMpl) {
+                        try {
+                            pyodide.runPython("import micropip");
+                            // matplotlib is pre-bundled in Pyodide, just need to set backend
+                            pyodide.runPython("import matplotlib\nmatplotlib.use('AGG')");
+                        } catch (e) { /* ignore - matplotlib may already be loaded */ }
+                    }
+
+                    pyodide.runPython(code);
+
+                    var stdout = pyodide.runPython('sys.stdout.getvalue()');
+                    var stderr = pyodide.runPython('sys.stderr.getvalue()');
+
+                    var outputHtml = '';
+
+                    // Check for matplotlib figures
+                    if (usesMpl) {
+                        try {
+                            pyodide.runPython([
+                                'import matplotlib.pyplot as _plt',
+                                'import base64 as _b64',
+                                'from io import BytesIO as _BytesIO',
+                                '_mdv_figs = []',
+                                'for _fig_num in _plt.get_fignums():',
+                                '    _buf = _BytesIO()',
+                                '    _plt.figure(_fig_num).savefig(_buf, format="png", dpi=100, bbox_inches="tight")',
+                                '    _buf.seek(0)',
+                                '    _mdv_figs.append(_b64.b64encode(_buf.read()).decode())',
+                                '    _buf.close()',
+                                '_plt.close("all")'
+                            ].join('\n'));
+                            var figs = pyodide.runPython('_mdv_figs').toJs();
+                            if (figs && figs.length > 0) {
+                                for (var fi = 0; fi < figs.length; fi++) {
+                                    outputHtml += '<div class="python-plot"><img src="data:image/png;base64,' + figs[fi] + '" alt="Plot ' + (fi + 1) + '"></div>';
+                                }
+                            }
+                        } catch (plotErr) {
+                            console.warn('matplotlib capture failed:', plotErr);
+                        }
+                    }
+
+                    if (stdout) outputHtml += '<span class="code-output-stdout">' + escapeHtml(stdout) + '</span>';
+                    if (stderr) outputHtml += '<span class="code-output-stderr">' + escapeHtml(stderr) + '</span>';
+                    if (!stdout && !stderr && !outputHtml) outputHtml = '<span class="code-output-muted">(no output)</span>';
+                    outputEl.innerHTML = outputHtml;
+                } catch (runErr) {
+                    var errMsg = runErr.message || String(runErr);
+                    // Clean up Pyodide traceback noise
+                    var cleanErr = errMsg.replace(/^[\s\S]*?(Traceback)/, '$1').replace(/PythonError:\s*/, '');
+                    outputEl.innerHTML = '<span class="code-output-stderr">' + escapeHtml(cleanErr || errMsg) + '</span>';
+                } finally {
+                    btnRun.disabled = false;
+                    btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+                }
+            }, 50);
+        }, function (msg) {
+            outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> ' + escapeHtml(msg) + '</span>';
+        });
+    }
+
 })(window.MDView);

@@ -799,6 +799,139 @@ a:focus {
   color: #d2a8ff;
 }
 
+/* ========================================
+   EXECUTABLE HTML BLOCKS (iframe sandbox)
+   ======================================== */
+
+.executable-html-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.executable-html-container pre {
+  margin-bottom: 0;
+}
+
+.executable-html-container:hover .code-block-toolbar {
+  opacity: 1;
+}
+
+/* Preview button — teal accent */
+.html-preview-btn {
+  background-color: #0d9488;
+  border-color: rgba(13, 148, 136, 0.6);
+  color: #fff;
+}
+
+.html-preview-btn:hover {
+  background-color: #14b8a6;
+}
+
+[data-theme="dark"] .html-preview-btn {
+  background-color: #0d9488;
+  border-color: rgba(13, 148, 136, 0.5);
+}
+
+[data-theme="dark"] .html-preview-btn:hover {
+  background-color: #14b8a6;
+}
+
+/* HTML preview output area */
+.html-preview-output {
+  display: none;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+[data-theme="dark"] .html-preview-output {
+  background-color: #1b1f23;
+  border-color: #21262d;
+}
+
+.html-preview-frame {
+  width: 100%;
+  min-height: 60px;
+  height: 200px;
+  border: none;
+  display: block;
+  background-color: #fff;
+}
+
+/* When preview is open, remove bottom rounding from pre */
+.executable-html-container .html-preview-output[style*="display: block"]~pre,
+.executable-html-container:has(.html-preview-output[style*="display: block"]) pre {
+  border-radius: 6px 6px 0 0;
+}
+
+/* ========================================
+   EXECUTABLE PYTHON BLOCKS (Pyodide WASM)
+   ======================================== */
+
+.executable-python-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.executable-python-container pre {
+  margin-bottom: 0;
+}
+
+.executable-python-container:hover .code-block-toolbar {
+  opacity: 1;
+}
+
+/* Run button — gold/amber accent (Python brand) */
+.python-run-btn {
+  background-color: #b58900;
+  border-color: rgba(181, 137, 0, 0.6);
+  color: #fff;
+}
+
+.python-run-btn:hover {
+  background-color: #d4a017;
+}
+
+[data-theme="dark"] .python-run-btn {
+  background-color: #b58900;
+  border-color: rgba(181, 137, 0, 0.5);
+}
+
+[data-theme="dark"] .python-run-btn:hover {
+  background-color: #d4a017;
+}
+
+/* Python output */
+.python-output {
+  background-color: #1b1f23;
+  color: #c9d1d9;
+}
+
+[data-theme="dark"] .python-output {
+  background-color: #0d1117;
+  border-color: #21262d;
+}
+
+/* Matplotlib plots */
+.python-plot {
+  padding: 8px 0;
+  text-align: center;
+}
+
+.python-plot img {
+  max-width: 100%;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+/* When python output is visible, adjust pre rounding */
+.executable-python-container .code-output[style*="display: block"]~pre,
+.executable-python-container:has(.code-output[style*="display: block"]) pre {
+  border-radius: 6px 6px 0 0;
+}
+
 .stats-container {
   font-size: 0.9rem;
   color: var(--text-color);
