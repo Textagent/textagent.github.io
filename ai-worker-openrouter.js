@@ -64,7 +64,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': 'https://markdownviewer.pages.dev',
-                'X-Title': 'Markdown Viewer',
+                'X-Title': 'MDview',
             },
             body: JSON.stringify({
                 model: MODEL_ID,

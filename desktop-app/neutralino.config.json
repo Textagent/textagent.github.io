@@ -13,11 +13,15 @@
     "enabled": true,
     "writeToLogFile": true
   },
-  "nativeAllowList": ["app.*", "os.*", "debug.log"],
+  "nativeAllowList": [
+    "app.*",
+    "os.*",
+    "debug.log"
+  ],
   "globalVariables": {},
   "modes": {
     "window": {
-      "title": "Markdown Viewer",
+      "title": "MDview",
       "width": 800,
       "height": 500,
       "minWidth": 400,
@@ -35,17 +39,24 @@
     },
     "browser": {
       "globalVariables": {},
-      "nativeBlockList": ["filesystem.*"]
+      "nativeBlockList": [
+        "filesystem.*"
+      ]
     },
     "cloud": {
       "url": "/resources/#cloud",
-      "nativeAllowList": ["app.*"]
+      "nativeAllowList": [
+        "app.*"
+      ]
     },
     "chrome": {
       "width": 800,
       "height": 500,
       "args": "--user-agent=\"Neutralinojs chrome mode\"",
-      "nativeBlockList": ["filesystem.*", "os.*"]
+      "nativeBlockList": [
+        "filesystem.*",
+        "os.*"
+      ]
     }
   },
   "cli": {

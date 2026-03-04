@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
     },
   });
 
-  const sampleMarkdown = `# Welcome to Markdown Viewer
+  const sampleMarkdown = `# Welcome to MDview
 
 ## ✨ Key Features
 - **Live Preview** with GitHub styling
@@ -195,7 +195,7 @@ sequenceDiagram
 
 ## 🆚 Feature Comparison
 
-| Feature                  | Markdown Viewer (Ours) | Other Markdown Editors  |
+| Feature                  | MDview (Ours) | Other Markdown Editors  |
 |:-------------------------|:----------------------:|:-----------------------:|
 | Live Preview             | ✅ GitHub-Styled       | ✅                     |
 | Sync Scrolling           | ✅ Two-way             | 🔄 Partial/None        |
@@ -211,7 +211,7 @@ sequenceDiagram
       <th colspan="2">Support</th>
     </tr>
     <tr>
-      <th>Markdown Viewer (Ours)</th>
+      <th>MDview (Ours)</th>
       <th>Other Markdown Editors</th>
     </tr>
   </thead>
@@ -3879,8 +3879,8 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       name: 'Feature Showcase',
       category: 'documentation',
       icon: 'bi-stars',
-      description: 'Explore every Markdown Viewer feature: AI, diagrams, math, code, presentations, and more',
-      content: '# Welcome to Markdown Viewer\n\n' +
+      description: 'Explore every MDview feature: AI, diagrams, math, code, presentations, and more',
+      content: '# Welcome to MDview\n\n' +
         '> Your all-in-one Markdown editor with live preview, AI assistance, and powerful export options.\n\n' +
         '---\n\n' +
         '## ✨ All Features at a Glance\n\n' +
@@ -3940,7 +3940,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
         '```\n\n' +
         '### Pie Chart\n' +
         '```mermaid\n' +
-        'pie title Markdown Viewer Usage\n' +
+        'pie title MDview Usage\n' +
         '    "Code Docs" : 30\n' +
         '    "Notes" : 25\n' +
         '    "Blog Posts" : 20\n' +
@@ -3988,7 +3988,7 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
         'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
         'Hover over any bash code block and click **▶ Run**:\n\n' +
         '```bash\n' +
-        'echo "Hello from Markdown Viewer! 🎉"\n' +
+        'echo "Hello from MDview! 🎉"\n' +
         '```\n\n' +
         '```bash\n' +
         'echo "Current date: $(date +%Y-%m-%d)"\n' +

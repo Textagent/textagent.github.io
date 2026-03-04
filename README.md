@@ -1,7 +1,7 @@
-# Markdown Viewer
+# MDview
 
 <div align="center">
-    <img src="assets/icon.jpg" alt="Markdown Viewer Logo" width="150px"/>
+    <img src="assets/icon.jpg" alt="MDview Logo" width="150px"/>
     <h3>A powerful GitHub-style Markdown rendering tool</h3>
     <p>Fast, secure, and feature-rich - all running in your browser</p>
     <a href="https://markdownview.github.io/">Live Demo</a> • 
@@ -14,7 +14,7 @@
 
 ## 🚀 Overview
 
-Markdown Viewer is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a clean split-screen interface, allowing you to write Markdown on one side and instantly preview the formatted output on the other.
+MDview is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a clean split-screen interface, allowing you to write Markdown on one side and instantly preview the formatted output on the other.
 
 ## ✨ Features
 
@@ -173,7 +173,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📈 Development Journey
 
-The Markdown Viewer has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, professional application with multiple advanced capabilities. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
+MDview has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, professional application with multiple advanced capabilities. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
 
 ## 📋 Release Notes
 
@@ -220,10 +220,10 @@ The Markdown Viewer has undergone significant evolution since its inception. Wha
 | **2025-05-09** | 🖨 **PDF rendering fixes** — PDF export bug fixes and rendering improvements |
 | **2025-05-01** | 🎨 **New UI & dark mode fixes** — refreshed interface, fixed dark-mode code-block coloring |
 | **2024-04-12** | 📊 **Reading stats** — word count, character count, and reading time |
-| **2024-04-09** | 🚀 **Initial commit** — Markdown Viewer project created |
+| **2024-04-09** | 🚀 **Initial commit** — MDview project created |
 
 ---
 
 <div align="center">
-    <p>Created with ❤️ by the <a href="https://github.com/markdownview">Markdown Viewer</a> team</p>
+    <p>Created with ❤️ by the <a href="https://github.com/markdownview">MDview</a> team</p>
 </div>

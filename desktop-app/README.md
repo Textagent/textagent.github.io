@@ -1,6 +1,6 @@
-# Markdown Viewer Desktop App Port
+# MDview Desktop App Port
 
-This is a desktop app port of [Markdown Viewer](https://github.com/ThisIs-Developer/Markdown-Viewer), see [README](../README.md). It is built using [Neutralinojs](https://github.com/neutralinojs/neutralinojs).
+This is a desktop app port of [MDview](https://github.com/ThisIs-Developer/Markdown-Viewer), see [README](../README.md). It is built using [Neutralinojs](https://github.com/neutralinojs/neutralinojs).
 
 ## Architecture
 
@@ -100,7 +100,7 @@ Each release includes:
 The desktop version uses [Neutralinojs](https://github.com/neutralinojs/neutralinojs), which is also licensed under the MIT License.
 
 - [Neutralinojs](https://github.com/neutralinojs/neutralinojs): [LICENSE (MIT)](LICENSE)
-- [Markdown Viewer & Desktop Port](https://github.com/ThisIs-Developer/Markdown-Viewer): [LICENSE (MIT)](../LICENSE)
+- [MDview & Desktop Port](https://github.com/ThisIs-Developer/Markdown-Viewer): [LICENSE (MIT)](../LICENSE)
 
 ## Contributors
 
