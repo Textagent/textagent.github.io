@@ -3876,6 +3876,130 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
 
   const MARKDOWN_TEMPLATES = [
     {
+      name: 'Feature Showcase',
+      category: 'documentation',
+      icon: 'bi-stars',
+      description: 'Explore every Markdown Viewer feature: code, math, diagrams, tables, and more',
+      content: '# Welcome to Markdown Viewer\n\n' +
+        '## ✨ Key Features\n' +
+        '- **Live Preview** with GitHub styling\n' +
+        '- **Smart Import/Export** (MD, HTML, PDF)\n' +
+        '- **Mermaid Diagrams** for visual documentation\n' +
+        '- **LaTeX Math Support** for scientific notation\n' +
+        '- **Emoji Support** 😄 👍 🎉\n\n' +
+        '## 💻 Code with Syntax Highlighting\n' +
+        '```javascript\n' +
+        'function renderMarkdown() {\n' +
+        '  const markdown = markdownEditor.value;\n' +
+        '  const html = marked.parse(markdown);\n' +
+        '  const sanitizedHtml = DOMPurify.sanitize(html);\n' +
+        '  markdownPreview.innerHTML = sanitizedHtml;\n\n' +
+        '  // Apply syntax highlighting to code blocks\n' +
+        '  markdownPreview.querySelectorAll(\'pre code\').forEach((block) => {\n' +
+        '    hljs.highlightElement(block);\n' +
+        '  });\n' +
+        '}\n' +
+        '```\n\n' +
+        '```python\n' +
+        '# Python example\n' +
+        'class MarkdownParser:\n' +
+        '    def __init__(self, source: str):\n' +
+        '        self.source = source\n\n' +
+        '    def parse(self) -> str:\n' +
+        '        \"\"\"Convert markdown to HTML.\"\"\"\n' +
+        '        return markdown.convert(self.source)\n\n' +
+        'parser = MarkdownParser("# Hello World")\n' +
+        'print(parser.parse())\n' +
+        '```\n\n' +
+        '## 🧮 Mathematical Expressions\n' +
+        'Write complex formulas with LaTeX syntax:\n\n' +
+        'Inline equation: $$E = mc^2$$\n\n' +
+        'Display equations:\n' +
+        '$$\\\\frac{\\\\partial f}{\\\\partial x} = \\\\lim_{h \\\\to 0} \\\\frac{f(x+h) - f(x)}{h}$$\n\n' +
+        '$$\\\\sum_{i=1}^{n} i^2 = \\\\frac{n(n+1)(2n+1)}{6}$$\n\n' +
+        '## 📊 Mermaid Diagrams\n' +
+        'Create powerful visualizations directly in markdown:\n\n' +
+        '```mermaid\n' +
+        'flowchart LR\n' +
+        '    A[Start] --> B{Is it working?}\n' +
+        '    B -->|Yes| C[Great!]\n' +
+        '    B -->|No| D[Debug]\n' +
+        '    C --> E[Deploy]\n' +
+        '    D --> B\n' +
+        '```\n\n' +
+        '### Sequence Diagram\n' +
+        '```mermaid\n' +
+        'sequenceDiagram\n' +
+        '    User->>Editor: Type markdown\n' +
+        '    Editor->>Preview: Render content\n' +
+        '    User->>Editor: Make changes\n' +
+        '    Editor->>Preview: Update rendering\n' +
+        '    User->>Export: Save as PDF\n' +
+        '```\n\n' +
+        '### Pie Chart\n' +
+        '```mermaid\n' +
+        'pie title Feature Usage\n' +
+        '    "Code Blocks" : 35\n' +
+        '    "Tables" : 25\n' +
+        '    "Diagrams" : 20\n' +
+        '    "Math" : 15\n' +
+        '    "Other" : 5\n' +
+        '```\n\n' +
+        '## 📋 Task Management\n' +
+        '- [x] Create responsive layout\n' +
+        '- [x] Implement live preview with GitHub styling\n' +
+        '- [x] Add syntax highlighting for code blocks\n' +
+        '- [x] Support math expressions with LaTeX\n' +
+        '- [x] Enable mermaid diagrams\n' +
+        '- [ ] Your next feature here\n\n' +
+        '## 🆚 Feature Comparison\n\n' +
+        '| Feature                  | Markdown Viewer (Ours) | Other Editors  |\n' +
+        '|:-------------------------|:----------------------:|:--------------:|\n' +
+        '| Live Preview             | ✅ GitHub-Styled       | ✅             |\n' +
+        '| Sync Scrolling           | ✅ Two-way             | 🔄 Partial     |\n' +
+        '| Mermaid Support          | ✅                     | ❌ Limited     |\n' +
+        '| LaTeX Math Rendering     | ✅                     | ❌ Limited     |\n' +
+        '| File Import (DOCX, PDF)  | ✅                     | ❌             |\n' +
+        '| AI Assistant             | ✅ Local + Cloud       | ❌             |\n\n' +
+        '## 📝 Text Formatting Examples\n\n' +
+        '### Inline Formatting\n\n' +
+        'Text can be **bold**, *italic*, ***bold italic***, or ~~strikethrough~~.\n\n' +
+        'Use <mark>highlighted text</mark> for emphasis or <u>underlines</u> for key terms.\n\n' +
+        '### Superscript & Subscript\n\n' +
+        'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub>\n' +
+        'Math notation: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
+        '### Keyboard Shortcuts\n\n' +
+        'Press <kbd>Ctrl</kbd> + <kbd>B</kbd> for bold, <kbd>Ctrl</kbd> + <kbd>I</kbd> for italic.\n\n' +
+        '### Blockquotes\n\n' +
+        '> "The best way to predict the future is to invent it." — Alan Kay\n\n' +
+        '> [!NOTE]\n' +
+        '> GitHub-style alert callouts are also supported!\n\n' +
+        '### Lists\n\n' +
+        'Ordered:\n' +
+        '1. First item\n' +
+        '2. Second item\n' +
+        '3. Third item\n\n' +
+        'Unordered:\n' +
+        '- Item A\n' +
+        '  - Nested item\n' +
+        '    - Deep nested\n' +
+        '- Item B\n\n' +
+        '### Links & Images\n\n' +
+        'Add a [link to GitHub](https://github.com) or embed an image:\n' +
+        '![Markdown Logo](https://upload.wikimedia.org/wikipedia/commons/4/48/Markdown-mark.svg)\n\n' +
+        '## 🖥️ Executable Bash Blocks\n\n' +
+        'Run bash commands directly in the preview — powered by [just-bash](https://justbash.dev/).\n\n' +
+        '```bash\n' +
+        'echo "Hello from Markdown Viewer! 🎉"\n' +
+        '```\n\n' +
+        '```bash\n' +
+        'echo "Today is $(date +%Y-%m-%d)"\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🛡️ Security Note\n\n' +
+        'This is a fully client-side application. Your content never leaves your browser and stays secure on your device.\n'
+    },
+    {
       name: 'README',
       category: 'documentation',
       icon: 'bi-book',
@@ -4835,7 +4959,7 @@ Brief description of the project.
     templates.forEach((tpl, idx) => {
       const card = document.createElement('div');
       card.className = 'template-card';
-      card.setAttribute('data-template-index', idx);
+      card.setAttribute('data-template-index', String(idx));
       card.setAttribute('title', 'Click to use this template');
 
       const preview = tpl.content.trim().split('\n').slice(0, 4).join('\n');
@@ -4850,16 +4974,18 @@ Brief description of the project.
         <div class="template-card-preview">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
       `;
 
-      card.addEventListener('click', () => selectTemplate(tpl));
       templateGrid.appendChild(card);
     });
   }
+
+  // Use event delegation on the grid for reliable click handling
+  let _filteredTemplates = MARKDOWN_TEMPLATES;
 
   function filterTemplates() {
     const query = templateSearchInput.value.toLowerCase().trim();
     const category = activeTemplateCategory;
 
-    const filtered = MARKDOWN_TEMPLATES.filter(tpl => {
+    _filteredTemplates = MARKDOWN_TEMPLATES.filter(tpl => {
       const matchCategory = category === 'all' || tpl.category === category;
       if (!matchCategory) return false;
       if (!query) return true;
@@ -4870,18 +4996,21 @@ Brief description of the project.
         tpl.content.toLowerCase().includes(query);
     });
 
-    renderTemplateCards(filtered);
+    renderTemplateCards(_filteredTemplates);
+  }
+
+  // Event delegation: handle clicks on any template card
+  if (templateGrid) {
+    templateGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.template-card');
+      if (!card) return;
+      const idx = parseInt(card.getAttribute('data-template-index'), 10);
+      if (isNaN(idx) || idx < 0 || idx >= _filteredTemplates.length) return;
+      selectTemplate(_filteredTemplates[idx]);
+    });
   }
 
   function selectTemplate(tpl) {
-    const editorContent = markdownEditor.value.trim();
-
-    if (editorContent.length > 0) {
-      if (!confirm('This will replace your current editor content with the template. Continue?')) {
-        return;
-      }
-    }
-
     // Replace $(date) placeholders with current date
     const today = new Date().toISOString().split('T')[0];
     const content = tpl.content.replace(/\$\(date\)/g, today);
@@ -5476,12 +5605,16 @@ Brief description of the project.
               });
               const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
 
+              // Update consent modal progress
               aiProgressBar.style.width = overallPercent + '%';
               aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
 
               const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
               const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
               aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
+
+              // Also update inline progress in AI panel
+              updateAiInlineProgress(overallPercent, `Downloading Qwen 3.5... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
 
               setTimeout(() => { initAiWorker._progressThrottle = false; }, 200);
             });
@@ -5732,6 +5865,37 @@ Brief description of the project.
     // Insert after header
     const header = aiPanel.querySelector('.ai-panel-header');
     header.insertAdjacentElement('afterend', bar);
+  }
+
+  // Show or update an inline download progress bar in the AI panel
+  function updateAiInlineProgress(percent, statusText, detailText) {
+    let bar = aiPanel.querySelector('.ai-status-bar.downloading');
+    if (!bar) {
+      // Remove any existing non-download status bar
+      const existing = aiPanel.querySelector('.ai-status-bar');
+      if (existing) existing.remove();
+
+      bar = document.createElement('div');
+      bar.className = 'ai-status-bar downloading';
+      bar.innerHTML = `
+        <div class="ai-status-text">
+          <span class="ai-download-status"><span class="ai-status-spinner"></span> ${statusText}</span>
+          <span class="ai-download-detail">${detailText}</span>
+        </div>
+        <div class="ai-inline-progress">
+          <div class="ai-inline-progress-fill" style="width: ${percent}%"></div>
+        </div>
+      `;
+      const header = aiPanel.querySelector('.ai-panel-header');
+      header.insertAdjacentElement('afterend', bar);
+    } else {
+      const fill = bar.querySelector('.ai-inline-progress-fill');
+      const statusEl = bar.querySelector('.ai-download-status');
+      const detailEl = bar.querySelector('.ai-download-detail');
+      if (fill) fill.style.width = percent + '%';
+      if (statusEl) statusEl.innerHTML = `<span class="ai-status-spinner"></span> ${statusText}`;
+      if (detailEl) detailEl.textContent = detailText;
+    }
   }
 
   // --- Chat Messages ---
@@ -6566,28 +6730,56 @@ Brief description of the project.
   memoryDownloadMd.addEventListener('click', () => memoryDownload('md'));
   memoryDownloadTxt.addEventListener('click', () => memoryDownload('txt'));
 
-  // Generate shareable link
-  memoryGenLink.addEventListener('click', () => {
+  // Generate shareable link (uses existing Firebase + encryption infra)
+  memoryGenLink.addEventListener('click', async () => {
     const output = getCurrentMemoryOutput();
-    try {
-      const encoded = btoa(unescape(encodeURIComponent(output)));
-      if (encoded.length > 8000) {
-        memoryShareResult.style.display = 'block';
-        memoryShareResult.className = 'error';
-        memoryShareResult.innerHTML = 'Content too large for URL encoding. Use download or copy instead.';
-      } else {
-        const dataUrl = `data:text/plain;base64,${encoded}`;
-        memoryShareResult.style.display = 'flex';
-        memoryShareResult.className = 'success';
-        memoryShareResult.innerHTML = `<input readonly value="${dataUrl}"><button class="memory-action-btn" id="memory-copy-link"><i class="bi bi-clipboard"></i> Copy</button>`;
-        document.getElementById('memory-copy-link').addEventListener('click', function () {
-          memoryCopyText(dataUrl, this);
-        });
-      }
-    } catch {
+    if (!output.trim()) {
       memoryShareResult.style.display = 'block';
       memoryShareResult.className = 'error';
-      memoryShareResult.innerHTML = 'Failed to encode content.';
+      memoryShareResult.innerHTML = 'Nothing to share — editor is empty.';
+      return;
+    }
+
+    // Show loading state
+    memoryGenLink.disabled = true;
+    memoryGenLink.textContent = 'Generating...';
+
+    try {
+      // Compress → Encrypt → Upload to Firebase (same flow as main share)
+      const compressed = compressData(output);
+      const key = await generateEncryptionKey();
+      const encrypted = await encryptData(key, compressed);
+      const dataString = uint8ArrayToBase64Url(encrypted);
+      const keyString = await keyToBase64Url(key);
+
+      let shareUrl;
+      try {
+        const docRef = await db.collection('shares').add({
+          d: dataString,
+          t: Date.now()
+        });
+        shareUrl = `${SHARE_BASE_URL}#id=${docRef.id}&k=${keyString}`;
+      } catch (fbError) {
+        console.warn('Firebase unavailable, using URL fallback:', fbError);
+        shareUrl = `${SHARE_BASE_URL}#d=${dataString}&k=${keyString}`;
+        if (shareUrl.length > 65000) {
+          throw new Error('Content too large to share via URL. Use download or copy.');
+        }
+      }
+
+      memoryShareResult.style.display = 'flex';
+      memoryShareResult.className = 'success';
+      memoryShareResult.innerHTML = `<input readonly value="${shareUrl}"><button class="memory-action-btn" id="memory-copy-link"><i class="bi bi-clipboard"></i> Copy</button>`;
+      document.getElementById('memory-copy-link').addEventListener('click', function () {
+        memoryCopyText(shareUrl, this);
+      });
+    } catch (err) {
+      memoryShareResult.style.display = 'block';
+      memoryShareResult.className = 'error';
+      memoryShareResult.innerHTML = 'Failed to generate link: ' + err.message;
+    } finally {
+      memoryGenLink.disabled = false;
+      memoryGenLink.textContent = 'Generate Link';
     }
   });
 
