@@ -20,7 +20,7 @@
         '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math · Mermaid Diagrams · Emoji |\n' +
         '| **AI** | Built-in AI Assistant — Local Qwen 3.5 + Cloud: Gemini, Groq, OpenRouter |\n' +
         '| **Voice** | 🎤 Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
-        '| **Code** | ▶ Executable Bash blocks (just-bash) · ▶ Executable Math blocks (math.js) |\n' +
+        '| **Code** | ▶ Bash (just-bash) · ▶ Math (math.js) · 🐍 Python (Pyodide) · 🌐 HTML Sandbox (iframe) |\n' +
         '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
         '| **Export** | Markdown · HTML · PDF · LLM Memory Format |\n' +
         '| **Sharing** | ☁️ End-to-end encrypted cloud sharing via Firebase |\n' +
@@ -83,6 +83,52 @@
         '// Matrix operations\n' +
         'det([1, 2; 3, 4])\n' +
         'inv([1, 2; 3, 4])\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🐍 Python Sandbox\n\n' +
+        'Run Python code **directly in the browser** — powered by [Pyodide](https://pyodide.org/) (WebAssembly CPython).\n' +
+        'Hover over a `python` block and click **▶ Run** (first run loads ~11 MB runtime, then cached):\n\n' +
+        '```python\n' +
+        'import math\n\n' +
+        'print(f"π = {math.pi:.10f}")\n' +
+        'print(f"e = {math.e:.10f}")\n' +
+        'print(f"10! = {math.factorial(10)}")\n\n' +
+        '# Fibonacci sequence\n' +
+        'def fib(n):\n' +
+        '    a, b = 0, 1\n' +
+        '    for _ in range(n):\n' +
+        '        a, b = b, a + b\n' +
+        '    return a\n\n' +
+        'for i in range(1, 11):\n' +
+        '    print(f"fib({i}) = {fib(i)}")\n' +
+        '```\n\n' +
+        '```python\n' +
+        '# Data processing\n' +
+        'data = [{"name": "Alice", "score": 95}, {"name": "Bob", "score": 87}, {"name": "Carol", "score": 92}]\n' +
+        'avg = sum(d["score"] for d in data) / len(data)\n' +
+        'print(f"Average score: {avg:.1f}")\n' +
+        'print(f"Top scorer: {max(data, key=lambda d: d[\'score\'])[\'name\']}")\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🌐 HTML Sandbox\n\n' +
+        'Preview HTML/CSS/JS **live in the browser** — rendered inside a secure, sandboxed `<iframe>`.\n' +
+        'Hover over an `html` block and click **▶ Preview** to see it rendered:\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; text-align: center; padding: 20px; }\n' +
+        '  .box { width: 80px; height: 80px; margin: 20px auto;\n' +
+        '         background: linear-gradient(135deg, #667eea, #764ba2);\n' +
+        '         border-radius: 12px; animation: spin 2s infinite linear; }\n' +
+        '  @keyframes spin { to { transform: rotate(360deg); } }\n' +
+        '</style>\n' +
+        '<h2 style="color: #667eea;">Hello from the Sandbox!</h2>\n' +
+        '<div class="box"></div>\n' +
+        '<p>This HTML, CSS, and JS runs inside a secure iframe.</p>\n' +
+        '```\n\n' +
+        '```html\n' +
+        '<button onclick="document.getElementById(\'c\').textContent = ++n">Click me!</button>\n' +
+        '<p>Count: <span id="c">0</span></p>\n' +
+        '<script>let n = 0;</script>\n' +
         '```\n\n' +
         '---\n\n' +
         '## 🧮 LaTeX Math Expressions\n\n' +
@@ -241,6 +287,8 @@
         '- [x] AI Assistant — 4 models (local + cloud)\n' +
         '- [x] Voice dictation with markdown commands\n' +
         '- [x] Executable bash & math blocks\n' +
+        '- [x] Python sandbox (Pyodide WASM)\n' +
+        '- [x] HTML sandbox (iframe preview)\n' +
         '- [x] LLM Memory export (4 formats)\n' +
         '- [x] Presentation mode (slideshow)\n' +
         '- [x] Encrypted cloud sharing (Firebase)\n' +
@@ -2252,6 +2300,243 @@ norm(u)
       icon: 'bi-trophy-fill',
       description: 'Hackathon demo day with project showcases, judging criteria, voting, and awards',
       content: 'layout: cover\nbackground: https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80\n\n# 🏆 Hackathon Demo Day!\n\nSpring 2025 · 48 Hours of Building\n\n*12 Teams · 48 Hackers · Unlimited Coffee ☕*\n\n<!-- Welcome to Demo Day! 12 teams, 48 hours, and some incredible projects. Let\'s see what you built! -->\n\n---\n\n# Judging Criteria\n\n| Criterion | Weight | Description |\n|:----------|:------:|:------------|\n| 🎯 **Impact** | 30% | Does it solve a real problem? |\n| 💡 **Innovation** | 25% | Is the approach creative or novel? |\n| 🛠️ **Technical** | 25% | How well is it built? |\n| 🎨 **Design** | 10% | Is it polished and usable? |\n| 🎤 **Demo** | 10% | Is the presentation clear and compelling? |\n\n> Each team gets **3 minutes** to demo + **2 minutes** for Q&A.\n\n---\n\n# Team Lineup\n\n| # | Team | Project | Tech |\n|:--|:-----|:--------|:-----|\n| 1 | 🦊 FoxForce | AI Code Reviewer | GPT-4 + GitHub API |\n| 2 | 🚀 LaunchPad | One-Click Staging | Terraform + K8s |\n| 3 | 🎵 SoundWave | Meeting Summarizer | Whisper + LLM |\n| 4 | 🌿 GreenCode | Carbon-Aware CI | Cloud Carbon API |\n| 5 | 🔮 Crystal | Predictive Alerting | Time Series ML |\n| 6 | 🎮 PixelPush | Gamified Onboarding | React + Badges |\n\n*...and 6 more amazing teams!*\n\n---\n\n# Demo Flow\n\n```mermaid\nflowchart LR\n    A[\"Teams 1-4\\n(12 min)\"] --> B[\"☕ Break\\n(5 min)\"]\n    B --> C[\"Teams 5-8\\n(12 min)\"]\n    C --> D[\"☕ Break\\n(5 min)\"]\n    D --> E[\"Teams 9-12\\n(12 min)\"]\n    E --> F[\"🗳️ Voting\\n(10 min)\"]\n    F --> G[\"🏆 Awards!\"]\n```\n\n---\n\n# Prizes\n\n| Place | Prize | Perk |\n|:------|:------|:-----|\n| 🥇 **1st Place** | $3,000 + Trophy | Project gets roadmap slot |\n| 🥈 **2nd Place** | $1,500 | Extra PTO day |\n| 🥉 **3rd Place** | $750 | Swag box |\n| 🌟 **People\'s Choice** | $500 | Bragging rights |\n| 💡 **Most Innovative** | $500 | Innovation lab access |\n\n> [!TIP]\n> Vote for People\'s Choice on Slido: **#hackathon2025**\n\n---\n\nlayout: center\n\n# Time to Vote! 🗳️\n\nScan the QR code or go to **slido.com/hackathon2025**\n\n*Results announced in 15 minutes!*\n\n---\n\nlayout: cover\nbackground: linear-gradient(135deg, #f5af19 0%, #f12711 100%)\n\n# Congratulations to ALL Teams! 🎉\n\n48 hours of pure creativity and engineering excellence.\n\n*See you at the next hackathon!*\n\n<!-- Incredible work from everyone. The energy this week was unmatched. -->'
+    },
+    {
+      name: 'Python Playground',
+      category: 'technical',
+      icon: 'bi-filetype-py',
+      description: 'Interactive Python examples — algorithms, data processing, and math — runnable in the browser via Pyodide',
+      content: '# 🐍 Python Playground\n\n' +
+        '> Run Python code **directly in your browser** — no install required!\n' +
+        '> Powered by [Pyodide](https://pyodide.org/) (CPython compiled to WebAssembly).\n\n' +
+        '> [!TIP]\n' +
+        '> Hover over any code block and click **▶ Run** to execute. The first run downloads the Python runtime (~11 MB, cached afterwards).\n\n' +
+        '---\n\n' +
+        '## 🔢 Math & Constants\n\n' +
+        '```python\n' +
+        'import math\n\n' +
+        'print(f"π  = {math.pi:.15f}")\n' +
+        'print(f"e  = {math.e:.15f}")\n' +
+        'print(f"τ  = {math.tau:.15f}")\n' +
+        'print(f"φ  = {(1 + 5**0.5) / 2:.15f}  (golden ratio)")\n' +
+        'print()\n' +
+        'print(f"100! = {math.factorial(100)}")\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🧮 Algorithms\n\n' +
+        '```python\n' +
+        '# Fibonacci — iterative\n' +
+        'def fib(n):\n' +
+        '    a, b = 0, 1\n' +
+        '    for _ in range(n):\n' +
+        '        a, b = b, a + b\n' +
+        '    return a\n\n' +
+        'print("Fibonacci sequence:")\n' +
+        'for i in range(1, 16):\n' +
+        '    print(f"  fib({i:2d}) = {fib(i)}")\n' +
+        '```\n\n' +
+        '```python\n' +
+        '# Sieve of Eratosthenes\n' +
+        'def primes_up_to(n):\n' +
+        '    sieve = [True] * (n + 1)\n' +
+        '    sieve[0] = sieve[1] = False\n' +
+        '    for i in range(2, int(n**0.5) + 1):\n' +
+        '        if sieve[i]:\n' +
+        '            for j in range(i*i, n + 1, i):\n' +
+        '                sieve[j] = False\n' +
+        '    return [i for i, v in enumerate(sieve) if v]\n\n' +
+        'p = primes_up_to(100)\n' +
+        'print(f"Primes up to 100 ({len(p)} total):")\n' +
+        'print(p)\n' +
+        '```\n\n' +
+        '```python\n' +
+        '# Sorting algorithms comparison\n' +
+        'import random, time\n\n' +
+        'def bubble_sort(arr):\n' +
+        '    a = arr[:]\n' +
+        '    for i in range(len(a)):\n' +
+        '        for j in range(len(a) - i - 1):\n' +
+        '            if a[j] > a[j+1]:\n' +
+        '                a[j], a[j+1] = a[j+1], a[j]\n' +
+        '    return a\n\n' +
+        'data = [random.randint(1, 1000) for _ in range(500)]\n\n' +
+        't1 = time.time()\n' +
+        'bubble_sort(data)\n' +
+        'bubble_time = time.time() - t1\n\n' +
+        't2 = time.time()\n' +
+        'sorted(data)\n' +
+        'builtin_time = time.time() - t2\n\n' +
+        'print(f"Bubble sort (500 items): {bubble_time*1000:.1f} ms")\n' +
+        'print(f"Built-in sort:          {builtin_time*1000:.3f} ms")\n' +
+        'print(f"Built-in is {bubble_time/builtin_time:.0f}x faster!")\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 📊 Data Processing\n\n' +
+        '```python\n' +
+        '# JSON data analysis\n' +
+        'import json\n\n' +
+        'students = [\n' +
+        '    {"name": "Alice",   "grade": "A",  "score": 95},\n' +
+        '    {"name": "Bob",     "grade": "B+", "score": 88},\n' +
+        '    {"name": "Carol",   "grade": "A-", "score": 92},\n' +
+        '    {"name": "David",   "grade": "B",  "score": 85},\n' +
+        '    {"name": "Eve",     "grade": "A+", "score": 98},\n' +
+        '    {"name": "Frank",   "grade": "C+", "score": 78},\n' +
+        ']\n\n' +
+        'scores = [s["score"] for s in students]\n' +
+        'avg = sum(scores) / len(scores)\n' +
+        'top = max(students, key=lambda s: s["score"])\n\n' +
+        'print(f"Students:  {len(students)}")\n' +
+        'print(f"Average:   {avg:.1f}")\n' +
+        'print(f"Highest:   {top[\'name\']} ({top[\'score\']})")\n' +
+        'print(f"Lowest:    {min(scores)}")\n' +
+        'print(f"Std Dev:   {(sum((s - avg)**2 for s in scores) / len(scores))**0.5:.2f}")\n' +
+        'print()\n' +
+        'print("Leaderboard:")\n' +
+        'for i, s in enumerate(sorted(students, key=lambda x: -x["score"]), 1):\n' +
+        '    medal = ["🥇", "🥈", "🥉"][i-1] if i <= 3 else "  "\n' +
+        '    print(f"  {medal} {s[\'name\']: <8} {s[\'grade\']: <3} {s[\'score\']: >3}")\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🎨 String Art\n\n' +
+        '```python\n' +
+        '# ASCII art generator\n' +
+        'import math\n\n' +
+        'width, height = 60, 20\n\n' +
+        'for y in range(height):\n' +
+        '    row = ""\n' +
+        '    for x in range(width):\n' +
+        '        nx = (x / width - 0.5) * 4\n' +
+        '        ny = (y / height - 0.5) * 2\n' +
+        '        val = math.sin(nx * 2) * math.cos(ny * 3) + math.sin(nx * ny)\n' +
+        '        chars = " .:-=+*#%@"\n' +
+        '        idx = int((val + 2) / 4 * (len(chars) - 1))\n' +
+        '        idx = max(0, min(len(chars) - 1, idx))\n' +
+        '        row += chars[idx]\n' +
+        '    print(row)\n' +
+        '```\n'
+    },
+    {
+      name: 'HTML Playground',
+      category: 'technical',
+      icon: 'bi-filetype-html',
+      description: 'Interactive HTML/CSS/JS demos — animations, interactive widgets, and canvas drawing — live in the preview',
+      content: '# 🌐 HTML Playground\n\n' +
+        '> Preview HTML, CSS, and JavaScript **live in your browser** — rendered inside a secure, sandboxed `<iframe>`.\n\n' +
+        '> [!TIP]\n' +
+        '> Hover over any code block and click **▶ Preview** to see it rendered. Click again to close.\n\n' +
+        '---\n\n' +
+        '## 🎨 CSS Animation\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; text-align: center; padding: 20px; margin: 0;\n' +
+        '         background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: #fff; }\n' +
+        '  .orbit { position: relative; width: 200px; height: 200px; margin: 20px auto; }\n' +
+        '  .planet { width: 20px; height: 20px; border-radius: 50%;\n' +
+        '            position: absolute; top: 50%; left: 50%; margin: -10px;\n' +
+        '            animation: orbit 3s linear infinite; }\n' +
+        '  .planet:nth-child(1) { background: #667eea; animation-duration: 2s; }\n' +
+        '  .planet:nth-child(2) { background: #f093fb; animation-duration: 3s; animation-delay: -1s; }\n' +
+        '  .planet:nth-child(3) { background: #4facfe; animation-duration: 4s; animation-delay: -2s; }\n' +
+        '  .sun { width: 40px; height: 40px; background: #ffd700; border-radius: 50%;\n' +
+        '         position: absolute; top: 50%; left: 50%; margin: -20px;\n' +
+        '         box-shadow: 0 0 30px #ffd700; }\n' +
+        '  @keyframes orbit {\n' +
+        '    from { transform: rotate(0deg) translateX(80px) rotate(0deg); }\n' +
+        '    to   { transform: rotate(360deg) translateX(80px) rotate(-360deg); }\n' +
+        '  }\n' +
+        '</style>\n' +
+        '<h3>🌌 Solar System</h3>\n' +
+        '<div class="orbit">\n' +
+        '  <div class="sun"></div>\n' +
+        '  <div class="planet"></div>\n' +
+        '  <div class="planet"></div>\n' +
+        '  <div class="planet"></div>\n' +
+        '</div>\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🖱️ Interactive Counter\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; text-align: center; padding: 30px; }\n' +
+        '  .counter { font-size: 48px; font-weight: bold; color: #667eea; margin: 20px; }\n' +
+        '  button { padding: 12px 24px; font-size: 18px; border: none; border-radius: 8px;\n' +
+        '           cursor: pointer; margin: 5px; transition: transform 0.1s; }\n' +
+        '  button:active { transform: scale(0.95); }\n' +
+        '  .minus { background: #f47067; color: #fff; }\n' +
+        '  .plus  { background: #238636; color: #fff; }\n' +
+        '  .reset { background: #6f42c1; color: #fff; }\n' +
+        '</style>\n' +
+        '<div class="counter" id="count">0</div>\n' +
+        '<button class="minus" onclick="update(-1)">− 1</button>\n' +
+        '<button class="reset" onclick="n=0;update(0)">Reset</button>\n' +
+        '<button class="plus" onclick="update(1)">+ 1</button>\n' +
+        '<script>\n' +
+        '  let n = 0;\n' +
+        '  function update(d) { n += d; document.getElementById("count").textContent = n; }\n' +
+        '</script>\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🎨 Canvas Drawing\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: system-ui; text-align: center; padding: 10px; margin: 0; }\n' +
+        '  canvas { border: 2px solid #ddd; border-radius: 8px; cursor: crosshair; display: block; margin: 10px auto; }\n' +
+        '  .controls { margin: 10px; }\n' +
+        '  button { padding: 8px 16px; margin: 4px; border: none; border-radius: 6px; cursor: pointer; }\n' +
+        '  .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; }\n' +
+        '  .color-btn.active { border-color: #333; box-shadow: 0 0 4px rgba(0,0,0,0.3); }\n' +
+        '</style>\n' +
+        '<h3>🖌️ Draw Something!</h3>\n' +
+        '<div class="controls">\n' +
+        '  <button class="color-btn active" style="background:#333" onclick="setColor(this,\'#333\')"></button>\n' +
+        '  <button class="color-btn" style="background:#f47067" onclick="setColor(this,\'#f47067\')"></button>\n' +
+        '  <button class="color-btn" style="background:#238636" onclick="setColor(this,\'#238636\')"></button>\n' +
+        '  <button class="color-btn" style="background:#667eea" onclick="setColor(this,\'#667eea\')"></button>\n' +
+        '  <button class="color-btn" style="background:#ffd700" onclick="setColor(this,\'#ffd700\')"></button>\n' +
+        '  <button onclick="ctx.clearRect(0,0,cv.width,cv.height)" style="background:#eee">Clear</button>\n' +
+        '</div>\n' +
+        '<canvas id="cv" width="400" height="250"></canvas>\n' +
+        '<script>\n' +
+        '  const cv = document.getElementById("cv");\n' +
+        '  const ctx = cv.getContext("2d");\n' +
+        '  let drawing = false, color = "#333";\n' +
+        '  ctx.lineWidth = 3; ctx.lineCap = "round";\n' +
+        '  function setColor(btn, c) { color = c; ctx.strokeStyle = c;\n' +
+        '    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));\n' +
+        '    btn.classList.add("active"); }\n' +
+        '  cv.addEventListener("mousedown", e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });\n' +
+        '  cv.addEventListener("mousemove", e => { if (drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });\n' +
+        '  cv.addEventListener("mouseup", () => drawing = false);\n' +
+        '  cv.addEventListener("mouseleave", () => drawing = false);\n' +
+        '</script>\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## ⏱️ Stopwatch\n\n' +
+        '```html\n' +
+        '<style>\n' +
+        '  body { font-family: \'SF Mono\', monospace; text-align: center; padding: 30px;\n' +
+        '         background: #1b1f23; color: #c9d1d9; }\n' +
+        '  .time { font-size: 56px; letter-spacing: 4px; margin: 20px; color: #58a6ff; }\n' +
+        '  button { padding: 10px 24px; font-size: 16px; border: none; border-radius: 8px;\n' +
+        '           cursor: pointer; margin: 5px; color: #fff; }\n' +
+        '  .start { background: #238636; }\n' +
+        '  .stop  { background: #f47067; }\n' +
+        '  .reset { background: #6f42c1; }\n' +
+        '</style>\n' +
+        '<div class="time" id="display">00:00.00</div>\n' +
+        '<button class="start" onclick="start()">Start</button>\n' +
+        '<button class="stop" onclick="stop()">Stop</button>\n' +
+        '<button class="reset" onclick="reset()">Reset</button>\n' +
+        '<script>\n' +
+        '  let t = 0, timer = null;\n' +
+        '  function fmt(ms) { let s=Math.floor(ms/1000), m=Math.floor(s/60);\n' +
+        '    return `${String(m).padStart(2,"0")}:${String(s%60).padStart(2,"0")}.${String(Math.floor(ms%1000/10)).padStart(2,"0")}`; }\n' +
+        '  function start() { if(!timer) { let s=Date.now()-t; timer=setInterval(()=>{t=Date.now()-s;document.getElementById("display").textContent=fmt(t)},10); } }\n' +
+        '  function stop() { clearInterval(timer); timer=null; }\n' +
+        '  function reset() { stop(); t=0; document.getElementById("display").textContent="00:00.00"; }\n' +
+        '</script>\n' +
+        '```\n'
     },
   ];
 
