@@ -217,4 +217,185 @@
         }
     }
 
+    // ========================================
+    // LATEX DISPLAY MATH EVALUATION (Nerdamer)
+    // ========================================
+
+    M.addLatexEvalToolbars = function () {
+        if (typeof nerdamer === 'undefined') return;
+
+        // Extract display math expressions from raw markdown source
+        var markdown = M.markdownEditor.value || '';
+        var displayMathRegex = /\$\$([\s\S]*?)\$\$/g;
+        var latexSources = [];
+        var match;
+        while ((match = displayMathRegex.exec(markdown)) !== null) {
+            latexSources.push(match[1].trim());
+        }
+
+        var mjxElements = M.markdownPreview.querySelectorAll('mjx-container[display="true"]');
+        var sourceIndex = 0;
+
+        mjxElements.forEach(function (mjxEl) {
+            // Skip if already wrapped
+            if (mjxEl.parentElement && mjxEl.parentElement.classList.contains('latex-eval-container')) return;
+            // Skip if inside an executable-math-container
+            if (mjxEl.closest('.executable-math-container')) return;
+
+            // Get LaTeX source from our extracted list
+            var latexSource = (sourceIndex < latexSources.length) ? latexSources[sourceIndex] : '';
+            sourceIndex++;
+
+            var wrapper = document.createElement('div');
+            wrapper.className = 'latex-eval-container';
+            wrapper.setAttribute('data-latex', latexSource);
+            mjxEl.parentNode.insertBefore(wrapper, mjxEl);
+            wrapper.appendChild(mjxEl);
+
+            var toolbar = document.createElement('div');
+            toolbar.className = 'latex-eval-toolbar';
+            toolbar.setAttribute('aria-label', 'LaTeX evaluation actions');
+
+            var btnEval = document.createElement('button');
+            btnEval.className = 'code-toolbar-btn math-eval-btn';
+            btnEval.title = 'Evaluate LaTeX expression';
+            btnEval.setAttribute('aria-label', 'Evaluate');
+            btnEval.innerHTML = '<i class="bi bi-calculator"></i> Evaluate';
+            btnEval.addEventListener('click', function () { evaluateLatexBlock(wrapper, btnEval); });
+
+            var btnCopy = document.createElement('button');
+            btnCopy.className = 'code-toolbar-btn code-copy-btn';
+            btnCopy.title = 'Copy LaTeX source';
+            btnCopy.setAttribute('aria-label', 'Copy LaTeX');
+            btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
+            btnCopy.addEventListener('click', function () {
+                var latex = wrapper.getAttribute('data-latex') || '';
+                navigator.clipboard.writeText('$$' + latex + '$$').then(function () {
+                    btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                }).catch(function () {
+                    btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                });
+            });
+
+            toolbar.appendChild(btnEval);
+            toolbar.appendChild(btnCopy);
+            wrapper.insertBefore(toolbar, wrapper.firstChild);
+        });
+    };
+
+    function evaluateLatexBlock(container, btnEval) {
+        var latex = container.getAttribute('data-latex') || '';
+        if (!latex.trim()) return;
+
+
+        var outputEl = container.querySelector('.latex-eval-output');
+        if (!outputEl) {
+            outputEl = document.createElement('div');
+            outputEl.className = 'latex-eval-output';
+            container.appendChild(outputEl);
+        }
+
+        if (typeof nerdamer === 'undefined') {
+            outputEl.innerHTML = '<span class="code-output-error">⏳ Nerdamer is still loading. Please try again.</span>';
+            outputEl.style.display = 'block';
+            return;
+        }
+
+        btnEval.disabled = true;
+        btnEval.innerHTML = '<i class="bi bi-hourglass-split"></i> Computing...';
+        outputEl.style.display = 'block';
+
+        try {
+            // Clean up the LaTeX for nerdamer
+            var cleanLatex = latex
+                .replace(/\\displaystyle\s*/g, '')
+                .replace(/\\left\s*/g, '')
+                .replace(/\\right\s*/g, '')
+                .replace(/\\,/g, '')
+                .replace(/\\;/g, '')
+                .replace(/\\!/g, '')
+                .replace(/\\quad/g, '')
+                .replace(/\\qquad/g, '')
+                .replace(/\\text\{[^}]*\}/g, '')
+                .replace(/\\mathrm\{([^}]*)\}/g, '$1')
+                .replace(/\\mathbf\{([^}]*)\}/g, '$1')
+                .replace(/\\vec\{([^}]*)\}/g, '$1')
+                .replace(/\\overrightarrow\{([^}]*)\}/g, '$1')
+                .replace(/\\hat\{([^}]*)\}/g, '$1')
+                .replace(/\\bar\{([^}]*)\}/g, '$1')
+                .trim();
+
+            // Try to parse and evaluate
+            var expr = nerdamer.convertFromLaTeX(cleanLatex);
+            var resultText;
+            var resultType;
+
+            try {
+                // Try numeric evaluation first
+                var numResult = expr.evaluate();
+                var numStr = numResult.text('decimals');
+
+                // Check if it's actually numeric (not still symbolic)
+                if (/^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(numStr) || numStr === 'Infinity' || numStr === '-Infinity') {
+                    // Format nice numbers
+                    var num = parseFloat(numStr);
+                    if (Number.isInteger(num) && Math.abs(num) < 1e15) {
+                        resultText = num.toString();
+                    } else {
+                        resultText = parseFloat(num.toPrecision(10)).toString();
+                    }
+                    resultType = 'numeric';
+                } else {
+                    // It's still symbolic after evaluate
+                    resultText = numStr;
+                    resultType = 'symbolic';
+                }
+            } catch (evalErr) {
+                // Numeric evaluation failed, show symbolic form
+                resultText = expr.text();
+                resultType = 'symbolic';
+            }
+
+            // Also get the LaTeX representation of the result
+            var resultLatex = '';
+            try {
+                resultLatex = expr.toTeX();
+            } catch (e) { /* ignore */ }
+
+            var html = '';
+            if (resultType === 'numeric') {
+                html = '<span class="math-result-label">Result:</span> <span class="math-result-value latex-result-numeric">' + escapeHtml(resultText) + '</span>';
+            } else {
+                html = '<span class="math-result-label">Simplified:</span> <span class="math-result-value latex-result-symbolic">' + escapeHtml(resultText) + '</span>';
+            }
+
+            // If we have a LaTeX result, render it with MathJax
+            if (resultLatex && resultType === 'symbolic') {
+                var latexDisplay = document.createElement('div');
+                latexDisplay.className = 'latex-result-rendered';
+                latexDisplay.textContent = '$$' + resultLatex + '$$';
+                outputEl.innerHTML = html;
+                outputEl.appendChild(latexDisplay);
+                if (window.MathJax) {
+                    MathJax.typesetPromise([latexDisplay]).catch(function () { });
+                }
+            } else {
+                outputEl.innerHTML = html;
+            }
+        } catch (err) {
+            var errMsg = err.message || String(err);
+            // Make error messages more user-friendly
+            if (errMsg.includes('parse') || errMsg.includes('unexpected') || errMsg.includes('token')) {
+                outputEl.innerHTML = '<span class="code-output-error"><i class="bi bi-info-circle"></i> This expression contains notation that cannot be evaluated computationally.</span>';
+            } else {
+                outputEl.innerHTML = '<span class="code-output-error"><i class="bi bi-exclamation-triangle"></i> ' + escapeHtml(errMsg) + '</span>';
+            }
+        } finally {
+            btnEval.disabled = false;
+            btnEval.innerHTML = '<i class="bi bi-calculator"></i> Evaluate';
+        }
+    }
+
 })(window.MDView);

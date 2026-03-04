@@ -87,7 +87,8 @@
         '---\n\n' +
         '## 🧮 LaTeX Math Expressions\n\n' +
         'Inline math: $$E = mc^2$$ and $$\\nabla \\times \\vec{E} = -\\frac{\\partial \\vec{B}}{\\partial t}$$\n\n' +
-        'Display equations:\n\n' +
+        'Display equations — **hover to evaluate** with [Nerdamer](https://nerdamer.com) CAS:\n\n' +
+        '$$2^{10} + 3 \\times 7$$\n\n' +
         '$$\\frac{\\partial f}{\\partial x} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}$$\n\n' +
         '$$\\sum_{i=1}^{n} i^2 = \\frac{n(n+1)(2n+1)}{6}$$\n\n' +
         '$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$\n\n' +

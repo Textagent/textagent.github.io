@@ -117,6 +117,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.min.js"
         integrity="sha384-a6tyz0CYLcg0g2DeSvkgaOLuDQopfPMUn1mzAgfwGmtTheHbzNtr9ZQ56jiqKYXo"
         crossorigin="anonymous"></script>
+    <!-- Nerdamer: LaTeX math evaluator (symbolic CAS) -->
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/nerdamer.core.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Algebra.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Calculus.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Solve.js" crossorigin="anonymous"></script>
     <!-- just-bash: sandboxed bash interpreter for executable code blocks -->
     <script type="module">
         try {
@@ -170,6 +175,10 @@
                     <button class="view-mode-btn" data-mode="preview" aria-pressed="false" title="Preview only">
                         <i class="bi bi-eye"></i>
                         <span>Preview</span>
+                    </button>
+                    <button class="view-mode-btn" data-mode="ppt" aria-pressed="false" title="Presentation view">
+                        <i class="bi bi-easel"></i>
+                        <span>PPT</span>
                     </button>
                 </div>
 
@@ -300,6 +309,11 @@
                                 title="Preview only">
                                 <i class="bi bi-eye"></i>
                                 <span>Preview</span>
+                            </button>
+                            <button class="mobile-view-mode-btn" data-mode="ppt" aria-pressed="false"
+                                title="Presentation view">
+                                <i class="bi bi-easel"></i>
+                                <span>PPT</span>
                             </button>
                         </div>
 
@@ -472,22 +486,89 @@
             <div class="preview-pane">
                 <div id="markdown-preview" class="markdown-body"></div>
             </div>
-        </div>
-    </div>
 
-    <!-- Slide / Presentation Container -->
-    <div id="slide-container" style="display:none">
-        <div class="slide-header">
-            <span class="slide-counter" id="slide-counter">1 / 1</span>
-            <button class="slide-exit-btn" id="slide-exit" title="Exit Presentation (Escape)"><i
-                    class="bi bi-x-lg me-1"></i> Exit</button>
-        </div>
-        <div class="slide-content">
-            <div id="slide-body" class="markdown-body"></div>
-        </div>
-        <div class="slide-nav">
-            <button class="slide-nav-btn" id="slide-prev"><i class="bi bi-chevron-left"></i> Prev</button>
-            <button class="slide-nav-btn" id="slide-next">Next <i class="bi bi-chevron-right"></i></button>
+            <!-- Slide / Presentation Container (Slidev-Inspired) -->
+            <div id="slide-container" style="display:none">
+                <!-- Top bar -->
+                <div class="slide-header">
+                    <span class="slide-counter" id="slide-counter">1 / 1</span>
+                    <div class="slide-header-actions">
+                        <button class="slide-tool-btn" id="slide-notes-toggle" title="Speaker Notes (S)">
+                            <i class="bi bi-sticky"></i>
+                        </button>
+                        <button class="slide-tool-btn" id="slide-overview-toggle" title="Slide Overview (G)">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                        <button class="slide-tool-btn" id="slide-shortcuts-toggle" title="Keyboard Shortcuts (?)">
+                            <i class="bi bi-keyboard"></i>
+                        </button>
+                        <button class="slide-tool-btn" id="slide-fullscreen-toggle" title="Toggle Fullscreen (F)">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                        <button class="slide-exit-btn" id="slide-exit" title="Exit Presentation (Escape)">
+                            <i class="bi bi-x-lg me-1"></i> Exit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main slide area -->
+                <div class="slide-content" id="slide-content">
+                    <div class="slide-transition-wrapper" id="slide-transition-wrapper">
+                        <div id="slide-body" class="markdown-body"></div>
+                    </div>
+                </div>
+
+                <!-- Speaker notes panel -->
+                <div class="slide-notes-panel" id="slide-notes-panel" style="display:none">
+                    <div class="slide-notes-header">
+                        <span><i class="bi bi-sticky me-1"></i> Speaker Notes</span>
+                        <button class="slide-tool-btn" id="slide-notes-close" title="Close Notes"><i
+                                class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="slide-notes-body" id="slide-notes-body">
+                        <span class="slide-notes-empty">No notes for this slide</span>
+                    </div>
+                </div>
+
+                <!-- Navigation bar with progress -->
+                <div class="slide-nav">
+                    <button class="slide-nav-btn" id="slide-prev" title="Previous (←)"><i
+                            class="bi bi-chevron-left"></i></button>
+                    <div class="slide-progress-container" id="slide-progress-container">
+                        <div class="slide-progress-bar" id="slide-progress-bar"></div>
+                    </div>
+                    <button class="slide-nav-btn" id="slide-next" title="Next (→)"><i
+                            class="bi bi-chevron-right"></i></button>
+                </div>
+
+                <!-- Slide overview grid overlay -->
+                <div class="slide-overview" id="slide-overview" style="display:none">
+                    <div class="slide-overview-header">
+                        <h4><i class="bi bi-grid-3x3-gap me-2"></i>Slide Overview</h4>
+                        <button class="slide-tool-btn" id="slide-overview-close"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="slide-overview-grid" id="slide-overview-grid"></div>
+                </div>
+
+                <!-- Shortcuts help overlay -->
+                <div class="slide-shortcuts" id="slide-shortcuts" style="display:none">
+                    <div class="slide-shortcuts-content">
+                        <h4><i class="bi bi-keyboard me-2"></i>Keyboard Shortcuts</h4>
+                        <div class="slide-shortcut-grid">
+                            <div class="slide-shortcut-item"><kbd>→</kbd> <kbd>Space</kbd> <span>Next slide</span></div>
+                            <div class="slide-shortcut-item"><kbd>←</kbd> <span>Previous slide</span></div>
+                            <div class="slide-shortcut-item"><kbd>Home</kbd> <span>First slide</span></div>
+                            <div class="slide-shortcut-item"><kbd>End</kbd> <span>Last slide</span></div>
+                            <div class="slide-shortcut-item"><kbd>S</kbd> <span>Speaker notes</span></div>
+                            <div class="slide-shortcut-item"><kbd>G</kbd> <span>Slide overview</span></div>
+                            <div class="slide-shortcut-item"><kbd>F</kbd> <span>Fullscreen</span></div>
+                            <div class="slide-shortcut-item"><kbd>?</kbd> <span>This help</span></div>
+                            <div class="slide-shortcut-item"><kbd>Esc</kbd> <span>Exit / Close overlay</span></div>
+                        </div>
+                        <button class="slide-shortcuts-close-btn" id="slide-shortcuts-close">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

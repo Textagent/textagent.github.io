@@ -212,7 +212,7 @@
         if (aiConsentModal && aiConsentModal.style.display === 'flex') { if (M.hideAiConsentDialog) M.hideAiConsentDialog(); return; }
         var mermaidModal = document.getElementById('mermaid-zoom-modal');
         if (mermaidModal && mermaidModal.classList.contains('active')) { M.closeMermaidModal(); return; }
-        if (M.isPresentationActive && M.isPresentationActive()) { M.exitPresentation(); return; }
+        if (M.isPresentationActive && M.isPresentationActive() && M.currentViewMode !== 'ppt') { M.exitPresentation(); return; }
         var shareResultModal = document.getElementById('share-result-modal');
         if (shareResultModal && shareResultModal.classList.contains('active')) { M.closeShareResultModal(); return; }
         if (M.aiPanelOpen) { M.closeAiPanel(); return; }

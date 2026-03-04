@@ -73,8 +73,9 @@
         if (mode === M.currentViewMode) return;
         var previousMode = M.currentViewMode;
         M.currentViewMode = mode;
-        M.contentContainer.classList.remove('view-editor-only', 'view-preview-only', 'view-split');
-        M.contentContainer.classList.add('view-' + (mode === 'editor' ? 'editor-only' : mode === 'preview' ? 'preview-only' : 'split'));
+        M.contentContainer.classList.remove('view-editor-only', 'view-preview-only', 'view-split', 'view-ppt');
+        var classMap = { editor: 'view-editor-only', preview: 'view-preview-only', split: 'view-split', ppt: 'view-ppt' };
+        M.contentContainer.classList.add(classMap[mode] || 'view-split');
         M.viewModeButtons.forEach(function (btn) {
             var btnMode = btn.getAttribute('data-mode');
             btn.classList.toggle('active', btnMode === mode);
@@ -89,6 +90,15 @@
         if (mode === 'split') { applyPaneWidths(); }
         else if (previousMode === 'split') { resetPaneWidths(); }
         if (mode === 'split' || mode === 'preview') { M.renderMarkdown(); }
+        // PPT mode: parse slides and enter presentation
+        if (mode === 'ppt') {
+            if (M.enterPptMode) M.enterPptMode();
+        }
+        // Exiting PPT mode: hide slide container
+        if (previousMode === 'ppt' && mode !== 'ppt') {
+            var sc = document.getElementById('slide-container');
+            if (sc) { sc.style.display = 'none'; sc.classList.remove('slide-fullscreen'); }
+        }
     };
 
     // ========================================
@@ -267,25 +277,79 @@
     });
 
     // ========================================
-    // PRESENTATION MODE
+    // PRESENTATION MODE (Slidev-Inspired)
     // ========================================
     var slideContainer = document.getElementById('slide-container');
     var slideBody = document.getElementById('slide-body');
+    var slideContent = document.getElementById('slide-content');
+    var slideTransitionWrapper = document.getElementById('slide-transition-wrapper');
     var slideCounter = document.getElementById('slide-counter');
     var slidePrevBtn = document.getElementById('slide-prev');
     var slideNextBtn = document.getElementById('slide-next');
     var slideExitBtn = document.getElementById('slide-exit');
     var presentBtn = document.getElementById('present-button');
+    var slideProgressBar = document.getElementById('slide-progress-bar');
+    var slideNotesPanel = document.getElementById('slide-notes-panel');
+    var slideNotesBody = document.getElementById('slide-notes-body');
+    var slideNotesToggle = document.getElementById('slide-notes-toggle');
+    var slideNotesClose = document.getElementById('slide-notes-close');
+    var slideOverview = document.getElementById('slide-overview');
+    var slideOverviewGrid = document.getElementById('slide-overview-grid');
+    var slideOverviewToggle = document.getElementById('slide-overview-toggle');
+    var slideOverviewClose = document.getElementById('slide-overview-close');
+    var slideShortcuts = document.getElementById('slide-shortcuts');
+    var slideShortcutsToggle = document.getElementById('slide-shortcuts-toggle');
+    var slideShortcutsClose = document.getElementById('slide-shortcuts-close');
+    var slideFullscreenToggle = document.getElementById('slide-fullscreen-toggle');
+
     var slides = [];
     var currentSlide = 0;
+    var notesVisible = false;
+
+    // --- Parse frontmatter from a slide chunk ---
+    function parseSlideFrontmatter(raw) {
+        var result = { content: raw, notes: '', layout: '', className: '', background: '', transition: '' };
+        // Extract speaker notes: trailing <!-- ... --> comments
+        var noteMatch = raw.match(/<!--\s*([\s\S]*?)\s*-->[\s]*$/);
+        if (noteMatch) {
+            result.notes = noteMatch[1].trim();
+            result.content = raw.replace(/<!--\s*[\s\S]*?\s*-->[\s]*$/, '').trim();
+        }
+        // Extract optional YAML-like frontmatter at top of slide
+        var fmMatch = result.content.match(/^((?:\w[\w-]*:\s*.+\n?)+)\n([\s\S]*)$/);
+        if (fmMatch) {
+            var fmLines = fmMatch[1].trim().split('\n');
+            var validFm = true;
+            var meta = {};
+            for (var i = 0; i < fmLines.length; i++) {
+                var kv = fmLines[i].match(/^(\w[\w-]*):\s*(.+)$/);
+                if (kv) { meta[kv[1].toLowerCase()] = kv[2].trim(); }
+                else { validFm = false; break; }
+            }
+            if (validFm && Object.keys(meta).length > 0) {
+                result.content = fmMatch[2].trim();
+                result.layout = meta.layout || '';
+                result.className = meta['class'] || '';
+                result.background = meta.background || '';
+                result.transition = meta.transition || '';
+            }
+        }
+        return result;
+    }
 
     function parseSlides(markdown) {
-        return markdown.split(/\n(?:---|\*\*\*|___)\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+        var chunks = markdown.split(/\n(?:---|___|\*\*\*)\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+        return chunks.map(parseSlideFrontmatter);
     }
-    function renderSlide(index) {
+
+    function renderSlide(index, direction) {
         if (index < 0 || index >= slides.length) return;
+        var prevIndex = currentSlide;
         currentSlide = index;
-        var html = marked.parse(slides[index]);
+        var slide = slides[index];
+
+        // Render content
+        var html = marked.parse(slide.content);
         var sanitized = DOMPurify.sanitize(html, { ADD_TAGS: ['mjx-container'], ADD_ATTR: ['id', 'class'] });
         slideBody.innerHTML = sanitized;
         M.processEmojis(slideBody);
@@ -294,36 +358,229 @@
         var mermaidNodes = slideBody.querySelectorAll('.mermaid');
         if (mermaidNodes.length > 0) { try { mermaid.run({ nodes: mermaidNodes, suppressErrors: true }); } catch (e) { } }
         if (window.MathJax) { try { MathJax.typesetPromise([slideBody]); } catch (e) { } }
+
+        // Apply layout class
+        slideTransitionWrapper.className = 'slide-transition-wrapper';
+        if (slide.layout) slideTransitionWrapper.classList.add('slide-layout-' + slide.layout);
+        if (slide.className) slide.className.split(/\s+/).forEach(function (c) { if (c) slideTransitionWrapper.classList.add(c); });
+
+        // Apply background
+        if (slide.background) {
+            if (slide.background.startsWith('#') || slide.background.startsWith('rgb')) {
+                slideContent.style.backgroundColor = slide.background;
+                slideContent.style.backgroundImage = '';
+            } else {
+                slideContent.style.backgroundImage = 'url(' + slide.background + ')';
+                slideContent.style.backgroundColor = '';
+            }
+            slideContent.setAttribute('data-bg', 'true');
+        } else {
+            slideContent.style.backgroundColor = '';
+            slideContent.style.backgroundImage = '';
+            slideContent.removeAttribute('data-bg');
+        }
+
+        // Apply transition animation
+        if (direction !== undefined && prevIndex !== index) {
+            var transClass = direction > 0 ? 'slide-transition-from-right' : 'slide-transition-from-left';
+            if (slide.transition === 'fade') transClass = 'slide-transition-fade';
+            slideTransitionWrapper.classList.add(transClass);
+            // Remove after animation
+            slideTransitionWrapper.addEventListener('animationend', function handler() {
+                slideTransitionWrapper.classList.remove(transClass);
+                slideTransitionWrapper.removeEventListener('animationend', handler);
+            });
+        }
+
+        // Update counter & progress
         slideCounter.textContent = (index + 1) + ' / ' + slides.length;
         slidePrevBtn.disabled = index === 0;
         slideNextBtn.disabled = index === slides.length - 1;
+        if (slideProgressBar) {
+            var progress = slides.length <= 1 ? 100 : ((index) / (slides.length - 1)) * 100;
+            slideProgressBar.style.width = progress + '%';
+        }
+
+        // Update speaker notes
+        if (slideNotesBody) {
+            if (slide.notes) {
+                slideNotesBody.innerHTML = DOMPurify.sanitize(marked.parse(slide.notes));
+            } else {
+                slideNotesBody.innerHTML = '<span class="slide-notes-empty">No notes for this slide</span>';
+            }
+        }
     }
+
+    function goToSlide(index, direction) {
+        if (direction === undefined) direction = index > currentSlide ? 1 : -1;
+        renderSlide(index, direction);
+    }
+
+    // --- Speaker Notes ---
+    function toggleNotes() {
+        notesVisible = !notesVisible;
+        slideNotesPanel.style.display = notesVisible ? 'block' : 'none';
+        if (slideNotesToggle) slideNotesToggle.classList.toggle('active', notesVisible);
+    }
+
+    // --- Overview Grid ---
+    function showOverview() {
+        slideOverviewGrid.innerHTML = '';
+        slides.forEach(function (slide, i) {
+            var card = document.createElement('div');
+            card.className = 'slide-overview-card' + (i === currentSlide ? ' active' : '');
+            var body = document.createElement('div');
+            body.className = 'slide-overview-card-body';
+            var innerHtml = marked.parse(slide.content.substring(0, 500));
+            body.innerHTML = '<div class="markdown-body">' + DOMPurify.sanitize(innerHtml) + '</div>';
+            var footer = document.createElement('div');
+            footer.className = 'slide-overview-card-footer';
+            footer.textContent = 'Slide ' + (i + 1);
+            card.appendChild(body);
+            card.appendChild(footer);
+            card.addEventListener('click', function () {
+                hideOverview();
+                goToSlide(i);
+            });
+            slideOverviewGrid.appendChild(card);
+        });
+        slideOverview.style.display = 'flex';
+        if (slideOverviewToggle) slideOverviewToggle.classList.add('active');
+    }
+
+    function hideOverview() {
+        slideOverview.style.display = 'none';
+        if (slideOverviewToggle) slideOverviewToggle.classList.remove('active');
+    }
+
+    function toggleOverview() {
+        if (slideOverview.style.display === 'none' || slideOverview.style.display === '') {
+            showOverview();
+        } else {
+            hideOverview();
+        }
+    }
+
+    // --- Shortcuts overlay ---
+    function toggleShortcuts() {
+        var visible = slideShortcuts.style.display !== 'none' && slideShortcuts.style.display !== '';
+        slideShortcuts.style.display = visible ? 'none' : 'flex';
+        if (slideShortcutsToggle) slideShortcutsToggle.classList.toggle('active', !visible);
+    }
+
+    function hideShortcuts() {
+        slideShortcuts.style.display = 'none';
+        if (slideShortcutsToggle) slideShortcutsToggle.classList.remove('active');
+    }
+
+    // --- Fullscreen toggle ---
+    function toggleSlideFullscreen() {
+        if (slideContainer.classList.contains('slide-fullscreen')) {
+            slideContainer.classList.remove('slide-fullscreen');
+            try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
+        } else {
+            slideContainer.classList.add('slide-fullscreen');
+            try { slideContainer.requestFullscreen(); } catch (e) { }
+        }
+    }
+
+    // --- Start / Exit Presentation ---
     M.startPresentation = function () {
         var md = M.markdownEditor.value;
         slides = parseSlides(md);
         if (slides.length === 0) { alert('No slides found. Use --- (horizontal rule) to separate slides.'); return; }
         currentSlide = 0;
+        notesVisible = false;
+        slideNotesPanel.style.display = 'none';
+        slideOverview.style.display = 'none';
+        slideShortcuts.style.display = 'none';
         slideContainer.style.display = 'flex';
+        slideContainer.classList.add('slide-fullscreen');
         renderSlide(0);
-        try { document.documentElement.requestFullscreen(); } catch (e) { }
+        try { slideContainer.requestFullscreen(); } catch (e) { }
     };
+
     M.exitPresentation = function () {
+        // If in PPT view mode, just switch back to split
+        if (M.currentViewMode === 'ppt') {
+            M.setViewMode('split');
+            return;
+        }
         slideContainer.style.display = 'none';
+        slideContainer.classList.remove('slide-fullscreen');
         slides = []; currentSlide = 0;
+        notesVisible = false;
         try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
     };
-    M.isPresentationActive = function () { return slideContainer.style.display !== 'none'; };
+
+    M.isPresentationActive = function () {
+        return M.currentViewMode === 'ppt' || slideContainer.style.display !== 'none';
+    };
+
+    // --- Enter PPT View Mode ---
+    M.enterPptMode = function () {
+        var md = M.markdownEditor.value;
+        slides = parseSlides(md);
+        if (slides.length === 0) {
+            slides = [{ content: M.markdownEditor.value || '*No slides — use `---` to separate slides*', notes: '', layout: '', className: '', background: '', transition: '' }];
+        }
+        currentSlide = 0;
+        notesVisible = false;
+        slideNotesPanel.style.display = 'none';
+        slideOverview.style.display = 'none';
+        slideShortcuts.style.display = 'none';
+        slideContainer.classList.remove('slide-fullscreen');
+        renderSlide(0);
+    };
+
+    // --- Event Wiring ---
     if (presentBtn) presentBtn.addEventListener('click', M.startPresentation);
     if (slideExitBtn) slideExitBtn.addEventListener('click', M.exitPresentation);
-    if (slidePrevBtn) slidePrevBtn.addEventListener('click', function () { renderSlide(currentSlide - 1); });
-    if (slideNextBtn) slideNextBtn.addEventListener('click', function () { renderSlide(currentSlide + 1); });
+    if (slidePrevBtn) slidePrevBtn.addEventListener('click', function () { goToSlide(currentSlide - 1, -1); });
+    if (slideNextBtn) slideNextBtn.addEventListener('click', function () { goToSlide(currentSlide + 1, 1); });
+    if (slideNotesToggle) slideNotesToggle.addEventListener('click', toggleNotes);
+    if (slideNotesClose) slideNotesClose.addEventListener('click', toggleNotes);
+    if (slideOverviewToggle) slideOverviewToggle.addEventListener('click', toggleOverview);
+    if (slideOverviewClose) slideOverviewClose.addEventListener('click', hideOverview);
+    if (slideShortcutsToggle) slideShortcutsToggle.addEventListener('click', toggleShortcuts);
+    if (slideShortcutsClose) slideShortcutsClose.addEventListener('click', hideShortcuts);
+    if (slideFullscreenToggle) slideFullscreenToggle.addEventListener('click', toggleSlideFullscreen);
+
+    // Keyboard shortcuts for presentation
     document.addEventListener('keydown', function (e) {
-        if (slideContainer.style.display === 'none') return;
-        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); renderSlide(currentSlide + 1); }
-        else if (e.key === 'ArrowLeft') { e.preventDefault(); renderSlide(currentSlide - 1); }
+        if (!M.isPresentationActive()) return;
+        // Ignore if typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        // Close overlays first
+        if (e.key === 'Escape') {
+            if (slideShortcuts.style.display !== 'none' && slideShortcuts.style.display !== '') { hideShortcuts(); e.preventDefault(); return; }
+            if (slideOverview.style.display !== 'none' && slideOverview.style.display !== '') { hideOverview(); e.preventDefault(); return; }
+            if (slideContainer.classList.contains('slide-fullscreen')) {
+                slideContainer.classList.remove('slide-fullscreen');
+                try { if (document.fullscreenElement) document.exitFullscreen(); } catch (ex) { }
+                e.preventDefault();
+                return;
+            }
+            // In PPT view mode, Escape does nothing (use view mode buttons to switch)
+            return;
+        }
+
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); goToSlide(currentSlide + 1, 1); }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goToSlide(currentSlide - 1, -1); }
+        else if (e.key === 'Home') { e.preventDefault(); goToSlide(0, -1); }
+        else if (e.key === 'End') { e.preventDefault(); goToSlide(slides.length - 1, 1); }
+        else if (e.key === 's' || e.key === 'S') { e.preventDefault(); toggleNotes(); }
+        else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); toggleOverview(); }
+        else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleSlideFullscreen(); }
+        else if (e.key === '?') { e.preventDefault(); toggleShortcuts(); }
     });
+
+    // Handle fullscreen exit
     document.addEventListener('fullscreenchange', function () {
-        if (!document.fullscreenElement && slideContainer.style.display !== 'none') M.exitPresentation();
+        if (!document.fullscreenElement && slideContainer.classList.contains('slide-fullscreen')) {
+            slideContainer.classList.remove('slide-fullscreen');
+        }
     });
 
     // ========================================

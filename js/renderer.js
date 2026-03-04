@@ -161,7 +161,9 @@
 
             if (window.MathJax) {
                 try {
-                    MathJax.typesetPromise([M.markdownPreview]).catch(function (err) {
+                    MathJax.typesetPromise([M.markdownPreview]).then(function () {
+                        if (M.addLatexEvalToolbars) M.addLatexEvalToolbars();
+                    }).catch(function (err) {
                         console.warn('MathJax typesetting failed:', err);
                     });
                 } catch (e) {
