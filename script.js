@@ -4207,7 +4207,7 @@ sin(pi/4)
         '- **Cloud Save** — Save to GitHub Gist with one click\n' +
         '- **Find & Replace** — Regex-powered search (<kbd>Ctrl</kbd>+<kbd>H</kbd>)\n' +
         '- **Word Count** — Live word, character, and reading time stats\n' +
-        '- **Templates** — Start from 13 pre-built templates\n\n' +
+        '- **Templates** — Start from 19 pre-built templates\n\n' +
         '---\n\n' +
         '## 🛡️ Security & Privacy\n\n' +
         'This is a **fully client-side** application. Your content never leaves your browser and stays secure on your device. No server, no tracking, no data collection.\n'
@@ -5124,60 +5124,892 @@ Brief description of the project, what problem it solves, and technologies used.
 ### **[Project Name](https://github.com/yourname/project)**
 Brief description of the project.
 `
-    }
+    },
+    {
+      name: 'Bash Scripting',
+      category: 'coding',
+      icon: 'bi-terminal',
+      description: 'Learn bash basics with runnable examples — variables, loops, and text processing',
+      content: `# 🖥️ Bash Scripting — Interactive Tutorial
+
+> Click **▶ Run** on any code block below to execute it live in your browser.
+> Powered by [just-bash](https://justbash.dev/) — a sandboxed bash environment.
+
+---
+
+## 1. Variables & String Operations
+
+Bash variables don't need type declarations. Use \`$VAR\` or \`\${VAR}\` to reference them.
+
+\`\`\`bash
+NAME="World"
+GREETING="Hello, $NAME!"
+echo "$GREETING"
+echo "Length of NAME: \${#NAME}"
+echo "Uppercase: \${NAME^^}"
+\`\`\`
+
+**What this does:**
+- Assigns a string to \`NAME\`
+- Uses string interpolation with \`$\`
+- \`\${#VAR}\` gives the string length
+- \`\${VAR^^}\` converts to uppercase
+
+---
+
+## 2. Conditionals
+
+Bash uses \`if / elif / else / fi\` for branching. Use \`[[ ]]\` for modern test syntax.
+
+\`\`\`bash
+SCORE=85
+
+if [[ $SCORE -ge 90 ]]; then
+  GRADE="A"
+elif [[ $SCORE -ge 80 ]]; then
+  GRADE="B"
+elif [[ $SCORE -ge 70 ]]; then
+  GRADE="C"
+else
+  GRADE="F"
+fi
+
+echo "Score: $SCORE → Grade: $GRADE"
+\`\`\`
+
+**Operators:** \`-eq\` (equal), \`-ne\` (not equal), \`-gt\` (greater), \`-lt\` (less), \`-ge\` (≥), \`-le\` (≤)
+
+---
+
+## 3. Loops
+
+### For Loop — iterating over a range
+
+\`\`\`bash
+echo "Counting to 5:"
+for i in 1 2 3 4 5; do
+  echo "  → $i"
+done
+
+echo ""
+echo "Fruits:"
+for fruit in apple banana cherry; do
+  echo "  🍎 $fruit"
+done
+\`\`\`
+
+### While Loop — FizzBuzz
+
+\`\`\`bash
+i=1
+while [[ $i -le 20 ]]; do
+  if [[ $((i % 15)) -eq 0 ]]; then
+    echo "$i: FizzBuzz"
+  elif [[ $((i % 3)) -eq 0 ]]; then
+    echo "$i: Fizz"
+  elif [[ $((i % 5)) -eq 0 ]]; then
+    echo "$i: Buzz"
+  else
+    echo "$i"
+  fi
+  ((i++))
+done
+\`\`\`
+
+---
+
+## 4. Functions
+
+Bash functions can take arguments via \`$1\`, \`$2\`, etc.
+
+\`\`\`bash
+greet() {
+  local name="$1"
+  local time="$2"
+  echo "Good $time, $name! 👋"
+}
+
+greet "Alice" "morning"
+greet "Bob" "evening"
+\`\`\`
+
+---
+
+## 5. Text Processing with Pipes
+
+Bash excels at chaining commands with \`|\` (pipe).
+
+\`\`\`bash
+# Create sample data
+echo -e "banana\napple\ncherry\napple\nbanana\nbanana" > /tmp/fruits.txt
+
+echo "=== Raw data ==="
+cat /tmp/fruits.txt
+
+echo ""
+echo "=== Sorted unique with count ==="
+sort /tmp/fruits.txt | uniq -c | sort -rn
+
+echo ""
+echo "=== Lines containing 'an' ==="
+grep "an" /tmp/fruits.txt
+\`\`\`
+
+**Pipeline explained:**
+1. \`sort\` — alphabetize lines
+2. \`uniq -c\` — count consecutive duplicates
+3. \`sort -rn\` — sort numerically in reverse (most frequent first)
+4. \`grep\` — filter lines matching a pattern
+`
+    },
+    {
+      name: 'Data Processing',
+      category: 'coding',
+      icon: 'bi-database',
+      description: 'CLI data manipulation — CSV parsing, JSON processing, and text transforms',
+      content: `# 📊 Data Processing — CLI Toolkit
+
+> Run each block to see real output. All commands execute in a sandboxed bash shell.
+
+---
+
+## 1. CSV Processing
+
+Parse and analyze CSV data using standard Unix tools.
+
+\`\`\`bash
+# Create a sample CSV dataset
+cat > /tmp/sales.csv << 'EOF'
+name,region,q1,q2,q3,q4
+Alice,North,1200,1500,1800,2100
+Bob,South,900,1100,1300,1600
+Carol,North,1500,1400,1700,1900
+Dave,South,800,950,1100,1250
+Eve,West,2000,2200,2500,2800
+EOF
+
+echo "=== Raw CSV ==="
+cat /tmp/sales.csv
+
+echo ""
+echo "=== Header ==="
+head -1 /tmp/sales.csv
+
+echo ""
+echo "=== Data rows (no header) ==="
+tail -n +2 /tmp/sales.csv
+\`\`\`
+
+### Extracting Columns
+
+\`\`\`bash
+echo "=== Names and Regions ==="
+tail -n +2 /tmp/sales.csv | cut -d',' -f1,2
+
+echo ""
+echo "=== Sorted by Q1 revenue (descending) ==="
+tail -n +2 /tmp/sales.csv | sort -t',' -k3 -nr | head -5
+\`\`\`
+
+---
+
+## 2. Text Transforms with awk
+
+\`awk\` is a powerful text-processing language built into Unix.
+
+\`\`\`bash
+# Calculate total annual sales per person
+echo "=== Annual Totals ==="
+echo "Name | Region | Annual Total"
+echo "-----|--------|-------------"
+tail -n +2 /tmp/sales.csv | awk -F',' '{
+  total = $3 + $4 + $5 + $6
+  printf "%-6s | %-6s | $%d\n", $1, $2, total
+}'
+\`\`\`
+
+### Filtering with awk
+
+\`\`\`bash
+# Find people with Q4 > 1800
+echo "=== High Q4 Performers (Q4 > 1800) ==="
+tail -n +2 /tmp/sales.csv | awk -F',' '$6 > 1800 { printf "%s: $%d\n", $1, $6 }'
+\`\`\`
+
+---
+
+## 3. sed — Stream Editor
+
+\`sed\` transforms text line-by-line using pattern matching.
+
+\`\`\`bash
+# Text transformations
+TEXT="The quick brown fox jumps over the lazy dog"
+
+echo "Original: $TEXT"
+echo "Replace fox→cat: $(echo "$TEXT" | sed 's/fox/cat/')"
+echo "Replace all spaces with underscores: $(echo "$TEXT" | sed 's/ /_/g')"
+echo "Delete 'the' (case-insensitive): $(echo "$TEXT" | sed 's/[Tt]he //g')"
+\`\`\`
+
+---
+
+## 4. Working with JSON (using bash)
+
+Parse simple JSON structures with bash string tools.
+
+\`\`\`bash
+# Create JSON-like data and process it
+cat > /tmp/users.txt << 'EOF'
+{"name": "Alice", "age": 30, "role": "engineer"}
+{"name": "Bob", "age": 25, "role": "designer"}
+{"name": "Carol", "age": 35, "role": "engineer"}
+{"name": "Dave", "age": 28, "role": "manager"}
+EOF
+
+echo "=== All Users ==="
+cat /tmp/users.txt
+
+echo ""
+echo "=== Engineers Only ==="
+grep '"engineer"' /tmp/users.txt
+
+echo ""
+echo "=== Names ==="
+grep -o '"name": "[^"]*"' /tmp/users.txt | cut -d'"' -f4
+\`\`\`
+
+---
+
+## 5. Generating Reports
+
+\`\`\`bash
+echo "╔══════════════════════════════════╗"
+echo "║     SALES SUMMARY REPORT        ║"
+echo "╠══════════════════════════════════╣"
+
+# Count by region
+echo "║                                  ║"
+echo "║ Employees by Region:             ║"
+tail -n +2 /tmp/sales.csv | cut -d',' -f2 | sort | uniq -c | while read count region; do
+  printf "║   %-8s: %d                    ║\n" "$region" "$count"
+done
+
+echo "║                                  ║"
+echo "╚══════════════════════════════════╝"
+\`\`\`
+`
+    },
+    {
+      name: 'DevOps Snippets',
+      category: 'coding',
+      icon: 'bi-gear',
+      description: 'Common DevOps commands — system info, disk usage, networking, and process management',
+      content: `# ⚙️ DevOps Snippets — Quick Reference
+
+> Runnable bash snippets for common operations tasks.
+> These run in a sandboxed environment — safe to experiment!
+
+---
+
+## 1. System Information
+
+\`\`\`bash
+echo "=== System Overview ==="
+echo "Hostname: $(hostname 2>/dev/null || echo 'sandbox')"
+echo "Shell: $SHELL"
+echo "User: $(whoami 2>/dev/null || echo 'sandbox-user')"
+echo "Date: $(date)"
+echo "Uptime: $(uptime 2>/dev/null || echo 'N/A')"
+\`\`\`
+
+---
+
+## 2. Working with Environment Variables
+
+\`\`\`bash
+# Set and display env vars
+export APP_NAME="MyApp"
+export APP_ENV="production"
+export APP_PORT=8080
+export DB_HOST="db.example.com"
+
+echo "=== Application Config ==="
+env | grep "^APP_" | sort
+
+echo ""
+echo "=== Formatted ==="
+for var in APP_NAME APP_ENV APP_PORT DB_HOST; do
+  printf "  %-12s = %s\n" "$var" "${!var}"
+done
+  \`\`\`
+
+**Tip:** \`\${!var}\` is bash indirect expansion — it gets the value of the variable whose *name* is stored in \`$var\`.
+
+---
+
+## 3. File System Operations
+
+\`\`\`bash
+# Create a project structure
+mkdir -p /tmp/myproject/{src,tests,docs,config}
+
+# Create some files
+echo '#!/bin/bash' > /tmp/myproject/src/main.sh
+echo '# Tests' > /tmp/myproject/tests/test_main.sh
+echo '# README' > /tmp/myproject/docs/README.md
+echo 'PORT=3000' > /tmp/myproject/config/app.env
+
+echo "=== Project Structure ==="
+find /tmp/myproject -type f | sort | while read f; do
+  size=$(wc -c < "$f")
+  printf "  %-45s %4d bytes\n" "$f" "$size"
+done
+
+echo ""
+echo "=== Directory Summary ==="
+echo "Files: $(find /tmp/myproject -type f | wc -l)"
+echo "Dirs:  $(find /tmp/myproject -type d | wc -l)"
+\`\`\`
+
+---
+
+## 4. Log Processing
+
+\`\`\`bash
+# Generate sample log entries
+cat > /tmp/app.log << 'EOF'
+2024-01-15 10:23:01 [INFO] Server started on port 8080
+2024-01-15 10:23:05 [INFO] Database connected
+2024-01-15 10:24:12 [WARN] Slow query detected (2.3s)
+2024-01-15 10:25:30 [ERROR] Connection timeout to redis:6379
+2024-01-15 10:25:31 [INFO] Retrying connection...
+2024-01-15 10:25:33 [INFO] Redis reconnected
+2024-01-15 10:30:45 [ERROR] Out of memory: heap limit reached
+2024-01-15 10:30:46 [WARN] GC pause exceeded 500ms
+2024-01-15 10:31:00 [INFO] Memory recovered after GC
+EOF
+
+echo "=== Log Level Summary ==="
+grep -oP '\[\K[A-Z]+' /tmp/app.log 2>/dev/null || grep -o '\[.*\]' /tmp/app.log | tr -d '[]' | sort | uniq -c | sort -rn
+
+echo ""
+echo "=== Errors Only ==="
+grep "ERROR" /tmp/app.log
+
+echo ""
+echo "=== Timeline ==="
+awk '{print $2, $3}' /tmp/app.log
+\`\`\`
+
+---
+
+## 5. Useful One-Liners
+
+\`\`\`bash
+echo "=== Generate a random password ==="
+cat /dev/urandom 2>/dev/null | tr -dc 'A-Za-z0-9!@#$%' | head -c 20 || echo "$(date +%s | sha256sum 2>/dev/null || echo $RANDOM$RANDOM | md5sum 2>/dev/null || echo "FallbackPass_$RANDOM")" | head -c 20
+echo ""
+
+echo ""
+echo "=== Count lines of code in a project ==="
+find /tmp/myproject -name '*.sh' -o -name '*.md' -o -name '*.env' | xargs wc -l 2>/dev/null
+
+echo ""
+echo "=== Quick math ==="
+echo "2^10 = $((2**10))"
+echo "Hex FF = $((16#FF))"
+echo "Octal 77 = $((8#77))"
+\`\`\`
+`
+},
+  {
+    name: 'Algebra & Calculus',
+    category: 'maths',
+    icon: 'bi-calculator',
+    description: 'Fundamental algebra and calculus with step-by-step evaluations',
+    content: `# 📐 Algebra & Calculus — Interactive Math
+
+> Click **▶ Evaluate** on any math block to compute it live.
+> Powered by [math.js](https://mathjs.org/) — a comprehensive math library.
+
+---
+
+## 1. Basic Arithmetic & Expressions
+
+math.js handles operator precedence, parentheses, and large numbers.
+
+\`\`\`math
+2 + 3 * 4
+(2 + 3) * 4
+2 ^ 10
+sqrt(144)
+abs(-42)
+\`\`\`
+
+**Explanation:**
+- \`2 + 3 * 4\` → multiplication first: 2 + 12 = **14**
+- \`(2 + 3) * 4\` → parentheses first: 5 × 4 = **20**
+- \`2 ^ 10\` → 2 raised to the 10th power = **1024**
+- \`sqrt(144)\` → square root = **12**
+
+---
+
+## 2. Variables & Algebra
+
+Variables persist across lines within the same block.
+
+\`\`\`math
+x = 5
+y = 3
+x^2 + y^2
+sqrt(x^2 + y^2)
+\`\`\`
+
+**Pythagorean theorem:** Given sides x=5 and y=3, the hypotenuse is \`√(25 + 9) = √34 ≈ 5.83\`
+
+### Quadratic Formula
+
+For $ax^2 + bx + c = 0$, the roots are $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+
+\`\`\`math
+a = 1
+b = -5
+c = 6
+// Discriminant
+D = b^2 - 4*a*c
+// Roots
+x1 = (-b + sqrt(D)) / (2*a)
+x2 = (-b - sqrt(D)) / (2*a)
+\`\`\`
+
+**Result:** The equation $x^2 - 5x + 6 = 0$ has roots **x = 3** and **x = 2**
+
+---
+
+## 3. Trigonometry
+
+\`\`\`math
+// Angles in radians
+sin(pi / 6)
+cos(pi / 3)
+tan(pi / 4)
+// Convert degrees to radians
+45 * (pi / 180)
+sin(45 * pi / 180)
+\`\`\`
+
+**Key values:**
+- sin(30°) = sin(π/6) = **0.5**
+- cos(60°) = cos(π/3) = **0.5**
+- tan(45°) = tan(π/4) = **1**
+
+---
+
+## 4. Logarithms & Exponentials
+
+\`\`\`math
+// Natural log
+log(e)
+log(e^3)
+// Base-10 log
+log10(1000)
+log10(50)
+// Exponential
+exp(1)
+exp(0)
+\`\`\`
+
+**Explanation:**
+- \`log(e)\` = ln(e) = **1** (natural log)
+- \`log10(1000)\` = **3** (since 10³ = 1000)
+- \`exp(1)\` = e¹ ≈ **2.718** (Euler's number)
+
+---
+
+## 5. Calculus Concepts
+
+While math.js doesn't do symbolic calculus, we can approximate **derivatives** and compute **summations**:
+
+### Numerical Derivative
+
+Approximate f'(x) using the limit definition: $f'(x) \\approx \\frac{f(x+h) - f(x-h)}{2h}$
+
+\`\`\`math
+// f(x) = x^3 at x = 2
+// Exact derivative: f'(x) = 3x^2 = 12
+h = 0.0001
+f_plus = (2 + h)^3
+f_minus = (2 - h)^3
+derivative = (f_plus - f_minus) / (2 * h)
+\`\`\`
+
+**Result:** The numerical derivative of x³ at x=2 ≈ **12** (exact: 3·2² = 12 ✓)
+
+### Summation (Σ)
+
+$$\\sum_{k=1}^{100} k = \\frac{100 \\times 101}{2} = 5050$$
+
+\`\`\`math
+// Sum of 1 to 100
+sum(1:100)
+// Verify with formula
+100 * 101 / 2
+\`\`\`
+`
+  },
+  {
+    name: 'Statistics & Probability',
+    category: 'maths',
+    icon: 'bi-bar-chart-line',
+    description: 'Statistical computations — mean, standard deviation, combinations, and distributions',
+    content: `# 📊 Statistics & Probability
+
+> Click **▶ Evaluate** to compute each block. Variables carry over within a block.
+
+---
+
+## 1. Descriptive Statistics
+
+### Central Tendency
+
+\`\`\`math
+data = [85, 90, 78, 92, 88, 76, 95, 89, 84, 91]
+mean(data)
+median(data)
+min(data)
+max(data)
+\`\`\`
+
+**Interpretation:**
+- **Mean** = average of all values
+- **Median** = middle value when sorted (robust to outliers)
+
+### Spread & Variability
+
+\`\`\`math
+data = [85, 90, 78, 92, 88, 76, 95, 89, 84, 91]
+// Variance
+variance(data)
+// Standard deviation
+std(data)
+// Range
+max(data) - min(data)
+\`\`\`
+
+**Explanation:**
+- **Variance** σ² = average of squared deviations from the mean
+- **Std Dev** σ = √variance — measures spread in same units as data
+- **Range** = max − min — simplest measure of spread
+
+---
+
+## 2. Combinatorics
+
+Counting arrangements and selections.
+
+### Factorials & Permutations
+
+\`\`\`math
+// Factorial: n!
+factorial(5)
+factorial(10)
+// Permutations: P(n,r) = n! / (n-r)!
+// "How many ways to arrange 3 items from 5?"
+factorial(5) / factorial(5 - 3)
+\`\`\`
+
+### Combinations
+
+$$C(n, r) = \\binom{n}{r} = \\frac{n!}{r!(n-r)!}$$
+
+\`\`\`math
+// Combinations: C(n,r) = n! / (r! * (n-r)!)
+// "How many ways to choose 3 items from 10?"
+combinations(10, 3)
+// Lottery: choose 6 from 49
+combinations(49, 6)
+\`\`\`
+
+**Lottery odds:** Choosing 6 numbers from 49 → **13,983,816** possible combinations. That's roughly 1 in 14 million!
+
+---
+
+## 3. Probability
+
+### Basic Probability Calculations
+
+\`\`\`math
+// Probability of rolling a 6 on a fair die
+p_six = 1/6
+// Probability of NOT rolling a 6
+p_not_six = 1 - p_six
+// Probability of rolling a 6 at least once in 4 rolls
+p_at_least_one = 1 - (5/6)^4
+\`\`\`
+
+**Explanation:**
+- P(at least one 6 in 4 rolls) = 1 − P(no 6 in any roll) = 1 − (5/6)⁴ ≈ **51.8%**
+
+### Expected Value
+
+\`\`\`math
+// Fair coin: +$10 for heads, -$6 for tails
+// E[X] = Σ(value × probability)
+E_coin = 10 * 0.5 + (-6) * 0.5
+// Weighted die: sides 1-6 with double chance for 6
+// Total probability weight: 5*1 + 1*2 = 7
+E_die = (1+2+3+4+5) * (1/7) + 6 * (2/7)
+\`\`\`
+
+---
+
+## 4. Sequences & Series
+
+### Geometric Series
+
+$$S = a \\cdot \\frac{1 - r^n}{1 - r}$$
+
+\`\`\`math
+// Geometric series: a=2, r=3, n=5 terms
+a = 2
+r = 3
+n = 5
+S = a * (1 - r^n) / (1 - r)
+// Verify by summing terms: 2 + 6 + 18 + 54 + 162
+2 + 6 + 18 + 54 + 162
+\`\`\`
+
+### Compound Interest
+
+$$A = P \\left(1 + \\frac{r}{n}\\right)^{nt}$$
+
+\`\`\`math
+// $1000 at 5% annual interest, compounded monthly, for 10 years
+P = 1000
+r = 0.05
+n = 12
+t = 10
+A = P * (1 + r/n)^(n*t)
+\`\`\`
+
+**Result:** \\$1,000 grows to ≈ **\\$1,647** over 10 years at 5% compounded monthly.
+
+---
+
+## 5. Normal Distribution (Z-scores)
+
+\`\`\`math
+// Student scores: mean = 75, std = 10
+// A student scored 92. What's their z-score?
+mu = 75
+sigma = 10
+score = 92
+z = (score - mu) / sigma
+// How many std deviations above the mean?
+\`\`\`
+
+**Interpretation:** A z-score of **1.7** means the student scored 1.7 standard deviations above the mean — roughly in the **top 5%**.
+`
+  },
+  {
+    name: 'Linear Algebra',
+    category: 'maths',
+    icon: 'bi-grid-3x3',
+    description: 'Matrix operations — multiplication, determinants, inverses, and transforms',
+    content: `# 🔢 Linear Algebra — Matrix Operations
+
+> Click **▶ Evaluate** to compute. math.js has full matrix support!
+
+---
+
+## 1. Creating Matrices
+
+\`\`\`math
+// 2×2 matrix
+A = [[1, 2], [3, 4]]
+A
+// 3×3 identity matrix
+I = identity(3)
+I
+\`\`\`
+
+**Notation:** Matrices are written as arrays of rows: \`[[row1], [row2], ...]\`
+
+---
+
+## 2. Matrix Arithmetic
+
+\`\`\`math
+A = [[1, 2], [3, 4]]
+B = [[5, 6], [7, 8]]
+// Addition
+add(A, B)
+// Scalar multiplication
+multiply(3, A)
+// Element-wise multiplication
+dotMultiply(A, B)
+\`\`\`
+
+### Matrix Multiplication
+
+\`\`\`math
+A = [[1, 2], [3, 4]]
+B = [[5, 6], [7, 8]]
+// Matrix product (A × B)
+multiply(A, B)
+\`\`\`
+
+**How it works:**
+$$AB = \\begin{bmatrix} 1 \\cdot 5 + 2 \\cdot 7 & 1 \\cdot 6 + 2 \\cdot 8 \\\\ 3 \\cdot 5 + 4 \\cdot 7 & 3 \\cdot 6 + 4 \\cdot 8 \\end{bmatrix} = \\begin{bmatrix} 19 & 22 \\\\ 43 & 50 \\end{bmatrix}$$
+
+---
+
+## 3. Determinant & Inverse
+
+\`\`\`math
+A = [[1, 2], [3, 4]]
+// Determinant
+det(A)
+// Inverse
+inv(A)
+// Verify: A × A⁻¹ = I
+multiply(A, inv(A))
+\`\`\`
+
+**Explanation:**
+- det([[a,b],[c,d]]) = ad − bc = (1)(4) − (2)(3) = **−2**
+- A matrix is invertible if and only if det ≠ 0
+- A × A⁻¹ always equals the identity matrix
+
+---
+
+## 4. Transpose & Trace
+
+\`\`\`math
+A = [[1, 2, 3], [4, 5, 6]]
+// Transpose: flip rows and columns
+transpose(A)
+// Trace: sum of diagonal elements (square matrix)
+B = [[1, 2], [3, 4]]
+trace(B)
+\`\`\`
+
+**Properties:**
+- Transpose of a 2×3 matrix gives a 3×2 matrix
+- Trace(B) = 1 + 4 = **5** (sum of main diagonal)
+
+---
+
+## 5. Solving Linear Systems
+
+Solve Ax = b:
+
+$$\\begin{cases} 2x + y = 5 \\\\ x + 3y = 10 \\end{cases}$$
+
+\`\`\`math
+// Coefficient matrix A and constants vector b
+A = [[2, 1], [1, 3]]
+b = [5, 10]
+// Solve for x: x = A⁻¹b
+x = multiply(inv(A), b)
+\`\`\`
+
+**Solution:** x = **1**, y = **3**
+
+**Verification:** 2(1) + 3 = 5 ✓ and 1 + 3(3) = 10 ✓
+
+---
+
+## 6. Eigenvalues
+
+\`\`\`math
+A = [[4, 1], [2, 3]]
+eigs(A).values
+\`\`\`
+
+**Eigenvalues** of a matrix A are scalars λ where Av = λv for some non-zero vector v. They reveal important properties like stability, growth rates, and principal directions.
+
+---
+
+## 7. Vector Operations
+
+\`\`\`math
+u = [3, 4]
+v = [1, 2]
+// Dot product
+dot(u, v)
+// Cross product (3D)
+a = [1, 0, 0]
+b = [0, 1, 0]
+cross(a, b)
+// Vector norm (length)
+norm(u)
+\`\`\`
+
+**Key results:**
+- Dot product: 3·1 + 4·2 = **11**
+- Cross product of x̂ and ŷ unit vectors = **ẑ** = [0, 0, 1]
+- Norm of [3,4]: √(9+16) = **5**
+`
+  }
   ];
 
-  // --- Template Modal Logic ---
-  const templateModal = document.getElementById('template-modal');
-  const templateGrid = document.getElementById('template-grid');
-  const templateSearchInput = document.getElementById('template-search-input');
-  const templateCategories = document.getElementById('template-categories');
-  const templateEmpty = document.getElementById('template-empty');
-  const templateCloseBtn = document.getElementById('template-modal-close');
-  const templateBtn = document.getElementById('template-btn');
-  const mobileTemplateBtn = document.getElementById('mobile-template-btn');
+// --- Template Modal Logic ---
+const templateModal = document.getElementById('template-modal');
+const templateGrid = document.getElementById('template-grid');
+const templateSearchInput = document.getElementById('template-search-input');
+const templateCategories = document.getElementById('template-categories');
+const templateEmpty = document.getElementById('template-empty');
+const templateCloseBtn = document.getElementById('template-modal-close');
+const templateBtn = document.getElementById('template-btn');
+const mobileTemplateBtn = document.getElementById('mobile-template-btn');
 
-  let activeTemplateCategory = 'all';
+let activeTemplateCategory = 'all';
 
-  function getCategoryIconClass(category) {
-    switch (category) {
-      case 'documentation': return 'doc';
-      case 'project': return 'project';
-      case 'technical': return 'technical';
-      case 'creative': return 'creative';
-      default: return 'doc';
-    }
+function getCategoryIconClass(category) {
+  switch (category) {
+    case 'documentation': return 'doc';
+    case 'project': return 'project';
+    case 'technical': return 'technical';
+    case 'creative': return 'creative';
+    case 'coding': return 'technical';
+    case 'maths': return 'doc';
+    default: return 'doc';
   }
+}
 
-  function getCategoryIcon(category) {
-    switch (category) {
-      case 'documentation': return 'bi-book';
-      case 'project': return 'bi-clipboard-check';
-      case 'technical': return 'bi-cpu';
-      case 'creative': return 'bi-brush';
-      default: return 'bi-file-earmark';
-    }
+function getCategoryIcon(category) {
+  switch (category) {
+    case 'documentation': return 'bi-book';
+    case 'project': return 'bi-clipboard-check';
+    case 'technical': return 'bi-cpu';
+    case 'creative': return 'bi-brush';
+    case 'coding': return 'bi-terminal';
+    case 'maths': return 'bi-calculator';
+    default: return 'bi-file-earmark';
   }
+}
 
-  function renderTemplateCards(templates) {
-    templateGrid.innerHTML = '';
-    if (templates.length === 0) {
-      templateGrid.style.display = 'none';
-      templateEmpty.style.display = 'flex';
-      return;
-    }
-    templateGrid.style.display = 'grid';
-    templateEmpty.style.display = 'none';
+function renderTemplateCards(templates) {
+  templateGrid.innerHTML = '';
+  if (templates.length === 0) {
+    templateGrid.style.display = 'none';
+    templateEmpty.style.display = 'flex';
+    return;
+  }
+  templateGrid.style.display = 'grid';
+  templateEmpty.style.display = 'none';
 
-    templates.forEach((tpl, idx) => {
-      const card = document.createElement('div');
-      card.className = 'template-card';
-      card.setAttribute('data-template-index', String(idx));
-      card.setAttribute('title', 'Click to use this template');
+  templates.forEach((tpl, idx) => {
+    const card = document.createElement('div');
+    card.className = 'template-card';
+    card.setAttribute('data-template-index', String(idx));
+    card.setAttribute('title', 'Click to use this template');
 
-      const preview = tpl.content.trim().split('\n').slice(0, 4).join('\n');
+    const preview = tpl.content.trim().split('\n').slice(0, 4).join('\n');
 
-      card.innerHTML = `
+    card.innerHTML = `
         <div class="template-card-icon ${getCategoryIconClass(tpl.category)}">
           <i class="bi ${tpl.icon || getCategoryIcon(tpl.category)}"></i>
         </div>
@@ -5187,856 +6019,856 @@ Brief description of the project.
         <div class="template-card-preview">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
       `;
 
-      templateGrid.appendChild(card);
-    });
-  }
+    templateGrid.appendChild(card);
+  });
+}
 
-  // Use event delegation on the grid for reliable click handling
-  let _filteredTemplates = MARKDOWN_TEMPLATES;
+// Use event delegation on the grid for reliable click handling
+let _filteredTemplates = MARKDOWN_TEMPLATES;
 
-  function filterTemplates() {
-    const query = templateSearchInput.value.toLowerCase().trim();
-    const category = activeTemplateCategory;
+function filterTemplates() {
+  const query = templateSearchInput.value.toLowerCase().trim();
+  const category = activeTemplateCategory;
 
-    _filteredTemplates = MARKDOWN_TEMPLATES.filter(tpl => {
-      const matchCategory = category === 'all' || tpl.category === category;
-      if (!matchCategory) return false;
-      if (!query) return true;
+  _filteredTemplates = MARKDOWN_TEMPLATES.filter(tpl => {
+    const matchCategory = category === 'all' || tpl.category === category;
+    if (!matchCategory) return false;
+    if (!query) return true;
 
-      return tpl.name.toLowerCase().includes(query) ||
-        tpl.description.toLowerCase().includes(query) ||
-        tpl.category.toLowerCase().includes(query) ||
-        tpl.content.toLowerCase().includes(query);
-    });
-
-    renderTemplateCards(_filteredTemplates);
-  }
-
-  // Event delegation: handle clicks on any template card
-  if (templateGrid) {
-    templateGrid.addEventListener('click', (e) => {
-      const card = e.target.closest('.template-card');
-      if (!card) return;
-      const idx = parseInt(card.getAttribute('data-template-index'), 10);
-      if (isNaN(idx) || idx < 0 || idx >= _filteredTemplates.length) return;
-      selectTemplate(_filteredTemplates[idx]);
-    });
-  }
-
-  function selectTemplate(tpl) {
-    // Replace $(date) placeholders with current date
-    const today = new Date().toISOString().split('T')[0];
-    const content = tpl.content.replace(/\$\(date\)/g, today);
-
-    markdownEditor.value = content;
-    renderMarkdown();
-    closeTemplateModal();
-
-    // Scroll editor to top
-    markdownEditor.scrollTop = 0;
-  }
-
-  function openTemplateModal() {
-    templateSearchInput.value = '';
-    activeTemplateCategory = 'all';
-
-    // Reset category buttons
-    templateCategories.querySelectorAll('.template-cat-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.category === 'all');
-    });
-
-    renderTemplateCards(MARKDOWN_TEMPLATES);
-    templateModal.style.display = 'flex';
-    setTimeout(() => templateSearchInput.focus(), 100);
-  }
-
-  function closeTemplateModal() {
-    templateModal.style.display = 'none';
-  }
-
-  // Wire up open/close
-  if (templateBtn) {
-    templateBtn.addEventListener('click', openTemplateModal);
-  }
-  if (mobileTemplateBtn) {
-    mobileTemplateBtn.addEventListener('click', () => {
-      closeMobileMenu();
-      openTemplateModal();
-    });
-  }
-  if (templateCloseBtn) {
-    templateCloseBtn.addEventListener('click', closeTemplateModal);
-  }
-
-  // Close on overlay click
-  if (templateModal) {
-    templateModal.addEventListener('click', (e) => {
-      if (e.target === templateModal) closeTemplateModal();
-    });
-  }
-
-  // Close on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && templateModal && templateModal.style.display !== 'none') {
-      closeTemplateModal();
-    }
+    return tpl.name.toLowerCase().includes(query) ||
+      tpl.description.toLowerCase().includes(query) ||
+      tpl.category.toLowerCase().includes(query) ||
+      tpl.content.toLowerCase().includes(query);
   });
 
-  // Search input
-  if (templateSearchInput) {
-    templateSearchInput.addEventListener('input', filterTemplates);
-  }
+  renderTemplateCards(_filteredTemplates);
+}
 
-  // Category tabs
-  if (templateCategories) {
-    templateCategories.addEventListener('click', (e) => {
-      const btn = e.target.closest('.template-cat-btn');
-      if (!btn) return;
+// Event delegation: handle clicks on any template card
+if (templateGrid) {
+  templateGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.template-card');
+    if (!card) return;
+    const idx = parseInt(card.getAttribute('data-template-index'), 10);
+    if (isNaN(idx) || idx < 0 || idx >= _filteredTemplates.length) return;
+    selectTemplate(_filteredTemplates[idx]);
+  });
+}
 
-      activeTemplateCategory = btn.dataset.category;
-      templateCategories.querySelectorAll('.template-cat-btn').forEach(b => {
-        b.classList.toggle('active', b === btn);
-      });
-      filterTemplates();
-    });
-  }
+function selectTemplate(tpl) {
+  // Replace $(date) placeholders with current date
+  const today = new Date().toISOString().split('T')[0];
+  const content = tpl.content.replace(/\$\(date\)/g, today);
 
+  markdownEditor.value = content;
+  renderMarkdown();
+  closeTemplateModal();
 
-  document.getElementById('share-button').addEventListener('click', shareMarkdown);
-  document.getElementById('mobile-share-button').addEventListener('click', function () {
+  // Scroll editor to top
+  markdownEditor.scrollTop = 0;
+}
+
+function openTemplateModal() {
+  templateSearchInput.value = '';
+  activeTemplateCategory = 'all';
+
+  // Reset category buttons
+  templateCategories.querySelectorAll('.template-cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.category === 'all');
+  });
+
+  renderTemplateCards(MARKDOWN_TEMPLATES);
+  templateModal.style.display = 'flex';
+  setTimeout(() => templateSearchInput.focus(), 100);
+}
+
+function closeTemplateModal() {
+  templateModal.style.display = 'none';
+}
+
+// Wire up open/close
+if (templateBtn) {
+  templateBtn.addEventListener('click', openTemplateModal);
+}
+if (mobileTemplateBtn) {
+  mobileTemplateBtn.addEventListener('click', () => {
     closeMobileMenu();
-    shareMarkdown();
+    openTemplateModal();
   });
+}
+if (templateCloseBtn) {
+  templateCloseBtn.addEventListener('click', closeTemplateModal);
+}
 
-  // --- Auto-load shared content on page load ---
-  loadSharedMarkdown();
-
-  // ========================================
-  // AI ASSISTANT — Multi-model: Qwen 3.5 (local) + Groq Llama 3.3 70B (cloud)
-  // ========================================
-
-  const aiPanel = document.getElementById('ai-panel');
-  const aiPanelOverlay = document.getElementById('ai-panel-overlay');
-  const aiToggleBtn = document.getElementById('ai-toggle-button');
-  const mobileAiBtn = document.getElementById('mobile-ai-button');
-  const aiPanelCloseBtn = document.getElementById('ai-panel-close');
-  const aiClearChatBtn = document.getElementById('ai-clear-chat');
-  const aiChatArea = document.getElementById('ai-chat-area');
-  const aiInput = document.getElementById('ai-input');
-  const aiSendBtn = document.getElementById('ai-send-btn');
-  const aiConsentModal = document.getElementById('ai-consent-modal');
-  const aiConsentCancel = document.getElementById('ai-consent-cancel');
-  const aiConsentDownload = document.getElementById('ai-consent-download');
-  const aiProgressSection = document.getElementById('ai-download-progress');
-  const aiProgressBar = document.getElementById('ai-progress-bar');
-  const aiProgressStatus = document.getElementById('ai-progress-status');
-  const aiProgressDetail = document.getElementById('ai-progress-detail');
-  const aiDeviceLabel = document.getElementById('ai-device-label');
-  const aiDeviceDetail = document.getElementById('ai-device-detail');
-  const aiContextMenu = document.getElementById('ai-context-menu');
-  const aiModelBadge = document.getElementById('ai-model-badge');
-  const aiModelBtn = document.getElementById('ai-model-btn');
-  const aiModelLabel = document.getElementById('ai-model-label');
-  const aiModelBtnIcon = document.getElementById('ai-model-btn-icon');
-  const aiModelDropdown = document.getElementById('ai-model-dropdown');
-  const aiModelSelector = aiModelBtn ? aiModelBtn.closest('.ai-model-selector') : null;
-  const aiApikeyModal = document.getElementById('ai-apikey-modal');
-  const aiApikeyCancel = document.getElementById('ai-apikey-cancel');
-  const aiApikeySave = document.getElementById('ai-apikey-save');
-  const aiGroqKeyInput = document.getElementById('ai-groq-key-input');
-  const aiApikeyError = document.getElementById('ai-apikey-error');
-
-  let aiWorker = null;       // Qwen local worker
-  let groqWorker = null;     // Groq cloud worker
-  let openrouterWorker = null; // OpenRouter cloud worker
-  let geminiWorker = null;   // Gemini cloud worker
-  let aiModelLoaded = false; // Qwen loaded flag
-  let groqModelLoaded = false;
-  let openrouterModelLoaded = false;
-  let geminiModelLoaded = false;
-  let aiIsGenerating = false;
-  let aiMessageIdCounter = 0;
-  let aiPanelOpen = false;
-  let currentAiModel = localStorage.getItem('md-viewer-ai-model') || 'qwen-local';
-  let groqApiKey = localStorage.getItem('md-viewer-groq-key') || null;
-  let openrouterApiKey = localStorage.getItem('md-viewer-openrouter-key') || null;
-  let geminiApiKey = localStorage.getItem('md-viewer-gemini-key') || null;
-  let streamingMessageId = null;
-  let pendingProviderForKey = null; // Which provider the API key modal is open for
-
-  // Provider configuration map
-  const CLOUD_PROVIDERS = {
-    'groq-llama': {
-      label: 'Llama 3.3 · Groq',
-      badge: 'Llama 3.3 · Groq',
-      icon: 'bi bi-cloud',
-      statusReady: 'Llama 3.3 70B · Groq Cloud',
-      workerFile: 'ai-worker-groq.js',
-      keyStorageKey: 'md-viewer-groq-key',
-      dialogTitle: 'Connect to Groq',
-      dialogDesc: 'Enter your free API key to use <strong>Llama 3.3 70B</strong>',
-      dialogPlaceholder: 'gsk_xxxxxxxxxxxxxxxxxxxx',
-      dialogLink: 'https://console.groq.com/keys',
-      dialogLinkText: 'console.groq.com/keys',
-      dialogIcon: 'bi bi-cloud',
-      getKey: () => groqApiKey,
-      setKey: (k) => { groqApiKey = k; },
-      getWorker: () => groqWorker,
-      setWorker: (w) => { groqWorker = w; },
-      isLoaded: () => groqModelLoaded,
-      setLoaded: (v) => { groqModelLoaded = v; },
-    },
-    'gemini-flash': {
-      label: 'Gemini 2.0 · Google',
-      badge: 'Gemini 2.0 · Google',
-      icon: 'bi bi-google',
-      statusReady: 'Gemini 2.0 Flash · Google',
-      workerFile: 'ai-worker-gemini.js',
-      keyStorageKey: 'md-viewer-gemini-key',
-      dialogTitle: 'Connect to Gemini',
-      dialogDesc: 'Enter your free API key to use <strong>Gemini 2.0 Flash</strong>',
-      dialogPlaceholder: 'AIzaSy_xxxxxxxxxxxxxxxxxxxxx',
-      dialogLink: 'https://aistudio.google.com/apikey',
-      dialogLinkText: 'aistudio.google.com/apikey',
-      dialogIcon: 'bi bi-google',
-      getKey: () => geminiApiKey,
-      setKey: (k) => { geminiApiKey = k; },
-      getWorker: () => geminiWorker,
-      setWorker: (w) => { geminiWorker = w; },
-      isLoaded: () => geminiModelLoaded,
-      setLoaded: (v) => { geminiModelLoaded = v; },
-    },
-    'openrouter-free': {
-      label: 'Auto · OpenRouter',
-      badge: 'Auto · OpenRouter',
-      icon: 'bi bi-globe2',
-      statusReady: 'Auto Model · OpenRouter',
-      workerFile: 'ai-worker-openrouter.js',
-      keyStorageKey: 'md-viewer-openrouter-key',
-      dialogTitle: 'Connect to OpenRouter',
-      dialogDesc: 'Enter your free API key for <strong>300+ AI models</strong>',
-      dialogPlaceholder: 'sk-or-xxxxxxxxxxxxxxxxxxxx',
-      dialogLink: 'https://openrouter.ai/keys',
-      dialogLinkText: 'openrouter.ai/keys',
-      dialogIcon: 'bi bi-globe2',
-      getKey: () => openrouterApiKey,
-      setKey: (k) => { openrouterApiKey = k; },
-      getWorker: () => openrouterWorker,
-      setWorker: (w) => { openrouterWorker = w; },
-      isLoaded: () => openrouterModelLoaded,
-      setLoaded: (v) => { openrouterModelLoaded = v; },
-    },
-  };
-
-  // Unified helpers
-  function getActiveWorker() {
-    if (currentAiModel === 'qwen-local') return aiWorker;
-    const p = CLOUD_PROVIDERS[currentAiModel];
-    return p ? p.getWorker() : null;
-  }
-  function isCurrentModelReady() {
-    if (currentAiModel === 'qwen-local') return aiModelLoaded;
-    const p = CLOUD_PROVIDERS[currentAiModel];
-    return p ? p.isLoaded() : false;
-  }
-
-  // --- Check WebGPU on page load (for consent dialog) ---
-  (async function checkGPU() {
-    if (navigator.gpu) {
-      try {
-        const adapter = await navigator.gpu.requestAdapter();
-        if (adapter) {
-          aiDeviceLabel.textContent = 'WebGPU Available ✓';
-          aiDeviceDetail.textContent = 'Fast GPU-accelerated inference';
-          return;
-        }
-      } catch (e) { /* fall through */ }
-    }
-    aiDeviceLabel.textContent = 'WebGPU Not Available';
-    aiDeviceDetail.textContent = 'Will use WASM (slower but functional)';
-  })();
-
-  // --- Initialize model selector UI on load ---
-  function initModelSelectorUI() {
-    // Restore last selected model
-    updateModelUI(currentAiModel);
-    // Mark the correct option as active
-    if (aiModelDropdown) {
-      aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.model === currentAiModel);
-      });
-    }
-  }
-  initModelSelectorUI();
-
-  function updateModelUI(modelId) {
-    const p = CLOUD_PROVIDERS[modelId];
-    if (p) {
-      if (aiModelLabel) aiModelLabel.textContent = p.label;
-      if (aiModelBtnIcon) { aiModelBtnIcon.className = p.icon; }
-      if (aiModelBadge) aiModelBadge.textContent = p.badge;
-    } else {
-      if (aiModelLabel) aiModelLabel.textContent = 'Qwen 3.5 · Local';
-      if (aiModelBtnIcon) { aiModelBtnIcon.className = 'bi bi-pc-display'; }
-      if (aiModelBadge) aiModelBadge.textContent = 'Qwen 3.5 · Local';
-    }
-  }
-
-  // --- Model Selector Dropdown ---
-  if (aiModelBtn) {
-    aiModelBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      aiModelSelector.classList.toggle('open');
-    });
-  }
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (aiModelSelector && !aiModelSelector.contains(e.target)) {
-      aiModelSelector.classList.remove('open');
-    }
+// Close on overlay click
+if (templateModal) {
+  templateModal.addEventListener('click', (e) => {
+    if (e.target === templateModal) closeTemplateModal();
   });
+}
 
-  // Model option click
-  if (aiModelDropdown) {
-    aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        const model = opt.dataset.model;
-        aiModelSelector.classList.remove('open');
-        if (model === currentAiModel) return;
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && templateModal && templateModal.style.display !== 'none') {
+    closeTemplateModal();
+  }
+});
 
-        const provider = CLOUD_PROVIDERS[model];
-        if (provider) {
-          // Cloud model — need API key
-          if (!provider.getKey()) {
-            showApiKeyModal(model);
-            return;
-          }
-          switchToModel(model);
-        } else {
-          // Qwen local
-          switchToModel('qwen-local');
-        }
-      });
+// Search input
+if (templateSearchInput) {
+  templateSearchInput.addEventListener('input', filterTemplates);
+}
+
+// Category tabs
+if (templateCategories) {
+  templateCategories.addEventListener('click', (e) => {
+    const btn = e.target.closest('.template-cat-btn');
+    if (!btn) return;
+
+    activeTemplateCategory = btn.dataset.category;
+    templateCategories.querySelectorAll('.template-cat-btn').forEach(b => {
+      b.classList.toggle('active', b === btn);
     });
-  }
+    filterTemplates();
+  });
+}
 
-  function switchToModel(modelId) {
-    currentAiModel = modelId;
-    localStorage.setItem('md-viewer-ai-model', modelId);
-    updateModelUI(modelId);
 
-    // Update active option
-    if (aiModelDropdown) {
-      aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.model === modelId);
-      });
-    }
+document.getElementById('share-button').addEventListener('click', shareMarkdown);
+document.getElementById('mobile-share-button').addEventListener('click', function () {
+  closeMobileMenu();
+  shareMarkdown();
+});
 
-    const provider = CLOUD_PROVIDERS[modelId];
-    if (provider) {
-      if (!provider.isLoaded() && !provider.getWorker()) {
-        initCloudWorker(modelId);
-      }
-      if (provider.isLoaded()) {
-        addAiStatusBar('ready', provider.statusReady);
-      }
-    } else {
-      // Qwen local
-      if (!aiModelLoaded && !aiWorker) {
-        if (localStorage.getItem('md-viewer-ai-consented')) {
-          initAiWorker();
-          addAiStatusBar('loading', 'Loading cached model...');
-        } else {
-          addAiStatusBar('loading', 'Qwen not loaded — click AI button to download');
-        }
-      } else if (aiModelLoaded) {
-        addAiStatusBar('ready', 'Qwen 3.5 · Local');
-      }
-    }
-  }
+// --- Auto-load shared content on page load ---
+loadSharedMarkdown();
 
-  // --- API Key Modal (shared by all cloud providers) ---
-  const aiApikeyTitle = document.getElementById('ai-apikey-title');
-  const aiApikeyDesc = document.getElementById('ai-apikey-desc');
-  const aiApikeyIcon = document.getElementById('ai-apikey-icon');
-  const aiApikeyLink = document.getElementById('ai-apikey-link');
+// ========================================
+// AI ASSISTANT — Multi-model: Qwen 3.5 (local) + Groq Llama 3.3 70B (cloud)
+// ========================================
 
-  function showApiKeyModal(providerId) {
-    pendingProviderForKey = providerId;
-    const provider = CLOUD_PROVIDERS[providerId];
-    if (!provider) return;
+const aiPanel = document.getElementById('ai-panel');
+const aiPanelOverlay = document.getElementById('ai-panel-overlay');
+const aiToggleBtn = document.getElementById('ai-toggle-button');
+const mobileAiBtn = document.getElementById('mobile-ai-button');
+const aiPanelCloseBtn = document.getElementById('ai-panel-close');
+const aiClearChatBtn = document.getElementById('ai-clear-chat');
+const aiChatArea = document.getElementById('ai-chat-area');
+const aiInput = document.getElementById('ai-input');
+const aiSendBtn = document.getElementById('ai-send-btn');
+const aiConsentModal = document.getElementById('ai-consent-modal');
+const aiConsentCancel = document.getElementById('ai-consent-cancel');
+const aiConsentDownload = document.getElementById('ai-consent-download');
+const aiProgressSection = document.getElementById('ai-download-progress');
+const aiProgressBar = document.getElementById('ai-progress-bar');
+const aiProgressStatus = document.getElementById('ai-progress-status');
+const aiProgressDetail = document.getElementById('ai-progress-detail');
+const aiDeviceLabel = document.getElementById('ai-device-label');
+const aiDeviceDetail = document.getElementById('ai-device-detail');
+const aiContextMenu = document.getElementById('ai-context-menu');
+const aiModelBadge = document.getElementById('ai-model-badge');
+const aiModelBtn = document.getElementById('ai-model-btn');
+const aiModelLabel = document.getElementById('ai-model-label');
+const aiModelBtnIcon = document.getElementById('ai-model-btn-icon');
+const aiModelDropdown = document.getElementById('ai-model-dropdown');
+const aiModelSelector = aiModelBtn ? aiModelBtn.closest('.ai-model-selector') : null;
+const aiApikeyModal = document.getElementById('ai-apikey-modal');
+const aiApikeyCancel = document.getElementById('ai-apikey-cancel');
+const aiApikeySave = document.getElementById('ai-apikey-save');
+const aiGroqKeyInput = document.getElementById('ai-groq-key-input');
+const aiApikeyError = document.getElementById('ai-apikey-error');
 
-    // Update dialog with provider-specific info
-    if (aiApikeyTitle) aiApikeyTitle.textContent = provider.dialogTitle;
-    if (aiApikeyDesc) aiApikeyDesc.innerHTML = provider.dialogDesc;
-    if (aiApikeyIcon) aiApikeyIcon.className = provider.dialogIcon;
-    if (aiApikeyLink) {
-      aiApikeyLink.href = provider.dialogLink;
-      aiApikeyLink.textContent = provider.dialogLinkText;
-    }
-    aiGroqKeyInput.placeholder = provider.dialogPlaceholder;
-    aiGroqKeyInput.value = provider.getKey() || '';
+let aiWorker = null;       // Qwen local worker
+let groqWorker = null;     // Groq cloud worker
+let openrouterWorker = null; // OpenRouter cloud worker
+let geminiWorker = null;   // Gemini cloud worker
+let aiModelLoaded = false; // Qwen loaded flag
+let groqModelLoaded = false;
+let openrouterModelLoaded = false;
+let geminiModelLoaded = false;
+let aiIsGenerating = false;
+let aiMessageIdCounter = 0;
+let aiPanelOpen = false;
+let currentAiModel = localStorage.getItem('md-viewer-ai-model') || 'qwen-local';
+let groqApiKey = localStorage.getItem('md-viewer-groq-key') || null;
+let openrouterApiKey = localStorage.getItem('md-viewer-openrouter-key') || null;
+let geminiApiKey = localStorage.getItem('md-viewer-gemini-key') || null;
+let streamingMessageId = null;
+let pendingProviderForKey = null; // Which provider the API key modal is open for
 
-    aiApikeyModal.style.display = 'flex';
-    aiApikeyError.style.display = 'none';
-    aiApikeySave.disabled = false;
-    aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
-    setTimeout(() => aiGroqKeyInput.focus(), 100);
-  }
+// Provider configuration map
+const CLOUD_PROVIDERS = {
+  'groq-llama': {
+    label: 'Llama 3.3 · Groq',
+    badge: 'Llama 3.3 · Groq',
+    icon: 'bi bi-cloud',
+    statusReady: 'Llama 3.3 70B · Groq Cloud',
+    workerFile: 'ai-worker-groq.js',
+    keyStorageKey: 'md-viewer-groq-key',
+    dialogTitle: 'Connect to Groq',
+    dialogDesc: 'Enter your free API key to use <strong>Llama 3.3 70B</strong>',
+    dialogPlaceholder: 'gsk_xxxxxxxxxxxxxxxxxxxx',
+    dialogLink: 'https://console.groq.com/keys',
+    dialogLinkText: 'console.groq.com/keys',
+    dialogIcon: 'bi bi-cloud',
+    getKey: () => groqApiKey,
+    setKey: (k) => { groqApiKey = k; },
+    getWorker: () => groqWorker,
+    setWorker: (w) => { groqWorker = w; },
+    isLoaded: () => groqModelLoaded,
+    setLoaded: (v) => { groqModelLoaded = v; },
+  },
+  'gemini-flash': {
+    label: 'Gemini 2.0 · Google',
+    badge: 'Gemini 2.0 · Google',
+    icon: 'bi bi-google',
+    statusReady: 'Gemini 2.0 Flash · Google',
+    workerFile: 'ai-worker-gemini.js',
+    keyStorageKey: 'md-viewer-gemini-key',
+    dialogTitle: 'Connect to Gemini',
+    dialogDesc: 'Enter your free API key to use <strong>Gemini 2.0 Flash</strong>',
+    dialogPlaceholder: 'AIzaSy_xxxxxxxxxxxxxxxxxxxxx',
+    dialogLink: 'https://aistudio.google.com/apikey',
+    dialogLinkText: 'aistudio.google.com/apikey',
+    dialogIcon: 'bi bi-google',
+    getKey: () => geminiApiKey,
+    setKey: (k) => { geminiApiKey = k; },
+    getWorker: () => geminiWorker,
+    setWorker: (w) => { geminiWorker = w; },
+    isLoaded: () => geminiModelLoaded,
+    setLoaded: (v) => { geminiModelLoaded = v; },
+  },
+  'openrouter-free': {
+    label: 'Auto · OpenRouter',
+    badge: 'Auto · OpenRouter',
+    icon: 'bi bi-globe2',
+    statusReady: 'Auto Model · OpenRouter',
+    workerFile: 'ai-worker-openrouter.js',
+    keyStorageKey: 'md-viewer-openrouter-key',
+    dialogTitle: 'Connect to OpenRouter',
+    dialogDesc: 'Enter your free API key for <strong>300+ AI models</strong>',
+    dialogPlaceholder: 'sk-or-xxxxxxxxxxxxxxxxxxxx',
+    dialogLink: 'https://openrouter.ai/keys',
+    dialogLinkText: 'openrouter.ai/keys',
+    dialogIcon: 'bi bi-globe2',
+    getKey: () => openrouterApiKey,
+    setKey: (k) => { openrouterApiKey = k; },
+    getWorker: () => openrouterWorker,
+    setWorker: (w) => { openrouterWorker = w; },
+    isLoaded: () => openrouterModelLoaded,
+    setLoaded: (v) => { openrouterModelLoaded = v; },
+  },
+};
 
-  function hideApiKeyModal() {
-    aiApikeyModal.style.display = 'none';
-    pendingProviderForKey = null;
-  }
+// Unified helpers
+function getActiveWorker() {
+  if (currentAiModel === 'qwen-local') return aiWorker;
+  const p = CLOUD_PROVIDERS[currentAiModel];
+  return p ? p.getWorker() : null;
+}
+function isCurrentModelReady() {
+  if (currentAiModel === 'qwen-local') return aiModelLoaded;
+  const p = CLOUD_PROVIDERS[currentAiModel];
+  return p ? p.isLoaded() : false;
+}
 
-  if (aiApikeyCancel) aiApikeyCancel.addEventListener('click', hideApiKeyModal);
-  if (aiApikeyModal) {
-    aiApikeyModal.addEventListener('click', (e) => {
-      if (e.target === aiApikeyModal) hideApiKeyModal();
-    });
-  }
-
-  if (aiApikeySave) {
-    aiApikeySave.addEventListener('click', () => {
-      const key = aiGroqKeyInput.value.trim();
-      const providerId = pendingProviderForKey;
-      const provider = CLOUD_PROVIDERS[providerId];
-      if (!key || !provider) {
-        aiApikeyError.textContent = 'Please enter your API key.';
-        aiApikeyError.style.display = 'block';
+// --- Check WebGPU on page load (for consent dialog) ---
+(async function checkGPU() {
+  if (navigator.gpu) {
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (adapter) {
+        aiDeviceLabel.textContent = 'WebGPU Available ✓';
+        aiDeviceDetail.textContent = 'Fast GPU-accelerated inference';
         return;
       }
+    } catch (e) { /* fall through */ }
+  }
+  aiDeviceLabel.textContent = 'WebGPU Not Available';
+  aiDeviceDetail.textContent = 'Will use WASM (slower but functional)';
+})();
 
-      aiApikeySave.disabled = true;
-      aiApikeySave.innerHTML = '<span class="ai-status-spinner"></span> Validating...';
-      aiApikeyError.style.display = 'none';
-
-      // Save key
-      provider.setKey(key);
-      localStorage.setItem(provider.keyStorageKey, key);
-
-      // Init worker to validate key
-      initCloudWorker(providerId, () => {
-        hideApiKeyModal();
-        switchToModel(providerId);
-        if (!aiPanelOpen) openAiPanel();
-      }, (errorMsg) => {
-        aiApikeySave.disabled = false;
-        aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
-        aiApikeyError.textContent = errorMsg;
-        aiApikeyError.style.display = 'block';
-        provider.setKey(null);
-        localStorage.removeItem(provider.keyStorageKey);
-      });
+// --- Initialize model selector UI on load ---
+function initModelSelectorUI() {
+  // Restore last selected model
+  updateModelUI(currentAiModel);
+  // Mark the correct option as active
+  if (aiModelDropdown) {
+    aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.model === currentAiModel);
     });
   }
+}
+initModelSelectorUI();
 
-  // Handle Enter key in API key input
-  if (aiGroqKeyInput) {
-    aiGroqKeyInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        aiApikeySave.click();
+function updateModelUI(modelId) {
+  const p = CLOUD_PROVIDERS[modelId];
+  if (p) {
+    if (aiModelLabel) aiModelLabel.textContent = p.label;
+    if (aiModelBtnIcon) { aiModelBtnIcon.className = p.icon; }
+    if (aiModelBadge) aiModelBadge.textContent = p.badge;
+  } else {
+    if (aiModelLabel) aiModelLabel.textContent = 'Qwen 3.5 · Local';
+    if (aiModelBtnIcon) { aiModelBtnIcon.className = 'bi bi-pc-display'; }
+    if (aiModelBadge) aiModelBadge.textContent = 'Qwen 3.5 · Local';
+  }
+}
+
+// --- Model Selector Dropdown ---
+if (aiModelBtn) {
+  aiModelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    aiModelSelector.classList.toggle('open');
+  });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (aiModelSelector && !aiModelSelector.contains(e.target)) {
+    aiModelSelector.classList.remove('open');
+  }
+});
+
+// Model option click
+if (aiModelDropdown) {
+  aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const model = opt.dataset.model;
+      aiModelSelector.classList.remove('open');
+      if (model === currentAiModel) return;
+
+      const provider = CLOUD_PROVIDERS[model];
+      if (provider) {
+        // Cloud model — need API key
+        if (!provider.getKey()) {
+          showApiKeyModal(model);
+          return;
+        }
+        switchToModel(model);
+      } else {
+        // Qwen local
+        switchToModel('qwen-local');
       }
     });
+  });
+}
+
+function switchToModel(modelId) {
+  currentAiModel = modelId;
+  localStorage.setItem('md-viewer-ai-model', modelId);
+  updateModelUI(modelId);
+
+  // Update active option
+  if (aiModelDropdown) {
+    aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.model === modelId);
+    });
   }
 
-  // --- Panel Toggle ---
-  function openAiPanel() {
-    // Always open the panel first — never block with a consent/download dialog
-    aiPanel.style.display = 'flex';
-    aiPanelOverlay.classList.add('active');
-    void aiPanel.offsetWidth;
-    aiPanel.classList.add('ai-panel-open');
-    aiToggleBtn.classList.add('ai-active');
-    aiPanelOpen = true;
-    document.body.classList.add('ai-panel-active');
-    aiInput.focus();
-
-    // Then handle model loading in the background
-    if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
+  const provider = CLOUD_PROVIDERS[modelId];
+  if (provider) {
+    if (!provider.isLoaded() && !provider.getWorker()) {
+      initCloudWorker(modelId);
+    }
+    if (provider.isLoaded()) {
+      addAiStatusBar('ready', provider.statusReady);
+    }
+  } else {
+    // Qwen local
+    if (!aiModelLoaded && !aiWorker) {
       if (localStorage.getItem('md-viewer-ai-consented')) {
-        // Model was previously downloaded — auto-load from cache
         initAiWorker();
         addAiStatusBar('loading', 'Loading cached model...');
+      } else {
+        addAiStatusBar('loading', 'Qwen not loaded — click AI button to download');
       }
-      // Otherwise do nothing — user can pick a cloud model or send a message
-      // to trigger the consent dialog
+    } else if (aiModelLoaded) {
+      addAiStatusBar('ready', 'Qwen 3.5 · Local');
+    }
+  }
+}
+
+// --- API Key Modal (shared by all cloud providers) ---
+const aiApikeyTitle = document.getElementById('ai-apikey-title');
+const aiApikeyDesc = document.getElementById('ai-apikey-desc');
+const aiApikeyIcon = document.getElementById('ai-apikey-icon');
+const aiApikeyLink = document.getElementById('ai-apikey-link');
+
+function showApiKeyModal(providerId) {
+  pendingProviderForKey = providerId;
+  const provider = CLOUD_PROVIDERS[providerId];
+  if (!provider) return;
+
+  // Update dialog with provider-specific info
+  if (aiApikeyTitle) aiApikeyTitle.textContent = provider.dialogTitle;
+  if (aiApikeyDesc) aiApikeyDesc.innerHTML = provider.dialogDesc;
+  if (aiApikeyIcon) aiApikeyIcon.className = provider.dialogIcon;
+  if (aiApikeyLink) {
+    aiApikeyLink.href = provider.dialogLink;
+    aiApikeyLink.textContent = provider.dialogLinkText;
+  }
+  aiGroqKeyInput.placeholder = provider.dialogPlaceholder;
+  aiGroqKeyInput.value = provider.getKey() || '';
+
+  aiApikeyModal.style.display = 'flex';
+  aiApikeyError.style.display = 'none';
+  aiApikeySave.disabled = false;
+  aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
+  setTimeout(() => aiGroqKeyInput.focus(), 100);
+}
+
+function hideApiKeyModal() {
+  aiApikeyModal.style.display = 'none';
+  pendingProviderForKey = null;
+}
+
+if (aiApikeyCancel) aiApikeyCancel.addEventListener('click', hideApiKeyModal);
+if (aiApikeyModal) {
+  aiApikeyModal.addEventListener('click', (e) => {
+    if (e.target === aiApikeyModal) hideApiKeyModal();
+  });
+}
+
+if (aiApikeySave) {
+  aiApikeySave.addEventListener('click', () => {
+    const key = aiGroqKeyInput.value.trim();
+    const providerId = pendingProviderForKey;
+    const provider = CLOUD_PROVIDERS[providerId];
+    if (!key || !provider) {
+      aiApikeyError.textContent = 'Please enter your API key.';
+      aiApikeyError.style.display = 'block';
       return;
     }
 
-    // Any cloud model — check if ready
-    const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
-    if (cloudProvider && !cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
-      if (!cloudProvider.getKey()) {
-        showApiKeyModal(currentAiModel);
-        return;
-      }
-      initCloudWorker(currentAiModel);
-    }
-  }
+    aiApikeySave.disabled = true;
+    aiApikeySave.innerHTML = '<span class="ai-status-spinner"></span> Validating...';
+    aiApikeyError.style.display = 'none';
 
-  function closeAiPanel() {
-    aiPanel.classList.remove('ai-panel-open');
-    aiPanelOverlay.classList.remove('active');
-    aiToggleBtn.classList.remove('ai-active');
-    aiPanelOpen = false;
-    document.body.classList.remove('ai-panel-active');
-    setTimeout(() => {
-      if (!aiPanelOpen) aiPanel.style.display = 'none';
-    }, 300);
-  }
+    // Save key
+    provider.setKey(key);
+    localStorage.setItem(provider.keyStorageKey, key);
 
-  function toggleAiPanel() {
-    if (aiPanelOpen) closeAiPanel();
-    else openAiPanel();
-  }
-
-  if (aiToggleBtn) aiToggleBtn.addEventListener('click', toggleAiPanel);
-  if (mobileAiBtn) mobileAiBtn.addEventListener('click', () => {
-    closeMobileMenu();
-    toggleAiPanel();
+    // Init worker to validate key
+    initCloudWorker(providerId, () => {
+      hideApiKeyModal();
+      switchToModel(providerId);
+      if (!aiPanelOpen) openAiPanel();
+    }, (errorMsg) => {
+      aiApikeySave.disabled = false;
+      aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
+      aiApikeyError.textContent = errorMsg;
+      aiApikeyError.style.display = 'block';
+      provider.setKey(null);
+      localStorage.removeItem(provider.keyStorageKey);
+    });
   });
-  if (aiPanelCloseBtn) aiPanelCloseBtn.addEventListener('click', closeAiPanel);
-  // Overlay is pass-through — panel closes via the X button only
+}
 
-  // --- AI Panel Resize (drag left edge) ---
-  const aiResizeDivider = document.getElementById('ai-resize-divider');
-
-  // Restore saved width
-  const savedAiWidth = localStorage.getItem('md-viewer-ai-panel-width');
-  if (savedAiWidth) {
-    const w = parseInt(savedAiWidth, 10);
-    if (w >= 250 && w <= window.innerWidth * 0.6) {
-      document.documentElement.style.setProperty('--ai-panel-width', w + 'px');
-    }
-  }
-
-  if (aiResizeDivider) {
-    let aiResizing = false;
-    let aiResizeStartX = 0;
-    let aiResizeStartWidth = 0;
-
-    function startAiResize(e) {
+// Handle Enter key in API key input
+if (aiGroqKeyInput) {
+  aiGroqKeyInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      aiResizing = true;
-      aiResizeStartX = e.clientX || e.touches[0].clientX;
-      aiResizeStartWidth = aiPanel.offsetWidth;
-      aiResizeDivider.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      document.addEventListener('mousemove', handleAiResize);
-      document.addEventListener('mouseup', stopAiResize);
-      document.addEventListener('touchmove', handleAiResize, { passive: false });
-      document.addEventListener('touchend', stopAiResize);
+      aiApikeySave.click();
     }
-
-    function handleAiResize(e) {
-      if (!aiResizing) return;
-      e.preventDefault();
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-      if (clientX == null) return;
-      const delta = aiResizeStartX - clientX;
-      const newWidth = Math.min(Math.max(aiResizeStartWidth + delta, 250), window.innerWidth * 0.6);
-      document.documentElement.style.setProperty('--ai-panel-width', newWidth + 'px');
-    }
-
-    function stopAiResize() {
-      if (!aiResizing) return;
-      aiResizing = false;
-      aiResizeDivider.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', handleAiResize);
-      document.removeEventListener('mouseup', stopAiResize);
-      document.removeEventListener('touchmove', handleAiResize);
-      document.removeEventListener('touchend', stopAiResize);
-      // Persist width
-      const currentWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ai-panel-width'));
-      if (currentWidth) localStorage.setItem('md-viewer-ai-panel-width', currentWidth);
-    }
-
-    aiResizeDivider.addEventListener('mousedown', startAiResize);
-    aiResizeDivider.addEventListener('touchstart', startAiResize, { passive: false });
-  }
-
-  // --- Consent Dialog ---
-  function showAiConsentDialog() {
-    aiConsentModal.style.display = 'flex';
-    aiProgressSection.style.display = 'none';
-    aiConsentDownload.disabled = false;
-    aiConsentDownload.innerHTML = '<i class="bi bi-download me-1"></i> Download & Enable AI';
-  }
-
-  function hideAiConsentDialog() {
-    aiConsentModal.style.display = 'none';
-  }
-
-  aiConsentCancel.addEventListener('click', hideAiConsentDialog);
-  aiConsentModal.addEventListener('click', (e) => {
-    if (e.target === aiConsentModal) hideAiConsentDialog();
   });
+}
 
-  aiConsentDownload.addEventListener('click', () => {
-    aiConsentDownload.disabled = true;
-    aiConsentDownload.innerHTML = '<span class="ai-status-spinner"></span> Loading...';
-    aiProgressSection.style.display = 'block';
-    initAiWorker();
-  });
+// --- Panel Toggle ---
+function openAiPanel() {
+  // Always open the panel first — never block with a consent/download dialog
+  aiPanel.style.display = 'flex';
+  aiPanelOverlay.classList.add('active');
+  void aiPanel.offsetWidth;
+  aiPanel.classList.add('ai-panel-open');
+  aiToggleBtn.classList.add('ai-active');
+  aiPanelOpen = true;
+  document.body.classList.add('ai-panel-active');
+  aiInput.focus();
 
-  // --- Worker Lifecycle ---
-  function initAiWorker() {
-    if (aiWorker) return;
+  // Then handle model loading in the background
+  if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
+    if (localStorage.getItem('md-viewer-ai-consented')) {
+      // Model was previously downloaded — auto-load from cache
+      initAiWorker();
+      addAiStatusBar('loading', 'Loading cached model...');
+    }
+    // Otherwise do nothing — user can pick a cloud model or send a message
+    // to trigger the consent dialog
+    return;
+  }
 
-    aiWorker = new Worker('ai-worker.js', { type: 'module' });
+  // Any cloud model — check if ready
+  const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
+  if (cloudProvider && !cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
+    if (!cloudProvider.getKey()) {
+      showApiKeyModal(currentAiModel);
+      return;
+    }
+    initCloudWorker(currentAiModel);
+  }
+}
 
-    // Track download progress per file
-    const fileProgress = {};
+function closeAiPanel() {
+  aiPanel.classList.remove('ai-panel-open');
+  aiPanelOverlay.classList.remove('active');
+  aiToggleBtn.classList.remove('ai-active');
+  aiPanelOpen = false;
+  document.body.classList.remove('ai-panel-active');
+  setTimeout(() => {
+    if (!aiPanelOpen) aiPanel.style.display = 'none';
+  }, 300);
+}
 
-    aiWorker.addEventListener('message', (e) => {
-      const msg = e.data;
+function toggleAiPanel() {
+  if (aiPanelOpen) closeAiPanel();
+  else openAiPanel();
+}
 
-      switch (msg.type) {
-        case 'progress': {
-          // Track per-file progress
-          fileProgress[msg.file] = {
-            loaded: msg.loaded || 0,
-            total: msg.total || 0,
-            progress: msg.progress || 0
-          };
+if (aiToggleBtn) aiToggleBtn.addEventListener('click', toggleAiPanel);
+if (mobileAiBtn) mobileAiBtn.addEventListener('click', () => {
+  closeMobileMenu();
+  toggleAiPanel();
+});
+if (aiPanelCloseBtn) aiPanelCloseBtn.addEventListener('click', closeAiPanel);
+// Overlay is pass-through — panel closes via the X button only
 
-          // Throttle DOM updates to prevent dialog shaking
-          if (!initAiWorker._progressThrottle) {
-            initAiWorker._progressThrottle = true;
-            requestAnimationFrame(() => {
-              // Calculate overall progress
-              let totalLoaded = 0, totalSize = 0;
-              Object.values(fileProgress).forEach(fp => {
-                totalLoaded += fp.loaded;
-                totalSize += fp.total;
-              });
-              const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
+// --- AI Panel Resize (drag left edge) ---
+const aiResizeDivider = document.getElementById('ai-resize-divider');
 
-              // Update consent modal progress
-              aiProgressBar.style.width = overallPercent + '%';
-              aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
+// Restore saved width
+const savedAiWidth = localStorage.getItem('md-viewer-ai-panel-width');
+if (savedAiWidth) {
+  const w = parseInt(savedAiWidth, 10);
+  if (w >= 250 && w <= window.innerWidth * 0.6) {
+    document.documentElement.style.setProperty('--ai-panel-width', w + 'px');
+  }
+}
 
-              const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
-              const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
-              aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
+if (aiResizeDivider) {
+  let aiResizing = false;
+  let aiResizeStartX = 0;
+  let aiResizeStartWidth = 0;
 
-              // Also update inline progress in AI panel
-              updateAiInlineProgress(overallPercent, `Downloading Qwen 3.5... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
+  function startAiResize(e) {
+    e.preventDefault();
+    aiResizing = true;
+    aiResizeStartX = e.clientX || e.touches[0].clientX;
+    aiResizeStartWidth = aiPanel.offsetWidth;
+    aiResizeDivider.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', handleAiResize);
+    document.addEventListener('mouseup', stopAiResize);
+    document.addEventListener('touchmove', handleAiResize, { passive: false });
+    document.addEventListener('touchend', stopAiResize);
+  }
 
-              setTimeout(() => { initAiWorker._progressThrottle = false; }, 200);
+  function handleAiResize(e) {
+    if (!aiResizing) return;
+    e.preventDefault();
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    if (clientX == null) return;
+    const delta = aiResizeStartX - clientX;
+    const newWidth = Math.min(Math.max(aiResizeStartWidth + delta, 250), window.innerWidth * 0.6);
+    document.documentElement.style.setProperty('--ai-panel-width', newWidth + 'px');
+  }
+
+  function stopAiResize() {
+    if (!aiResizing) return;
+    aiResizing = false;
+    aiResizeDivider.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    document.removeEventListener('mousemove', handleAiResize);
+    document.removeEventListener('mouseup', stopAiResize);
+    document.removeEventListener('touchmove', handleAiResize);
+    document.removeEventListener('touchend', stopAiResize);
+    // Persist width
+    const currentWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ai-panel-width'));
+    if (currentWidth) localStorage.setItem('md-viewer-ai-panel-width', currentWidth);
+  }
+
+  aiResizeDivider.addEventListener('mousedown', startAiResize);
+  aiResizeDivider.addEventListener('touchstart', startAiResize, { passive: false });
+}
+
+// --- Consent Dialog ---
+function showAiConsentDialog() {
+  aiConsentModal.style.display = 'flex';
+  aiProgressSection.style.display = 'none';
+  aiConsentDownload.disabled = false;
+  aiConsentDownload.innerHTML = '<i class="bi bi-download me-1"></i> Download & Enable AI';
+}
+
+function hideAiConsentDialog() {
+  aiConsentModal.style.display = 'none';
+}
+
+aiConsentCancel.addEventListener('click', hideAiConsentDialog);
+aiConsentModal.addEventListener('click', (e) => {
+  if (e.target === aiConsentModal) hideAiConsentDialog();
+});
+
+aiConsentDownload.addEventListener('click', () => {
+  aiConsentDownload.disabled = true;
+  aiConsentDownload.innerHTML = '<span class="ai-status-spinner"></span> Loading...';
+  aiProgressSection.style.display = 'block';
+  initAiWorker();
+});
+
+// --- Worker Lifecycle ---
+function initAiWorker() {
+  if (aiWorker) return;
+
+  aiWorker = new Worker('ai-worker.js', { type: 'module' });
+
+  // Track download progress per file
+  const fileProgress = {};
+
+  aiWorker.addEventListener('message', (e) => {
+    const msg = e.data;
+
+    switch (msg.type) {
+      case 'progress': {
+        // Track per-file progress
+        fileProgress[msg.file] = {
+          loaded: msg.loaded || 0,
+          total: msg.total || 0,
+          progress: msg.progress || 0
+        };
+
+        // Throttle DOM updates to prevent dialog shaking
+        if (!initAiWorker._progressThrottle) {
+          initAiWorker._progressThrottle = true;
+          requestAnimationFrame(() => {
+            // Calculate overall progress
+            let totalLoaded = 0, totalSize = 0;
+            Object.values(fileProgress).forEach(fp => {
+              totalLoaded += fp.loaded;
+              totalSize += fp.total;
             });
-          }
-          break;
+            const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
+
+            // Update consent modal progress
+            aiProgressBar.style.width = overallPercent + '%';
+            aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
+
+            const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
+            const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
+            aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
+
+            // Also update inline progress in AI panel
+            updateAiInlineProgress(overallPercent, `Downloading Qwen 3.5... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
+
+            setTimeout(() => { initAiWorker._progressThrottle = false; }, 200);
+          });
         }
+        break;
+      }
 
-        case 'status':
-          aiProgressStatus.textContent = msg.message;
-          break;
+      case 'status':
+        aiProgressStatus.textContent = msg.message;
+        break;
 
-        case 'loaded':
-          aiModelLoaded = true;
-          // Remember consent so we skip the dialog next time
-          localStorage.setItem('md-viewer-ai-consented', 'true');
-          hideAiConsentDialog();
-          // Open the panel if not already open
-          if (!aiPanelOpen) {
-            aiPanel.style.display = 'flex';
-            aiPanelOverlay.classList.add('active');
-            void aiPanel.offsetWidth;
-            aiPanel.classList.add('ai-panel-open');
-            aiToggleBtn.classList.add('ai-active');
-            aiPanelOpen = true;
-            document.body.classList.add('ai-panel-active');
-          }
-          // Add a status bar — show current model name
-          if (currentAiModel === 'qwen-local') {
-            addAiStatusBar('ready', `Qwen 3.5 · Local (${msg.device.toUpperCase()})`);
-          }
-          aiInput.focus();
-          break;
+      case 'loaded':
+        aiModelLoaded = true;
+        // Remember consent so we skip the dialog next time
+        localStorage.setItem('md-viewer-ai-consented', 'true');
+        hideAiConsentDialog();
+        // Open the panel if not already open
+        if (!aiPanelOpen) {
+          aiPanel.style.display = 'flex';
+          aiPanelOverlay.classList.add('active');
+          void aiPanel.offsetWidth;
+          aiPanel.classList.add('ai-panel-open');
+          aiToggleBtn.classList.add('ai-active');
+          aiPanelOpen = true;
+          document.body.classList.add('ai-panel-active');
+        }
+        // Add a status bar — show current model name
+        if (currentAiModel === 'qwen-local') {
+          addAiStatusBar('ready', `Qwen 3.5 · Local (${msg.device.toUpperCase()})`);
+        }
+        aiInput.focus();
+        break;
 
-        case 'complete':
-          handleAiResponse(msg.text, msg.messageId);
-          break;
+      case 'complete':
+        handleAiResponse(msg.text, msg.messageId);
+        break;
 
-        case 'error':
-          if (!aiModelLoaded) {
-            // Clear consent so user gets the dialog again
-            localStorage.removeItem('md-viewer-ai-consented');
-            // Model failed to load — show error in consent dialog and allow retry
-            if (aiConsentModal.style.display === 'flex') {
-              aiProgressStatus.textContent = '❌ ' + msg.message;
-              aiProgressBar.style.width = '0%';
-              aiProgressBar.style.background = '#f87171';
-              aiConsentDownload.disabled = false;
-              aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
-            } else {
-              // Was auto-loading from cache — show error in panel
-              addAiStatusBar('error', msg.message);
-            }
-            // Reset worker so user can retry
-            if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+      case 'error':
+        if (!aiModelLoaded) {
+          // Clear consent so user gets the dialog again
+          localStorage.removeItem('md-viewer-ai-consented');
+          // Model failed to load — show error in consent dialog and allow retry
+          if (aiConsentModal.style.display === 'flex') {
+            aiProgressStatus.textContent = '❌ ' + msg.message;
+            aiProgressBar.style.width = '0%';
+            aiProgressBar.style.background = '#f87171';
+            aiConsentDownload.disabled = false;
+            aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
           } else {
-            handleAiError(msg.message, msg.messageId);
+            // Was auto-loading from cache — show error in panel
+            addAiStatusBar('error', msg.message);
           }
-          break;
-      }
-    });
-
-    // Handle worker-level crashes (network failure, script error, etc.)
-    aiWorker.addEventListener('error', (e) => {
-      console.error('AI Worker error:', e);
-      aiModelLoaded = false;
-      if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
-      // If consent dialog is open, show error there
-      if (aiConsentModal.style.display === 'flex') {
-        aiProgressStatus.textContent = '❌ Worker failed to initialize. Check your connection and retry.';
-        aiProgressBar.style.width = '0%';
-        aiConsentDownload.disabled = false;
-        aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
-      } else {
-        // Panel is open but model died — show re-download notice
-        addAiStatusBar('error', 'Model unavailable — click AI button to re-download');
-        aiModelLoaded = false;
-      }
-    });
-
-    aiWorker.postMessage({ type: 'load' });
-  }
-
-  // --- Groq Worker Lifecycle ---
-  // --- Generic Cloud Worker Initializer (works for any provider) ---
-  function initCloudWorker(providerId, onSuccess, onError) {
-    const provider = CLOUD_PROVIDERS[providerId];
-    if (!provider) return;
-
-    if (provider.getWorker()) {
-      if (provider.isLoaded()) {
-        if (onSuccess) onSuccess();
-        return;
-      }
+          // Reset worker so user can retry
+          if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+        } else {
+          handleAiError(msg.message, msg.messageId);
+        }
+        break;
     }
+  });
 
-    // Terminate existing worker if re-initializing
-    if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
-    provider.setLoaded(false);
+  // Handle worker-level crashes (network failure, script error, etc.)
+  aiWorker.addEventListener('error', (e) => {
+    console.error('AI Worker error:', e);
+    aiModelLoaded = false;
+    if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+    // If consent dialog is open, show error there
+    if (aiConsentModal.style.display === 'flex') {
+      aiProgressStatus.textContent = '❌ Worker failed to initialize. Check your connection and retry.';
+      aiProgressBar.style.width = '0%';
+      aiConsentDownload.disabled = false;
+      aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
+    } else {
+      // Panel is open but model died — show re-download notice
+      addAiStatusBar('error', 'Model unavailable — click AI button to re-download');
+      aiModelLoaded = false;
+    }
+  });
 
-    const worker = new Worker(provider.workerFile);
-    provider.setWorker(worker);
+  aiWorker.postMessage({ type: 'load' });
+}
 
-    worker.addEventListener('message', (e) => {
-      const msg = e.data;
+// --- Groq Worker Lifecycle ---
+// --- Generic Cloud Worker Initializer (works for any provider) ---
+function initCloudWorker(providerId, onSuccess, onError) {
+  const provider = CLOUD_PROVIDERS[providerId];
+  if (!provider) return;
 
-      switch (msg.type) {
-        case 'status':
-          addAiStatusBar('loading', msg.message);
-          break;
-
-        case 'loaded':
-          provider.setLoaded(true);
-          if (currentAiModel === providerId) {
-            addAiStatusBar('ready', provider.statusReady);
-          }
-          if (onSuccess) { onSuccess(); onSuccess = null; }
-          break;
-
-        case 'token':
-          handleStreamingToken(msg.token, msg.messageId);
-          break;
-
-        case 'complete':
-          handleGroqComplete(msg.text, msg.messageId);
-          break;
-
-        case 'error':
-          if (!provider.isLoaded()) {
-            if (onError) { onError(msg.message); onError = null; }
-            else { addAiStatusBar('error', msg.message); }
-            if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
-            if (msg.message.includes('Invalid API key') || msg.message.includes('API key')) {
-              provider.setKey(null);
-              localStorage.removeItem(provider.keyStorageKey);
-            }
-          } else {
-            handleAiError(msg.message, msg.messageId);
-          }
-          break;
-      }
-    });
-
-    worker.addEventListener('error', (e) => {
-      console.error(`${providerId} worker error:`, e);
-      provider.setLoaded(false);
-      if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
-      const errorMsg = `${provider.dialogTitle.replace('Connect to ', '')} worker failed to initialize.`;
-      if (onError) { onError(errorMsg); onError = null; }
-      else { addAiStatusBar('error', errorMsg); }
-    });
-
-    // Send API key and load
-    worker.postMessage({ type: 'setApiKey', apiKey: provider.getKey() });
-    worker.postMessage({ type: 'load' });
+  if (provider.getWorker()) {
+    if (provider.isLoaded()) {
+      if (onSuccess) onSuccess();
+      return;
+    }
   }
 
-  // --- Streaming Token Handling ---
-  function handleStreamingToken(token, messageId) {
-    // Find or create the streaming bubble
-    let bubble = document.getElementById('ai-streaming-bubble-' + messageId);
+  // Terminate existing worker if re-initializing
+  if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
+  provider.setLoaded(false);
 
-    if (!bubble) {
-      // First token — replace typing indicator with an empty AI bubble
-      removeTypingIndicator();
+  const worker = new Worker(provider.workerFile);
+  provider.setWorker(worker);
 
-      // Remove welcome message
-      const welcome = aiChatArea.querySelector('.ai-welcome-message');
-      if (welcome) welcome.remove();
+  worker.addEventListener('message', (e) => {
+    const msg = e.data;
 
-      const msg = document.createElement('div');
-      msg.className = 'ai-message ai-message-ai';
-      msg.id = 'ai-streaming-msg-' + messageId;
-      msg.innerHTML = `
+    switch (msg.type) {
+      case 'status':
+        addAiStatusBar('loading', msg.message);
+        break;
+
+      case 'loaded':
+        provider.setLoaded(true);
+        if (currentAiModel === providerId) {
+          addAiStatusBar('ready', provider.statusReady);
+        }
+        if (onSuccess) { onSuccess(); onSuccess = null; }
+        break;
+
+      case 'token':
+        handleStreamingToken(msg.token, msg.messageId);
+        break;
+
+      case 'complete':
+        handleGroqComplete(msg.text, msg.messageId);
+        break;
+
+      case 'error':
+        if (!provider.isLoaded()) {
+          if (onError) { onError(msg.message); onError = null; }
+          else { addAiStatusBar('error', msg.message); }
+          if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
+          if (msg.message.includes('Invalid API key') || msg.message.includes('API key')) {
+            provider.setKey(null);
+            localStorage.removeItem(provider.keyStorageKey);
+          }
+        } else {
+          handleAiError(msg.message, msg.messageId);
+        }
+        break;
+    }
+  });
+
+  worker.addEventListener('error', (e) => {
+    console.error(`${providerId} worker error:`, e);
+    provider.setLoaded(false);
+    if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
+    const errorMsg = `${provider.dialogTitle.replace('Connect to ', '')} worker failed to initialize.`;
+    if (onError) { onError(errorMsg); onError = null; }
+    else { addAiStatusBar('error', errorMsg); }
+  });
+
+  // Send API key and load
+  worker.postMessage({ type: 'setApiKey', apiKey: provider.getKey() });
+  worker.postMessage({ type: 'load' });
+}
+
+// --- Streaming Token Handling ---
+function handleStreamingToken(token, messageId) {
+  // Find or create the streaming bubble
+  let bubble = document.getElementById('ai-streaming-bubble-' + messageId);
+
+  if (!bubble) {
+    // First token — replace typing indicator with an empty AI bubble
+    removeTypingIndicator();
+
+    // Remove welcome message
+    const welcome = aiChatArea.querySelector('.ai-welcome-message');
+    if (welcome) welcome.remove();
+
+    const msg = document.createElement('div');
+    msg.className = 'ai-message ai-message-ai';
+    msg.id = 'ai-streaming-msg-' + messageId;
+    msg.innerHTML = `
         <span class="ai-msg-label">AI</span>
         <div class="ai-msg-bubble" id="ai-streaming-bubble-${messageId}"></div>
       `;
-      aiChatArea.appendChild(msg);
-      bubble = document.getElementById('ai-streaming-bubble-' + messageId);
-    }
-
-    // Append token text (accumulate raw text, then format)
-    if (!bubble._rawText) bubble._rawText = '';
-    bubble._rawText += token;
-    bubble.innerHTML = formatAiResponse(bubble._rawText);
-
-    // Auto-scroll
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+    aiChatArea.appendChild(msg);
+    bubble = document.getElementById('ai-streaming-bubble-' + messageId);
   }
 
-  function handleGroqComplete(text, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    streamingMessageId = null;
+  // Append token text (accumulate raw text, then format)
+  if (!bubble._rawText) bubble._rawText = '';
+  bubble._rawText += token;
+  bubble.innerHTML = formatAiResponse(bubble._rawText);
 
-    // Find the streaming message and add action buttons
-    const msgEl = document.getElementById('ai-streaming-msg-' + messageId);
-    if (msgEl) {
-      // Remove the streaming IDs (no longer needed)
-      const bubble = document.getElementById('ai-streaming-bubble-' + messageId);
-      if (bubble) {
-        bubble.removeAttribute('id');
-        bubble.innerHTML = formatAiResponse(text);
-      }
-      msgEl.removeAttribute('id');
+  // Auto-scroll
+  aiChatArea.scrollTop = aiChatArea.scrollHeight;
+}
 
-      // Add action buttons
-      const actions = document.createElement('div');
-      actions.className = 'ai-msg-actions';
-      actions.innerHTML = `
+function handleGroqComplete(text, messageId) {
+  aiIsGenerating = false;
+  aiSendBtn.disabled = false;
+  streamingMessageId = null;
+
+  // Find the streaming message and add action buttons
+  const msgEl = document.getElementById('ai-streaming-msg-' + messageId);
+  if (msgEl) {
+    // Remove the streaming IDs (no longer needed)
+    const bubble = document.getElementById('ai-streaming-bubble-' + messageId);
+    if (bubble) {
+      bubble.removeAttribute('id');
+      bubble.innerHTML = formatAiResponse(text);
+    }
+    msgEl.removeAttribute('id');
+
+    // Add action buttons
+    const actions = document.createElement('div');
+    actions.className = 'ai-msg-actions';
+    actions.innerHTML = `
         <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
           <i class="bi bi-box-arrow-in-down"></i> Insert
         </button>
@@ -6047,50 +6879,50 @@ Brief description of the project.
           <i class="bi bi-arrow-left-right"></i> Replace
         </button>
       `;
-      msgEl.appendChild(actions);
+    msgEl.appendChild(actions);
 
-      // Wire up action buttons
-      actions.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-          const action = this.dataset.action;
-          const rawText = decodeURIComponent(this.dataset.text);
-          handleAiAction(action, rawText, this);
-        });
+    // Wire up action buttons
+    actions.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const action = this.dataset.action;
+        const rawText = decodeURIComponent(this.dataset.text);
+        handleAiAction(action, rawText, this);
       });
-    } else {
-      // Fallback if no streaming element found
-      removeTypingIndicator();
-      addAiMessage(text, messageId);
-    }
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+    });
+  } else {
+    // Fallback if no streaming element found
+    removeTypingIndicator();
+    addAiMessage(text, messageId);
   }
+  aiChatArea.scrollTop = aiChatArea.scrollHeight;
+}
 
-  // --- Status Bar ---
-  function addAiStatusBar(status, text) {
-    // Remove existing status bar
+// --- Status Bar ---
+function addAiStatusBar(status, text) {
+  // Remove existing status bar
+  const existing = aiPanel.querySelector('.ai-status-bar');
+  if (existing) existing.remove();
+
+  const bar = document.createElement('div');
+  bar.className = 'ai-status-bar';
+  bar.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
+
+  // Insert after header
+  const header = aiPanel.querySelector('.ai-panel-header');
+  header.insertAdjacentElement('afterend', bar);
+}
+
+// Show or update an inline download progress bar in the AI panel
+function updateAiInlineProgress(percent, statusText, detailText) {
+  let bar = aiPanel.querySelector('.ai-status-bar.downloading');
+  if (!bar) {
+    // Remove any existing non-download status bar
     const existing = aiPanel.querySelector('.ai-status-bar');
     if (existing) existing.remove();
 
-    const bar = document.createElement('div');
-    bar.className = 'ai-status-bar';
-    bar.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
-
-    // Insert after header
-    const header = aiPanel.querySelector('.ai-panel-header');
-    header.insertAdjacentElement('afterend', bar);
-  }
-
-  // Show or update an inline download progress bar in the AI panel
-  function updateAiInlineProgress(percent, statusText, detailText) {
-    let bar = aiPanel.querySelector('.ai-status-bar.downloading');
-    if (!bar) {
-      // Remove any existing non-download status bar
-      const existing = aiPanel.querySelector('.ai-status-bar');
-      if (existing) existing.remove();
-
-      bar = document.createElement('div');
-      bar.className = 'ai-status-bar downloading';
-      bar.innerHTML = `
+    bar = document.createElement('div');
+    bar.className = 'ai-status-bar downloading';
+    bar.innerHTML = `
         <div class="ai-status-text">
           <span class="ai-download-status"><span class="ai-status-spinner"></span> ${statusText}</span>
           <span class="ai-download-detail">${detailText}</span>
@@ -6099,39 +6931,39 @@ Brief description of the project.
           <div class="ai-inline-progress-fill" style="width: ${percent}%"></div>
         </div>
       `;
-      const header = aiPanel.querySelector('.ai-panel-header');
-      header.insertAdjacentElement('afterend', bar);
-    } else {
-      const fill = bar.querySelector('.ai-inline-progress-fill');
-      const statusEl = bar.querySelector('.ai-download-status');
-      const detailEl = bar.querySelector('.ai-download-detail');
-      if (fill) fill.style.width = percent + '%';
-      if (statusEl) statusEl.innerHTML = `<span class="ai-status-spinner"></span> ${statusText}`;
-      if (detailEl) detailEl.textContent = detailText;
-    }
+    const header = aiPanel.querySelector('.ai-panel-header');
+    header.insertAdjacentElement('afterend', bar);
+  } else {
+    const fill = bar.querySelector('.ai-inline-progress-fill');
+    const statusEl = bar.querySelector('.ai-download-status');
+    const detailEl = bar.querySelector('.ai-download-detail');
+    if (fill) fill.style.width = percent + '%';
+    if (statusEl) statusEl.innerHTML = `<span class="ai-status-spinner"></span> ${statusText}`;
+    if (detailEl) detailEl.textContent = detailText;
   }
+}
 
-  // --- Chat Messages ---
-  function addUserMessage(text) {
-    // Remove welcome message
-    const welcome = aiChatArea.querySelector('.ai-welcome-message');
-    if (welcome) welcome.remove();
+// --- Chat Messages ---
+function addUserMessage(text) {
+  // Remove welcome message
+  const welcome = aiChatArea.querySelector('.ai-welcome-message');
+  if (welcome) welcome.remove();
 
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-user';
-    msg.innerHTML = `
+  const msg = document.createElement('div');
+  msg.className = 'ai-message ai-message-user';
+  msg.innerHTML = `
       <span class="ai-msg-label">You</span>
       <div class="ai-msg-bubble">${escapeHtml(text)}</div>
     `;
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
+  aiChatArea.appendChild(msg);
+  aiChatArea.scrollTop = aiChatArea.scrollHeight;
+}
 
-  function addTypingIndicator() {
-    const indicator = document.createElement('div');
-    indicator.className = 'ai-message ai-message-ai';
-    indicator.id = 'ai-typing';
-    indicator.innerHTML = `
+function addTypingIndicator() {
+  const indicator = document.createElement('div');
+  indicator.className = 'ai-message ai-message-ai';
+  indicator.id = 'ai-typing';
+  indicator.innerHTML = `
       <span class="ai-msg-label">AI</span>
       <div class="ai-typing-indicator">
         <span class="ai-typing-dot"></span>
@@ -6139,29 +6971,29 @@ Brief description of the project.
         <span class="ai-typing-dot"></span>
       </div>
     `;
-    aiChatArea.appendChild(indicator);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
+  aiChatArea.appendChild(indicator);
+  aiChatArea.scrollTop = aiChatArea.scrollHeight;
+}
 
-  function removeTypingIndicator() {
-    const indicator = document.getElementById('ai-typing');
-    if (indicator) indicator.remove();
-  }
+function removeTypingIndicator() {
+  const indicator = document.getElementById('ai-typing');
+  if (indicator) indicator.remove();
+}
 
-  function addAiMessage(text, messageId) {
-    removeTypingIndicator();
+function addAiMessage(text, messageId) {
+  removeTypingIndicator();
 
-    // Remove welcome message
-    const welcome = aiChatArea.querySelector('.ai-welcome-message');
-    if (welcome) welcome.remove();
+  // Remove welcome message
+  const welcome = aiChatArea.querySelector('.ai-welcome-message');
+  if (welcome) welcome.remove();
 
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-ai';
+  const msg = document.createElement('div');
+  msg.className = 'ai-message ai-message-ai';
 
-    // Simple markdown-to-html for AI response (basic formatting)
-    const formattedText = formatAiResponse(text);
+  // Simple markdown-to-html for AI response (basic formatting)
+  const formattedText = formatAiResponse(text);
 
-    msg.innerHTML = `
+  msg.innerHTML = `
       <span class="ai-msg-label">AI</span>
       <div class="ai-msg-bubble">${formattedText}</div>
       <div class="ai-msg-actions">
@@ -6177,442 +7009,462 @@ Brief description of the project.
       </div>
     `;
 
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+  aiChatArea.appendChild(msg);
+  aiChatArea.scrollTop = aiChatArea.scrollHeight;
 
-    // Wire up action buttons
-    msg.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const action = this.dataset.action;
-        const rawText = decodeURIComponent(this.dataset.text);
-        handleAiAction(action, rawText, this);
-      });
+  // Wire up action buttons
+  msg.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const action = this.dataset.action;
+      const rawText = decodeURIComponent(this.dataset.text);
+      handleAiAction(action, rawText, this);
     });
-  }
+  });
+}
 
-  function handleAiAction(action, text, btn) {
-    switch (action) {
-      case 'insert': {
-        const pos = markdownEditor.selectionStart;
-        const before = markdownEditor.value.substring(0, pos);
-        const after = markdownEditor.value.substring(pos);
-        markdownEditor.value = before + '\n' + text + '\n' + after;
-        markdownEditor.dispatchEvent(new Event('input'));
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Inserted';
-        setTimeout(() => { btn.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Insert'; }, 1500);
-        break;
+function handleAiAction(action, text, btn) {
+  switch (action) {
+    case 'insert': {
+      const pos = markdownEditor.selectionStart;
+      const before = markdownEditor.value.substring(0, pos);
+      const after = markdownEditor.value.substring(pos);
+      markdownEditor.value = before + '\n' + text + '\n' + after;
+      markdownEditor.dispatchEvent(new Event('input'));
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Inserted';
+      setTimeout(() => { btn.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Insert'; }, 1500);
+      break;
+    }
+    case 'copy': {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 1500);
+      });
+      break;
+    }
+    case 'replace': {
+      const start = markdownEditor.selectionStart;
+      const end = markdownEditor.selectionEnd;
+      if (start === end) {
+        // No selection, insert instead
+        handleAiAction('insert', text, btn);
+        return;
       }
-      case 'copy': {
-        navigator.clipboard.writeText(text).then(() => {
-          btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
-          setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 1500);
-        });
-        break;
-      }
-      case 'replace': {
-        const start = markdownEditor.selectionStart;
-        const end = markdownEditor.selectionEnd;
-        if (start === end) {
-          // No selection, insert instead
-          handleAiAction('insert', text, btn);
-          return;
-        }
-        markdownEditor.value = markdownEditor.value.substring(0, start) + text + markdownEditor.value.substring(end);
-        markdownEditor.dispatchEvent(new Event('input'));
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Replaced';
-        setTimeout(() => { btn.innerHTML = '<i class="bi bi-arrow-left-right"></i> Replace'; }, 1500);
-        break;
-      }
+      markdownEditor.value = markdownEditor.value.substring(0, start) + text + markdownEditor.value.substring(end);
+      markdownEditor.dispatchEvent(new Event('input'));
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Replaced';
+      setTimeout(() => { btn.innerHTML = '<i class="bi bi-arrow-left-right"></i> Replace'; }, 1500);
+      break;
     }
   }
+}
 
-  function handleAiResponse(text, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    addAiMessage(text, messageId);
-  }
+function handleAiResponse(text, messageId) {
+  aiIsGenerating = false;
+  aiSendBtn.disabled = false;
+  addAiMessage(text, messageId);
+}
 
-  function handleAiError(message, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    removeTypingIndicator();
+function handleAiError(message, messageId) {
+  aiIsGenerating = false;
+  aiSendBtn.disabled = false;
+  removeTypingIndicator();
 
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-ai';
-    msg.innerHTML = `
+  const msg = document.createElement('div');
+  msg.className = 'ai-message ai-message-ai';
+  msg.innerHTML = `
       <span class="ai-msg-label">AI</span>
       <div class="ai-msg-bubble" style="border-color: var(--color-danger-fg); color: var(--color-danger-fg);">
         <i class="bi bi-exclamation-triangle"></i> ${escapeHtml(message)}
       </div>
     `;
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+  aiChatArea.appendChild(msg);
+  aiChatArea.scrollTop = aiChatArea.scrollHeight;
+}
+
+function formatAiResponse(text) {
+  // Basic markdown formatting for AI responses
+  let html = escapeHtml(text);
+
+  // Code blocks
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Bold
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+
+  // Sanitize the final output to prevent any XSS
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['pre', 'code', 'strong', 'em', 'br'],
+    ALLOWED_ATTR: []
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// --- Send to AI (routes to active model's worker) ---
+function sendToAi(taskType, context, userPrompt) {
+  // If Qwen is selected but not loaded yet, trigger consent/download
+  if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
+    if (localStorage.getItem('md-viewer-ai-consented')) {
+      initAiWorker();
+      addAiStatusBar('loading', 'Loading cached model...');
+    } else {
+      showAiConsentDialog();
+    }
+    return;
   }
 
-  function formatAiResponse(text) {
-    // Basic markdown formatting for AI responses
-    let html = escapeHtml(text);
-
-    // Code blocks
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-
-    // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Bold
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // Italic
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
-
-    // Sanitize the final output to prevent any XSS
-    return DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ['pre', 'code', 'strong', 'em', 'br'],
-      ALLOWED_ATTR: []
-    });
+  // If a cloud model is selected but not ready, prompt for API key
+  const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
+  if (cloudProvider && !cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
+    if (!cloudProvider.getKey()) {
+      showApiKeyModal(currentAiModel);
+      return;
+    }
+    initCloudWorker(currentAiModel);
+    return;
   }
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
+  const activeWorker = getActiveWorker();
+  const isReady = isCurrentModelReady();
 
-  // --- Send to AI (routes to active model's worker) ---
-  function sendToAi(taskType, context, userPrompt) {
-    // If Qwen is selected but not loaded yet, trigger consent/download
-    if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
-      if (localStorage.getItem('md-viewer-ai-consented')) {
-        initAiWorker();
-        addAiStatusBar('loading', 'Loading cached model...');
-      } else {
-        showAiConsentDialog();
+  if (!isReady || !activeWorker) return;
+  if (aiIsGenerating) return;
+
+  aiIsGenerating = true;
+  aiSendBtn.disabled = true;
+  const messageId = ++aiMessageIdCounter;
+  streamingMessageId = messageId;
+
+  // Check thinking mode toggle
+  const thinkingToggle = document.getElementById('ai-thinking-toggle');
+  const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
+
+  // Show user message in chat
+  const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
+  addUserMessage(displayText);
+  addTypingIndicator();
+
+  activeWorker.postMessage({
+    type: 'generate',
+    taskType,
+    context,
+    userPrompt,
+    messageId,
+    enableThinking
+  });
+}
+
+// --- Chat Input ---
+aiInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
+});
+
+// Auto-resize textarea
+aiInput.addEventListener('input', () => {
+  aiInput.style.height = 'auto';
+  aiInput.style.height = Math.min(aiInput.scrollHeight, 120) + 'px';
+});
+
+aiSendBtn.addEventListener('click', sendChatMessage);
+
+function sendChatMessage() {
+  const text = aiInput.value.trim();
+  if (!text || aiIsGenerating) return;
+
+  aiInput.value = '';
+  aiInput.style.height = 'auto';
+
+  // Detect if it's a Q&A about the document or a generation request
+  const editorContent = markdownEditor.value;
+  const isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
+
+  if (isQuestion && editorContent.trim()) {
+    sendToAi('qa', editorContent, text);
+  } else {
+    sendToAi('generate', null, text);
+  }
+}
+
+// --- Track editor selection so it persists when focus moves to AI panel ---
+let savedSelection = { start: 0, end: 0 };
+markdownEditor.addEventListener('select', () => {
+  savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
+});
+markdownEditor.addEventListener('click', () => {
+  savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
+});
+markdownEditor.addEventListener('keyup', () => {
+  savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
+});
+
+/**
+ * Get a smart text chunk around cursor when no text is selected.
+ * Takes ~1500 chars around the cursor position to avoid overloading the model.
+ */
+function getSmartChunk(fullText, cursorPos) {
+  if (!fullText.trim()) return '';
+  const CHUNK_SIZE = 1500;
+  if (fullText.length <= CHUNK_SIZE) return fullText;
+  let start = Math.max(0, cursorPos - Math.floor(CHUNK_SIZE / 2));
+  let end = Math.min(fullText.length, start + CHUNK_SIZE);
+  // Snap start to a paragraph boundary (double newline) if possible
+  if (start > 0) {
+    const paraBreak = fullText.lastIndexOf('\n\n', start + 100);
+    if (paraBreak > start - 200 && paraBreak > 0) start = paraBreak + 2;
+  }
+  // Snap end to a paragraph boundary if possible
+  if (end < fullText.length) {
+    const paraBreak = fullText.indexOf('\n\n', end - 100);
+    if (paraBreak > 0 && paraBreak < end + 200) end = paraBreak;
+  }
+  return fullText.substring(start, end);
+}
+
+/**
+ * Split text into chunks of ~CHUNK_SIZE characters, breaking at newlines when possible.
+ */
+function splitIntoChunks(text, chunkSize = 1500) {
+  if (text.length <= chunkSize) return [text];
+  const chunks = [];
+  let start = 0;
+  while (start < text.length) {
+    let end = Math.min(start + chunkSize, text.length);
+    // Try to break at a newline
+    if (end < text.length) {
+      const lastNewline = text.lastIndexOf('\n', end);
+      if (lastNewline > start + chunkSize * 0.5) end = lastNewline + 1;
+    }
+    chunks.push(text.substring(start, end));
+    start = end;
+  }
+  return chunks;
+}
+
+/**
+ * Process document in chunks like an agent — step by step, with progress.
+ * Returns a promise that resolves when done.
+ */
+function processDocumentInChunks(action, fullText) {
+  const chunks = splitIntoChunks(fullText);
+  const totalChunks = chunks.length;
+
+  addAiMessage(`📄 Processing entire document (${fullText.length} chars) in ${totalChunks} chunk${totalChunks > 1 ? 's' : ''}...`, 'user');
+
+  let chunkIndex = 0;
+  const chunkResults = [];
+
+  function processNextChunk() {
+    if (chunkIndex >= totalChunks) {
+      // All chunks processed — combine results
+      if (action === 'summarize' && totalChunks > 1) {
+        // Final summary pass: combine chunk summaries
+        addAiMessage(`🔗 Combining ${totalChunks} chunk summaries into final summary...`);
+        const combined = chunkResults.map((r, i) => `### Part ${i + 1}\n${r}`).join('\n\n');
+        sendToAi('summarize', combined, 'Combine these section summaries into one concise final summary.');
+      } else if (totalChunks > 1) {
+        // For other actions, show combined results
+        const combined = chunkResults.join('\n\n---\n\n');
+        removeTypingIndicator();
+        addAiMessage(combined);
+        aiIsGenerating = false;
+        aiSendBtn.disabled = false;
       }
       return;
     }
 
-    // If a cloud model is selected but not ready, prompt for API key
-    const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
-    if (cloudProvider && !cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
-      if (!cloudProvider.getKey()) {
-        showApiKeyModal(currentAiModel);
-        return;
-      }
-      initCloudWorker(currentAiModel);
-      return;
-    }
-
-    const activeWorker = getActiveWorker();
-    const isReady = isCurrentModelReady();
-
-    if (!isReady || !activeWorker) return;
-    if (aiIsGenerating) return;
+    const chunkNum = chunkIndex + 1;
+    addAiMessage(`⏳ Processing chunk ${chunkNum}/${totalChunks}...`);
 
     aiIsGenerating = true;
     aiSendBtn.disabled = true;
     const messageId = ++aiMessageIdCounter;
-    streamingMessageId = messageId;
 
-    // Check thinking mode toggle
+    // Check thinking toggle
     const thinkingToggle = document.getElementById('ai-thinking-toggle');
     const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
 
-    // Show user message in chat
-    const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
-    addUserMessage(displayText);
+    // Route to correct worker
+    const activeWorker = getActiveWorker();
+
+    // Set up one-time listener for this chunk's response
+    const chunkHandler = (e) => {
+      const msg = e.data;
+      if (msg.messageId !== messageId) return;
+
+      if (msg.type === 'complete') {
+        activeWorker.removeEventListener('message', chunkHandler);
+        chunkResults.push(msg.text);
+        removeTypingIndicator();
+        // Show intermediate result
+        addAiMessage(`✅ Chunk ${chunkNum}/${totalChunks}: ${msg.text.substring(0, 100)}...`);
+        addTypingIndicator();
+        chunkIndex++;
+        aiIsGenerating = false;
+        // Process next chunk after a small delay
+        setTimeout(processNextChunk, 100);
+      } else if (msg.type === 'error') {
+        activeWorker.removeEventListener('message', chunkHandler);
+        removeTypingIndicator();
+        addAiMessage(`❌ Error on chunk ${chunkNum}: ${msg.message}`);
+        aiIsGenerating = false;
+        aiSendBtn.disabled = false;
+      }
+    };
+    activeWorker.addEventListener('message', chunkHandler);
     addTypingIndicator();
 
     activeWorker.postMessage({
       type: 'generate',
-      taskType,
-      context,
-      userPrompt,
+      taskType: action,
+      context: chunks[chunkIndex],
+      userPrompt: null,
       messageId,
       enableThinking
     });
   }
 
-  // --- Chat Input ---
-  aiInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendChatMessage();
+  processNextChunk();
+}
+
+// --- Quick Action Chips ---
+document.querySelectorAll('.ai-action-chip').forEach(chip => {
+  chip.addEventListener('click', function () {
+    const action = this.dataset.action;
+    // Check editor selection first, then preview selection
+    let selectedText = markdownEditor.value.substring(savedSelection.start, savedSelection.end);
+    if (!selectedText) {
+      const sel = window.getSelection();
+      selectedText = sel ? sel.toString().trim() : '';
     }
-  });
-
-  // Auto-resize textarea
-  aiInput.addEventListener('input', () => {
-    aiInput.style.height = 'auto';
-    aiInput.style.height = Math.min(aiInput.scrollHeight, 120) + 'px';
-  });
-
-  aiSendBtn.addEventListener('click', sendChatMessage);
-
-  function sendChatMessage() {
-    const text = aiInput.value.trim();
-    if (!text || aiIsGenerating) return;
-
-    aiInput.value = '';
-    aiInput.style.height = 'auto';
-
-    // Detect if it's a Q&A about the document or a generation request
     const editorContent = markdownEditor.value;
-    const isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
 
-    if (isQuestion && editorContent.trim()) {
-      sendToAi('qa', editorContent, text);
-    } else {
-      sendToAi('generate', null, text);
+    const isCurrentModelReady2 = isCurrentModelReady();
+    if (!isCurrentModelReady2) {
+      openAiPanel();
+      return;
     }
-  }
 
-  // --- Track editor selection so it persists when focus moves to AI panel ---
-  let savedSelection = { start: 0, end: 0 };
-  markdownEditor.addEventListener('select', () => {
-    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
-  });
-  markdownEditor.addEventListener('click', () => {
-    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
-  });
-  markdownEditor.addEventListener('keyup', () => {
-    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
-  });
+    // Ensure panel is open
+    if (!aiPanelOpen) openAiPanel();
 
-  /**
-   * Get a smart text chunk around cursor when no text is selected.
-   * Takes ~1500 chars around the cursor position to avoid overloading the model.
-   */
-  function getSmartChunk(fullText, cursorPos) {
-    if (!fullText.trim()) return '';
-    const CHUNK_SIZE = 1500;
-    if (fullText.length <= CHUNK_SIZE) return fullText;
-    let start = Math.max(0, cursorPos - Math.floor(CHUNK_SIZE / 2));
-    let end = Math.min(fullText.length, start + CHUNK_SIZE);
-    // Snap start to a paragraph boundary (double newline) if possible
-    if (start > 0) {
-      const paraBreak = fullText.lastIndexOf('\n\n', start + 100);
-      if (paraBreak > start - 200 && paraBreak > 0) start = paraBreak + 2;
-    }
-    // Snap end to a paragraph boundary if possible
-    if (end < fullText.length) {
-      const paraBreak = fullText.indexOf('\n\n', end - 100);
-      if (paraBreak > 0 && paraBreak < end + 200) end = paraBreak;
-    }
-    return fullText.substring(start, end);
-  }
-
-  /**
-   * Split text into chunks of ~CHUNK_SIZE characters, breaking at newlines when possible.
-   */
-  function splitIntoChunks(text, chunkSize = 1500) {
-    if (text.length <= chunkSize) return [text];
-    const chunks = [];
-    let start = 0;
-    while (start < text.length) {
-      let end = Math.min(start + chunkSize, text.length);
-      // Try to break at a newline
-      if (end < text.length) {
-        const lastNewline = text.lastIndexOf('\n', end);
-        if (lastNewline > start + chunkSize * 0.5) end = lastNewline + 1;
-      }
-      chunks.push(text.substring(start, end));
-      start = end;
-    }
-    return chunks;
-  }
-
-  /**
-   * Process document in chunks like an agent — step by step, with progress.
-   * Returns a promise that resolves when done.
-   */
-  function processDocumentInChunks(action, fullText) {
-    const chunks = splitIntoChunks(fullText);
-    const totalChunks = chunks.length;
-
-    addAiMessage(`📄 Processing entire document (${fullText.length} chars) in ${totalChunks} chunk${totalChunks > 1 ? 's' : ''}...`, 'user');
-
-    let chunkIndex = 0;
-    const chunkResults = [];
-
-    function processNextChunk() {
-      if (chunkIndex >= totalChunks) {
-        // All chunks processed — combine results
-        if (action === 'summarize' && totalChunks > 1) {
-          // Final summary pass: combine chunk summaries
-          addAiMessage(`🔗 Combining ${totalChunks} chunk summaries into final summary...`);
-          const combined = chunkResults.map((r, i) => `### Part ${i + 1}\n${r}`).join('\n\n');
-          sendToAi('summarize', combined, 'Combine these section summaries into one concise final summary.');
-        } else if (totalChunks > 1) {
-          // For other actions, show combined results
-          const combined = chunkResults.join('\n\n---\n\n');
-          removeTypingIndicator();
-          addAiMessage(combined);
-          aiIsGenerating = false;
-          aiSendBtn.disabled = false;
+    switch (action) {
+      case 'summarize':
+      case 'expand':
+      case 'rephrase':
+      case 'grammar': {
+        if (!editorContent.trim() && !selectedText.trim()) {
+          addAiMessage('Please add some text in the editor first.');
+          return;
         }
-        return;
-      }
-
-      const chunkNum = chunkIndex + 1;
-      addAiMessage(`⏳ Processing chunk ${chunkNum}/${totalChunks}...`);
-
-      aiIsGenerating = true;
-      aiSendBtn.disabled = true;
-      const messageId = ++aiMessageIdCounter;
-
-      // Check thinking toggle
-      const thinkingToggle = document.getElementById('ai-thinking-toggle');
-      const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
-
-      // Route to correct worker
-      const activeWorker = getActiveWorker();
-
-      // Set up one-time listener for this chunk's response
-      const chunkHandler = (e) => {
-        const msg = e.data;
-        if (msg.messageId !== messageId) return;
-
-        if (msg.type === 'complete') {
-          activeWorker.removeEventListener('message', chunkHandler);
-          chunkResults.push(msg.text);
-          removeTypingIndicator();
-          // Show intermediate result
-          addAiMessage(`✅ Chunk ${chunkNum}/${totalChunks}: ${msg.text.substring(0, 100)}...`);
-          addTypingIndicator();
-          chunkIndex++;
-          aiIsGenerating = false;
-          // Process next chunk after a small delay
-          setTimeout(processNextChunk, 100);
-        } else if (msg.type === 'error') {
-          activeWorker.removeEventListener('message', chunkHandler);
-          removeTypingIndicator();
-          addAiMessage(`❌ Error on chunk ${chunkNum}: ${msg.message}`);
-          aiIsGenerating = false;
-          aiSendBtn.disabled = false;
+        if (selectedText) {
+          // Selected text — process directly
+          addAiMessage(`Using selected text (${selectedText.length} chars)`, 'user');
+          sendToAi(action, selectedText, null);
+        } else if (editorContent.length > 1500) {
+          // Large document — agent-style chunked processing
+          processDocumentInChunks(action, editorContent);
+        } else {
+          // Small document — process all at once
+          addAiMessage(`Using entire document (${editorContent.length} chars)`, 'user');
+          sendToAi(action, editorContent, null);
         }
-      };
-      activeWorker.addEventListener('message', chunkHandler);
-      addTypingIndicator();
-
-      activeWorker.postMessage({
-        type: 'generate',
-        taskType: action,
-        context: chunks[chunkIndex],
-        userPrompt: null,
-        messageId,
-        enableThinking
-      });
-    }
-
-    processNextChunk();
-  }
-
-  // --- Quick Action Chips ---
-  document.querySelectorAll('.ai-action-chip').forEach(chip => {
-    chip.addEventListener('click', function () {
-      const action = this.dataset.action;
-      // Check editor selection first, then preview selection
-      let selectedText = markdownEditor.value.substring(savedSelection.start, savedSelection.end);
-      if (!selectedText) {
-        const sel = window.getSelection();
-        selectedText = sel ? sel.toString().trim() : '';
+        break;
       }
-      const editorContent = markdownEditor.value;
-
-      const isCurrentModelReady2 = isCurrentModelReady();
-      if (!isCurrentModelReady2) {
-        openAiPanel();
-        return;
-      }
-
-      // Ensure panel is open
-      if (!aiPanelOpen) openAiPanel();
-
-      switch (action) {
-        case 'summarize':
-        case 'expand':
-        case 'rephrase':
-        case 'grammar': {
-          if (!editorContent.trim() && !selectedText.trim()) {
-            addAiMessage('Please add some text in the editor first.');
-            return;
-          }
-          if (selectedText) {
-            // Selected text — process directly
-            addAiMessage(`Using selected text (${selectedText.length} chars)`, 'user');
-            sendToAi(action, selectedText, null);
-          } else if (editorContent.length > 1500) {
-            // Large document — agent-style chunked processing
-            processDocumentInChunks(action, editorContent);
-          } else {
-            // Small document — process all at once
-            addAiMessage(`Using entire document (${editorContent.length} chars)`, 'user');
-            sendToAi(action, editorContent, null);
-          }
-          break;
+      case 'explain':
+      case 'simplify':
+        if (!selectedText) {
+          addAiMessage('Please select some text in the editor to explain or simplify.');
+          return;
         }
-        case 'explain':
-        case 'simplify':
-          if (!selectedText) {
-            addAiMessage('Please select some text in the editor to explain or simplify.');
-            return;
-          }
-          sendToAi(action, selectedText, `Please ${action} this text.`);
-          break;
-        case 'autocomplete': {
-          const textBeforeCursor = editorContent.substring(0, savedSelection.start);
-          if (!textBeforeCursor.trim()) {
-            addAiMessage('Place your cursor after some text in the editor to auto-complete.');
-            return;
-          }
-          sendToAi('autocomplete', textBeforeCursor, null);
-          break;
+        sendToAi(action, selectedText, `Please ${action} this text.`);
+        break;
+      case 'autocomplete': {
+        const textBeforeCursor = editorContent.substring(0, savedSelection.start);
+        if (!textBeforeCursor.trim()) {
+          addAiMessage('Place your cursor after some text in the editor to auto-complete.');
+          return;
         }
-        case 'markdown':
-          // Focus the input for user to type their request
-          aiInput.placeholder = 'Describe what markdown to generate...';
-          aiInput.focus();
-          break;
-      }
-    });
-  });
-
-  // --- Ctrl+Space for Auto-Complete ---
-  markdownEditor.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === ' ') {
-      e.preventDefault();
-      const isCurrentReady = isCurrentModelReady();
-      if (!isCurrentReady) {
-        openAiPanel();
-        return;
-      }
-      if (!aiPanelOpen) openAiPanel();
-
-      const textBeforeCursor = markdownEditor.value.substring(0, markdownEditor.selectionStart);
-      if (textBeforeCursor.trim()) {
         sendToAi('autocomplete', textBeforeCursor, null);
+        break;
       }
+      case 'markdown':
+        // Focus the input for user to type their request
+        aiInput.placeholder = 'Describe what markdown to generate...';
+        aiInput.focus();
+        break;
     }
   });
+});
 
-  // --- Context Menu (on text selection in editor OR preview) ---
-  let contextMenuTimeout = null;
-  let savedContextText = ''; // Stores selected text from either pane
+// --- Ctrl+Space for Auto-Complete ---
+markdownEditor.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === ' ') {
+    e.preventDefault();
+    const isCurrentReady = isCurrentModelReady();
+    if (!isCurrentReady) {
+      openAiPanel();
+      return;
+    }
+    if (!aiPanelOpen) openAiPanel();
 
-  // Editor text selection
-  markdownEditor.addEventListener('mouseup', (e) => {
+    const textBeforeCursor = markdownEditor.value.substring(0, markdownEditor.selectionStart);
+    if (textBeforeCursor.trim()) {
+      sendToAi('autocomplete', textBeforeCursor, null);
+    }
+  }
+});
+
+// --- Context Menu (on text selection in editor OR preview) ---
+let contextMenuTimeout = null;
+let savedContextText = ''; // Stores selected text from either pane
+
+// Editor text selection
+markdownEditor.addEventListener('mouseup', (e) => {
+  clearTimeout(contextMenuTimeout);
+  contextMenuTimeout = setTimeout(() => {
+    const selectedText = markdownEditor.value.substring(
+      markdownEditor.selectionStart,
+      markdownEditor.selectionEnd
+    );
+
+    const isEditorCtxReady = isCurrentModelReady();
+    if (selectedText && selectedText.length > 2 && isEditorCtxReady) {
+      savedContextText = selectedText;
+      aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+      aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
+      aiContextMenu.style.display = 'flex';
+    } else {
+      aiContextMenu.style.display = 'none';
+    }
+  }, 300);
+});
+
+// Preview pane text selection
+if (previewPane) {
+  previewPane.addEventListener('mouseup', (e) => {
     clearTimeout(contextMenuTimeout);
     contextMenuTimeout = setTimeout(() => {
-      const selectedText = markdownEditor.value.substring(
-        markdownEditor.selectionStart,
-        markdownEditor.selectionEnd
-      );
+      const selection = window.getSelection();
+      const selectedText = selection ? selection.toString().trim() : '';
 
-      const isEditorCtxReady = isCurrentModelReady();
-      if (selectedText && selectedText.length > 2 && isEditorCtxReady) {
+      const isCurrentReady3 = isCurrentModelReady();
+      if (selectedText && selectedText.length > 2 && isCurrentReady3) {
         savedContextText = selectedText;
         aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
         aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
@@ -6622,65 +7474,45 @@ Brief description of the project.
       }
     }, 300);
   });
+}
 
-  // Preview pane text selection
-  if (previewPane) {
-    previewPane.addEventListener('mouseup', (e) => {
-      clearTimeout(contextMenuTimeout);
-      contextMenuTimeout = setTimeout(() => {
-        const selection = window.getSelection();
-        const selectedText = selection ? selection.toString().trim() : '';
-
-        const isCurrentReady3 = isCurrentModelReady();
-        if (selectedText && selectedText.length > 2 && isCurrentReady3) {
-          savedContextText = selectedText;
-          aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-          aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
-          aiContextMenu.style.display = 'flex';
-        } else {
-          aiContextMenu.style.display = 'none';
-        }
-      }, 300);
-    });
+// Hide context menu on click elsewhere
+document.addEventListener('mousedown', (e) => {
+  if (!aiContextMenu.contains(e.target)) {
+    aiContextMenu.style.display = 'none';
   }
+});
 
-  // Hide context menu on click elsewhere
-  document.addEventListener('mousedown', (e) => {
-    if (!aiContextMenu.contains(e.target)) {
-      aiContextMenu.style.display = 'none';
+// Context menu actions — uses savedContextText from either pane
+aiContextMenu.querySelectorAll('.ai-ctx-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const action = this.dataset.action;
+    aiContextMenu.style.display = 'none';
+
+    if (!savedContextText) return;
+
+    // Open panel if needed
+    if (!aiPanelOpen) {
+      aiPanel.style.display = 'flex';
+      aiPanelOverlay.classList.add('active');
+      void aiPanel.offsetWidth;
+      aiPanel.classList.add('ai-panel-open');
+      aiToggleBtn.classList.add('ai-active');
+      aiPanelOpen = true;
+    }
+
+    if (['summarize', 'expand', 'rephrase', 'grammar'].includes(action)) {
+      sendToAi(action, savedContextText, null);
+    } else {
+      sendToAi(action, savedContextText, `Please ${action} this text.`);
     }
   });
+});
 
-  // Context menu actions — uses savedContextText from either pane
-  aiContextMenu.querySelectorAll('.ai-ctx-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const action = this.dataset.action;
-      aiContextMenu.style.display = 'none';
-
-      if (!savedContextText) return;
-
-      // Open panel if needed
-      if (!aiPanelOpen) {
-        aiPanel.style.display = 'flex';
-        aiPanelOverlay.classList.add('active');
-        void aiPanel.offsetWidth;
-        aiPanel.classList.add('ai-panel-open');
-        aiToggleBtn.classList.add('ai-active');
-        aiPanelOpen = true;
-      }
-
-      if (['summarize', 'expand', 'rephrase', 'grammar'].includes(action)) {
-        sendToAi(action, savedContextText, null);
-      } else {
-        sendToAi(action, savedContextText, `Please ${action} this text.`);
-      }
-    });
-  });
-
-  // --- Clear Chat ---
-  if (aiClearChatBtn) {
-    aiClearChatBtn.addEventListener('click', () => {
-      aiChatArea.innerHTML = `
+// --- Clear Chat ---
+if (aiClearChatBtn) {
+  aiClearChatBtn.addEventListener('click', () => {
+    aiChatArea.innerHTML = `
         <div class="ai-welcome-message">
           <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>
           <h5>AI Assistant</h5>
@@ -6692,366 +7524,366 @@ Brief description of the project.
           </div>
         </div>
       `;
-    });
-  }
+  });
+}
 
-  // ==============================================
-  // LLM MEMORY CONVERTER
-  // ==============================================
+// ==============================================
+// LLM MEMORY CONVERTER
+// ==============================================
 
-  const MEMORY_TEMPLATES = {
-    standard: {
-      name: "Standard Memory",
-      prefix: "<context>\n<memory_document>\n",
-      suffix: "\n</memory_document>\n</context>",
-      sectionWrap: (title, content) => `<section name="${title}">\n${content}\n</section>`,
-    },
-    system: {
-      name: "System Prompt Block",
-      prefix: "<user_context>\nThe following is structured memory about the user and their projects:\n\n",
-      suffix: "\n</user_context>",
-      sectionWrap: (title, content) => `## ${title}\n${content}\n`,
-    },
-    openai: {
-      name: "OpenAI Custom Instructions",
-      prefix: "# About Me & My Projects\n\n",
-      suffix: "",
-      sectionWrap: (title, content) => `## ${title}\n${content}\n`,
-    },
-    raw: {
-      name: "Raw Structured",
-      prefix: "---BEGIN CONTEXT---\n",
-      suffix: "\n---END CONTEXT---",
-      sectionWrap: (title, content) => `[${title.toUpperCase()}]\n${content}\n`,
-    },
-  };
+const MEMORY_TEMPLATES = {
+  standard: {
+    name: "Standard Memory",
+    prefix: "<context>\n<memory_document>\n",
+    suffix: "\n</memory_document>\n</context>",
+    sectionWrap: (title, content) => `<section name="${title}">\n${content}\n</section>`,
+  },
+  system: {
+    name: "System Prompt Block",
+    prefix: "<user_context>\nThe following is structured memory about the user and their projects:\n\n",
+    suffix: "\n</user_context>",
+    sectionWrap: (title, content) => `## ${title}\n${content}\n`,
+  },
+  openai: {
+    name: "OpenAI Custom Instructions",
+    prefix: "# About Me & My Projects\n\n",
+    suffix: "",
+    sectionWrap: (title, content) => `## ${title}\n${content}\n`,
+  },
+  raw: {
+    name: "Raw Structured",
+    prefix: "---BEGIN CONTEXT---\n",
+    suffix: "\n---END CONTEXT---",
+    sectionWrap: (title, content) => `[${title.toUpperCase()}]\n${content}\n`,
+  },
+};
 
-  function parseMarkdownToSections(md) {
-    const lines = md.split("\n");
-    const sections = [];
-    let currentSection = null;
-    let currentContent = [];
-    for (const line of lines) {
-      const h1 = line.match(/^#\s+(.+)/);
-      const h2 = line.match(/^##\s+(.+)/);
-      if (h1 || h2) {
-        if (currentSection) {
-          sections.push({ title: currentSection, content: currentContent.join("\n").trim() });
-        }
-        currentSection = (h1 || h2)[1];
-        currentContent = [];
-      } else {
-        currentContent.push(line);
+function parseMarkdownToSections(md) {
+  const lines = md.split("\n");
+  const sections = [];
+  let currentSection = null;
+  let currentContent = [];
+  for (const line of lines) {
+    const h1 = line.match(/^#\s+(.+)/);
+    const h2 = line.match(/^##\s+(.+)/);
+    if (h1 || h2) {
+      if (currentSection) {
+        sections.push({ title: currentSection, content: currentContent.join("\n").trim() });
       }
-    }
-    if (currentSection) {
-      sections.push({ title: currentSection, content: currentContent.join("\n").trim() });
-    }
-    return sections;
-  }
-
-  function generateMemoryOutput(md, templateKey, meta) {
-    const t = MEMORY_TEMPLATES[templateKey];
-    const sections = parseMarkdownToSections(md);
-    let output = t.prefix;
-
-    if (meta.title || meta.author || meta.tags) {
-      let metaBlock = "<metadata>\n";
-      if (meta.title) metaBlock += `  title: ${meta.title}\n`;
-      if (meta.author) metaBlock += `  author: ${meta.author}\n`;
-      if (meta.tags) metaBlock += `  tags: ${meta.tags}\n`;
-      metaBlock += `  generated: ${new Date().toISOString().split("T")[0]}\n`;
-      metaBlock += `  format: llm-memory-v1\n`;
-      metaBlock += "</metadata>\n\n";
-      output += metaBlock;
-    }
-
-    if (meta.summary) {
-      output += `<summary>\n${meta.summary}\n</summary>\n\n`;
-    }
-
-    for (const sec of sections) {
-      if (sec.content) {
-        output += t.sectionWrap(sec.title, sec.content) + "\n";
-      }
-    }
-
-    output += t.suffix;
-    return output.trim();
-  }
-
-  // --- Memory Modal UI ---
-  const memoryModal = document.getElementById('memory-modal');
-  const memoryCloseBtn = document.getElementById('memory-modal-close');
-  const memoryOutputPre = document.getElementById('memory-output-pre');
-  const memoryOutputLabel = document.getElementById('memory-output-label');
-  const memoryCopyOutputBtn = document.getElementById('memory-copy-output');
-  const memoryCopyBlockBtn = document.getElementById('memory-copy-block');
-  const memoryDownloadMd = document.getElementById('memory-download-md');
-  const memoryDownloadTxt = document.getElementById('memory-download-txt');
-  const memoryGenLink = document.getElementById('memory-gen-link');
-  const memoryShareResult = document.getElementById('memory-share-result');
-  const memoryToggleApi = document.getElementById('memory-toggle-api');
-  const memoryApiExample = document.getElementById('memory-api-example');
-
-  let memoryTemplate = 'standard';
-  let memoryModalOpen = false;
-
-  function getMemoryMeta() {
-    return {
-      title: document.getElementById('memory-meta-title').value.trim(),
-      author: document.getElementById('memory-meta-author').value.trim(),
-      tags: document.getElementById('memory-meta-tags').value.trim(),
-      summary: document.getElementById('memory-meta-summary').value.trim(),
-    };
-  }
-
-  function getCurrentMemoryOutput() {
-    return generateMemoryOutput(markdownEditor.value, memoryTemplate, getMemoryMeta());
-  }
-
-  function updateMemoryStats() {
-    const md = markdownEditor.value;
-    const output = getCurrentMemoryOutput();
-    const wordCount = md.split(/\s+/).filter(Boolean).length;
-    const tokenEstimate = Math.round(output.split(/\s+/).filter(Boolean).length * 1.3);
-    const sectionCount = parseMarkdownToSections(md).length;
-
-    document.getElementById('memory-word-count').textContent = wordCount + ' words';
-    document.getElementById('memory-token-count').textContent = '~' + tokenEstimate + ' tokens';
-    document.getElementById('memory-section-count').textContent = sectionCount + ' sections';
-
-    const sizeLabel = document.getElementById('memory-size-label');
-    if (tokenEstimate < 2000) {
-      sizeLabel.textContent = 'compact';
-      sizeLabel.className = 'memory-size-compact';
-    } else if (tokenEstimate < 8000) {
-      sizeLabel.textContent = 'medium';
-      sizeLabel.className = 'memory-size-medium';
+      currentSection = (h1 || h2)[1];
+      currentContent = [];
     } else {
-      sizeLabel.textContent = 'large';
-      sizeLabel.className = 'memory-size-large';
+      currentContent.push(line);
+    }
+  }
+  if (currentSection) {
+    sections.push({ title: currentSection, content: currentContent.join("\n").trim() });
+  }
+  return sections;
+}
+
+function generateMemoryOutput(md, templateKey, meta) {
+  const t = MEMORY_TEMPLATES[templateKey];
+  const sections = parseMarkdownToSections(md);
+  let output = t.prefix;
+
+  if (meta.title || meta.author || meta.tags) {
+    let metaBlock = "<metadata>\n";
+    if (meta.title) metaBlock += `  title: ${meta.title}\n`;
+    if (meta.author) metaBlock += `  author: ${meta.author}\n`;
+    if (meta.tags) metaBlock += `  tags: ${meta.tags}\n`;
+    metaBlock += `  generated: ${new Date().toISOString().split("T")[0]}\n`;
+    metaBlock += `  format: llm-memory-v1\n`;
+    metaBlock += "</metadata>\n\n";
+    output += metaBlock;
+  }
+
+  if (meta.summary) {
+    output += `<summary>\n${meta.summary}\n</summary>\n\n`;
+  }
+
+  for (const sec of sections) {
+    if (sec.content) {
+      output += t.sectionWrap(sec.title, sec.content) + "\n";
     }
   }
 
-  function refreshMemoryOutput() {
-    const output = getCurrentMemoryOutput();
-    memoryOutputPre.textContent = output;
-    memoryOutputLabel.textContent = 'Generated Memory · ' + MEMORY_TEMPLATES[memoryTemplate].name;
-    updateMemoryStats();
-  }
+  output += t.suffix;
+  return output.trim();
+}
 
-  function openMemoryModal() {
-    memoryModal.style.display = 'flex';
-    memoryModalOpen = true;
-    refreshMemoryOutput();
-  }
+// --- Memory Modal UI ---
+const memoryModal = document.getElementById('memory-modal');
+const memoryCloseBtn = document.getElementById('memory-modal-close');
+const memoryOutputPre = document.getElementById('memory-output-pre');
+const memoryOutputLabel = document.getElementById('memory-output-label');
+const memoryCopyOutputBtn = document.getElementById('memory-copy-output');
+const memoryCopyBlockBtn = document.getElementById('memory-copy-block');
+const memoryDownloadMd = document.getElementById('memory-download-md');
+const memoryDownloadTxt = document.getElementById('memory-download-txt');
+const memoryGenLink = document.getElementById('memory-gen-link');
+const memoryShareResult = document.getElementById('memory-share-result');
+const memoryToggleApi = document.getElementById('memory-toggle-api');
+const memoryApiExample = document.getElementById('memory-api-example');
 
-  function closeMemoryModal() {
-    memoryModal.style.display = 'none';
-    memoryModalOpen = false;
-  }
+let memoryTemplate = 'standard';
+let memoryModalOpen = false;
 
-  // Open from export dropdown
-  const exportLlmBtn = document.getElementById('export-llm-memory');
-  if (exportLlmBtn) {
-    exportLlmBtn.addEventListener('click', openMemoryModal);
-  }
-  const mobileExportLlm = document.getElementById('mobile-export-llm-memory');
-  if (mobileExportLlm) {
-    mobileExportLlm.addEventListener('click', () => {
-      // Close mobile menu
-      const mobilePanel = document.getElementById('mobile-menu-panel');
-      const mobileOverlay = document.getElementById('mobile-menu-overlay');
-      if (mobilePanel) mobilePanel.classList.remove('show');
-      if (mobileOverlay) mobileOverlay.classList.remove('show');
-      openMemoryModal();
-    });
-  }
+function getMemoryMeta() {
+  return {
+    title: document.getElementById('memory-meta-title').value.trim(),
+    author: document.getElementById('memory-meta-author').value.trim(),
+    tags: document.getElementById('memory-meta-tags').value.trim(),
+    summary: document.getElementById('memory-meta-summary').value.trim(),
+  };
+}
 
-  // Close
-  memoryCloseBtn.addEventListener('click', closeMemoryModal);
-  memoryModal.addEventListener('click', (e) => {
-    if (e.target === memoryModal) closeMemoryModal();
+function getCurrentMemoryOutput() {
+  return generateMemoryOutput(markdownEditor.value, memoryTemplate, getMemoryMeta());
+}
+
+function updateMemoryStats() {
+  const md = markdownEditor.value;
+  const output = getCurrentMemoryOutput();
+  const wordCount = md.split(/\s+/).filter(Boolean).length;
+  const tokenEstimate = Math.round(output.split(/\s+/).filter(Boolean).length * 1.3);
+  const sectionCount = parseMarkdownToSections(md).length;
+
+  document.getElementById('memory-word-count').textContent = wordCount + ' words';
+  document.getElementById('memory-token-count').textContent = '~' + tokenEstimate + ' tokens';
+  document.getElementById('memory-section-count').textContent = sectionCount + ' sections';
+
+  const sizeLabel = document.getElementById('memory-size-label');
+  if (tokenEstimate < 2000) {
+    sizeLabel.textContent = 'compact';
+    sizeLabel.className = 'memory-size-compact';
+  } else if (tokenEstimate < 8000) {
+    sizeLabel.textContent = 'medium';
+    sizeLabel.className = 'memory-size-medium';
+  } else {
+    sizeLabel.textContent = 'large';
+    sizeLabel.className = 'memory-size-large';
+  }
+}
+
+function refreshMemoryOutput() {
+  const output = getCurrentMemoryOutput();
+  memoryOutputPre.textContent = output;
+  memoryOutputLabel.textContent = 'Generated Memory · ' + MEMORY_TEMPLATES[memoryTemplate].name;
+  updateMemoryStats();
+}
+
+function openMemoryModal() {
+  memoryModal.style.display = 'flex';
+  memoryModalOpen = true;
+  refreshMemoryOutput();
+}
+
+function closeMemoryModal() {
+  memoryModal.style.display = 'none';
+  memoryModalOpen = false;
+}
+
+// Open from export dropdown
+const exportLlmBtn = document.getElementById('export-llm-memory');
+if (exportLlmBtn) {
+  exportLlmBtn.addEventListener('click', openMemoryModal);
+}
+const mobileExportLlm = document.getElementById('mobile-export-llm-memory');
+if (mobileExportLlm) {
+  mobileExportLlm.addEventListener('click', () => {
+    // Close mobile menu
+    const mobilePanel = document.getElementById('mobile-menu-panel');
+    const mobileOverlay = document.getElementById('mobile-menu-overlay');
+    if (mobilePanel) mobilePanel.classList.remove('show');
+    if (mobileOverlay) mobileOverlay.classList.remove('show');
+    openMemoryModal();
   });
+}
 
-  // Tabs
-  document.querySelectorAll('.memory-tab').forEach(tab => {
-    tab.addEventListener('click', function () {
-      document.querySelectorAll('.memory-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.memory-tab-content').forEach(c => c.classList.remove('active'));
-      this.classList.add('active');
-      const tabId = 'memory-tab-' + this.dataset.tab;
-      document.getElementById(tabId).classList.add('active');
+// Close
+memoryCloseBtn.addEventListener('click', closeMemoryModal);
+memoryModal.addEventListener('click', (e) => {
+  if (e.target === memoryModal) closeMemoryModal();
+});
 
-      if (this.dataset.tab === 'output' || this.dataset.tab === 'share') {
-        refreshMemoryOutput();
-      }
-    });
-  });
+// Tabs
+document.querySelectorAll('.memory-tab').forEach(tab => {
+  tab.addEventListener('click', function () {
+    document.querySelectorAll('.memory-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.memory-tab-content').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    const tabId = 'memory-tab-' + this.dataset.tab;
+    document.getElementById(tabId).classList.add('active');
 
-  // Template selection
-  document.querySelectorAll('.memory-template-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('.memory-template-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      memoryTemplate = this.dataset.template;
+    if (this.dataset.tab === 'output' || this.dataset.tab === 'share') {
       refreshMemoryOutput();
-    });
-  });
-
-  // Metadata fields → live refresh
-  ['memory-meta-title', 'memory-meta-author', 'memory-meta-tags', 'memory-meta-summary'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', refreshMemoryOutput);
-  });
-
-  // Copy helpers
-  function memoryCopyText(text, btn) {
-    navigator.clipboard.writeText(text).then(() => {
-      const origHtml = btn.innerHTML;
-      btn.classList.add('copied');
-      btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
-      setTimeout(() => {
-        btn.classList.remove('copied');
-        btn.innerHTML = origHtml;
-      }, 2000);
-    }).catch(() => { });
-  }
-
-  memoryCopyOutputBtn.addEventListener('click', () => {
-    memoryCopyText(getCurrentMemoryOutput(), memoryCopyOutputBtn);
-  });
-
-  memoryCopyBlockBtn.addEventListener('click', () => {
-    memoryCopyText(getCurrentMemoryOutput(), memoryCopyBlockBtn);
-  });
-
-  // Download
-  function memoryDownload(ext) {
-    const output = getCurrentMemoryOutput();
-    const meta = getMemoryMeta();
-    const blob = new Blob([output], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `memory-${meta.title || "context"}-${Date.now()}.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  memoryDownloadMd.addEventListener('click', () => memoryDownload('md'));
-  memoryDownloadTxt.addEventListener('click', () => memoryDownload('txt'));
-
-  // Generate shareable link (uses existing Firebase + encryption infra)
-  memoryGenLink.addEventListener('click', async () => {
-    const output = getCurrentMemoryOutput();
-    if (!output.trim()) {
-      memoryShareResult.style.display = 'block';
-      memoryShareResult.className = 'error';
-      memoryShareResult.innerHTML = 'Nothing to share — editor is empty.';
-      return;
     }
+  });
+});
 
-    // Show loading state
-    memoryGenLink.disabled = true;
-    memoryGenLink.textContent = 'Generating...';
+// Template selection
+document.querySelectorAll('.memory-template-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.memory-template-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    memoryTemplate = this.dataset.template;
+    refreshMemoryOutput();
+  });
+});
 
+// Metadata fields → live refresh
+['memory-meta-title', 'memory-meta-author', 'memory-meta-tags', 'memory-meta-summary'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', refreshMemoryOutput);
+});
+
+// Copy helpers
+function memoryCopyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const origHtml = btn.innerHTML;
+    btn.classList.add('copied');
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = origHtml;
+    }, 2000);
+  }).catch(() => { });
+}
+
+memoryCopyOutputBtn.addEventListener('click', () => {
+  memoryCopyText(getCurrentMemoryOutput(), memoryCopyOutputBtn);
+});
+
+memoryCopyBlockBtn.addEventListener('click', () => {
+  memoryCopyText(getCurrentMemoryOutput(), memoryCopyBlockBtn);
+});
+
+// Download
+function memoryDownload(ext) {
+  const output = getCurrentMemoryOutput();
+  const meta = getMemoryMeta();
+  const blob = new Blob([output], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `memory-${meta.title || "context"}-${Date.now()}.${ext}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+memoryDownloadMd.addEventListener('click', () => memoryDownload('md'));
+memoryDownloadTxt.addEventListener('click', () => memoryDownload('txt'));
+
+// Generate shareable link (uses existing Firebase + encryption infra)
+memoryGenLink.addEventListener('click', async () => {
+  const output = getCurrentMemoryOutput();
+  if (!output.trim()) {
+    memoryShareResult.style.display = 'block';
+    memoryShareResult.className = 'error';
+    memoryShareResult.innerHTML = 'Nothing to share — editor is empty.';
+    return;
+  }
+
+  // Show loading state
+  memoryGenLink.disabled = true;
+  memoryGenLink.textContent = 'Generating...';
+
+  try {
+    // Compress → Encrypt → Upload to Firebase (same flow as main share)
+    const compressed = compressData(output);
+    const key = await generateEncryptionKey();
+    const encrypted = await encryptData(key, compressed);
+    const dataString = uint8ArrayToBase64Url(encrypted);
+    const keyString = await keyToBase64Url(key);
+
+    let shareUrl;
     try {
-      // Compress → Encrypt → Upload to Firebase (same flow as main share)
-      const compressed = compressData(output);
-      const key = await generateEncryptionKey();
-      const encrypted = await encryptData(key, compressed);
-      const dataString = uint8ArrayToBase64Url(encrypted);
-      const keyString = await keyToBase64Url(key);
-
-      let shareUrl;
-      try {
-        const docRef = await db.collection('shares').add({
-          d: dataString,
-          t: Date.now()
-        });
-        shareUrl = `${SHARE_BASE_URL}#id=${docRef.id}&k=${keyString}`;
-      } catch (fbError) {
-        console.warn('Firebase unavailable, using URL fallback:', fbError);
-        shareUrl = `${SHARE_BASE_URL}#d=${dataString}&k=${keyString}`;
-        if (shareUrl.length > 65000) {
-          throw new Error('Content too large to share via URL. Use download or copy.');
-        }
-      }
-
-      memoryShareResult.style.display = 'flex';
-      memoryShareResult.className = 'success';
-      memoryShareResult.innerHTML = `<input readonly value="${shareUrl}"><button class="memory-action-btn" id="memory-copy-link"><i class="bi bi-clipboard"></i> Copy</button>`;
-      document.getElementById('memory-copy-link').addEventListener('click', function () {
-        memoryCopyText(shareUrl, this);
+      const docRef = await db.collection('shares').add({
+        d: dataString,
+        t: Date.now()
       });
-    } catch (err) {
-      memoryShareResult.style.display = 'block';
-      memoryShareResult.className = 'error';
-      memoryShareResult.innerHTML = 'Failed to generate link: ' + err.message;
-    } finally {
-      memoryGenLink.disabled = false;
-      memoryGenLink.textContent = 'Generate Link';
+      shareUrl = `${SHARE_BASE_URL}#id=${docRef.id}&k=${keyString}`;
+    } catch (fbError) {
+      console.warn('Firebase unavailable, using URL fallback:', fbError);
+      shareUrl = `${SHARE_BASE_URL}#d=${dataString}&k=${keyString}`;
+      if (shareUrl.length > 65000) {
+        throw new Error('Content too large to share via URL. Use download or copy.');
+      }
     }
-  });
 
-  // API example toggle
-  memoryToggleApi.addEventListener('click', () => {
-    const showing = memoryApiExample.style.display !== 'none';
-    memoryApiExample.style.display = showing ? 'none' : 'block';
-    memoryToggleApi.textContent = showing ? 'Show Code' : 'Hide Code';
-  });
+    memoryShareResult.style.display = 'flex';
+    memoryShareResult.className = 'success';
+    memoryShareResult.innerHTML = `<input readonly value="${shareUrl}"><button class="memory-action-btn" id="memory-copy-link"><i class="bi bi-clipboard"></i> Copy</button>`;
+    document.getElementById('memory-copy-link').addEventListener('click', function () {
+      memoryCopyText(shareUrl, this);
+    });
+  } catch (err) {
+    memoryShareResult.style.display = 'block';
+    memoryShareResult.className = 'error';
+    memoryShareResult.innerHTML = 'Failed to generate link: ' + err.message;
+  } finally {
+    memoryGenLink.disabled = false;
+    memoryGenLink.textContent = 'Generate Link';
+  }
+});
 
-  // --- Unified Escape Key Handler (priority-based, topmost overlay wins) ---
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
+// API example toggle
+memoryToggleApi.addEventListener('click', () => {
+  const showing = memoryApiExample.style.display !== 'none';
+  memoryApiExample.style.display = showing ? 'none' : 'block';
+  memoryToggleApi.textContent = showing ? 'Show Code' : 'Hide Code';
+});
 
-    // Priority 0: Memory modal
-    if (memoryModalOpen) {
-      closeMemoryModal();
-      return;
-    }
-    // Priority 0b: API key modal
-    if (aiApikeyModal && aiApikeyModal.style.display === 'flex') {
-      hideApiKeyModal();
-      return;
-    }
-    // Priority 1: AI consent modal (topmost dialog)
-    if (aiConsentModal.style.display === 'flex') {
-      hideAiConsentDialog();
-      return;
-    }
-    // Priority 2: Mermaid zoom modal
-    if (mermaidZoomModal.classList.contains('active')) {
-      closeMermaidModal();
-      return;
-    }
-    // Priority 3: Presentation mode
-    if (slideContainer.style.display !== 'none') {
-      exitPresentation();
-      return;
-    }
-    // Priority 4: Share result modal
-    if (shareResultModal.classList.contains('active')) {
-      closeShareResultModal();
-      return;
-    }
-    // Priority 5: AI panel
-    if (aiPanelOpen) {
-      closeAiPanel();
-      return;
-    }
-    // Priority 6: Find/Replace bar
-    if (findReplaceBar.style.display === 'block') {
-      closeFindBar();
-      return;
-    }
-    // Priority 7: Zen mode
-    if (isZenMode) {
-      toggleZenMode();
-      return;
-    }
-  });
+// --- Unified Escape Key Handler (priority-based, topmost overlay wins) ---
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+
+  // Priority 0: Memory modal
+  if (memoryModalOpen) {
+    closeMemoryModal();
+    return;
+  }
+  // Priority 0b: API key modal
+  if (aiApikeyModal && aiApikeyModal.style.display === 'flex') {
+    hideApiKeyModal();
+    return;
+  }
+  // Priority 1: AI consent modal (topmost dialog)
+  if (aiConsentModal.style.display === 'flex') {
+    hideAiConsentDialog();
+    return;
+  }
+  // Priority 2: Mermaid zoom modal
+  if (mermaidZoomModal.classList.contains('active')) {
+    closeMermaidModal();
+    return;
+  }
+  // Priority 3: Presentation mode
+  if (slideContainer.style.display !== 'none') {
+    exitPresentation();
+    return;
+  }
+  // Priority 4: Share result modal
+  if (shareResultModal.classList.contains('active')) {
+    closeShareResultModal();
+    return;
+  }
+  // Priority 5: AI panel
+  if (aiPanelOpen) {
+    closeAiPanel();
+    return;
+  }
+  // Priority 6: Find/Replace bar
+  if (findReplaceBar.style.display === 'block') {
+    closeFindBar();
+    return;
+  }
+  // Priority 7: Zen mode
+  if (isZenMode) {
+    toggleZenMode();
+    return;
+  }
+});
 
 });
