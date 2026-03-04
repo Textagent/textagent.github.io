@@ -10,21 +10,24 @@
       category: 'documentation',
       icon: 'bi-stars',
       description: 'Explore every MDview feature: AI, diagrams, math, code, presentations, and more',
-      content: '# Welcome to MDview\n\n' +
-        '> Your all-in-one Markdown editor with live preview, AI assistance, and powerful export options.\n\n' +
+      content: '# 🚀 Welcome to MDview\n\n' +
+        '> Your all-in-one Markdown editor with live preview, AI assistance, executable code, and powerful export options — **100% client-side, zero tracking.**\n\n' +
         '---\n\n' +
         '## ✨ All Features at a Glance\n\n' +
         '| Category | Features |\n' +
         '|:---------|:---------|\n' +
-        '| **Editing** | Live Preview, Sync Scrolling, Find & Replace, Zen Mode, Dark Mode |\n' +
-        '| **Rendering** | GitHub Styling, Syntax Highlighting, LaTeX Math, Mermaid Diagrams, Emoji |\n' +
-        '| **AI** | Built-in AI Assistant (Local Qwen + Cloud: Gemini, Groq, OpenRouter) |\n' +
-        '| **Import** | MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF |\n' +
-        '| **Export** | Markdown, HTML, PDF, LLM Memory Format |\n' +
-        '| **Extras** | Presentation Mode (PPT), Cloud Save, Executable Bash, Templates |\n\n' +
+        '| **Editing** | Live Preview · Sync Scrolling · Find & Replace (Regex) · Zen Mode · Word Wrap Toggle |\n' +
+        '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math · Mermaid Diagrams · Emoji |\n' +
+        '| **AI** | Built-in AI Assistant — Local Qwen 3.5 + Cloud: Gemini, Groq, OpenRouter |\n' +
+        '| **Voice** | 🎤 Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
+        '| **Code** | ▶ Executable Bash blocks (just-bash) · ▶ Executable Math blocks (math.js) |\n' +
+        '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
+        '| **Export** | Markdown · HTML · PDF · LLM Memory Format |\n' +
+        '| **Sharing** | ☁️ End-to-end encrypted cloud sharing via Firebase |\n' +
+        '| **Extras** | Presentation Mode (PPT) · Preview Themes · Dark Mode · Templates (19+) |\n\n' +
         '---\n\n' +
         '## 💻 Code with Syntax Highlighting\n\n' +
-        'Supports 180+ languages via highlight.js:\n\n' +
+        'Supports **180+ languages** via highlight.js. Every code block gets a copy button:\n\n' +
         '```javascript\n' +
         '// JavaScript — Live preview rendering\n' +
         'function renderMarkdown() {\n' +
@@ -40,14 +43,57 @@
         'summary = df.describe()\n' +
         'print(summary.to_markdown())\n' +
         '```\n\n' +
+        '```sql\n' +
+        '-- SQL — Query example\n' +
+        'SELECT users.name, COUNT(orders.id) AS total_orders\n' +
+        'FROM users\n' +
+        'LEFT JOIN orders ON users.id = orders.user_id\n' +
+        'GROUP BY users.name\n' +
+        'ORDER BY total_orders DESC;\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🖥️ Executable Bash Blocks\n\n' +
+        'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
+        'Hover over any bash code block and click **▶ Run**:\n\n' +
+        '```bash\n' +
+        'echo "Hello from MDview! 🎉"\n' +
+        '```\n\n' +
+        '```bash\n' +
+        'echo "Today is $(date +%A), $(date +%B\\ %d,\\ %Y)"\n' +
+        '```\n\n' +
+        '```bash\n' +
+        'for i in 1 2 3 4 5; do echo "Count: $i"; done\n' +
+        '```\n\n' +
+        '---\n\n' +
+        '## 🔢 Executable Math Blocks\n\n' +
+        'Evaluate math expressions **right in the preview** — powered by [math.js](https://mathjs.org/).\n' +
+        'Hover over a `math` block and click **▶ Evaluate**:\n\n' +
+        '```math\n' +
+        '2 + 3 * 4\n' +
+        'sqrt(144)\n' +
+        'sin(pi / 2)\n' +
+        'log(1000, 10)\n' +
+        '```\n\n' +
+        '```math\n' +
+        '// Unit conversions\n' +
+        '5 inch to cm\n' +
+        '100 fahrenheit to celsius\n' +
+        '```\n\n' +
+        '```math\n' +
+        '// Matrix operations\n' +
+        'det([1, 2; 3, 4])\n' +
+        'inv([1, 2; 3, 4])\n' +
+        '```\n\n' +
         '---\n\n' +
         '## 🧮 LaTeX Math Expressions\n\n' +
         'Inline math: $$E = mc^2$$ and $$\\nabla \\times \\vec{E} = -\\frac{\\partial \\vec{B}}{\\partial t}$$\n\n' +
         'Display equations:\n\n' +
         '$$\\frac{\\partial f}{\\partial x} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}$$\n\n' +
         '$$\\sum_{i=1}^{n} i^2 = \\frac{n(n+1)(2n+1)}{6}$$\n\n' +
+        '$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$\n\n' +
         '---\n\n' +
         '## 📊 Mermaid Diagrams\n\n' +
+        'Interactive diagrams with zoom, pan, and fullscreen — click any diagram!\n\n' +
         '### Flowchart\n' +
         '```mermaid\n' +
         'flowchart LR\n' +
@@ -79,21 +125,39 @@
         '```\n\n' +
         '---\n\n' +
         '## 🤖 AI Assistant\n\n' +
-        'The built-in AI panel supports **multiple models**:\n\n' +
+        'Open the AI panel and chat with **multiple models** — local or cloud:\n\n' +
         '| Model | Type | Speed |\n' +
         '|:------|:-----|:------|\n' +
-        '| **Qwen 3.5** | Local (runs in browser) | ⚡ Fast |\n' +
-        '| **Gemini 2.0 Flash** | Cloud (free tier) | 🚀 Very Fast |\n' +
-        '| **Llama 3.3 70B** | Cloud via OpenRouter | 🧠 Powerful |\n' +
-        '| **Llama via Groq** | Cloud via Groq | ⚡ Ultra Fast |\n\n' +
-        '**AI Features:**\n' +
-        '- 📝 Summarize your document\n' +
+        '| **Qwen 3.5** | 🏠 Local (runs in browser) | ⚡ Fast |\n' +
+        '| **Gemini 2.0 Flash** | ☁️ Cloud (free tier) | 🚀 Very Fast |\n' +
+        '| **Llama 3.3 70B** | ☁️ Cloud via OpenRouter | 🧠 Powerful |\n' +
+        '| **Llama via Groq** | ☁️ Cloud via Groq | ⚡ Ultra Fast |\n\n' +
+        '**AI Capabilities:**\n' +
+        '- 📝 Summarize documents (agent-style chunked processing)\n' +
         '- ✍️ Improve writing style and grammar\n' +
         '- 🌐 Translate to any language\n' +
-        '- 💬 Chat about your content\n' +
-        '- 🧠 Thinking mode for detailed analysis\n\n' +
+        '- 💬 Chat about your content with full context\n' +
+        '- 🧠 Thinking mode for detailed step-by-step analysis\n' +
+        '- 📋 Insert AI responses directly into the editor\n\n' +
         '> [!TIP]\n' +
-        '> Click the **AI** button in the toolbar to open the assistant panel.\n\n' +
+        '> Click the **🤖 AI** button in the toolbar to open the assistant panel. API keys are encrypted in localStorage.\n\n' +
+        '---\n\n' +
+        '## 🎤 Voice Dictation (Speech-to-Text)\n\n' +
+        'Dictate your markdown hands-free with **voice commands**:\n\n' +
+        '| Say this | Gets inserted |\n' +
+        '|:---------|:--------------|\n' +
+        '| "new line" | Line break |\n' +
+        '| "new paragraph" | Double line break |\n' +
+        '| "hash" / "hash hash" | `#` / `##` headings |\n' +
+        '| "bold \\<text\\>" | `**text**` |\n' +
+        '| "italic \\<text\\>" | `*text*` |\n' +
+        '| "bullet" | `- ` list item |\n' +
+        '| "checkbox" | `- [ ] ` task item |\n' +
+        '| "code" | Inline `` ` `` backtick |\n' +
+        '| "link \\<url\\>" | `[url](url)` |\n\n' +
+        'Supports **multiple languages** — switch via the language picker in the mic menu.\n\n' +
+        '> [!TIP]\n' +
+        '> Click the **🎤 Microphone** button in the toolbar. Say "help" to see the voice commands cheat sheet.\n\n' +
         '---\n\n' +
         '## 🧠 LLM Memory Export\n\n' +
         'Convert your markdown into **shareable LLM memory format** for use with AI tools:\n\n' +
@@ -108,27 +172,23 @@
         '## 🎯 Presentation Mode (PPT)\n\n' +
         'Turn your markdown into a **slideshow presentation**!\n\n' +
         '- Each `---` horizontal rule creates a new slide\n' +
-        '- Navigate with arrow keys or on-screen controls\n' +
+        '- Navigate with ← → arrow keys or on-screen controls\n' +
         '- Full-screen presentation with clean styling\n' +
         '- Perfect for meetings, demos, and teaching\n\n' +
         '> [!TIP]\n' +
-        '> Click the **Presentation** icon in the toolbar to start your slideshow.\n\n' +
+        '> Click the **📊 Presentation** icon in the toolbar to start your slideshow.\n\n' +
         '---\n\n' +
-        '## 🖥️ Executable Bash Blocks (just-bash)\n\n' +
-        'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
-        'Hover over any bash code block and click **▶ Run**:\n\n' +
-        '```bash\n' +
-        'echo "Hello from MDview! 🎉"\n' +
-        '```\n\n' +
-        '```bash\n' +
-        'echo "Current date: $(date +%Y-%m-%d)"\n' +
-        '```\n\n' +
-        '```bash\n' +
-        'seq 1 5 | sort -r | tr \'\\n\' \' \'\n' +
-        '```\n\n' +
+        '## ☁️ Cloud Save & Encrypted Sharing\n\n' +
+        '**Auto-save** to localStorage every second. **Cloud sync** to Firebase with end-to-end AES-256-GCM encryption:\n\n' +
+        '1. Click **Share** → generates an encrypted link\n' +
+        '2. Content is compressed (pako gzip) and encrypted client-side\n' +
+        '3. Only the link holder with the key can decrypt\n' +
+        '4. No one (not even the server) can read your content\n\n' +
+        '> [!NOTE]\n' +
+        '> Your encryption key is in the URL hash (`#k=...`) and is **never** sent to the server.\n\n' +
         '---\n\n' +
         '## 📁 Smart File Import\n\n' +
-        'Drag & drop or click to import from **8 formats**:\n\n' +
+        'Drag & drop or click **Import** to convert from **8 formats**:\n\n' +
         '| Format | Description |\n' +
         '|:-------|:------------|\n' +
         '| `.md` | Markdown files |\n' +
@@ -140,47 +200,74 @@
         '| `.xml` | XML documents |\n' +
         '| `.pdf` | PDF text extraction |\n\n' +
         '---\n\n' +
-        '## 📋 Task Lists & Checklists\n\n' +
-        '- [x] Live preview with GitHub styling\n' +
-        '- [x] Syntax highlighting for 180+ languages\n' +
-        '- [x] LaTeX math rendering\n' +
-        '- [x] Mermaid diagram support\n' +
-        '- [x] AI Assistant (local + cloud)\n' +
-        '- [x] LLM Memory export\n' +
-        '- [x] Presentation mode\n' +
-        '- [x] Executable bash blocks\n' +
-        '- [x] Multi-format file import\n' +
-        '- [x] Dark mode & Zen mode\n' +
-        '- [x] Cloud save to GitHub Gist\n' +
-        '- [x] Find & Replace with regex\n' +
-        '- [x] Word Count\n' +
-        '- [x] Templates\n' +
-        '- [ ] Your feature suggestion here!\n\n' +
+        '## 😀 Emoji Support\n\n' +
+        'Use GitHub-style emoji shortcodes:\n\n' +
+        ':rocket: :star: :heart: :fire: :tada: :sparkles: :zap: :bulb: :memo: :pushpin:\n\n' +
+        'Or just paste Unicode emoji directly: 🎉 🚀 ⭐ 🔥 💡 ✅ 🎯 🧠\n\n' +
         '---\n\n' +
         '## 📝 Text Formatting\n\n' +
         '**Bold**, *italic*, ***bold italic***, ~~strikethrough~~\n\n' +
         '<mark>Highlighted text</mark> and <u>underlined text</u>\n\n' +
         'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub> · Math: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
-        'Keyboard shortcuts: <kbd>Ctrl</kbd>+<kbd>B</kbd> bold, <kbd>Ctrl</kbd>+<kbd>I</kbd> italic\n\n' +
+        '### Tables\n\n' +
+        '| Feature | Shortcut | Description |\n' +
+        '|:--------|:---------|:------------|\n' +
+        '| Bold | <kbd>Ctrl</kbd>+<kbd>B</kbd> | **Bold text** |\n' +
+        '| Italic | <kbd>Ctrl</kbd>+<kbd>I</kbd> | *Italic text* |\n' +
+        '| Save | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Export as .md |\n' +
+        '| Find | <kbd>Ctrl</kbd>+<kbd>F</kbd> | Find & Replace |\n' +
+        '| Zen Mode | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Distraction-free |\n' +
+        '| Sync Scroll | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Toggle sync |\n\n' +
         '### Blockquotes\n\n' +
         '> "The best way to predict the future is to invent it." — Alan Kay\n\n' +
         '### GitHub-style Alerts\n\n' +
         '> [!NOTE]\n' +
         '> Useful background information the reader should know.\n\n' +
+        '> [!TIP]\n' +
+        '> Helpful advice for doing things more efficiently.\n\n' +
+        '> [!IMPORTANT]\n' +
+        '> Key information users need to know.\n\n' +
         '> [!WARNING]\n' +
         '> Critical information for avoiding problems.\n\n' +
+        '> [!CAUTION]\n' +
+        '> Negative potential consequences of an action.\n\n' +
         '---\n\n' +
-        '## 🌙 Additional Features\n\n' +
-        '- **Dark Mode** — Toggle with the moon icon in the toolbar\n' +
+        '## 📋 Task Lists & Checklists\n\n' +
+        '- [x] Live preview with GitHub styling\n' +
+        '- [x] Syntax highlighting for 180+ languages\n' +
+        '- [x] LaTeX math rendering (KaTeX)\n' +
+        '- [x] Mermaid diagrams with zoom/pan\n' +
+        '- [x] AI Assistant — 4 models (local + cloud)\n' +
+        '- [x] Voice dictation with markdown commands\n' +
+        '- [x] Executable bash & math blocks\n' +
+        '- [x] LLM Memory export (4 formats)\n' +
+        '- [x] Presentation mode (slideshow)\n' +
+        '- [x] Encrypted cloud sharing (Firebase)\n' +
+        '- [x] Multi-format file import (8 types)\n' +
+        '- [x] Dark mode & Zen mode\n' +
+        '- [x] Find & Replace with regex\n' +
+        '- [x] Word count & reading time\n' +
+        '- [x] Preview themes\n' +
+        '- [x] Word wrap toggle\n' +
+        '- [x] Emoji shortcodes\n' +
+        '- [x] PDF export\n' +
+        '- [x] 19+ templates\n' +
+        '- [ ] Your feature suggestion here!\n\n' +
+        '---\n\n' +
+        '## 🌙 Editor Customization\n\n' +
+        '- **Dark Mode** — Toggle with the 🌙 moon icon\n' +
         '- **Zen Mode** — Distraction-free writing (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>)\n' +
+        '- **Preview Themes** — Switch between GitHub, classic, and other preview styles\n' +
+        '- **Word Wrap** — Toggle editor line wrapping\n' +
         '- **Sync Scrolling** — Editor and preview scroll together\n' +
-        '- **Cloud Save** — Save to GitHub Gist with one click\n' +
-        '- **Find & Replace** — Regex-powered search (<kbd>Ctrl</kbd>+<kbd>H</kbd>)\n' +
-        '- **Word Count** — Live word, character, and reading time stats\n' +
-        '- **Templates** — Start from 19 pre-built templates\n\n' +
+        '- **Split / Editor / Preview** — Choose your view mode\n\n' +
         '---\n\n' +
         '## 🛡️ Security & Privacy\n\n' +
-        'This is a **fully client-side** application. Your content never leaves your browser and stays secure on your device. No server, no tracking, no data collection.\n'
+        '- **100% Client-Side** — No server processing, no data collection\n' +
+        '- **AES-256-GCM Encryption** — Shared links are end-to-end encrypted\n' +
+        '- **Encrypted API Keys** — AI provider keys are encrypted in localStorage\n' +
+        '- **No Tracking** — Zero analytics, zero cookies, zero telemetry\n' +
+        '- **Open Source** — Fully transparent, inspect every line of code\n'
     },
     {
       name: 'README',
@@ -2107,5 +2194,6 @@ norm(u)
   // Expose for other modules
   M.openTemplateModal = openTemplateModal;
   M.closeTemplateModal = closeTemplateModal;
+  M.getDefaultContent = function () { return MARKDOWN_TEMPLATES[0].content; };
 
 })(window.MDView);

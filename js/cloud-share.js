@@ -286,8 +286,16 @@
         newDocBtn.addEventListener('click', function () { window.open(window.location.pathname, '_blank'); });
     }
 
-    // --- Restore Auto-Saved Content ---
+    // --- Restore Auto-Saved Content or Load Default ---
     var wasRestored = restoreFromLocalStorage();
-    if (wasRestored) M.renderMarkdown();
+    if (wasRestored) {
+        M.renderMarkdown();
+    } else if (!window.location.hash || (!window.location.hash.includes('d=') && !window.location.hash.includes('id='))) {
+        // No autosave and no share link — load Feature Showcase as default
+        if (M.getDefaultContent) {
+            M.markdownEditor.value = M.getDefaultContent();
+            M.renderMarkdown();
+        }
+    }
 
 })(window.MDView);
