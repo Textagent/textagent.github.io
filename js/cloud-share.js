@@ -133,6 +133,7 @@
 
     async function cloudAutoSave() {
         if (!cloudSaveDirty) return;
+        if (M.isViewingSharedDoc) return;
         var content = M.markdownEditor.value;
         if (!content.trim() || content === lastCloudContent) { cloudSaveDirty = false; return; }
         if (M.markdownEditor.readOnly) return;
@@ -231,6 +232,7 @@
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
             M.setViewMode('preview');
+            M.isViewingSharedDoc = true;
             showSharedBanner();
         } catch (error) {
             console.error('Failed to load shared markdown:', error);
@@ -255,11 +257,18 @@
     }
     document.getElementById('shared-banner-edit').addEventListener('click', function () {
         hideSharedBanner();
+        // Clear shared state so edits create a NEW document, not overwrite the original
+        M.isViewingSharedDoc = false;
+        localStorage.removeItem(CLOUD_DOC_KEY);
+        localStorage.removeItem(CLOUD_KEY_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
         M.setViewMode('split');
     });
     document.getElementById('shared-banner-close').addEventListener('click', function () {
         hideSharedBanner();
+        M.isViewingSharedDoc = false;
+        localStorage.removeItem(CLOUD_DOC_KEY);
+        localStorage.removeItem(CLOUD_KEY_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
     });
 
