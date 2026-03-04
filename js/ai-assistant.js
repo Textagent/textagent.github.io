@@ -7,6 +7,7 @@
   // --- Local aliases for shared MDView globals ---
   const markdownEditor = M.markdownEditor;
   const closeMobileMenu = M.closeMobileMenu || function () { };
+  const previewPane = M.previewPane;
 
   // ========================================
   // AI ASSISTANT — Multi-model: Qwen 3.5 (local) + Groq Llama 3.3 70B (cloud)
@@ -1423,33 +1424,45 @@
 
   // Hide context menu on click elsewhere
   document.addEventListener('mousedown', (e) => {
-    if (!aiContextMenu.contains(e.target)) {
+    if (aiContextMenu && aiContextMenu.style.display !== 'none' && !aiContextMenu.contains(e.target)) {
       aiContextMenu.style.display = 'none';
     }
   });
 
-  // Context menu actions — uses savedContextText from either pane
-  aiContextMenu.querySelectorAll('.ai-ctx-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
+  // Context menu actions — attach directly to each button
+  function handleContextAction(action) {
+    clearTimeout(contextMenuTimeout);
+    aiContextMenu.style.display = 'none';
+
+    if (!savedContextText) return;
+
+    // Open panel if needed
+    if (!aiPanelOpen) {
+      aiPanel.style.display = 'flex';
+      aiPanelOverlay.classList.add('active');
+      void aiPanel.offsetWidth;
+      aiPanel.classList.add('ai-panel-open');
+      aiToggleBtn.classList.add('ai-active');
+      aiPanelOpen = true;
+      document.body.classList.add('ai-panel-active');
+    }
+
+    if (['summarize', 'expand', 'rephrase', 'grammar', 'explain', 'simplify', 'polish', 'formalize', 'elaborate', 'shorten'].includes(action)) {
+      sendToAi(action, savedContextText, null);
+    } else {
+      sendToAi(action, savedContextText, `Please ${action} this text.`);
+    }
+  }
+
+  const ctxBtns = aiContextMenu.querySelectorAll('.ai-ctx-btn');
+  ctxBtns.forEach(btn => {
+    btn.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
       const action = this.dataset.action;
-      aiContextMenu.style.display = 'none';
-
-      if (!savedContextText) return;
-
-      // Open panel if needed
-      if (!aiPanelOpen) {
-        aiPanel.style.display = 'flex';
-        aiPanelOverlay.classList.add('active');
-        void aiPanel.offsetWidth;
-        aiPanel.classList.add('ai-panel-open');
-        aiToggleBtn.classList.add('ai-active');
-        aiPanelOpen = true;
-      }
-
-      if (['summarize', 'expand', 'rephrase', 'grammar'].includes(action)) {
-        sendToAi(action, savedContextText, null);
-      } else {
-        sendToAi(action, savedContextText, `Please ${action} this text.`);
+      if (action) {
+        // Use setTimeout(0) to let event finish before triggering AI
+        setTimeout(() => handleContextAction(action), 0);
       }
     });
   });

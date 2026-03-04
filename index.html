@@ -948,12 +948,20 @@
 
     <!-- AI Editor Context Menu -->
     <div id="ai-context-menu" class="ai-context-menu" style="display:none">
-        <button class="ai-ctx-btn" data-action="summarize"><i class="bi bi-card-text"></i> Summarize</button>
-        <button class="ai-ctx-btn" data-action="explain"><i class="bi bi-lightbulb"></i> Explain</button>
-        <button class="ai-ctx-btn" data-action="simplify"><i class="bi bi-funnel"></i> Simplify</button>
-        <button class="ai-ctx-btn" data-action="rephrase"><i class="bi bi-arrow-repeat"></i> Rephrase</button>
-        <button class="ai-ctx-btn" data-action="grammar"><i class="bi bi-spellcheck"></i> Fix Grammar</button>
-        <button class="ai-ctx-btn" data-action="expand"><i class="bi bi-arrows-angle-expand"></i> Expand</button>
+        <div class="ai-ctx-col">
+            <button class="ai-ctx-btn" data-action="summarize"><i class="bi bi-card-text"></i> Summarize</button>
+            <button class="ai-ctx-btn" data-action="explain"><i class="bi bi-lightbulb"></i> Explain</button>
+            <button class="ai-ctx-btn" data-action="simplify"><i class="bi bi-funnel"></i> Simplify</button>
+            <button class="ai-ctx-btn" data-action="rephrase"><i class="bi bi-arrow-repeat"></i> Rephrase</button>
+            <button class="ai-ctx-btn" data-action="grammar"><i class="bi bi-spellcheck"></i> Fix Grammar</button>
+            <button class="ai-ctx-btn" data-action="expand"><i class="bi bi-arrows-angle-expand"></i> Expand</button>
+        </div>
+        <div class="ai-ctx-col ai-ctx-col-writing">
+            <button class="ai-ctx-btn" data-action="polish"><i class="bi bi-brush"></i> Polish</button>
+            <button class="ai-ctx-btn" data-action="formalize"><i class="bi bi-mortarboard"></i> Formalize</button>
+            <button class="ai-ctx-btn" data-action="elaborate"><i class="bi bi-textarea-resize"></i> Elaborate</button>
+            <button class="ai-ctx-btn" data-action="shorten"><i class="bi bi-scissors"></i> Shorten</button>
+        </div>
     </div>
 
     <!-- File Conversion Progress Overlay -->
