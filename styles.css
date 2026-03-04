@@ -4495,7 +4495,7 @@ body.focus-mode #markdown-editor {
 /* Category Tabs */
 .template-categories {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   padding: 14px 24px 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -4506,10 +4506,24 @@ body.focus-mode #markdown-editor {
   display: none;
 }
 
+.template-cat-pills {
+  display: flex;
+  gap: 4px;
+  background: var(--editor-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+[data-theme="dark"] .template-cat-pills {
+  background: #0f0f20;
+  border-color: #2d2d4a;
+}
+
 .template-cat-btn {
   padding: 6px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border: none;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-color);
   font-size: 12px;

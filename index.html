@@ -893,11 +893,13 @@ const chatResponse = await openai.chat.completions.create({
                 <input type="text" id="template-search-input" placeholder="Search templates..." autocomplete="off" />
             </div>
             <div class="template-categories" id="template-categories">
-                <button class="template-cat-btn active" data-category="all">All</button>
-                <button class="template-cat-btn" data-category="documentation">Documentation</button>
-                <button class="template-cat-btn" data-category="project">Project</button>
-                <button class="template-cat-btn" data-category="technical">Technical</button>
-                <button class="template-cat-btn" data-category="creative">Creative</button>
+                <div class="template-cat-pills">
+                    <button class="template-cat-btn active" data-category="all">All</button>
+                    <button class="template-cat-btn" data-category="documentation">Documentation</button>
+                    <button class="template-cat-btn" data-category="project">Project</button>
+                    <button class="template-cat-btn" data-category="technical">Technical</button>
+                    <button class="template-cat-btn" data-category="creative">Creative</button>
+                </div>
             </div>
             <div class="template-grid" id="template-grid"></div>
             <div class="template-empty" id="template-empty" style="display:none">
