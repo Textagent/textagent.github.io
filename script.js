@@ -3879,125 +3879,178 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       name: 'Feature Showcase',
       category: 'documentation',
       icon: 'bi-stars',
-      description: 'Explore every Markdown Viewer feature: code, math, diagrams, tables, and more',
+      description: 'Explore every Markdown Viewer feature: AI, diagrams, math, code, presentations, and more',
       content: '# Welcome to Markdown Viewer\n\n' +
-        '## ✨ Key Features\n' +
-        '- **Live Preview** with GitHub styling\n' +
-        '- **Smart Import/Export** (MD, HTML, PDF)\n' +
-        '- **Mermaid Diagrams** for visual documentation\n' +
-        '- **LaTeX Math Support** for scientific notation\n' +
-        '- **Emoji Support** 😄 👍 🎉\n\n' +
-        '## 💻 Code with Syntax Highlighting\n' +
+        '> Your all-in-one Markdown editor with live preview, AI assistance, and powerful export options.\n\n' +
+        '---\n\n' +
+        '## ✨ All Features at a Glance\n\n' +
+        '| Category | Features |\n' +
+        '|:---------|:---------|\n' +
+        '| **Editing** | Live Preview, Sync Scrolling, Find & Replace, Zen Mode, Dark Mode |\n' +
+        '| **Rendering** | GitHub Styling, Syntax Highlighting, LaTeX Math, Mermaid Diagrams, Emoji |\n' +
+        '| **AI** | Built-in AI Assistant (Local Qwen + Cloud: Gemini, Groq, OpenRouter) |\n' +
+        '| **Import** | MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF |\n' +
+        '| **Export** | Markdown, HTML, PDF, LLM Memory Format |\n' +
+        '| **Extras** | Presentation Mode (PPT), Cloud Save, Executable Bash, Templates |\n\n' +
+        '---\n\n' +
+        '## 💻 Code with Syntax Highlighting\n\n' +
+        'Supports 180+ languages via highlight.js:\n\n' +
         '```javascript\n' +
+        '// JavaScript — Live preview rendering\n' +
         'function renderMarkdown() {\n' +
-        '  const markdown = markdownEditor.value;\n' +
-        '  const html = marked.parse(markdown);\n' +
-        '  const sanitizedHtml = DOMPurify.sanitize(html);\n' +
-        '  markdownPreview.innerHTML = sanitizedHtml;\n\n' +
-        '  // Apply syntax highlighting to code blocks\n' +
-        '  markdownPreview.querySelectorAll(\'pre code\').forEach((block) => {\n' +
-        '    hljs.highlightElement(block);\n' +
-        '  });\n' +
+        '  const html = marked.parse(editor.value);\n' +
+        '  preview.innerHTML = DOMPurify.sanitize(html);\n' +
+        '  hljs.highlightAll();\n' +
         '}\n' +
         '```\n\n' +
         '```python\n' +
-        '# Python example\n' +
-        'class MarkdownParser:\n' +
-        '    def __init__(self, source: str):\n' +
-        '        self.source = source\n\n' +
-        '    def parse(self) -> str:\n' +
-        '        \"\"\"Convert markdown to HTML.\"\"\"\n' +
-        '        return markdown.convert(self.source)\n\n' +
-        'parser = MarkdownParser("# Hello World")\n' +
-        'print(parser.parse())\n' +
+        '# Python — Data processing\n' +
+        'import pandas as pd\n\n' +
+        'df = pd.read_csv("data.csv")\n' +
+        'summary = df.describe()\n' +
+        'print(summary.to_markdown())\n' +
         '```\n\n' +
-        '## 🧮 Mathematical Expressions\n' +
-        'Write complex formulas with LaTeX syntax:\n\n' +
-        'Inline equation: $$E = mc^2$$\n\n' +
-        'Display equations:\n' +
-        '$$\\\\frac{\\\\partial f}{\\\\partial x} = \\\\lim_{h \\\\to 0} \\\\frac{f(x+h) - f(x)}{h}$$\n\n' +
-        '$$\\\\sum_{i=1}^{n} i^2 = \\\\frac{n(n+1)(2n+1)}{6}$$\n\n' +
-        '## 📊 Mermaid Diagrams\n' +
-        'Create powerful visualizations directly in markdown:\n\n' +
+        '---\n\n' +
+        '## 🧮 LaTeX Math Expressions\n\n' +
+        'Inline math: $$E = mc^2$$ and $$\\nabla \\times \\vec{E} = -\\frac{\\partial \\vec{B}}{\\partial t}$$\n\n' +
+        'Display equations:\n\n' +
+        '$$\\frac{\\partial f}{\\partial x} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}$$\n\n' +
+        '$$\\sum_{i=1}^{n} i^2 = \\frac{n(n+1)(2n+1)}{6}$$\n\n' +
+        '---\n\n' +
+        '## 📊 Mermaid Diagrams\n\n' +
+        '### Flowchart\n' +
         '```mermaid\n' +
         'flowchart LR\n' +
-        '    A[Start] --> B{Is it working?}\n' +
-        '    B -->|Yes| C[Great!]\n' +
-        '    B -->|No| D[Debug]\n' +
-        '    C --> E[Deploy]\n' +
-        '    D --> B\n' +
+        '    A[Write Markdown] --> B{Preview OK?}\n' +
+        '    B -->|Yes| C[Export]\n' +
+        '    B -->|No| D[Edit]\n' +
+        '    C --> E[PDF / HTML / MD]\n' +
+        '    C --> F[LLM Memory]\n' +
+        '    C --> G[Presentation]\n' +
+        '    D --> A\n' +
         '```\n\n' +
         '### Sequence Diagram\n' +
         '```mermaid\n' +
         'sequenceDiagram\n' +
         '    User->>Editor: Type markdown\n' +
-        '    Editor->>Preview: Render content\n' +
-        '    User->>Editor: Make changes\n' +
-        '    Editor->>Preview: Update rendering\n' +
+        '    Editor->>Preview: Live render\n' +
+        '    User->>AI Panel: Ask for help\n' +
+        '    AI Panel->>Editor: Insert suggestion\n' +
         '    User->>Export: Save as PDF\n' +
         '```\n\n' +
         '### Pie Chart\n' +
         '```mermaid\n' +
-        'pie title Feature Usage\n' +
-        '    "Code Blocks" : 35\n' +
-        '    "Tables" : 25\n' +
-        '    "Diagrams" : 20\n' +
-        '    "Math" : 15\n' +
-        '    "Other" : 5\n' +
+        'pie title Markdown Viewer Usage\n' +
+        '    "Code Docs" : 30\n' +
+        '    "Notes" : 25\n' +
+        '    "Blog Posts" : 20\n' +
+        '    "Presentations" : 15\n' +
+        '    "AI Writing" : 10\n' +
         '```\n\n' +
-        '## 📋 Task Management\n' +
-        '- [x] Create responsive layout\n' +
-        '- [x] Implement live preview with GitHub styling\n' +
-        '- [x] Add syntax highlighting for code blocks\n' +
-        '- [x] Support math expressions with LaTeX\n' +
-        '- [x] Enable mermaid diagrams\n' +
-        '- [ ] Your next feature here\n\n' +
-        '## 🆚 Feature Comparison\n\n' +
-        '| Feature                  | Markdown Viewer (Ours) | Other Editors  |\n' +
-        '|:-------------------------|:----------------------:|:--------------:|\n' +
-        '| Live Preview             | ✅ GitHub-Styled       | ✅             |\n' +
-        '| Sync Scrolling           | ✅ Two-way             | 🔄 Partial     |\n' +
-        '| Mermaid Support          | ✅                     | ❌ Limited     |\n' +
-        '| LaTeX Math Rendering     | ✅                     | ❌ Limited     |\n' +
-        '| File Import (DOCX, PDF)  | ✅                     | ❌             |\n' +
-        '| AI Assistant             | ✅ Local + Cloud       | ❌             |\n\n' +
-        '## 📝 Text Formatting Examples\n\n' +
-        '### Inline Formatting\n\n' +
-        'Text can be **bold**, *italic*, ***bold italic***, or ~~strikethrough~~.\n\n' +
-        'Use <mark>highlighted text</mark> for emphasis or <u>underlines</u> for key terms.\n\n' +
-        '### Superscript & Subscript\n\n' +
-        'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub>\n' +
-        'Math notation: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
-        '### Keyboard Shortcuts\n\n' +
-        'Press <kbd>Ctrl</kbd> + <kbd>B</kbd> for bold, <kbd>Ctrl</kbd> + <kbd>I</kbd> for italic.\n\n' +
-        '### Blockquotes\n\n' +
-        '> "The best way to predict the future is to invent it." — Alan Kay\n\n' +
-        '> [!NOTE]\n' +
-        '> GitHub-style alert callouts are also supported!\n\n' +
-        '### Lists\n\n' +
-        'Ordered:\n' +
-        '1. First item\n' +
-        '2. Second item\n' +
-        '3. Third item\n\n' +
-        'Unordered:\n' +
-        '- Item A\n' +
-        '  - Nested item\n' +
-        '    - Deep nested\n' +
-        '- Item B\n\n' +
-        '### Links & Images\n\n' +
-        'Add a [link to GitHub](https://github.com) or embed an image:\n' +
-        '![Markdown Logo](https://upload.wikimedia.org/wikipedia/commons/4/48/Markdown-mark.svg)\n\n' +
-        '## 🖥️ Executable Bash Blocks\n\n' +
-        'Run bash commands directly in the preview — powered by [just-bash](https://justbash.dev/).\n\n' +
+        '---\n\n' +
+        '## 🤖 AI Assistant\n\n' +
+        'The built-in AI panel supports **multiple models**:\n\n' +
+        '| Model | Type | Speed |\n' +
+        '|:------|:-----|:------|\n' +
+        '| **Qwen 3.5** | Local (runs in browser) | ⚡ Fast |\n' +
+        '| **Gemini 2.0 Flash** | Cloud (free tier) | 🚀 Very Fast |\n' +
+        '| **Llama 3.3 70B** | Cloud via OpenRouter | 🧠 Powerful |\n' +
+        '| **Llama via Groq** | Cloud via Groq | ⚡ Ultra Fast |\n\n' +
+        '**AI Features:**\n' +
+        '- 📝 Summarize your document\n' +
+        '- ✍️ Improve writing style and grammar\n' +
+        '- 🌐 Translate to any language\n' +
+        '- 💬 Chat about your content\n' +
+        '- 🧠 Thinking mode for detailed analysis\n\n' +
+        '> [!TIP]\n' +
+        '> Click the **AI** button in the toolbar to open the assistant panel.\n\n' +
+        '---\n\n' +
+        '## 🧠 LLM Memory Export\n\n' +
+        'Convert your markdown into **shareable LLM memory format** for use with AI tools:\n\n' +
+        '- **Standard** — Clean structured format\n' +
+        '- **System Prompt** — Ready for ChatGPT/Claude system messages\n' +
+        '- **OpenAI** — JSON format for OpenAI API\n' +
+        '- **Raw** — Plain text extraction\n\n' +
+        'Includes metadata, token count, and one-click copy/download.\n\n' +
+        '> [!TIP]\n' +
+        '> Find "Export as LLM Memory" in the **Export** dropdown menu.\n\n' +
+        '---\n\n' +
+        '## 🎯 Presentation Mode (PPT)\n\n' +
+        'Turn your markdown into a **slideshow presentation**!\n\n' +
+        '- Each `---` horizontal rule creates a new slide\n' +
+        '- Navigate with arrow keys or on-screen controls\n' +
+        '- Full-screen presentation with clean styling\n' +
+        '- Perfect for meetings, demos, and teaching\n\n' +
+        '> [!TIP]\n' +
+        '> Click the **Presentation** icon in the toolbar to start your slideshow.\n\n' +
+        '---\n\n' +
+        '## 🖥️ Executable Bash Blocks (just-bash)\n\n' +
+        'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
+        'Hover over any bash code block and click **▶ Run**:\n\n' +
         '```bash\n' +
         'echo "Hello from Markdown Viewer! 🎉"\n' +
         '```\n\n' +
         '```bash\n' +
-        'echo "Today is $(date +%Y-%m-%d)"\n' +
+        'echo "Current date: $(date +%Y-%m-%d)"\n' +
+        '```\n\n' +
+        '```bash\n' +
+        'seq 1 5 | sort -r | tr \'\\n\' \' \'\n' +
         '```\n\n' +
         '---\n\n' +
-        '## 🛡️ Security Note\n\n' +
-        'This is a fully client-side application. Your content never leaves your browser and stays secure on your device.\n'
+        '## 📁 Smart File Import\n\n' +
+        'Drag & drop or click to import from **8 formats**:\n\n' +
+        '| Format | Description |\n' +
+        '|:-------|:------------|\n' +
+        '| `.md` | Markdown files |\n' +
+        '| `.docx` | Microsoft Word documents |\n' +
+        '| `.xlsx` | Excel spreadsheets → Markdown tables |\n' +
+        '| `.csv` | CSV data → Markdown tables |\n' +
+        '| `.html` | HTML pages → Markdown |\n' +
+        '| `.json` | JSON data → formatted code blocks |\n' +
+        '| `.xml` | XML documents |\n' +
+        '| `.pdf` | PDF text extraction |\n\n' +
+        '---\n\n' +
+        '## 📋 Task Lists & Checklists\n\n' +
+        '- [x] Live preview with GitHub styling\n' +
+        '- [x] Syntax highlighting for 180+ languages\n' +
+        '- [x] LaTeX math rendering\n' +
+        '- [x] Mermaid diagram support\n' +
+        '- [x] AI Assistant (local + cloud)\n' +
+        '- [x] LLM Memory export\n' +
+        '- [x] Presentation mode\n' +
+        '- [x] Executable bash blocks\n' +
+        '- [x] Multi-format file import\n' +
+        '- [x] Dark mode & Zen mode\n' +
+        '- [x] Cloud save to GitHub Gist\n' +
+        '- [x] Find & Replace with regex\n' +
+        '- [x] Word Count\n' +
+        '- [x] Templates\n' +
+        '- [ ] Your feature suggestion here!\n\n' +
+        '---\n\n' +
+        '## 📝 Text Formatting\n\n' +
+        '**Bold**, *italic*, ***bold italic***, ~~strikethrough~~\n\n' +
+        '<mark>Highlighted text</mark> and <u>underlined text</u>\n\n' +
+        'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub> · Math: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
+        'Keyboard shortcuts: <kbd>Ctrl</kbd>+<kbd>B</kbd> bold, <kbd>Ctrl</kbd>+<kbd>I</kbd> italic\n\n' +
+        '### Blockquotes\n\n' +
+        '> "The best way to predict the future is to invent it." — Alan Kay\n\n' +
+        '### GitHub-style Alerts\n\n' +
+        '> [!NOTE]\n' +
+        '> Useful background information the reader should know.\n\n' +
+        '> [!WARNING]\n' +
+        '> Critical information for avoiding problems.\n\n' +
+        '---\n\n' +
+        '## 🌙 Additional Features\n\n' +
+        '- **Dark Mode** — Toggle with the moon icon in the toolbar\n' +
+        '- **Zen Mode** — Distraction-free writing (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>)\n' +
+        '- **Sync Scrolling** — Editor and preview scroll together\n' +
+        '- **Cloud Save** — Save to GitHub Gist with one click\n' +
+        '- **Find & Replace** — Regex-powered search (<kbd>Ctrl</kbd>+<kbd>H</kbd>)\n' +
+        '- **Word Count** — Live word, character, and reading time stats\n' +
+        '- **Templates** — Start from 13 pre-built templates\n\n' +
+        '---\n\n' +
+        '## 🛡️ Security & Privacy\n\n' +
+        'This is a **fully client-side** application. Your content never leaves your browser and stays secure on your device. No server, no tracking, no data collection.\n'
     },
     {
       name: 'README',
