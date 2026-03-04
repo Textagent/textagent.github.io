@@ -4496,7 +4496,7 @@ body.focus-mode #markdown-editor {
 .template-categories {
   display: flex;
   gap: 4px;
-  padding: 14px 24px 0;
+  padding: 14px 24px 14px;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -4562,7 +4562,7 @@ body.focus-mode #markdown-editor {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 12px;
-  padding: 16px 24px 24px;
+  padding: 4px 24px 24px;
   overflow-y: auto;
   flex: 1;
 }
