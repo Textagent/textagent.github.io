@@ -179,6 +179,8 @@ The Markdown Viewer has undergone significant evolution since its inception. Wha
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-04** | 🔄 **Non-blocking AI panel** — AI panel opens instantly; Qwen download deferred until first use, so users can switch to cloud models without downloading the local model |
+| **2026-03-04** | 🧩 **Multi-model AI selector** — switch between Qwen (local), Groq Llama 3.3, Gemini 2.0 Flash, and OpenRouter from a unified model picker inside the AI panel |
 | **2026-03-04** | 🌐 **Google Gemini 2.0 Flash** — free-tier Gemini AI model with SSE streaming and 1 M tokens/min |
 | **2026-03-04** | 🔀 **OpenRouter AI** — access free auto-routed models via OpenRouter API |
 | **2026-03-04** | 📂 **File format converters** — import DOCX, XLSX/XLS, CSV, HTML, JSON, XML, and PDF; auto-converted to Markdown |

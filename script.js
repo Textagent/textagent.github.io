@@ -3870,6 +3870,1096 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     });
   }
 
+  // ========================================
+  // TEMPLATE PICKER
+  // ========================================
+
+  const MARKDOWN_TEMPLATES = [
+    {
+      name: 'README',
+      category: 'documentation',
+      icon: 'bi-book',
+      description: 'Standard project README with badges, install, usage, and contributing sections',
+      content: `# Project Name
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+
+> A brief description of what this project does and who it's for.
+
+## ✨ Features
+
+- **Feature 1** — Description of feature one
+- **Feature 2** — Description of feature two
+- **Feature 3** — Description of feature three
+
+## 📦 Installation
+
+\`\`\`bash
+# Clone the repository
+git clone https://github.com/username/project-name.git
+
+# Navigate to the project directory
+cd project-name
+
+# Install dependencies
+npm install
+\`\`\`
+
+## 🚀 Usage
+
+\`\`\`javascript
+const project = require('project-name');
+
+// Example usage
+project.doSomething();
+\`\`\`
+
+## 📖 Documentation
+
+For full documentation, visit [docs.example.com](https://docs.example.com).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create your feature branch (\`git checkout -b feature/amazing-feature\`)
+3. Commit your changes (\`git commit -m 'Add amazing feature'\`)
+4. Push to the branch (\`git push origin feature/amazing-feature\`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+## 📞 Contact
+
+- **Author** — [@yourname](https://github.com/yourname)
+- **Email** — your.email@example.com
+`
+    },
+    {
+      name: 'API Documentation',
+      category: 'documentation',
+      icon: 'bi-code-slash',
+      description: 'REST API documentation with endpoints, parameters, and response examples',
+      content: `# API Documentation
+
+**Base URL:** \`https://api.example.com/v1\`
+
+## Authentication
+
+All API requests require a Bearer token in the Authorization header:
+
+\`\`\`
+Authorization: Bearer YOUR_API_KEY
+\`\`\`
+
+---
+
+## Endpoints
+
+### GET /users
+
+Retrieve a list of users.
+
+**Query Parameters:**
+
+| Parameter | Type     | Required | Description              |
+|-----------|----------|----------|--------------------------|
+| \`page\`    | integer  | No       | Page number (default: 1) |
+| \`limit\`   | integer  | No       | Items per page (max: 100)|
+| \`search\`  | string   | No       | Search by name or email  |
+
+**Response:**
+
+\`\`\`json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150
+  }
+}
+\`\`\`
+
+### POST /users
+
+Create a new user.
+
+**Request Body:**
+
+\`\`\`json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "role": "admin"
+}
+\`\`\`
+
+**Response:** \`201 Created\`
+
+---
+
+## Error Codes
+
+| Code | Description           |
+|------|-----------------------|
+| 400  | Bad Request           |
+| 401  | Unauthorized          |
+| 404  | Not Found             |
+| 429  | Too Many Requests     |
+| 500  | Internal Server Error |
+`
+    },
+    {
+      name: 'Changelog',
+      category: 'documentation',
+      icon: 'bi-clock-history',
+      description: 'Project changelog following Keep a Changelog format',
+      content: `# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+- New feature description
+
+### Changed
+- Updated feature description
+
+---
+
+## [1.2.0] — 2024-03-15
+
+### Added
+- User authentication via OAuth 2.0
+- Dark mode support
+- Export to PDF functionality
+
+### Changed
+- Improved search algorithm performance by 40%
+- Updated dependencies to latest versions
+
+### Fixed
+- Fixed memory leak in data processing pipeline
+- Resolved timezone handling for international users
+
+---
+
+## [1.1.0] — 2024-02-01
+
+### Added
+- Real-time collaboration support
+- Markdown preview with syntax highlighting
+
+### Deprecated
+- Legacy API v1 endpoints (will be removed in v2.0)
+
+### Security
+- Patched XSS vulnerability in user input sanitization
+
+---
+
+## [1.0.0] — 2024-01-01
+
+### Added
+- Initial release
+- Core feature set
+- API documentation
+- User onboarding flow
+`
+    },
+    {
+      name: 'Meeting Notes',
+      category: 'project',
+      icon: 'bi-people',
+      description: 'Structured meeting notes with attendees, agenda, decisions, and action items',
+      content: `# Meeting Notes
+
+**Date:** $(date)
+**Time:** 10:00 AM — 11:00 AM
+**Location:** Conference Room / Zoom
+**Facilitator:** [Name]
+
+## Attendees
+
+- [ ] Person 1 — Role
+- [ ] Person 2 — Role
+- [ ] Person 3 — Role
+
+---
+
+## Agenda
+
+1. Review of previous action items (5 min)
+2. Topic A — [Owner] (15 min)
+3. Topic B — [Owner] (15 min)
+4. Topic C — [Owner] (10 min)
+5. Open discussion (10 min)
+6. Next steps & wrap-up (5 min)
+
+---
+
+## Discussion Notes
+
+### Topic A
+- Key point discussed
+- Decisions made
+- Open questions
+
+### Topic B
+- Key point discussed
+- Decisions made
+
+### Topic C
+- Key point discussed
+- Concerns raised
+
+---
+
+## Decisions Made
+
+| # | Decision | Owner | Deadline |
+|---|----------|-------|----------|
+| 1 | Decision description | Person | Date |
+| 2 | Decision description | Person | Date |
+
+## Action Items
+
+- [ ] **Person 1:** Action description — *Due: Date*
+- [ ] **Person 2:** Action description — *Due: Date*
+- [ ] **Person 3:** Action description — *Due: Date*
+
+---
+
+**Next Meeting:** [Date & Time]
+`
+    },
+    {
+      name: 'Project Proposal',
+      category: 'project',
+      icon: 'bi-lightbulb',
+      description: 'Comprehensive project proposal with objectives, timeline, and budget',
+      content: `# Project Proposal: [Project Name]
+
+**Prepared by:** [Your Name]
+**Date:** $(date)
+**Version:** 1.0
+
+---
+
+## Executive Summary
+
+A brief overview of the project, its goals, and expected outcomes (2-3 sentences).
+
+## Problem Statement
+
+Describe the problem or opportunity this project addresses. Include relevant data or metrics.
+
+## Objectives
+
+1. **Primary Objective** — Description
+2. **Secondary Objective** — Description
+3. **Tertiary Objective** — Description
+
+## Proposed Solution
+
+Detailed description of the proposed solution and approach.
+
+### Key Features
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Feature 1 | Description | High |
+| Feature 2 | Description | Medium |
+| Feature 3 | Description | Low |
+
+## Timeline
+
+\`\`\`mermaid
+gantt
+    title Project Timeline
+    dateFormat  YYYY-MM-DD
+    section Phase 1
+    Research & Planning  :a1, 2024-01-01, 14d
+    Design               :a2, after a1, 14d
+    section Phase 2
+    Development          :a3, after a2, 30d
+    Testing              :a4, after a3, 14d
+    section Phase 3
+    Deployment           :a5, after a4, 7d
+    Review               :a6, after a5, 7d
+\`\`\`
+
+## Budget Estimate
+
+| Item | Cost | Notes |
+|------|------|-------|
+| Development | $X,XXX | Description |
+| Infrastructure | $X,XXX | Description |
+| Testing | $X,XXX | Description |
+| **Total** | **$XX,XXX** | |
+
+## Risks & Mitigation
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Risk 1 | High | Medium | Mitigation strategy |
+| Risk 2 | Medium | Low | Mitigation strategy |
+
+## Success Metrics
+
+- **Metric 1:** Target value
+- **Metric 2:** Target value
+- **Metric 3:** Target value
+
+## Approval
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Project Sponsor | | | |
+| Technical Lead | | | |
+| Stakeholder | | | |
+`
+    },
+    {
+      name: 'Sprint Planning',
+      category: 'project',
+      icon: 'bi-kanban',
+      description: 'Agile sprint planning document with user stories and task breakdown',
+      content: `# Sprint Planning — Sprint [#]
+
+**Sprint Duration:** [Start Date] → [End Date]
+**Sprint Goal:** [One-sentence goal]
+**Team Velocity:** [X] story points
+
+---
+
+## Sprint Backlog
+
+### 🔴 High Priority
+
+#### US-001: [User Story Title]
+> As a [user type], I want [action] so that [benefit].
+
+- **Points:** 5
+- **Assignee:** [Name]
+- Tasks:
+  - [ ] Task 1
+  - [ ] Task 2
+  - [ ] Task 3
+
+#### US-002: [User Story Title]
+> As a [user type], I want [action] so that [benefit].
+
+- **Points:** 3
+- **Assignee:** [Name]
+- Tasks:
+  - [ ] Task 1
+  - [ ] Task 2
+
+### 🟡 Medium Priority
+
+#### US-003: [User Story Title]
+> As a [user type], I want [action] so that [benefit].
+
+- **Points:** 2
+- **Assignee:** [Name]
+- Tasks:
+  - [ ] Task 1
+  - [ ] Task 2
+
+### 🟢 Low Priority
+
+#### US-004: [User Story Title]
+- **Points:** 1
+- **Assignee:** [Name]
+- Tasks:
+  - [ ] Task 1
+
+---
+
+## Capacity
+
+| Team Member | Available Days | Capacity (pts) |
+|-------------|---------------|----------------|
+| Person 1 | 10 | 8 |
+| Person 2 | 8 | 6 |
+| Person 3 | 10 | 8 |
+| **Total** | | **22** |
+
+## Risks & Blockers
+
+- ⚠️ Risk/blocker description — *Mitigation plan*
+
+## Definition of Done
+
+- [ ] Code reviewed and approved
+- [ ] Unit tests passing (>80% coverage)
+- [ ] Documentation updated
+- [ ] QA verified
+- [ ] Deployed to staging
+`
+    },
+    {
+      name: 'Bug Report',
+      category: 'technical',
+      icon: 'bi-bug',
+      description: 'Detailed bug report with reproduction steps and environment info',
+      content: `# Bug Report
+
+**Title:** [Brief description of the bug]
+**Severity:** 🔴 Critical / 🟠 Major / 🟡 Minor / 🟢 Trivial
+**Reporter:** [Your Name]
+**Date:** $(date)
+**Status:** Open
+
+---
+
+## Description
+
+A clear and concise description of what the bug is.
+
+## Steps to Reproduce
+
+1. Go to '...'
+2. Click on '...'
+3. Scroll down to '...'
+4. See error
+
+## Expected Behavior
+
+A clear description of what you expected to happen.
+
+## Actual Behavior
+
+A clear description of what actually happened.
+
+## Screenshots / Recordings
+
+_If applicable, add screenshots or screen recordings to help explain the problem._
+
+## Environment
+
+| Property | Value |
+|----------|-------|
+| OS | macOS 14.2 / Windows 11 / Ubuntu 22.04 |
+| Browser | Chrome 120 / Firefox 121 / Safari 17 |
+| App Version | 1.2.0 |
+| Device | Desktop / Mobile |
+| Screen Size | 1920x1080 |
+
+## Console Errors
+
+\`\`\`
+Paste any relevant console errors here
+\`\`\`
+
+## Additional Context
+
+Add any other context about the problem here. Include:
+- Frequency (always, sometimes, rare)
+- Workaround if any
+- Related issues
+
+---
+
+## Resolution
+
+**Fixed in:** [Version / PR #]
+**Root Cause:**
+**Fix Description:**
+`
+    },
+    {
+      name: 'Technical Spec',
+      category: 'technical',
+      icon: 'bi-diagram-3',
+      description: 'Technical specification document with architecture and implementation details',
+      content: `# Technical Specification
+
+**Feature:** [Feature Name]
+**Author:** [Your Name]
+**Date:** $(date)
+**Status:** Draft / In Review / Approved
+
+---
+
+## Overview
+
+Brief description of the feature and its purpose.
+
+## Background & Motivation
+
+Why is this feature needed? What problem does it solve?
+
+## Goals & Non-Goals
+
+### Goals
+- Goal 1
+- Goal 2
+
+### Non-Goals
+- Non-goal 1 (explicitly out of scope)
+
+## Architecture
+
+\`\`\`mermaid
+flowchart TD
+    A[Client] --> B[API Gateway]
+    B --> C[Service Layer]
+    C --> D[Database]
+    C --> E[Cache]
+    C --> F[External API]
+\`\`\`
+
+## Detailed Design
+
+### Data Model
+
+\`\`\`sql
+CREATE TABLE example (
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL,
+    status      VARCHAR(50) DEFAULT 'active',
+    created_at  TIMESTAMP DEFAULT NOW(),
+    updated_at  TIMESTAMP DEFAULT NOW()
+);
+\`\`\`
+
+### API Design
+
+#### \`POST /api/v1/resource\`
+
+**Request:**
+\`\`\`json
+{
+  "name": "string",
+  "config": {}
+}
+\`\`\`
+
+**Response:** \`201 Created\`
+
+### Error Handling
+
+| Error Case | Handling Strategy |
+|------------|-------------------|
+| Invalid input | Return 400 with validation errors |
+| Not found | Return 404 |
+| Rate limited | Return 429 with retry-after header |
+
+## Testing Strategy
+
+- **Unit Tests:** Core logic and data transformations
+- **Integration Tests:** API endpoints and database operations
+- **E2E Tests:** Critical user flows
+
+## Rollout Plan
+
+1. **Phase 1:** Internal testing (1 week)
+2. **Phase 2:** Beta rollout to 10% of users
+3. **Phase 3:** Full rollout
+
+## Open Questions
+
+- [ ] Question 1?
+- [ ] Question 2?
+`
+    },
+    {
+      name: 'Code Review',
+      category: 'technical',
+      icon: 'bi-git',
+      description: 'Code review checklist and feedback template',
+      content: `# Code Review
+
+**PR:** #[number] — [PR Title]
+**Author:** @[username]
+**Reviewer:** @[username]
+**Date:** $(date)
+
+---
+
+## Summary
+
+Brief description of what this PR does.
+
+## Review Checklist
+
+### Correctness
+- [ ] Code does what the PR description says
+- [ ] Edge cases are handled
+- [ ] Error handling is appropriate
+- [ ] No obvious bugs
+
+### Code Quality
+- [ ] Code is readable and well-organized
+- [ ] Functions/methods are appropriately sized
+- [ ] Variable names are descriptive
+- [ ] No unnecessary complexity
+- [ ] DRY principle followed
+
+### Testing
+- [ ] Unit tests added/updated
+- [ ] Tests cover edge cases
+- [ ] All tests passing
+- [ ] Test coverage maintained or improved
+
+### Security
+- [ ] No hardcoded secrets or credentials
+- [ ] Input validation in place
+- [ ] No SQL injection vulnerabilities
+- [ ] XSS prevention applied
+
+### Performance
+- [ ] No N+1 queries
+- [ ] Appropriate caching used
+- [ ] No memory leaks
+- [ ] Database indexes considered
+
+---
+
+## Feedback
+
+### 🟢 What's Good
+- Positive feedback point 1
+- Positive feedback point 2
+
+### 🟡 Suggestions
+- **File:Line** — Suggestion description
+- **File:Line** — Suggestion description
+
+### 🔴 Must Fix
+- **File:Line** — Issue description
+- **File:Line** — Issue description
+
+---
+
+**Verdict:** ✅ Approve / 🔄 Request Changes / ❌ Reject
+`
+    },
+    {
+      name: 'Blog Post',
+      category: 'creative',
+      icon: 'bi-pencil-square',
+      description: 'Blog post template with title, sections, and call-to-action',
+      content: `# [Blog Post Title: Make It Catchy and SEO-Friendly]
+
+*Published on $(date) · X min read*
+
+![Cover Image](https://via.placeholder.com/800x400)
+
+---
+
+> **TL;DR:** A one-sentence summary of the key takeaway from this post.
+
+## Introduction
+
+Hook the reader with a compelling opening. State the problem or question this post addresses. Preview what they'll learn.
+
+## The Problem
+
+Describe the challenge or situation your readers face. Use relatable examples.
+
+## The Solution
+
+### Step 1: [First Key Point]
+
+Explain the first step or concept. Include examples:
+
+\`\`\`javascript
+// Code example if applicable
+function example() {
+  return "Hello, World!";
+}
+\`\`\`
+
+### Step 2: [Second Key Point]
+
+Continue with the next step or concept.
+
+> 💡 **Pro Tip:** Share an insider tip that adds extra value.
+
+### Step 3: [Third Key Point]
+
+Wrap up the main content with the final step or concept.
+
+## Results / Key Takeaways
+
+- **Takeaway 1** — Brief explanation
+- **Takeaway 2** — Brief explanation
+- **Takeaway 3** — Brief explanation
+
+## Conclusion
+
+Summarize what was covered. Reinforce the main message. End with a forward-looking statement.
+
+---
+
+**What do you think?** Share your thoughts in the comments below.
+
+*If you found this helpful, consider sharing it with others who might benefit! 🚀*
+
+---
+
+**Tags:** #topic1 #topic2 #topic3
+`
+    },
+    {
+      name: 'Newsletter',
+      category: 'creative',
+      icon: 'bi-envelope-paper',
+      description: 'Newsletter template with sections for updates, highlights, and links',
+      content: `# 📬 [Newsletter Name] — Issue #[X]
+
+*$(date)*
+
+---
+
+Hey there! 👋
+
+Welcome to this week's edition of **[Newsletter Name]**. Here's what's new:
+
+---
+
+## 🔥 This Week's Highlight
+
+### [Main Story Title]
+
+A brief summary of the main story or update. This should be the most important or exciting thing you want to share this week.
+
+[Read more →](https://example.com/article)
+
+---
+
+## 📰 News & Updates
+
+### 1. [Update Title]
+Brief summary of the first update. Keep it to 2-3 sentences.
+
+### 2. [Update Title]
+Brief summary of the second update.
+
+### 3. [Update Title]
+Brief summary of the third update.
+
+---
+
+## 🛠️ Tool / Resource of the Week
+
+**[Tool Name](https://example.com)** — A brief description of why this tool is useful and who it's for.
+
+---
+
+## 💡 Tip of the Week
+
+> [A practical tip, quote, or piece of advice relevant to your audience]
+
+---
+
+## 📊 Quick Stats
+
+| Metric | This Week | Last Week | Change |
+|--------|-----------|-----------|--------|
+| Stat 1 | 1,234 | 1,100 | +12% |
+| Stat 2 | 567 | 590 | -4% |
+
+---
+
+## 📅 Upcoming Events
+
+- **[Event Name]** — [Date] — [Brief description]
+- **[Event Name]** — [Date] — [Brief description]
+
+---
+
+## 🔗 Worth Reading
+
+- [Article Title](https://example.com) — Source
+- [Article Title](https://example.com) — Source
+- [Article Title](https://example.com) — Source
+
+---
+
+That's all for this week! See you next time. ✌️
+
+*— [Your Name]*
+
+---
+
+*[Unsubscribe](https://example.com/unsubscribe) · [View in browser](https://example.com/newsletter/1)*
+`
+    },
+    {
+      name: 'Resume / CV',
+      category: 'creative',
+      icon: 'bi-person-badge',
+      description: 'Professional resume template with experience, skills, and education',
+      content: `# [Your Full Name]
+
+**[Your Title / Role]**
+
+📍 [City, Country] · 📧 [email@example.com] · 🔗 [linkedin.com/in/yourname](https://linkedin.com/in/yourname) · 💻 [github.com/yourname](https://github.com/yourname)
+
+---
+
+## Summary
+
+A concise 2-3 sentence professional summary highlighting your key strengths, experience level, and what you bring to the table.
+
+---
+
+## Experience
+
+### **Senior Software Engineer** — [Company Name]
+*Jan 2022 — Present · City, Country*
+
+- Led development of [feature/project] that improved [metric] by X%
+- Architected and deployed [system] serving [X] million requests/day
+- Mentored team of [X] junior engineers, improving code review velocity by X%
+- **Tech Stack:** TypeScript, React, Node.js, PostgreSQL, AWS
+
+### **Software Engineer** — [Company Name]
+*Jun 2019 — Dec 2021 · City, Country*
+
+- Built [feature] from scratch, reducing [process] time by X%
+- Implemented CI/CD pipeline, cutting deployment time from hours to minutes
+- Collaborated with product team to define technical requirements
+- **Tech Stack:** Python, Django, React, Docker
+
+### **Junior Developer** — [Company Name]
+*Aug 2017 — May 2019 · City, Country*
+
+- Developed and maintained [X] microservices
+- Wrote comprehensive unit and integration tests (95%+ coverage)
+- **Tech Stack:** Java, Spring Boot, MySQL
+
+---
+
+## Skills
+
+| Category | Technologies |
+|----------|-------------|
+| **Languages** | TypeScript, Python, Java, Go |
+| **Frontend** | React, Next.js, Vue.js, HTML/CSS |
+| **Backend** | Node.js, Django, Spring Boot |
+| **Databases** | PostgreSQL, MongoDB, Redis |
+| **DevOps** | Docker, Kubernetes, AWS, CI/CD |
+| **Tools** | Git, Jira, Figma, VS Code |
+
+---
+
+## Education
+
+### **B.S. Computer Science** — [University Name]
+*2013 — 2017 · GPA: 3.8/4.0*
+
+- Relevant Coursework: Data Structures, Algorithms, Distributed Systems, Machine Learning
+
+---
+
+## Certifications
+
+- **AWS Solutions Architect — Associate** (2023)
+- **Google Cloud Professional Data Engineer** (2022)
+
+---
+
+## Projects
+
+### **[Project Name](https://github.com/yourname/project)**
+Brief description of the project, what problem it solves, and technologies used.
+
+### **[Project Name](https://github.com/yourname/project)**
+Brief description of the project.
+`
+    }
+  ];
+
+  // --- Template Modal Logic ---
+  const templateModal = document.getElementById('template-modal');
+  const templateGrid = document.getElementById('template-grid');
+  const templateSearchInput = document.getElementById('template-search-input');
+  const templateCategories = document.getElementById('template-categories');
+  const templateEmpty = document.getElementById('template-empty');
+  const templateCloseBtn = document.getElementById('template-modal-close');
+  const templateBtn = document.getElementById('template-btn');
+  const mobileTemplateBtn = document.getElementById('mobile-template-btn');
+
+  let activeTemplateCategory = 'all';
+
+  function getCategoryIconClass(category) {
+    switch (category) {
+      case 'documentation': return 'doc';
+      case 'project': return 'project';
+      case 'technical': return 'technical';
+      case 'creative': return 'creative';
+      default: return 'doc';
+    }
+  }
+
+  function getCategoryIcon(category) {
+    switch (category) {
+      case 'documentation': return 'bi-book';
+      case 'project': return 'bi-clipboard-check';
+      case 'technical': return 'bi-cpu';
+      case 'creative': return 'bi-brush';
+      default: return 'bi-file-earmark';
+    }
+  }
+
+  function renderTemplateCards(templates) {
+    templateGrid.innerHTML = '';
+    if (templates.length === 0) {
+      templateGrid.style.display = 'none';
+      templateEmpty.style.display = 'flex';
+      return;
+    }
+    templateGrid.style.display = 'grid';
+    templateEmpty.style.display = 'none';
+
+    templates.forEach((tpl, idx) => {
+      const card = document.createElement('div');
+      card.className = 'template-card';
+      card.setAttribute('data-template-index', idx);
+      card.setAttribute('title', 'Click to use this template');
+
+      const preview = tpl.content.trim().split('\n').slice(0, 4).join('\n');
+
+      card.innerHTML = `
+        <div class="template-card-icon ${getCategoryIconClass(tpl.category)}">
+          <i class="bi ${tpl.icon || getCategoryIcon(tpl.category)}"></i>
+        </div>
+        <div class="template-card-name">${tpl.name}</div>
+        <div class="template-card-desc">${tpl.description}</div>
+        <span class="template-card-tag ${tpl.category}">${tpl.category}</span>
+        <div class="template-card-preview">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+      `;
+
+      card.addEventListener('click', () => selectTemplate(tpl));
+      templateGrid.appendChild(card);
+    });
+  }
+
+  function filterTemplates() {
+    const query = templateSearchInput.value.toLowerCase().trim();
+    const category = activeTemplateCategory;
+
+    const filtered = MARKDOWN_TEMPLATES.filter(tpl => {
+      const matchCategory = category === 'all' || tpl.category === category;
+      if (!matchCategory) return false;
+      if (!query) return true;
+
+      return tpl.name.toLowerCase().includes(query) ||
+        tpl.description.toLowerCase().includes(query) ||
+        tpl.category.toLowerCase().includes(query) ||
+        tpl.content.toLowerCase().includes(query);
+    });
+
+    renderTemplateCards(filtered);
+  }
+
+  function selectTemplate(tpl) {
+    const editorContent = markdownEditor.value.trim();
+
+    if (editorContent.length > 0) {
+      if (!confirm('This will replace your current editor content with the template. Continue?')) {
+        return;
+      }
+    }
+
+    // Replace $(date) placeholders with current date
+    const today = new Date().toISOString().split('T')[0];
+    const content = tpl.content.replace(/\$\(date\)/g, today);
+
+    markdownEditor.value = content;
+    renderMarkdown();
+    closeTemplateModal();
+
+    // Scroll editor to top
+    markdownEditor.scrollTop = 0;
+  }
+
+  function openTemplateModal() {
+    templateSearchInput.value = '';
+    activeTemplateCategory = 'all';
+
+    // Reset category buttons
+    templateCategories.querySelectorAll('.template-cat-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.category === 'all');
+    });
+
+    renderTemplateCards(MARKDOWN_TEMPLATES);
+    templateModal.style.display = 'flex';
+    setTimeout(() => templateSearchInput.focus(), 100);
+  }
+
+  function closeTemplateModal() {
+    templateModal.style.display = 'none';
+  }
+
+  // Wire up open/close
+  if (templateBtn) {
+    templateBtn.addEventListener('click', openTemplateModal);
+  }
+  if (mobileTemplateBtn) {
+    mobileTemplateBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      openTemplateModal();
+    });
+  }
+  if (templateCloseBtn) {
+    templateCloseBtn.addEventListener('click', closeTemplateModal);
+  }
+
+  // Close on overlay click
+  if (templateModal) {
+    templateModal.addEventListener('click', (e) => {
+      if (e.target === templateModal) closeTemplateModal();
+    });
+  }
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && templateModal && templateModal.style.display !== 'none') {
+      closeTemplateModal();
+    }
+  });
+
+  // Search input
+  if (templateSearchInput) {
+    templateSearchInput.addEventListener('input', filterTemplates);
+  }
+
+  // Category tabs
+  if (templateCategories) {
+    templateCategories.addEventListener('click', (e) => {
+      const btn = e.target.closest('.template-cat-btn');
+      if (!btn) return;
+
+      activeTemplateCategory = btn.dataset.category;
+      templateCategories.querySelectorAll('.template-cat-btn').forEach(b => {
+        b.classList.toggle('active', b === btn);
+      });
+      filterTemplates();
+    });
+  }
+
+
   document.getElementById('share-button').addEventListener('click', shareMarkdown);
   document.getElementById('mobile-share-button').addEventListener('click', function () {
     closeMobileMenu();
@@ -4212,25 +5302,25 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
 
   // --- Panel Toggle ---
   function openAiPanel() {
+    // Always open the panel first — never block with a consent/download dialog
+    aiPanel.style.display = 'flex';
+    aiPanelOverlay.classList.add('active');
+    void aiPanel.offsetWidth;
+    aiPanel.classList.add('ai-panel-open');
+    aiToggleBtn.classList.add('ai-active');
+    aiPanelOpen = true;
+    document.body.classList.add('ai-panel-active');
+    aiInput.focus();
+
+    // Then handle model loading in the background
     if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
-      // Check if user previously consented (model cached in browser)
       if (localStorage.getItem('md-viewer-ai-consented')) {
-        // Auto-load — skip consent dialog, model is cached
+        // Model was previously downloaded — auto-load from cache
         initAiWorker();
-        // Show panel with loading status
-        aiPanel.style.display = 'flex';
-        aiPanelOverlay.classList.add('active');
-        void aiPanel.offsetWidth;
-        aiPanel.classList.add('ai-panel-open');
-        aiToggleBtn.classList.add('ai-active');
-        aiPanelOpen = true;
-        document.body.classList.add('ai-panel-active');
         addAiStatusBar('loading', 'Loading cached model...');
-        aiInput.focus();
-        return;
       }
-      // First time — show consent dialog
-      showAiConsentDialog();
+      // Otherwise do nothing — user can pick a cloud model or send a message
+      // to trigger the consent dialog
       return;
     }
 
@@ -4243,15 +5333,6 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       }
       initCloudWorker(currentAiModel);
     }
-
-    aiPanel.style.display = 'flex';
-    aiPanelOverlay.classList.add('active');
-    void aiPanel.offsetWidth;
-    aiPanel.classList.add('ai-panel-open');
-    aiToggleBtn.classList.add('ai-active');
-    aiPanelOpen = true;
-    document.body.classList.add('ai-panel-active');
-    aiInput.focus();
   }
 
   function closeAiPanel() {
@@ -4417,14 +5498,16 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
           // Remember consent so we skip the dialog next time
           localStorage.setItem('md-viewer-ai-consented', 'true');
           hideAiConsentDialog();
-          // Open the panel after successful load
-          aiPanel.style.display = 'flex';
-          aiPanelOverlay.classList.add('active');
-          void aiPanel.offsetWidth;
-          aiPanel.classList.add('ai-panel-open');
-          aiToggleBtn.classList.add('ai-active');
-          aiPanelOpen = true;
-          document.body.classList.add('ai-panel-active');
+          // Open the panel if not already open
+          if (!aiPanelOpen) {
+            aiPanel.style.display = 'flex';
+            aiPanelOverlay.classList.add('active');
+            void aiPanel.offsetWidth;
+            aiPanel.classList.add('ai-panel-open');
+            aiToggleBtn.classList.add('ai-active');
+            aiPanelOpen = true;
+            document.body.classList.add('ai-panel-active');
+          }
           // Add a status bar — show current model name
           if (currentAiModel === 'qwen-local') {
             addAiStatusBar('ready', `Qwen 3.5 · Local (${msg.device.toUpperCase()})`);
@@ -4823,6 +5906,28 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
 
   // --- Send to AI (routes to active model's worker) ---
   function sendToAi(taskType, context, userPrompt) {
+    // If Qwen is selected but not loaded yet, trigger consent/download
+    if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
+      if (localStorage.getItem('md-viewer-ai-consented')) {
+        initAiWorker();
+        addAiStatusBar('loading', 'Loading cached model...');
+      } else {
+        showAiConsentDialog();
+      }
+      return;
+    }
+
+    // If a cloud model is selected but not ready, prompt for API key
+    const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
+    if (cloudProvider && !cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
+      if (!cloudProvider.getKey()) {
+        showApiKeyModal(currentAiModel);
+        return;
+      }
+      initCloudWorker(currentAiModel);
+      return;
+    }
+
     const activeWorker = getActiveWorker();
     const isReady = isCurrentModelReady();
 

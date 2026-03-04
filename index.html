@@ -130,6 +130,9 @@
                     <button id="new-document-btn" class="tool-button" title="New Document">
                         <i class="bi bi-file-earmark-plus"></i>
                     </button>
+                    <button id="template-btn" class="tool-button" title="Templates">
+                        <i class="bi bi-file-earmark-richtext"></i>
+                    </button>
                     <span class="toolbar-separator"></span>
                     <button id="toggle-sync" class="tool-button sync-enabled"
                         title="Toggle Sync Scrolling (Ctrl+Shift+S)">
@@ -264,6 +267,10 @@
                             <button id="mobile-toggle-sync" class="mobile-menu-item tool-button sync-enabled"
                                 title="Toggle Sync Scrolling">
                                 <i class="bi bi-link"></i> Sync On
+                            </button>
+
+                            <button id="mobile-template-btn" class="mobile-menu-item" title="Templates">
+                                <i class="bi bi-file-earmark-richtext me-2"></i> Templates
                             </button>
 
                             <button id="mobile-import-button" class="mobile-menu-item" title="Import File">
@@ -865,6 +872,41 @@ const chatResponse = await openai.chat.completions.create({
             </div>
         </div>
     </div>
+
+    <!-- Template Picker Modal -->
+    <div id="template-modal" class="template-modal" style="display:none">
+        <div class="template-modal-content">
+            <div class="template-modal-header">
+                <div class="template-header-left">
+                    <div class="template-logo"><i class="bi bi-file-earmark-richtext"></i></div>
+                    <div>
+                        <h4>Templates</h4>
+                        <p class="template-subtitle">Start with a professionally structured template</p>
+                    </div>
+                </div>
+                <button class="template-close-btn" id="template-modal-close" title="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="template-search-bar">
+                <i class="bi bi-search template-search-icon"></i>
+                <input type="text" id="template-search-input" placeholder="Search templates..." autocomplete="off" />
+            </div>
+            <div class="template-categories" id="template-categories">
+                <button class="template-cat-btn active" data-category="all">All</button>
+                <button class="template-cat-btn" data-category="documentation">Documentation</button>
+                <button class="template-cat-btn" data-category="project">Project</button>
+                <button class="template-cat-btn" data-category="technical">Technical</button>
+                <button class="template-cat-btn" data-category="creative">Creative</button>
+            </div>
+            <div class="template-grid" id="template-grid"></div>
+            <div class="template-empty" id="template-empty" style="display:none">
+                <i class="bi bi-search"></i>
+                <p>No templates match your search</p>
+            </div>
+        </div>
+    </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
