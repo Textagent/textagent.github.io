@@ -32,9 +32,9 @@
 | **Sharing** | AES-256-GCM encrypted sharing via Firebase; read-only shared links — decryption key stays in URL fragment (never sent to server) |
 | **Presentation** | Slide mode using `---` separators, keyboard navigation, multiple layouts & transitions, speaker notes, overview grid, 20+ PPT templates with image backgrounds |
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
-| **Code Execution** | Run bash commands in preview via [just-bash](https://justbash.dev/); executable math blocks with live evaluation (Nerdamer) |
+| **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
 | **Security** | SRI integrity hashes, XSS sanitization, ReDoS protection, encrypted API key storage, Firestore security rules |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 30+ templates (Coding, Maths, PPT categories), content statistics, modular codebase (13 JS modules), fully responsive mobile UI |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 50+ templates (7 categories: Coding, Maths, PPT, Documentation, Project, Technical, Creative), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI |
 
 ## 🤖 AI Assistant
 
@@ -119,7 +119,7 @@ Hover over any Mermaid diagram to reveal a toolbar:
 
 ### Supported Markdown Syntax
 
-Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Ordered/Unordered Lists · Tables · Code Blocks (180+ languages) · Blockquotes · Horizontal Rules · Task Lists · LaTeX Equations (inline & block) · Mermaid Diagrams · PlantUML Diagrams · Callout Blocks (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) · Footnotes (`[^1]`) · Emoji Shortcodes · Executable Bash Blocks
+Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Ordered/Unordered Lists · Tables · Code Blocks (180+ languages) · Blockquotes · Horizontal Rules · Task Lists · LaTeX Equations (inline & block) · Mermaid Diagrams · PlantUML Diagrams · Callout Blocks (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) · Footnotes (`[^1]`) · Emoji Shortcodes · Executable Bash · Python · JavaScript · SQL · HTML Blocks
 
 ## 🔧 Technologies
 
@@ -165,6 +165,8 @@ Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Orde
 | [pako](https://github.com/nicmart/pako) | Gzip compression |
 | [Neutralino.js](https://neutralino.js.org/) | Desktop app framework |
 | [just-bash](https://justbash.dev/) | In-browser bash execution |
+| [Pyodide](https://pyodide.org/) | In-browser Python (CPython via WASM) |
+| [sql.js](https://sql.js.org/) | In-browser SQLite (WASM) |
 
 ## 🤝 Contributing
 
@@ -188,6 +190,12 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-05** | 📦 **Template modularization** — split `templates.js` (3080→206 lines) into 7 category-based files under `js/templates/` for maintainability |
+| **2026-03-05** | ⚡ **JavaScript sandbox** — execute JS in sandboxed iframe with `console.log/warn/error` capture and inline output display |
+| **2026-03-05** | 🗄️ **SQL sandbox** — run SQL queries on in-memory SQLite database (sql.js WASM) with formatted table output and persistent tables across blocks |
+| **2026-03-05** | 🐍 **Python sandbox** — run Python code in browser via Pyodide (CPython WASM), with stdout/stderr capture and matplotlib support |
+| **2026-03-05** | 🌐 **HTML sandbox** — live HTML/CSS/JS preview in secure sandboxed iframe with auto-resize |
+| **2026-03-05** | 💻 **6 Coding templates** — Python Playground, HTML Playground, Bash Scripting, JavaScript Sandbox, HTML+JS Interactive, SQL Playground |
 | **2026-03-05** | 🔒 **Read-only shared links** — shared documents are now protected; Edit Copy creates a local fork instead of overwriting the original |
 | **2026-03-05** | 🖼️ **Image backgrounds for PPT templates** — 5 presentation templates with Unsplash image backgrounds |
 | **2026-03-05** | 🧮 **LaTeX evaluation improvements** — reserved constant handling (E, π), unsupported construct detection (limits, integrals, partials) |
