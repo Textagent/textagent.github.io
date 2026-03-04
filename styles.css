@@ -4509,15 +4509,15 @@ body.focus-mode #markdown-editor {
 .template-cat-pills {
   display: flex;
   gap: 4px;
-  background: var(--editor-bg);
-  border: 1px solid var(--border-color);
+  background: #f0f0f5;
+  border: 1px solid #d0d0d8;
   border-radius: 12px;
   padding: 4px;
 }
 
 [data-theme="dark"] .template-cat-pills {
-  background: #0f0f20;
-  border-color: #2d2d4a;
+  background: #1a1a30;
+  border-color: #3a3a5a;
 }
 
 .template-cat-btn {
