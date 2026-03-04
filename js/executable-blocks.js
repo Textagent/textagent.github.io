@@ -285,6 +285,54 @@
         });
     };
 
+    // Nerdamer reserved constants that collide with common variable names
+    var NERDAMER_RESERVED_CONSTANTS = {
+        'E': 'Euler\'s number (e ≈ 2.718)',
+        'I': 'imaginary unit (i)',
+        'PI': 'π (≈ 3.14159)'
+    };
+
+    /**
+     * Detect standalone reserved-constant letters in a LaTeX part.
+     * Returns { cleaned, found } where `cleaned` has the letters replaced
+     * with Nerdamer-safe placeholders and `found` lists which constants
+     * were detected (for the info note).
+     */
+    function handleReservedConstants(partLatex) {
+        var found = [];
+
+        // For each reserved constant, check if it appears as a standalone
+        // identifier (not part of a longer word / command).
+        // We replace it with a prefixed version so Nerdamer treats it as a
+        // plain variable, e.g. E → E_v, I → I_v
+        Object.keys(NERDAMER_RESERVED_CONSTANTS).forEach(function (key) {
+            // Match the key as a standalone token: not preceded/followed by a
+            // letter, digit, underscore, or backslash (LaTeX command).
+            var re = new RegExp('(?<![a-zA-Z0-9_\\\\])' + key + '(?![a-zA-Z0-9_])', 'g');
+            if (re.test(partLatex)) {
+                found.push({ symbol: key, description: NERDAMER_RESERVED_CONSTANTS[key] });
+                // Reset lastIndex after test()
+                re.lastIndex = 0;
+                partLatex = partLatex.replace(re, key + '_v');
+            }
+        });
+
+        return { cleaned: partLatex, found: found };
+    }
+
+    /**
+     * Undo the placeholder renaming in result text so the user sees the
+     * original variable names.
+     */
+    function restoreReservedNames(text) {
+        Object.keys(NERDAMER_RESERVED_CONSTANTS).forEach(function (key) {
+            // Handle both plain text (E_v) and LaTeX subscript (E_{v})
+            text = text.split(key + '_{v}').join(key);
+            text = text.split(key + '_v').join(key);
+        });
+        return text;
+    }
+
     function evaluateLatexBlock(container, btnEval) {
         var latex = container.getAttribute('data-latex') || '';
         if (!latex.trim()) return;
@@ -307,95 +355,143 @@
         btnEval.innerHTML = '<i class="bi bi-hourglass-split"></i> Computing...';
         outputEl.style.display = 'block';
 
-        try {
-            // Clean up the LaTeX for nerdamer
-            var cleanLatex = latex
-                .replace(/\\displaystyle\s*/g, '')
-                .replace(/\\left\s*/g, '')
-                .replace(/\\right\s*/g, '')
-                .replace(/\\,/g, '')
-                .replace(/\\;/g, '')
-                .replace(/\\!/g, '')
-                .replace(/\\quad/g, '')
-                .replace(/\\qquad/g, '')
-                .replace(/\\text\{[^}]*\}/g, '')
-                .replace(/\\mathrm\{([^}]*)\}/g, '$1')
-                .replace(/\\mathbf\{([^}]*)\}/g, '$1')
-                .replace(/\\vec\{([^}]*)\}/g, '$1')
-                .replace(/\\overrightarrow\{([^}]*)\}/g, '$1')
-                .replace(/\\hat\{([^}]*)\}/g, '$1')
-                .replace(/\\bar\{([^}]*)\}/g, '$1')
-                .trim();
+        // Detect unsupported constructs before trying nerdamer
+        var unsupported = [];
+        if (/\\lim\b/.test(latex)) unsupported.push('limits (\\lim)');
+        if (/\\int\b/.test(latex)) unsupported.push('integrals (\\int)');
+        if (/\\partial\b/.test(latex)) unsupported.push('partial derivatives (∂)');
+        if (/\\nabla\b/.test(latex)) unsupported.push('nabla (∇)');
+        if (/\\infty\b/.test(latex)) unsupported.push('infinity (∞)');
+        if (/\\(iint|iiint|oint)\b/.test(latex)) unsupported.push('multi/surface integrals');
+        if (/\\prod\b/.test(latex)) unsupported.push('products (∏)');
 
-            // Try to parse and evaluate
-            var expr = nerdamer.convertFromLaTeX(cleanLatex);
-            var resultText;
-            var resultType;
+        // If equation has = sign, try to evaluate each side
+        var latexParts = [latex];
+        if (latex.includes('=') && !latex.includes('\\neq') && !latex.includes('\\leq') && !latex.includes('\\geq')) {
+            latexParts = latex.split('=').map(function (p) { return p.trim(); }).filter(function (p) { return p.length > 0; });
+        }
 
+        var evaluated = false;
+        var lastError = '';
+        var allReservedFound = [];   // collect across all parts
+
+        for (var pi = 0; pi < latexParts.length && !evaluated; pi++) {
             try {
-                // Try numeric evaluation first
-                var numResult = expr.evaluate();
-                var numStr = numResult.text('decimals');
+                var partLatex = latexParts[pi]
+                    .replace(/\\displaystyle\s*/g, '')
+                    .replace(/\\left\s*/g, '')
+                    .replace(/\\right\s*/g, '')
+                    .replace(/\\,/g, '')
+                    .replace(/\\;/g, '')
+                    .replace(/\\!/g, '')
+                    .replace(/\\quad/g, '')
+                    .replace(/\\qquad/g, '')
+                    .replace(/\\text\{[^}]*\}/g, '')
+                    .replace(/\\mathrm\{([^}]*)\}/g, '$1')
+                    .replace(/\\mathbf\{([^}]*)\}/g, '$1')
+                    .replace(/\\vec\{([^}]*)\}/g, '$1')
+                    .replace(/\\overrightarrow\{([^}]*)\}/g, '$1')
+                    .replace(/\\hat\{([^}]*)\}/g, '$1')
+                    .replace(/\\bar\{([^}]*)\}/g, '$1')
+                    .trim();
 
-                // Check if it's actually numeric (not still symbolic)
-                if (/^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(numStr) || numStr === 'Infinity' || numStr === '-Infinity') {
-                    // Format nice numbers
-                    var num = parseFloat(numStr);
-                    if (Number.isInteger(num) && Math.abs(num) < 1e15) {
-                        resultText = num.toString();
-                    } else {
-                        resultText = parseFloat(num.toPrecision(10)).toString();
+                if (!partLatex) continue;
+
+                // Detect & rename reserved constants so Nerdamer treats them as variables
+                var reserved = handleReservedConstants(partLatex);
+                partLatex = reserved.cleaned;
+                reserved.found.forEach(function (f) {
+                    // Avoid duplicates across parts
+                    if (!allReservedFound.some(function (a) { return a.symbol === f.symbol; })) {
+                        allReservedFound.push(f);
                     }
-                    resultType = 'numeric';
-                } else {
-                    // It's still symbolic after evaluate
-                    resultText = numStr;
+                });
+
+                var expr = nerdamer.convertFromLaTeX(partLatex);
+                var resultText;
+                var resultType;
+
+                try {
+                    var numResult = expr.evaluate();
+                    var numStr = numResult.text('decimals');
+
+                    if (/^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(numStr) || numStr === 'Infinity' || numStr === '-Infinity') {
+                        var num = parseFloat(numStr);
+                        if (Number.isInteger(num) && Math.abs(num) < 1e15) {
+                            resultText = num.toString();
+                        } else {
+                            resultText = parseFloat(num.toPrecision(10)).toString();
+                        }
+                        resultType = 'numeric';
+                    } else {
+                        resultText = numStr;
+                        resultType = 'symbolic';
+                    }
+                } catch (evalErr) {
+                    resultText = expr.text();
                     resultType = 'symbolic';
                 }
-            } catch (evalErr) {
-                // Numeric evaluation failed, show symbolic form
-                resultText = expr.text();
-                resultType = 'symbolic';
-            }
 
-            // Also get the LaTeX representation of the result
-            var resultLatex = '';
-            try {
-                resultLatex = expr.toTeX();
-            } catch (e) { /* ignore */ }
+                // Restore original variable names in the output
+                resultText = restoreReservedNames(resultText);
 
-            var html = '';
-            if (resultType === 'numeric') {
-                html = '<span class="math-result-label">Result:</span> <span class="math-result-value latex-result-numeric">' + escapeHtml(resultText) + '</span>';
-            } else {
-                html = '<span class="math-result-label">Simplified:</span> <span class="math-result-value latex-result-symbolic">' + escapeHtml(resultText) + '</span>';
-            }
+                var resultLatex = '';
+                try {
+                    resultLatex = expr.toTeX();
+                    resultLatex = restoreReservedNames(resultLatex);
+                } catch (e) { /* ignore */ }
 
-            // If we have a LaTeX result, render it with MathJax
-            if (resultLatex && resultType === 'symbolic') {
-                var latexDisplay = document.createElement('div');
-                latexDisplay.className = 'latex-result-rendered';
-                latexDisplay.textContent = '$$' + resultLatex + '$$';
-                outputEl.innerHTML = html;
-                outputEl.appendChild(latexDisplay);
-                if (window.MathJax) {
-                    MathJax.typesetPromise([latexDisplay]).catch(function () { });
+                var html = '';
+                var sideLabel = latexParts.length > 1 ? (pi === 0 ? 'LHS' : 'RHS') + ' → ' : '';
+
+                if (resultType === 'numeric') {
+                    html = '<span class="math-result-label">' + sideLabel + 'Result:</span> <span class="math-result-value latex-result-numeric">' + escapeHtml(resultText) + '</span>';
+                } else {
+                    html = '<span class="math-result-label">' + sideLabel + 'Simplified:</span> <span class="math-result-value latex-result-symbolic">' + escapeHtml(resultText) + '</span>';
                 }
-            } else {
-                outputEl.innerHTML = html;
+
+                if (resultLatex && resultType === 'symbolic') {
+                    var latexDisplay = document.createElement('div');
+                    latexDisplay.className = 'latex-result-rendered';
+                    latexDisplay.textContent = '$$' + resultLatex + '$$';
+                    outputEl.innerHTML = html;
+                    outputEl.appendChild(latexDisplay);
+                    if (window.MathJax) {
+                        MathJax.typesetPromise([latexDisplay]).catch(function () { });
+                    }
+                } else {
+                    outputEl.innerHTML = html;
+                }
+                evaluated = true;
+            } catch (partErr) {
+                lastError = partErr.message || String(partErr);
             }
-        } catch (err) {
-            var errMsg = err.message || String(err);
-            // Make error messages more user-friendly
-            if (errMsg.includes('parse') || errMsg.includes('unexpected') || errMsg.includes('token')) {
-                outputEl.innerHTML = '<span class="code-output-error"><i class="bi bi-info-circle"></i> This expression contains notation that cannot be evaluated computationally.</span>';
-            } else {
-                outputEl.innerHTML = '<span class="code-output-error"><i class="bi bi-exclamation-triangle"></i> ' + escapeHtml(errMsg) + '</span>';
-            }
-        } finally {
-            btnEval.disabled = false;
-            btnEval.innerHTML = '<i class="bi bi-calculator"></i> Evaluate';
         }
+
+        // If reserved constants were detected, append an info note
+        if (evaluated && allReservedFound.length > 0) {
+            var noteItems = allReservedFound.map(function (f) {
+                return '<b>' + escapeHtml(f.symbol) + '</b> is a Nerdamer reserved constant (' + escapeHtml(f.description) + ')';
+            }).join('; ');
+            var noteEl = document.createElement('div');
+            noteEl.className = 'latex-reserved-note';
+            noteEl.innerHTML = '<i class="bi bi-info-circle"></i> ' + noteItems + ' — treated as a variable here.';
+            outputEl.appendChild(noteEl);
+        }
+
+        if (!evaluated) {
+            // Show a friendly error
+            if (unsupported.length > 0) {
+                outputEl.innerHTML = '<span class="code-output-muted"><i class="bi bi-info-circle"></i> This expression uses ' +
+                    escapeHtml(unsupported.join(', ')) +
+                    ' — which cannot be evaluated numerically.</span>';
+            } else {
+                outputEl.innerHTML = '<span class="code-output-muted"><i class="bi bi-info-circle"></i> This expression contains notation that Nerdamer cannot evaluate.</span>';
+            }
+        }
+
+        btnEval.disabled = false;
+        btnEval.innerHTML = '<i class="bi bi-calculator"></i> Evaluate';
     }
 
 })(window.MDView);
