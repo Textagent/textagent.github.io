@@ -516,13 +516,13 @@
               });
               const overallPercent = totalSize > 0 ? Math.round((totalLoaded / totalSize) * 100) : 0;
 
-              // Update consent modal progress
-              aiProgressBar.style.width = overallPercent + '%';
-              aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
+              // Update consent modal progress (if visible)
+              if (aiProgressBar) aiProgressBar.style.width = overallPercent + '%';
+              if (aiProgressStatus) aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
 
               const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
               const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
-              aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
+              if (aiProgressDetail) aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
 
               // Also update inline progress in AI panel
               updateAiInlineProgress(overallPercent, `Downloading Qwen 3.5... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
@@ -534,7 +534,9 @@
         }
 
         case 'status':
-          aiProgressStatus.textContent = msg.message;
+          if (aiProgressStatus) aiProgressStatus.textContent = msg.message;
+          // Also show status in the inline panel bar
+          addAiStatusBar('loading', msg.message);
           break;
 
         case 'loaded':
