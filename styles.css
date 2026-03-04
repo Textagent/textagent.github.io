@@ -604,6 +604,94 @@ a:focus {
   border-radius: 6px 6px 0 0;
 }
 
+/* ========================================
+   EXECUTABLE MATH BLOCKS (math.js)
+   ======================================== */
+
+.executable-math-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.executable-math-container pre {
+  margin-bottom: 0;
+}
+
+.executable-math-container:hover .code-block-toolbar {
+  opacity: 1;
+}
+
+/* Evaluate button — purple/blue accent */
+.math-eval-btn {
+  background-color: #6f42c1;
+  border-color: rgba(111, 66, 193, 0.6);
+  color: #fff;
+}
+
+.math-eval-btn:hover {
+  background-color: #8250df;
+}
+
+[data-theme="dark"] .math-eval-btn {
+  background-color: #6f42c1;
+  border-color: rgba(111, 66, 193, 0.5);
+}
+
+[data-theme="dark"] .math-eval-btn:hover {
+  background-color: #8250df;
+}
+
+/* Math output styling */
+.math-output {
+  background-color: #1b1f23;
+  color: #c9d1d9;
+}
+
+.math-result-label {
+  color: #8b949e;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.math-result-value {
+  color: #7ee787;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.math-result-line {
+  padding: 3px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.math-result-expr {
+  color: #8b949e;
+  font-size: 13px;
+}
+
+.math-result-arrow {
+  color: #6f42c1;
+  font-weight: bold;
+}
+
+/* When math output has rounded bottom, remove pre rounding */
+.executable-math-container .code-output[style*="display: block"]~pre,
+.executable-math-container:has(.code-output[style*="display: block"]) pre {
+  border-radius: 6px 6px 0 0;
+}
+
+/* Math expression code style */
+.math-expr {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: #d2a8ff;
+}
+
+[data-theme="dark"] .math-expr {
+  color: #d2a8ff;
+}
+
 
 .stats-container {
   font-size: 0.9rem;

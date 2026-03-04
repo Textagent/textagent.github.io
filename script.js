@@ -107,6 +107,12 @@ document.addEventListener("DOMContentLoaded", function () {
       return `<div class="mermaid-container"><div class="mermaid" id="${uniqueId}">${code}</div></div>`;
     }
 
+    // Detect executable math code blocks
+    if ((language || '').toLowerCase() === 'math') {
+      const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<div class="executable-math-container"><pre><code class="hljs math-expr">${escapedCode}</code></pre></div>`;
+    }
+
     // Detect executable bash/sh/shell code blocks
     const isExecutable = ['bash', 'sh', 'shell'].includes((language || '').toLowerCase());
     const validLanguage = hljs.getLanguage(language) ? language : "plaintext";
@@ -307,6 +313,19 @@ seq 1 5 | sort -r | tr '\\n' ' '
 \`\`\`bash
 echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
 \`\`\`
+
+## 🧮 Executable Math Blocks
+
+Evaluate math expressions **directly in the preview** — powered by [math.js](https://mathjs.org/). Hover and click **▶ Evaluate**.
+
+\`\`\`math
+2 + 3 * 4
+\`\`\`
+
+\`\`\`math
+sqrt(144) + pi
+sin(pi/4)
+\`\`\`
 `;
 
   markdownEditor.value = sampleMarkdown;
@@ -365,8 +384,9 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
       // Feature 25: Render PlantUML diagrams
       renderPlantUML(markdownPreview);
 
-      // Executable code blocks (just-bash)
+      // Executable code blocks (just-bash) & math blocks
       addCodeBlockToolbars();
+      addMathBlockToolbars();
 
       if (window.MathJax) {
         try {
@@ -2410,6 +2430,146 @@ echo '{"users": ["Alice", "Bob", "Charlie"]}' | jq '.users | length'
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ========================================
+  // EXECUTABLE MATH BLOCKS (math.js)
+  // ========================================
+
+  /**
+   * Adds Evaluate and Copy toolbar buttons to every executable math block container.
+   * Safe to call multiple times — existing toolbars are not duplicated.
+   */
+  function addMathBlockToolbars() {
+    markdownPreview.querySelectorAll('.executable-math-container').forEach(container => {
+      if (container.querySelector('.code-block-toolbar')) return; // already added
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'code-block-toolbar';
+      toolbar.setAttribute('aria-label', 'Math block actions');
+
+      // Evaluate button
+      const btnEval = document.createElement('button');
+      btnEval.className = 'code-toolbar-btn math-eval-btn';
+      btnEval.title = 'Evaluate math expression';
+      btnEval.setAttribute('aria-label', 'Evaluate math');
+      btnEval.innerHTML = '<i class="bi bi-play-fill"></i> Evaluate';
+      btnEval.addEventListener('click', () => evaluateMathBlock(container, btnEval));
+
+      // Copy button
+      const btnCopy = document.createElement('button');
+      btnCopy.className = 'code-toolbar-btn code-copy-btn';
+      btnCopy.title = 'Copy expression';
+      btnCopy.setAttribute('aria-label', 'Copy expression');
+      btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
+      btnCopy.addEventListener('click', () => {
+        const codeEl = container.querySelector('code');
+        if (!codeEl) return;
+        navigator.clipboard.writeText(codeEl.textContent).then(() => {
+          btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
+          setTimeout(() => { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+        }).catch(() => {
+          btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
+          setTimeout(() => { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+        });
+      });
+
+      toolbar.appendChild(btnEval);
+      toolbar.appendChild(btnCopy);
+      container.insertBefore(toolbar, container.firstChild);
+    });
+  }
+
+  /**
+   * Evaluates the math expression inside an executable-math-container using math.js.
+   * Supports multi-line expressions — evaluates each line and shows all results.
+   */
+  function evaluateMathBlock(container, btnEval) {
+    const codeEl = container.querySelector('code');
+    if (!codeEl) return;
+    const code = codeEl.textContent.trim();
+
+    // Create or find the output container
+    let outputEl = container.querySelector('.code-output');
+    if (!outputEl) {
+      outputEl = document.createElement('div');
+      outputEl.className = 'code-output math-output';
+      container.appendChild(outputEl);
+    }
+
+    // Check if math.js is loaded
+    if (typeof math === 'undefined') {
+      outputEl.innerHTML = '<span class="code-output-error">⏳ math.js is still loading. Please try again.</span>';
+      outputEl.style.display = 'block';
+      return;
+    }
+
+    // Show loading state
+    btnEval.disabled = true;
+    btnEval.innerHTML = '<i class="bi bi-hourglass-split"></i> Computing...';
+    outputEl.style.display = 'block';
+
+    try {
+      // Split into lines, evaluate each non-empty line
+      const lines = code.split('\n').filter(l => l.trim() !== '' && !l.trim().startsWith('//')); // skip comments
+      const scope = {}; // shared scope across lines for variable persistence
+      const results = [];
+
+      for (const line of lines) {
+        try {
+          const result = math.evaluate(line.trim(), scope);
+          if (result !== undefined) {
+            // Format the result nicely
+            let formatted;
+            if (typeof result === 'object' && result.entries) {
+              // Matrix result
+              formatted = math.format(result, { precision: 10 });
+            } else if (typeof result === 'number') {
+              formatted = math.format(result, { precision: 10 });
+            } else if (typeof result === 'function') {
+              formatted = '(function defined)';
+            } else {
+              formatted = String(result);
+            }
+            results.push({ expr: line.trim(), value: formatted });
+          }
+        } catch (lineErr) {
+          results.push({ expr: line.trim(), value: '❌ ' + lineErr.message, isError: true });
+        }
+      }
+
+      // Build output HTML
+      let outputHtml = '';
+      if (results.length === 1) {
+        // Single result — show prominently
+        const r = results[0];
+        if (r.isError) {
+          outputHtml = '<span class="code-output-error">' + escapeHtml(r.value) + '</span>';
+        } else {
+          outputHtml = '<span class="math-result-label">Result:</span> <span class="math-result-value">' + escapeHtml(r.value) + '</span>';
+        }
+      } else {
+        // Multiple results — show expression → result for each
+        for (const r of results) {
+          if (r.isError) {
+            outputHtml += '<div class="math-result-line"><span class="math-result-expr">' + escapeHtml(r.expr) + '</span> <span class="code-output-error">→ ' + escapeHtml(r.value) + '</span></div>';
+          } else {
+            outputHtml += '<div class="math-result-line"><span class="math-result-expr">' + escapeHtml(r.expr) + '</span> <span class="math-result-arrow">→</span> <span class="math-result-value">' + escapeHtml(r.value) + '</span></div>';
+          }
+        }
+      }
+
+      if (results.length === 0) {
+        outputHtml = '<span class="code-output-muted">(no result)</span>';
+      }
+
+      outputEl.innerHTML = outputHtml;
+    } catch (err) {
+      outputEl.innerHTML = '<span class="code-output-error">Error: ' + escapeHtml(err.message) + '</span>';
+    } finally {
+      btnEval.disabled = false;
+      btnEval.innerHTML = '<i class="bi bi-play-fill"></i> Evaluate';
+    }
   }
 
   // ========================================
