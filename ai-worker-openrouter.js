@@ -18,7 +18,7 @@
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
-const MODEL_ID = 'openrouter/auto';
+let modelId = 'openrouter/auto';
 
 const TOKEN_LIMITS = {
     summarize: 256, expand: 512, rephrase: 384, grammar: 384,
@@ -68,7 +68,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                 'X-Title': 'MDview',
             },
             body: JSON.stringify({
-                model: MODEL_ID,
+                model: modelId,
                 messages,
                 max_tokens: maxTokens,
                 stream: true,
@@ -153,6 +153,7 @@ self.addEventListener('message', async (event) => {
     const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
     switch (type) {
         case 'setApiKey': apiKey = event.data.apiKey; break;
+        case 'setModelId': modelId = event.data.modelId; break;
         case 'load': await validateApiKey(); break;
         case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking); break;
         case 'ping': self.postMessage({ type: 'pong' }); break;

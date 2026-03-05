@@ -45,87 +45,36 @@
   const aiApikeyError = document.getElementById('ai-apikey-error');
 
   let aiWorker = null;       // Qwen local worker
-  let groqWorker = null;     // Groq cloud worker
-  let openrouterWorker = null; // OpenRouter cloud worker
-  let geminiWorker = null;   // Gemini cloud worker
   let aiModelLoaded = false; // Qwen loaded flag
-  let groqModelLoaded = false;
-  let openrouterModelLoaded = false;
-  let geminiModelLoaded = false;
   let aiIsGenerating = false;
   let aiMessageIdCounter = 0;
   let aiPanelOpen = false;
   let currentAiModel = localStorage.getItem('md-viewer-ai-model') || 'qwen-local';
-  let groqApiKey = localStorage.getItem('md-viewer-groq-key') || null;
-  let openrouterApiKey = localStorage.getItem('md-viewer-openrouter-key') || null;
-  let geminiApiKey = localStorage.getItem('md-viewer-gemini-key') || null;
   let streamingMessageId = null;
   let pendingProviderForKey = null; // Which provider the API key modal is open for
   let pendingAiMessage = null; // Queued message to send after model loads
 
-  // Provider configuration map
-  const CLOUD_PROVIDERS = {
-    'groq-llama': {
-      label: 'Llama 3.3 · Groq',
-      badge: 'Llama 3.3 · Groq',
-      icon: 'bi bi-cloud',
-      statusReady: 'Llama 3.3 70B · Groq Cloud',
-      workerFile: 'ai-worker-groq.js',
-      keyStorageKey: 'md-viewer-groq-key',
-      dialogTitle: 'Connect to Groq',
-      dialogDesc: 'Enter your free API key to use <strong>Llama 3.3 70B</strong>',
-      dialogPlaceholder: 'gsk_xxxxxxxxxxxxxxxxxxxx',
-      dialogLink: 'https://console.groq.com/keys',
-      dialogLinkText: 'console.groq.com/keys',
-      dialogIcon: 'bi bi-cloud',
-      getKey: () => groqApiKey,
-      setKey: (k) => { groqApiKey = k; },
-      getWorker: () => groqWorker,
-      setWorker: (w) => { groqWorker = w; },
-      isLoaded: () => groqModelLoaded,
-      setLoaded: (v) => { groqModelLoaded = v; },
-    },
-    'gemini-flash': {
-      label: 'Gemini 3.1 · Google',
-      badge: 'Gemini 3.1 · Google',
-      icon: 'bi bi-google',
-      statusReady: 'Gemini 3.1 Flash Lite · Google',
-      workerFile: 'ai-worker-gemini.js',
-      keyStorageKey: 'md-viewer-gemini-key',
-      dialogTitle: 'Connect to Gemini',
-      dialogDesc: 'Enter your free API key to use <strong>Gemini 3.1 Flash Lite</strong>',
-      dialogPlaceholder: 'AIzaSy_xxxxxxxxxxxxxxxxxxxxx',
-      dialogLink: 'https://aistudio.google.com/apikey',
-      dialogLinkText: 'aistudio.google.com/apikey',
-      dialogIcon: 'bi bi-google',
-      getKey: () => geminiApiKey,
-      setKey: (k) => { geminiApiKey = k; },
-      getWorker: () => geminiWorker,
-      setWorker: (w) => { geminiWorker = w; },
-      isLoaded: () => geminiModelLoaded,
-      setLoaded: (v) => { geminiModelLoaded = v; },
-    },
-    'openrouter-free': {
-      label: 'Auto · OpenRouter',
-      badge: 'Auto · OpenRouter',
-      icon: 'bi bi-globe2',
-      statusReady: 'Auto Model · OpenRouter',
-      workerFile: 'ai-worker-openrouter.js',
-      keyStorageKey: 'md-viewer-openrouter-key',
-      dialogTitle: 'Connect to OpenRouter',
-      dialogDesc: 'Enter your free API key for <strong>300+ AI models</strong>',
-      dialogPlaceholder: 'sk-or-xxxxxxxxxxxxxxxxxxxx',
-      dialogLink: 'https://openrouter.ai/keys',
-      dialogLinkText: 'openrouter.ai/keys',
-      dialogIcon: 'bi bi-globe2',
-      getKey: () => openrouterApiKey,
-      setKey: (k) => { openrouterApiKey = k; },
-      getWorker: () => openrouterWorker,
-      setWorker: (w) => { openrouterWorker = w; },
-      isLoaded: () => openrouterModelLoaded,
-      setLoaded: (v) => { openrouterModelLoaded = v; },
-    },
-  };
+  // --- Build CLOUD_PROVIDERS dynamically from the central AI_MODELS config ---
+  const _models = window.AI_MODELS || {};
+  const CLOUD_PROVIDERS = {};
+  Object.keys(_models).forEach(id => {
+    const cfg = _models[id];
+    if (cfg.isLocal) return; // skip local models
+    // Per-provider runtime state (kept in closure)
+    const _state = {
+      key: localStorage.getItem(cfg.keyStorageKey) || null,
+      worker: null,
+      loaded: false,
+    };
+    CLOUD_PROVIDERS[id] = Object.assign({}, cfg, {
+      getKey: () => _state.key,
+      setKey: (k) => { _state.key = k; },
+      getWorker: () => _state.worker,
+      setWorker: (w) => { _state.worker = w; },
+      isLoaded: () => _state.loaded,
+      setLoaded: (v) => { _state.loaded = v; },
+    });
+  });
 
   // Unified helpers
   function getActiveWorker() {
@@ -157,27 +106,42 @@
 
   // --- Initialize model selector UI on load ---
   function initModelSelectorUI() {
-    // Restore last selected model
+    buildModelDropdown();
     updateModelUI(currentAiModel);
-    // Mark the correct option as active
-    if (aiModelDropdown) {
-      aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.model === currentAiModel);
+  }
+
+  // Build dropdown buttons dynamically from AI_MODELS
+  function buildModelDropdown() {
+    if (!aiModelDropdown) return;
+    aiModelDropdown.innerHTML = '';
+    Object.keys(_models).forEach(id => {
+      const cfg = _models[id];
+      const btn = document.createElement('button');
+      btn.className = 'ai-model-option' + (id === currentAiModel ? ' active' : '');
+      btn.dataset.model = id;
+      btn.innerHTML = `<i class="${cfg.icon}"></i><div><strong>${cfg.dropdownName}</strong><small>${cfg.dropdownDesc}</small></div>`;
+      btn.addEventListener('click', () => {
+        aiModelSelector.classList.remove('open');
+        if (id === currentAiModel) return;
+        const provider = CLOUD_PROVIDERS[id];
+        if (provider) {
+          if (!provider.getKey()) { showApiKeyModal(id); return; }
+          switchToModel(id);
+        } else {
+          switchToModel(id);  // local model
+        }
       });
-    }
+      aiModelDropdown.appendChild(btn);
+    });
   }
   initModelSelectorUI();
 
-  function updateModelUI(modelId) {
-    const p = CLOUD_PROVIDERS[modelId];
-    if (p) {
-      if (aiModelLabel) aiModelLabel.textContent = p.label;
-      if (aiModelBtnIcon) { aiModelBtnIcon.className = p.icon; }
-      if (aiModelBadge) aiModelBadge.textContent = p.badge;
-    } else {
-      if (aiModelLabel) aiModelLabel.textContent = 'Qwen 3.5 · Local';
-      if (aiModelBtnIcon) { aiModelBtnIcon.className = 'bi bi-pc-display'; }
-      if (aiModelBadge) aiModelBadge.textContent = 'Qwen 3.5 · Local';
+  function updateModelUI(mid) {
+    const cfg = _models[mid];
+    if (cfg) {
+      if (aiModelLabel) aiModelLabel.textContent = cfg.label;
+      if (aiModelBtnIcon) { aiModelBtnIcon.className = cfg.icon; }
+      if (aiModelBadge) aiModelBadge.textContent = cfg.badge;
     }
   }
 
@@ -195,30 +159,6 @@
       aiModelSelector.classList.remove('open');
     }
   });
-
-  // Model option click
-  if (aiModelDropdown) {
-    aiModelDropdown.querySelectorAll('.ai-model-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        const model = opt.dataset.model;
-        aiModelSelector.classList.remove('open');
-        if (model === currentAiModel) return;
-
-        const provider = CLOUD_PROVIDERS[model];
-        if (provider) {
-          // Cloud model — need API key
-          if (!provider.getKey()) {
-            showApiKeyModal(model);
-            return;
-          }
-          switchToModel(model);
-        } else {
-          // Qwen local
-          switchToModel('qwen-local');
-        }
-      });
-    });
-  }
 
   function switchToModel(modelId) {
     currentAiModel = modelId;
@@ -684,8 +624,11 @@
       else { addAiStatusBar('error', errorMsg); }
     });
 
-    // Send API key and load
+    // Send API key, optional model override, and load
     worker.postMessage({ type: 'setApiKey', apiKey: provider.getKey() });
+    if (provider.workerModelId) {
+      worker.postMessage({ type: 'setModelId', modelId: provider.workerModelId });
+    }
     worker.postMessage({ type: 'load' });
   }
 
