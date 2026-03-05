@@ -1,0 +1,222 @@
+/* GitHub markdown prettylights theme variables (light + dark) + custom preview themes */
+
+.markdown-body {
+  color-scheme: light;
+  --color-prettylights-syntax-comment: #6a737d;
+  --color-prettylights-syntax-constant: #005cc5;
+  --color-prettylights-syntax-entity: #6f42c1;
+  --color-prettylights-syntax-storage-modifier-import: #24292e;
+  --color-prettylights-syntax-entity-tag: #22863a;
+  --color-prettylights-syntax-keyword: #d73a49;
+  --color-prettylights-syntax-string: #032f62;
+  --color-prettylights-syntax-variable: #e36209;
+  --color-prettylights-syntax-brackethighlighter-unmatched: #b31d28;
+  --color-prettylights-syntax-invalid-illegal-text: #fafbfc;
+  --color-prettylights-syntax-invalid-illegal-bg: #b31d28;
+  --color-prettylights-syntax-carriage-return-text: #fafbfc;
+  --color-prettylights-syntax-carriage-return-bg: #d73a49;
+  --color-prettylights-syntax-string-regexp: #22863a;
+  --color-prettylights-syntax-markup-list: #735c0f;
+  --color-prettylights-syntax-markup-heading: #005cc5;
+  --color-prettylights-syntax-markup-italic: #24292e;
+  --color-prettylights-syntax-markup-bold: #24292e;
+  --color-prettylights-syntax-markup-deleted-text: #b31d28;
+  --color-prettylights-syntax-markup-deleted-bg: #ffeef0;
+  --color-prettylights-syntax-markup-inserted-text: #22863a;
+  --color-prettylights-syntax-markup-inserted-bg: #f0fff4;
+  --color-prettylights-syntax-markup-changed-text: #e36209;
+  --color-prettylights-syntax-markup-changed-bg: #ffebda;
+  --color-prettylights-syntax-markup-ignored-text: #f6f8fa;
+  --color-prettylights-syntax-markup-ignored-bg: #005cc5;
+  --color-prettylights-syntax-meta-diff-range: #6f42c1;
+  --color-prettylights-syntax-brackethighlighter-angle: #586069;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #e1e4e8;
+  --color-prettylights-syntax-constant-other-reference-link: #032f62;
+  --color-fg-default: #24292e;
+  --color-fg-muted: #586069;
+  --color-fg-subtle: #6a737d;
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f6f8fa;
+  --color-border-default: #e1e4e8;
+  --color-border-muted: #eaecef;
+  --color-neutral-muted: rgba(175, 184, 193, 0.2);
+  --color-accent-fg: #0366d6;
+  --color-accent-emphasis: #0366d6;
+  --color-attention-subtle: #fff5b1;
+  --color-danger-fg: #d73a49;
+}
+
+/* Styles for GitHub markdown preview dark mode */
+[data-theme="dark"] .markdown-body {
+  color-scheme: dark;
+  --color-prettylights-syntax-comment: #8b949e;
+  --color-prettylights-syntax-constant: #79c0ff;
+  --color-prettylights-syntax-entity: #d2a8ff;
+  --color-prettylights-syntax-storage-modifier-import: #c9d1d9;
+  --color-prettylights-syntax-entity-tag: #7ee787;
+  --color-prettylights-syntax-keyword: #ff7b72;
+  --color-prettylights-syntax-string: #a5d6ff;
+  --color-prettylights-syntax-variable: #ffa657;
+  --color-prettylights-syntax-brackethighlighter-unmatched: #f85149;
+  --color-prettylights-syntax-invalid-illegal-text: #f0f6fc;
+  --color-prettylights-syntax-invalid-illegal-bg: #8e1519;
+  --color-prettylights-syntax-carriage-return-text: #f0f6fc;
+  --color-prettylights-syntax-carriage-return-bg: #b62324;
+  --color-prettylights-syntax-string-regexp: #7ee787;
+  --color-prettylights-syntax-markup-list: #f2cc60;
+  --color-prettylights-syntax-markup-heading: #1f6feb;
+  --color-prettylights-syntax-markup-italic: #c9d1d9;
+  --color-prettylights-syntax-markup-bold: #c9d1d9;
+  --color-prettylights-syntax-markup-deleted-text: #ffdcd7;
+  --color-prettylights-syntax-markup-deleted-bg: #67060c;
+  --color-prettylights-syntax-markup-inserted-text: #aff5b4;
+  --color-prettylights-syntax-markup-inserted-bg: #033a16;
+  --color-prettylights-syntax-markup-changed-text: #ffdfb6;
+  --color-prettylights-syntax-markup-changed-bg: #5a1e02;
+  --color-prettylights-syntax-markup-ignored-text: #c9d1d9;
+  --color-prettylights-syntax-markup-ignored-bg: #1158c7;
+  --color-prettylights-syntax-meta-diff-range: #d2a8ff;
+  --color-prettylights-syntax-brackethighlighter-angle: #8b949e;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #484f58;
+  --color-prettylights-syntax-constant-other-reference-link: #a5d6ff;
+  --color-fg-default: #c9d1d9;
+  --color-fg-muted: #8b949e;
+  --color-fg-subtle: #484f58;
+  --color-canvas-default: #0d1117;
+  --color-canvas-subtle: #161b22;
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+  --color-neutral-muted: rgba(110, 118, 129, 0.4);
+  --color-accent-fg: #58a6ff;
+  --color-accent-emphasis: #1f6feb;
+  --color-attention-subtle: rgba(187, 128, 9, 0.15);
+  --color-danger-fg: #f85149;
+}
+
+/* Override specific styles for dark mode tables and code */
+[data-theme="dark"] .markdown-body table tr {
+  background-color: var(--table-bg);
+}
+
+[data-theme="dark"] .markdown-body table tr:nth-child(2n) {
+  background-color: #1c2128;
+  /* Slightly lighter than base dark background */
+}
+
+[data-theme="dark"] .markdown-body pre {
+  background-color: var(--code-bg);
+}
+
+[data-theme="dark"] .markdown-body code {
+  background-color: var(--code-bg);
+}
+
+[data-theme="dark"] .hljs {
+  color: #e8eaed;
+}
+
+
+/* ========================================
+   CUSTOM PREVIEW THEMES
+   ======================================== */
+
+/* GitLab Theme */
+[data-preview-theme="gitlab"] .markdown-body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  --color-canvas-default: #fafafa;
+  --color-fg-default: #303030;
+  --color-border-default: #dbdbdb;
+  --color-accent-fg: #1068bf;
+}
+
+[data-theme="dark"][data-preview-theme="gitlab"] .markdown-body {
+  --color-canvas-default: #1a1a2e;
+  --color-fg-default: #e0e0e0;
+  --color-border-default: #3a3a5e;
+  --color-accent-fg: #63b3ed;
+}
+
+/* Notion Theme */
+[data-preview-theme="notion"] .markdown-body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  --color-canvas-default: #ffffff;
+  --color-fg-default: #37352f;
+  --color-border-default: #e3e2e0;
+  --color-accent-fg: #2eaadc;
+  letter-spacing: -0.003em;
+}
+
+[data-preview-theme="notion"] .markdown-body h1,
+[data-preview-theme="notion"] .markdown-body h2,
+[data-preview-theme="notion"] .markdown-body h3 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
+}
+
+[data-theme="dark"][data-preview-theme="notion"] .markdown-body {
+  --color-canvas-default: #191919;
+  --color-fg-default: #e0e0e0;
+  --color-border-default: #373737;
+  --color-accent-fg: #529cca;
+}
+
+/* Dracula Theme */
+[data-preview-theme="dracula"] .markdown-body {
+  --color-canvas-default: #282a36;
+  --color-fg-default: #f8f8f2;
+  --color-border-default: #44475a;
+  --color-accent-fg: #bd93f9;
+  --color-prettylights-syntax-comment: #6272a4;
+  --color-prettylights-syntax-keyword: #ff79c6;
+  --color-prettylights-syntax-string: #f1fa8c;
+  --color-prettylights-syntax-entity-tag: #50fa7b;
+  --color-prettylights-syntax-constant: #8be9fd;
+  background-color: #282a36 !important;
+  color: #f8f8f2 !important;
+}
+
+[data-preview-theme="dracula"] .markdown-body pre,
+[data-preview-theme="dracula"] .markdown-body code {
+  background-color: #1e1f29 !important;
+}
+
+/* Solarized Theme */
+[data-preview-theme="solarized"] .markdown-body {
+  --color-canvas-default: #fdf6e3;
+  --color-fg-default: #657b83;
+  --color-border-default: #eee8d5;
+  --color-accent-fg: #268bd2;
+  background-color: #fdf6e3 !important;
+  color: #657b83 !important;
+}
+
+[data-theme="dark"][data-preview-theme="solarized"] .markdown-body {
+  --color-canvas-default: #002b36;
+  --color-fg-default: #839496;
+  --color-border-default: #073642;
+  --color-accent-fg: #268bd2;
+  background-color: #002b36 !important;
+  color: #839496 !important;
+}
+
+[data-preview-theme="solarized"] .markdown-body pre,
+[data-preview-theme="solarized"] .markdown-body code {
+  background-color: #eee8d5 !important;
+}
+
+[data-theme="dark"][data-preview-theme="solarized"] .markdown-body pre,
+[data-theme="dark"][data-preview-theme="solarized"] .markdown-body code {
+  background-color: #073642 !important;
+}
+
+/* Active theme indicator in dropdown */
+.theme-option.active-theme {
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.theme-option.active-theme::before {
+  content: '✓ ';
+}
+
+

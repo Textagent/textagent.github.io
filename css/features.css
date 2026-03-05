@@ -1,0 +1,408 @@
+/* Autosave indicator, zen mode, focus mode, word wrap, PlantUML, callouts, heading anchors, footnotes */
+
+/* ========================================
+   AUTOSAVE INDICATOR
+   ======================================== */
+
+.autosave-indicator {
+  font-size: 0.8rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.autosave-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #2ea043;
+  display: inline-block;
+  animation: autosavePulse 2s ease-in-out;
+}
+
+@keyframes autosavePulse {
+  0% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* ========================================
+   ZEN MODE
+   ======================================== */
+
+body.zen-mode .app-header,
+body.zen-mode .formatting-toolbar,
+body.zen-mode .find-replace-bar,
+body.zen-mode .dropzone,
+body.zen-mode .toc-panel,
+body.zen-mode .preview-pane,
+body.zen-mode .resize-divider,
+body.zen-mode .ai-panel,
+body.zen-mode .ai-panel-overlay {
+  display: none !important;
+}
+
+body.zen-mode .app-container {
+  height: 100vh;
+}
+
+body.zen-mode .content-container {
+  display: flex;
+  justify-content: center;
+}
+
+body.zen-mode .editor-pane {
+  max-width: 750px;
+  width: 100%;
+  border: none !important;
+  flex: none;
+  height: 100%;
+  padding: 40px 20px;
+}
+
+body.zen-mode #markdown-editor {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+/* Zen mode for preview view — show preview centered instead of editor */
+body.zen-mode-preview .preview-pane {
+  display: block !important;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  border: none !important;
+  flex: none;
+  height: 100%;
+  padding: 40px 20px;
+}
+
+body.zen-mode-preview .editor-pane {
+  display: none !important;
+}
+
+.zen-exit-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 9999;
+  animation: zenHintFade 4s ease forwards;
+  pointer-events: none;
+}
+
+.zen-exit-hint kbd {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+@keyframes zenHintFade {
+  0% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+
+/* ========================================
+   GITHUB-STYLE CALLOUTS / ADMONITIONS
+   ======================================== */
+
+.markdown-callout {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.markdown-callout .callout-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.markdown-callout .callout-title i {
+  font-size: 16px;
+}
+
+.markdown-callout.callout-note {
+  background-color: rgba(9, 105, 218, 0.08);
+  border-left-color: #0969da;
+}
+
+.markdown-callout.callout-note .callout-title {
+  color: #0969da;
+}
+
+.markdown-callout.callout-tip {
+  background-color: rgba(26, 127, 55, 0.08);
+  border-left-color: #1a7f37;
+}
+
+.markdown-callout.callout-tip .callout-title {
+  color: #1a7f37;
+}
+
+.markdown-callout.callout-important {
+  background-color: rgba(130, 80, 223, 0.08);
+  border-left-color: #8250df;
+}
+
+.markdown-callout.callout-important .callout-title {
+  color: #8250df;
+}
+
+.markdown-callout.callout-warning {
+  background-color: rgba(154, 103, 0, 0.08);
+  border-left-color: #9a6700;
+}
+
+.markdown-callout.callout-warning .callout-title {
+  color: #9a6700;
+}
+
+.markdown-callout.callout-caution {
+  background-color: rgba(207, 34, 46, 0.08);
+  border-left-color: #cf222e;
+}
+
+.markdown-callout.callout-caution .callout-title {
+  color: #cf222e;
+}
+
+/* Dark mode callout adjustments */
+[data-theme="dark"] .markdown-callout.callout-note {
+  background-color: rgba(56, 139, 253, 0.1);
+  border-left-color: #388bfd;
+}
+
+[data-theme="dark"] .markdown-callout.callout-note .callout-title {
+  color: #388bfd;
+}
+
+[data-theme="dark"] .markdown-callout.callout-tip {
+  background-color: rgba(63, 185, 80, 0.1);
+  border-left-color: #3fb950;
+}
+
+[data-theme="dark"] .markdown-callout.callout-tip .callout-title {
+  color: #3fb950;
+}
+
+[data-theme="dark"] .markdown-callout.callout-important {
+  background-color: rgba(163, 113, 247, 0.1);
+  border-left-color: #a371f7;
+}
+
+[data-theme="dark"] .markdown-callout.callout-important .callout-title {
+  color: #a371f7;
+}
+
+[data-theme="dark"] .markdown-callout.callout-warning {
+  background-color: rgba(210, 153, 34, 0.1);
+  border-left-color: #d29922;
+}
+
+[data-theme="dark"] .markdown-callout.callout-warning .callout-title {
+  color: #d29922;
+}
+
+[data-theme="dark"] .markdown-callout.callout-caution {
+  background-color: rgba(248, 81, 73, 0.1);
+  border-left-color: #f85149;
+}
+
+[data-theme="dark"] .markdown-callout.callout-caution .callout-title {
+  color: #f85149;
+}
+
+/* ========================================
+   HEADING ANCHOR LINKS
+   ======================================== */
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  position: relative;
+}
+
+.heading-anchor {
+  position: absolute;
+  left: -1.5em;
+  color: var(--accent-color);
+  text-decoration: none;
+  opacity: 0;
+  font-size: 0.8em;
+  transition: opacity 0.15s ease;
+  padding-right: 4px;
+}
+
+.markdown-body h1:hover .heading-anchor,
+.markdown-body h2:hover .heading-anchor,
+.markdown-body h3:hover .heading-anchor,
+.markdown-body h4:hover .heading-anchor,
+.markdown-body h5:hover .heading-anchor,
+.markdown-body h6:hover .heading-anchor {
+  opacity: 1;
+}
+
+.heading-anchor:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   FOOTNOTES
+   ======================================== */
+
+.footnotes-section {
+  border-top: 1px solid var(--border-color);
+  margin-top: 32px;
+  padding-top: 16px;
+  font-size: 0.9em;
+}
+
+.footnotes-section .footnote-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.footnote-ref {
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footnote-ref:hover {
+  text-decoration: underline;
+}
+
+.footnote-item {
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.footnote-number {
+  font-weight: 600;
+  color: var(--accent-color);
+  min-width: 20px;
+  font-size: 0.85em;
+}
+
+.footnote-backref {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-size: 0.85em;
+  margin-left: 4px;
+}
+
+.footnote-backref:hover {
+  text-decoration: underline;
+}
+
+
+/* ========================================
+   FOCUS MODE
+   ======================================== */
+
+body.focus-mode #markdown-editor {
+  color: rgba(var(--text-color-rgb, 200, 200, 200), 0.35);
+}
+
+
+.tool-button.focus-active {
+  background-color: var(--accent-color) !important;
+  color: #fff !important;
+  border-color: var(--accent-color) !important;
+}
+
+.tool-button.wrap-active {
+  background-color: var(--accent-color) !important;
+  color: #fff !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* ========================================
+   WORD WRAP TOGGLE
+   ======================================== */
+
+#markdown-editor.no-wrap {
+  white-space: pre;
+  overflow-x: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+}
+
+/* ========================================
+   PLANTUML SUPPORT
+   ======================================== */
+
+.plantuml-container {
+  text-align: center;
+  margin: 16px 0;
+  overflow-x: auto;
+  position: relative;
+}
+
+.plantuml-container img {
+  max-width: 100%;
+  height: auto;
+}
+
+.plantuml-container.plantuml-loading::after {
+  content: 'Rendering PlantUML...';
+  display: block;
+  padding: 20px;
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+.plantuml-container.plantuml-error {
+  border: 1px solid var(--color-danger-fg, #d73a49);
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--color-danger-fg, #d73a49);
+  font-size: 13px;
+}
+
+

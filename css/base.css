@@ -1,0 +1,92 @@
+/* Base: CSS variables, reset, body, container layout */
+
+:root {
+  --bg-color: #ffffff;
+  --editor-bg: #f6f8fa;
+  --preview-bg: #ffffff;
+  /* Preview background for light mode */
+  --text-color: #24292e;
+  --preview-text-color: #24292e;
+  /* Text color for preview in light mode */
+  --border-color: #e1e4e8;
+  --header-bg: #f6f8fa;
+  --button-bg: #f6f8fa;
+  --button-hover: #e1e4e8;
+  --button-active: #d1d5da;
+  --dropzone-bg: rgba(255, 255, 255, 0.8);
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-track: #f1f1f1;
+  --accent-color: #0366d6;
+  --table-bg: #ffffff;
+  /* Table background for light mode */
+  --code-bg: #f6f8fa;
+  /* Code block background for light mode */
+  --ai-panel-width: 420px;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --editor-bg: #161b22;
+  --preview-bg: #0d1117;
+  /* Preview background for dark mode */
+  --text-color: #c9d1d9;
+  --preview-text-color: #c9d1d9;
+  /* Text color for preview in dark mode */
+  --border-color: #30363d;
+  --header-bg: #161b22;
+  --button-bg: #21262d;
+  --button-hover: #30363d;
+  --button-active: #3b434b;
+  --dropzone-bg: rgba(13, 17, 23, 0.8);
+  --scrollbar-thumb: #484f58;
+  --scrollbar-track: #21262d;
+  --accent-color: #58a6ff;
+  --table-bg: #161b22;
+  /* Table background for dark mode */
+  --code-bg: #161b22;
+  /* Code block background for dark mode */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.app-header {
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem;
+  transition: background-color 0.3s ease;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Push ENTIRE app-container left when AI panel is open (desktop only) */
+body.ai-panel-active .app-container {
+  width: calc(100% - var(--ai-panel-width));
+}
+

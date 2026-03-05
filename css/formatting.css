@@ -1,0 +1,159 @@
+/* Formatting toolbar and find & replace bar */
+
+/* ========================================
+   FORMATTING TOOLBAR
+   ======================================== */
+
+.formatting-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 12px;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  transition: background-color 0.3s ease, margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fmt-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-color);
+  border-radius: 4px;
+  padding: 4px 7px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  min-width: 30px;
+  height: 30px;
+}
+
+.fmt-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--border-color);
+}
+
+.fmt-btn:active {
+  background-color: var(--button-active);
+}
+
+.fmt-separator {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+}
+
+@media (max-width: 767px) {
+  .formatting-toolbar {
+    padding: 3px 8px;
+    gap: 1px;
+  }
+
+  .fmt-btn {
+    padding: 3px 5px;
+    font-size: 13px;
+    min-width: 26px;
+    height: 26px;
+  }
+}
+
+/* ========================================
+   FIND & REPLACE BAR
+   ======================================== */
+
+.find-replace-bar {
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 6px 12px;
+  animation: slideDown 0.15s ease;
+  transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.find-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.find-input-group,
+.replace-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.find-replace-bar input {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--editor-bg);
+  color: var(--text-color);
+  width: 160px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.find-replace-bar input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.15);
+}
+
+.find-btn {
+  background-color: var(--button-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.find-btn:hover {
+  background-color: var(--button-hover);
+}
+
+.find-btn.active {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+.find-match-count {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.7;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.find-close-btn {
+  margin-left: auto;
+}
+
+@media (max-width: 767px) {
+  .find-replace-bar input {
+    width: 100px;
+  }
+}
+
+

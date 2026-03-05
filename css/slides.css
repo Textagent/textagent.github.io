@@ -1,0 +1,506 @@
+/* Slide / Presentation mode (Slidev-inspired) */
+
+/* ========================================
+   SLIDE / PRESENTATION MODE (Slidev-Inspired)
+   ======================================== */
+
+/* --- PPT View Mode (inline, not fullscreen) --- */
+.content-container.view-ppt .editor-pane,
+.content-container.view-ppt .preview-pane,
+.content-container.view-ppt .resize-divider {
+  display: none;
+}
+
+.content-container.view-ppt #slide-container {
+  display: flex !important;
+  position: relative;
+  inset: unset;
+  z-index: auto;
+  flex: 1;
+  height: 100%;
+}
+
+/* --- Fullscreen mode (legacy present button or F key) --- */
+#slide-container.slide-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+}
+
+#slide-container {
+  background-color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease;
+}
+
+/* --- Slide Header --- */
+.slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--header-bg);
+  flex-shrink: 0;
+}
+
+.slide-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slide-counter {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.slide-tool-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-color);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+}
+
+.slide-tool-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--border-color);
+}
+
+.slide-tool-btn.active {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+.slide-exit-btn {
+  background-color: var(--button-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.slide-exit-btn:hover {
+  background-color: var(--color-danger-fg, #d73a49);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* --- Slide Content Area --- */
+.slide-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 32px 48px;
+  position: relative;
+}
+
+.slide-transition-wrapper {
+  width: 100%;
+  max-width: 960px;
+  max-height: 100%;
+  overflow-y: auto;
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.slide-content .markdown-body {
+  font-size: 1.25em;
+  line-height: 1.7;
+}
+
+.slide-content .markdown-body h1 {
+  font-size: 2.4em;
+  margin-bottom: 0.6em;
+}
+
+.slide-content .markdown-body h2 {
+  font-size: 1.8em;
+  margin-bottom: 0.5em;
+}
+
+/* --- Slide Transitions --- */
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-transition-fade {
+  animation-name: slideFadeIn;
+}
+
+.slide-transition-from-right {
+  animation-name: slideFromRight;
+}
+
+.slide-transition-from-left {
+  animation-name: slideFromLeft;
+}
+
+/* --- Slide Layouts --- */
+.slide-layout-cover .markdown-body {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.slide-layout-cover .markdown-body h1 {
+  font-size: 3.2em;
+  background: linear-gradient(135deg, var(--accent-color), #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.slide-layout-center .markdown-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 50vh;
+}
+
+.slide-layout-two-cols .markdown-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.slide-layout-two-cols .markdown-body>h1,
+.slide-layout-two-cols .markdown-body>h2,
+.slide-layout-two-cols .markdown-body>h3 {
+  grid-column: 1 / -1;
+}
+
+.slide-layout-image-right {
+  flex-direction: row;
+}
+
+.slide-layout-image-right .markdown-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+
+/* --- Navigation Bar & Progress --- */
+.slide-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--header-bg);
+  flex-shrink: 0;
+}
+
+.slide-nav-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.slide-nav-btn:hover {
+  background-color: var(--button-hover);
+}
+
+.slide-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.slide-progress-container {
+  flex: 1;
+  height: 4px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.slide-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color), #a855f7);
+  border-radius: 4px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 0%;
+}
+
+/* --- Speaker Notes Panel --- */
+.slide-notes-panel {
+  border-top: 1px solid var(--border-color);
+  background-color: var(--header-bg);
+  max-height: 200px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  to {
+    max-height: 200px;
+    opacity: 1;
+  }
+}
+
+.slide-notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.slide-notes-body {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.slide-notes-empty {
+  opacity: 0.4;
+  font-style: italic;
+}
+
+/* --- Slide Overview Grid --- */
+.slide-overview {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(8px);
+  animation: slideFadeIn 0.25s ease;
+}
+
+.slide-overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  color: #fff;
+}
+
+.slide-overview-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.slide-overview-header .slide-tool-btn {
+  color: #fff;
+}
+
+.slide-overview-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.slide-overview-card {
+  background-color: var(--bg-color);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-overview-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.slide-overview-card.active {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+}
+
+.slide-overview-card-body {
+  padding: 12px;
+  font-size: 10px;
+  line-height: 1.4;
+  flex: 1;
+  overflow: hidden;
+  max-height: 140px;
+  pointer-events: none;
+}
+
+.slide-overview-card-body .markdown-body {
+  font-size: 0.65em;
+  transform-origin: top left;
+}
+
+.slide-overview-card-footer {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.6;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+/* --- Shortcuts Help Overlay --- */
+.slide-shortcuts {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  animation: slideFadeIn 0.2s ease;
+}
+
+.slide-shortcuts-content {
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  padding: 28px 36px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.slide-shortcuts-content h4 {
+  margin: 0 0 20px;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.slide-shortcut-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slide-shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.slide-shortcut-item kbd {
+  background-color: var(--button-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  min-width: 28px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.slide-shortcut-item span {
+  opacity: 0.8;
+  margin-left: auto;
+}
+
+.slide-shortcuts-close-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 8px;
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.15s ease;
+}
+
+.slide-shortcuts-close-btn:hover {
+  opacity: 0.85;
+}
+
+/* --- Slide background support --- */
+.slide-content[data-bg] {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+

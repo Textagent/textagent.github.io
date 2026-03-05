@@ -1,0 +1,409 @@
+/* Speech-to-text dictation status bar */
+
+/* ========================================
+   SPEECH-TO-TEXT DICTATION
+   ======================================== */
+
+/* --- Status Bar --- */
+.speech-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #e0e0e0;
+  font-size: 13px;
+  border-bottom: 1px solid #2d2d4a;
+  z-index: 50;
+  min-height: 36px;
+  position: relative;
+}
+
+[data-theme="dark"] .speech-status-bar {
+  background: linear-gradient(135deg, #0d0d1a, #111128);
+  border-bottom-color: #1e1e3a;
+}
+
+/* --- Pulse Dot --- */
+.speech-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: speechPulse 1.5s ease infinite;
+  flex-shrink: 0;
+}
+
+@keyframes speechPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* --- Language Label --- */
+.speech-lang {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #a5b4fc;
+  flex-shrink: 0;
+}
+
+/* --- Interim Text --- */
+.speech-interim {
+  flex: 1;
+  font-style: italic;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  min-width: 0;
+}
+
+/* --- Control Buttons --- */
+.speech-control-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.speech-control-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Mic Button Active State --- */
+.tool-button.speech-active {
+  color: #ef4444 !important;
+  position: relative;
+}
+
+.tool-button.speech-active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: speechPulse 1.5s ease infinite;
+}
+
+.mobile-menu-item.speech-active {
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* --- Language Dropdown --- */
+.speech-lang-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 60px;
+  background: var(--bg-color, #fff);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+  min-width: 200px;
+  padding: 4px;
+  animation: fadeIn 0.15s ease;
+}
+
+[data-theme="dark"] .speech-lang-dropdown {
+  background: #1a1a2e;
+  border-color: #2d2d4a;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.speech-lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-color, #333);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.speech-lang-option:hover {
+  background: var(--button-hover, #f0f0f0);
+}
+
+[data-theme="dark"] .speech-lang-option:hover {
+  background: #2d2d4a;
+}
+
+.speech-lang-option.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .speech-lang-option.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+}
+
+.speech-lang-short {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .speech-lang-short {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+/* --- Toast Notifications --- */
+.speech-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.speech-toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.speech-toast-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.speech-toast-info {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+[data-theme="dark"] .speech-toast-error {
+  background: #2a1515;
+  color: #f87171;
+  border-color: #4a2020;
+}
+
+[data-theme="dark"] .speech-toast-info {
+  background: #152040;
+  color: #60a5fa;
+  border-color: #1e3a5f;
+}
+
+/* --- Voice Commands Cheat Sheet Popup --- */
+.speech-cheat-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 340px;
+  max-height: 70vh;
+  background: var(--bg-color, #fff);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  z-index: 3500;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.speech-cheat-popup.speech-cheat-show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+[data-theme="dark"] .speech-cheat-popup {
+  background: #1a1a2e;
+  border-color: #2d2d4a;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+}
+
+.speech-cheat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, #eee);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-color, #333);
+}
+
+.speech-cheat-header i {
+  color: #ef4444;
+  margin-right: 6px;
+}
+
+[data-theme="dark"] .speech-cheat-header {
+  border-bottom-color: #2d2d4a;
+}
+
+.speech-cheat-close {
+  background: none;
+  border: none;
+  color: var(--text-color, #999);
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.speech-cheat-close:hover {
+  opacity: 1;
+  background: var(--button-hover, #f0f0f0);
+}
+
+[data-theme="dark"] .speech-cheat-close:hover {
+  background: #2d2d4a;
+}
+
+.speech-cheat-body {
+  padding: 10px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.speech-cheat-group {
+  margin-bottom: 12px;
+}
+
+.speech-cheat-group:last-child {
+  margin-bottom: 4px;
+}
+
+.speech-cheat-cat {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  font-weight: 700;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="dark"] .speech-cheat-cat {
+  color: #a5b4fc;
+  border-bottom-color: rgba(165, 180, 252, 0.15);
+}
+
+.speech-cheat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.speech-cheat-say {
+  color: #16a34a;
+  font-family: 'SFMono-Regular', 'Consolas', monospace;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .speech-cheat-say {
+  color: #4ade80;
+}
+
+.speech-cheat-arrow {
+  color: var(--text-color, #aaa);
+  opacity: 0.35;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.speech-cheat-insert {
+  color: var(--text-color, #555);
+  font-family: 'SFMono-Regular', 'Consolas', monospace;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.speech-cheat-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color, #eee);
+  font-size: 10px;
+  color: var(--text-color, #999);
+  opacity: 0.5;
+  text-align: center;
+}
+
+.speech-cheat-footer kbd {
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border-color, #ccc);
+  background: var(--editor-bg, #f6f6f6);
+  font-size: 10px;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .speech-cheat-footer {
+  border-top-color: #2d2d4a;
+}
+
+@media (max-width: 600px) {
+  .speech-cheat-popup {
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 60vh;
+  }
+}

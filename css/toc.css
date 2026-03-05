@@ -1,0 +1,129 @@
+/* Table of contents panel */
+
+/* ========================================
+   TABLE OF CONTENTS PANEL
+   ======================================== */
+
+.toc-panel {
+  width: 240px;
+  min-width: 200px;
+  max-width: 300px;
+  background-color: var(--bg-color);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  flex-shrink: 0;
+  animation: slideInLeft 0.2s ease;
+  transition: background-color 0.3s ease;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-color);
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-color);
+  z-index: 1;
+}
+
+.toc-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.toc-close-btn:hover {
+  background-color: var(--button-hover);
+}
+
+.toc-nav {
+  padding: 8px 0;
+}
+
+.toc-item {
+  display: block;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--text-color);
+  text-decoration: none;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toc-item:hover {
+  background-color: var(--button-hover);
+  color: var(--accent-color);
+}
+
+.toc-item.active {
+  border-left-color: var(--accent-color);
+  color: var(--accent-color);
+  background-color: rgba(88, 166, 255, 0.08);
+}
+
+.toc-item[data-level="1"] {
+  padding-left: 12px;
+  font-weight: 600;
+}
+
+.toc-item[data-level="2"] {
+  padding-left: 24px;
+}
+
+.toc-item[data-level="3"] {
+  padding-left: 36px;
+}
+
+.toc-item[data-level="4"] {
+  padding-left: 48px;
+  font-size: 12px;
+}
+
+.toc-item[data-level="5"] {
+  padding-left: 60px;
+  font-size: 12px;
+}
+
+.toc-item[data-level="6"] {
+  padding-left: 72px;
+  font-size: 12px;
+}
+
+@media (max-width: 1079px) {
+  .toc-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1500;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  }
+}
+
+
