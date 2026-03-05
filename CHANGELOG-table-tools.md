@@ -12,3 +12,5 @@
 - Copy CSV / Copy Markdown / Download CSV export options
 - Double-click any cell to edit inline, press Enter to save back to editor markdown
 - Full dark mode support and responsive design
+- Fixed: empty cells in new rows now show visible ··· placeholder with dashed border
+- Fixed: double-click to edit clears placeholder and enters edit mode

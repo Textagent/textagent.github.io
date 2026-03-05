@@ -376,6 +376,33 @@
     background: #0d1117 !important;
 }
 
+/* ── Empty / Placeholder Cells ── */
+.tt-empty-cell {
+    color: var(--border-color, #d0d7de) !important;
+    min-height: 32px;
+    min-width: 60px;
+    border: 1px dashed var(--border-color, #d0d7de) !important;
+    text-align: center;
+    font-style: italic;
+    letter-spacing: 2px;
+}
+
+.tt-empty-cell:hover {
+    border-color: var(--accent-color, #0969da) !important;
+    color: var(--accent-color, #0969da) !important;
+    background: rgba(9, 105, 218, 0.06) !important;
+}
+
+[data-theme="dark"] .tt-empty-cell {
+    color: #30363d !important;
+    border-color: #30363d !important;
+}
+
+[data-theme="dark"] .tt-empty-cell:hover {
+    border-color: #58a6ff !important;
+    color: #58a6ff !important;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
     .tt-btn span {

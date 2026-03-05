@@ -154,6 +154,12 @@
         var cells = table.querySelectorAll('td');
         cells.forEach(function (cell) {
             cell.classList.add('tt-editable-cell');
+            // Mark empty cells with placeholder
+            if (cell.textContent.trim() === '' || cell.textContent.trim() === '···') {
+                cell.classList.add('tt-empty-cell');
+                cell.setAttribute('data-placeholder', 'click to edit');
+                if (cell.textContent.trim() === '') cell.textContent = '···';
+            }
             cell.addEventListener('dblclick', function (e) {
                 e.stopPropagation();
                 if (cell.getAttribute('contenteditable') === 'true') return;
@@ -163,7 +169,10 @@
     }
 
     function startCellEdit(table, cell) {
-        var originalText = cell.textContent.trim();
+        var isPlaceholder = cell.classList.contains('tt-empty-cell');
+        var originalText = isPlaceholder ? '' : cell.textContent.trim();
+        cell.classList.remove('tt-empty-cell');
+        if (isPlaceholder) cell.textContent = '';
         cell.setAttribute('contenteditable', 'true');
         cell.classList.add('tt-editing');
         cell.focus();
@@ -806,11 +815,11 @@
                 return;
             }
 
-            var emptyRow = '| ' + data.headers.map(function () { return '   '; }).join(' | ') + ' |';
+            var emptyRow = '| ' + data.headers.map(function () { return '···'; }).join(' | ') + ' |';
             var newTableText = tableText + '\n' + emptyRow;
             M.markdownEditor.value = markdown.replace(tableText, newTableText);
             M.renderMarkdown();
-            showToast('Row added');
+            showToast('Row added — double-click cells to edit');
         });
     }
 
