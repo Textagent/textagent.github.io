@@ -14,7 +14,8 @@
     window.__MDV_TEMPLATES_CODING || [],
     window.__MDV_TEMPLATES_MATHS || [],
     window.__MDV_TEMPLATES_PPT || [],
-    window.__MDV_TEMPLATES_QUIZ || []
+    window.__MDV_TEMPLATES_QUIZ || [],
+    window.__MDV_TEMPLATES_TABLES || []
   );
 
 
@@ -40,6 +41,7 @@
       case 'maths': return 'doc';
       case 'ppt': return 'creative';
       case 'quiz': return 'project';
+      case 'tables': return 'technical';
       default: return 'doc';
     }
   }
@@ -54,6 +56,7 @@
       case 'maths': return 'bi-calculator';
       case 'ppt': return 'bi-easel';
       case 'quiz': return 'bi-patch-question';
+      case 'tables': return 'bi-table';
       default: return 'bi-file-earmark';
     }
   }

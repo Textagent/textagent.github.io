@@ -14,3 +14,7 @@
 - Full dark mode support and responsive design
 - Fixed: empty cells in new rows now show visible ··· placeholder with dashed border
 - Fixed: double-click to edit clears placeholder and enters edit mode
+- Added 5 complex table templates: Sales Dashboard, Project Tracker, Financial Report, Employee Directory, Competitive Analysis
+- Added Tables category to template picker
+- Updated Feature Showcase with Table Spreadsheet Tools section
+- Updated README with 7 recent release notes

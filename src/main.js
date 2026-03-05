@@ -61,6 +61,7 @@ async function loadModules() {
         import('../js/templates/maths.js'),
         import('../js/templates/ppt.js'),
         import('../js/templates/quiz.js'),
+        import('../js/templates/tables.js'),
     ]);
     await import('../js/templates.js');
 

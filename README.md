@@ -34,7 +34,7 @@
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
 | **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
 | **Security** | SRI integrity hashes, XSS sanitization, ReDoS protection, encrypted API key storage, Firestore security rules |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 50+ templates (8 categories: Coding, Maths, PPT, Quiz, Documentation, Project, Technical, Creative), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 55+ templates (9 categories: Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI |
 
 ## 🤖 AI Assistant
 
@@ -190,6 +190,13 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-06** | 📊 **Table spreadsheet tools** — interactive toolbar on every rendered table: Sort, Filter, Search, Stats (Σ), Chart (canvas bar chart), Add Row/Col, Copy CSV/MD, Download CSV, inline cell editing (double-click to edit) |
+| **2026-03-06** | 📋 **Table templates** — 5 new complex table templates (Sales Dashboard, Project Tracker, Financial Report, Employee Directory, Competitive Analysis) in new Tables category |
+| **2026-03-05** | ⚡ **Performance optimizations** — 2-5x faster load: lazy-loading libraries, optimized rendering, improved build chunking, debounced keystroke processing |
+| **2026-03-05** | 🔧 **Vite build pipeline** — migrated to Vite for development and production builds with GitHub Pages deployment |
+| **2026-03-05** | 🛡️ **Changelog enforcement** — pre-commit hook requires a CHANGELOG-*.md file with every code commit |
+| **2026-03-05** | 🎨 **Toolbar overflow menu** — kebab menu for overflowed toolbar items at narrow widths, theme controls moved into overflow |
+| **2026-03-05** | 🌙 **FOUC fix** — prevent white→dark flash on page reload with inline theme detection script |
 | **2026-03-05** | 🧩 **Quiz templates + html-autorun** — new Quiz category with interactive HTML quizzes that auto-run on render; `html-autorun` code fence hides source and shows output directly |
 | **2026-03-05** | ⚙️ **Centralized AI model config** — all model definitions moved to `js/ai-models.js`; dropdown built dynamically; easy to add new providers |
 | **2026-03-05** | 🔄 **Gemini 3.1 Flash Lite** — upgraded from Gemini 2.0 Flash to Gemini 3.1 Flash Lite for improved performance |
