@@ -84,7 +84,7 @@
         const currentTheme = document.documentElement.getAttribute("data-theme");
         const mermaidTheme = currentTheme === "dark" ? "dark" : "default";
 
-        mermaid.initialize({
+        window.mermaid.initialize({
             startOnLoad: false,
             theme: mermaidTheme,
             securityLevel: 'strict',

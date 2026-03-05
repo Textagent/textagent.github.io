@@ -3,6 +3,10 @@
 .gitignore
 .gitattributes
 
+# Node
+node_modules
+dist
+
 # Documentation
 README.md
 LICENSE
