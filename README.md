@@ -25,16 +25,16 @@
 | **Editor** | Live preview, split/editor/preview modes, sync scrolling, formatting toolbar, find & replace (regex), word wrap toggle, draggable resize divider |
 | **Writing Modes** | Zen mode (distraction-free fullscreen), Focus mode (dimmed paragraphs), Dark mode, multiple preview themes (GitHub, GitLab, Notion, Dracula, Solarized) |
 | **Rendering** | GitHub-style Markdown, syntax highlighting (180+ languages), LaTeX math (MathJax), Mermaid diagrams (zoom/pan/export), PlantUML diagrams, callout blocks, footnotes, emoji, anchor links |
-| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM), Gemini 2.0 Flash, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten); enhanced context menu with column layout |
+| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM), Gemini 3.1 Flash Lite, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten); enhanced context menu with column layout |
 | **🎤 Voice Dictation** | Speech-to-text with Markdown-aware commands — hash headings, bold, italic, lists, code blocks, links, and more |
 | **Import** | MD, DOCX, XLSX/XLS, CSV, HTML, JSON, XML, PDF — drag & drop or click to import |
 | **Export** | Markdown, HTML, PDF (smart page-breaks), LLM Memory (4 formats + shareable link) |
 | **Sharing** | AES-256-GCM encrypted sharing via Firebase; read-only shared links, optional passphrase protection — decryption key stays in URL fragment (never sent to server) |
 | **Presentation** | Slide mode using `---` separators, keyboard navigation, multiple layouts & transitions, speaker notes, overview grid, 20+ PPT templates with image backgrounds |
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
-| **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
+| **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
 | **Security** | SRI integrity hashes, XSS sanitization, ReDoS protection, encrypted API key storage, Firestore security rules |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 50+ templates (7 categories: Coding, Maths, PPT, Documentation, Project, Technical, Creative), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 50+ templates (8 categories: Coding, Maths, PPT, Quiz, Documentation, Project, Technical, Creative), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI |
 
 ## 🤖 AI Assistant
 
@@ -43,7 +43,7 @@ MDview includes a built-in AI assistant panel with **four model options**:
 | Model | Provider | Type | Speed |
 |:------|:---------|:-----|:------|
 | **Qwen 3.5 Small** | Local (WebGPU/WASM) | 🔒 Private — no data leaves browser | ⚡ Fast |
-| **Gemini 2.0 Flash** | Google (free tier) | ☁️ Cloud — 1M tokens/min | 🚀 Very Fast |
+| **Gemini 3.1 Flash Lite** | Google (free tier) | ☁️ Cloud — 1M tokens/min | 🚀 Very Fast |
 | **Llama 3.3 70B** | Groq (free tier) | ☁️ Cloud — ultra-low latency | ⚡ Ultra Fast |
 | **Auto · Best Free** | OpenRouter (free tier) | ☁️ Cloud — multi-model routing | 🧠 Powerful |
 
@@ -145,7 +145,7 @@ Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Orde
 |:-----------|:--------|
 | [Transformers.js](https://huggingface.co/docs/transformers.js) | Local AI inference (Qwen 3.5 Small) |
 | [Groq API](https://groq.com/) | Cloud AI (Llama 3.3 70B) |
-| [Google Gemini API](https://ai.google.dev/) | Cloud AI (Gemini 2.0 Flash) |
+| [Google Gemini API](https://ai.google.dev/) | Cloud AI (Gemini 3.1 Flash Lite) |
 | [OpenRouter API](https://openrouter.ai/) | Multi-model AI routing |
 
 ### Export & Import
@@ -190,6 +190,9 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-05** | 🧩 **Quiz templates + html-autorun** — new Quiz category with interactive HTML quizzes that auto-run on render; `html-autorun` code fence hides source and shows output directly |
+| **2026-03-05** | ⚙️ **Centralized AI model config** — all model definitions moved to `js/ai-models.js`; dropdown built dynamically; easy to add new providers |
+| **2026-03-05** | 🔄 **Gemini 3.1 Flash Lite** — upgraded from Gemini 2.0 Flash to Gemini 3.1 Flash Lite for improved performance |
 | **2026-03-05** | 🔐 **Passphrase-protected sharing** — optional passphrase on shared links with unlock modal; share options dialog for link + passphrase vs. open link |
 | **2026-03-05** | 🧠 **Enhanced AI context menu** — column-based layout with writing assistance actions (Polish, Formalize, Elaborate, Shorten) alongside existing quick actions |
 | **2026-03-05** | 📊 **Inline AI progress bar** — model download and connection status shown inline in the AI panel header |
@@ -214,8 +217,8 @@ MDview has undergone significant evolution since its inception. What started as 
 | **2026-03-05** | 📄 **Feature Showcase as default** — comprehensive showcase loads on first visit |
 | **2026-03-04** | 🏷️ **Rebranded to MDview** — new display name across all pages, meta tags, and templates |
 | **2026-03-04** | 🔄 **Non-blocking AI panel** — AI panel opens instantly; Qwen download deferred until first use |
-| **2026-03-04** | 🧩 **Multi-model AI selector** — switch between Qwen (local), Groq Llama 3.3, Gemini 2.0 Flash, and OpenRouter |
-| **2026-03-04** | 🌐 **Google Gemini 2.0 Flash** — free-tier Gemini AI model with SSE streaming and 1M tokens/min |
+| **2026-03-04** | 🧩 **Multi-model AI selector** — switch between Qwen (local), Groq Llama 3.3, Gemini, and OpenRouter |
+| **2026-03-04** | 🌐 **Google Gemini** — free-tier Gemini AI model with SSE streaming and 1M tokens/min |
 | **2026-03-04** | 🔀 **OpenRouter AI** — access free auto-routed models via OpenRouter API |
 | **2026-03-04** | 📂 **File format converters** — import DOCX, XLSX/XLS, CSV, HTML, JSON, XML, and PDF |
 | **2026-03-04** | 🖥 **Desktop app** — native desktop version via Neutralino.js with system tray and offline support |
