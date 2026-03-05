@@ -184,6 +184,9 @@
             if (M.addJsBlockToolbars) M.addJsBlockToolbars();
             if (M.addSqlBlockToolbars) M.addSqlBlockToolbars();
 
+            // Table spreadsheet tools (sort, filter, stats, chart, etc.)
+            if (M.addTableToolbars) M.addTableToolbars();
+
             if (window.MathJax) {
                 try {
                     MathJax.typesetPromise([M.markdownPreview]).then(function () {
