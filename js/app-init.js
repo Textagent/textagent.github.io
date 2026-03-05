@@ -156,10 +156,12 @@
     // ========================================
     if (M.themeToggle) {
         M.themeToggle.addEventListener('click', function () {
-            M.isDarkMode = !M.isDarkMode;
-            document.documentElement.setAttribute('data-theme', M.isDarkMode ? 'dark' : 'light');
-            this.querySelector('i').className = M.isDarkMode ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-            localStorage.setItem('md-viewer-dark', M.isDarkMode);
+            var currentTheme = document.documentElement.getAttribute('data-theme');
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            this.querySelector('i').className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+            localStorage.setItem('markdown-viewer-theme', newTheme);
+            M.isDarkMode = newTheme === 'dark';
             M.initMermaid();
             M.renderMarkdown();
         });
