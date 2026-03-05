@@ -177,11 +177,13 @@
         if (M.dropzone.style.display === 'block') M.dropzone.style.display = 'none';
         else M.dropzone.style.display = 'block';
     });
-    M.exportMd.addEventListener('click', function () {
+    M.exportMd.addEventListener('click', async function () {
+        var saveAs = await window.getSaveAs();
         var blob = new Blob([M.markdownEditor.value], { type: 'text/markdown' });
         saveAs(blob, 'document.md');
     });
-    M.exportHtml.addEventListener('click', function () {
+    M.exportHtml.addEventListener('click', async function () {
+        var saveAs = await window.getSaveAs();
         var htmlContent = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Markdown Export</title></head><body>' + M.markdownPreview.innerHTML + '</body></html>';
         var blob = new Blob([htmlContent], { type: 'text/html' });
         saveAs(blob, 'document.html');

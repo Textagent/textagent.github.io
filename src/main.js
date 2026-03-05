@@ -29,30 +29,43 @@ import '../css/speech.css';
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
 async function loadModules() {
+    // Phase 1: Core (must load in order — each depends on prior)
     await import('../js/modal-templates.js');
     await import('../js/app-core.js');
     await import('../js/renderer.js');
-    await import('../js/file-converters.js');
-    await import('../js/pdf-export.js');
-    await import('../js/mermaid-toolbar.js');
-    await import('../js/executable-blocks.js');
-    await import('../js/editor-features.js');
-    await import('../js/ui-panels.js');
-    await import('../js/toolbar-overflow.js');
-    await import('../js/templates/documentation.js');
-    await import('../js/templates/project.js');
-    await import('../js/templates/technical.js');
-    await import('../js/templates/creative.js');
-    await import('../js/templates/coding.js');
-    await import('../js/templates/maths.js');
-    await import('../js/templates/ppt.js');
-    await import('../js/templates/quiz.js');
+
+    // Phase 2: Independent features (parallel — no inter-dependencies)
+    await Promise.all([
+        import('../js/file-converters.js'),
+        import('../js/pdf-export.js'),
+        import('../js/mermaid-toolbar.js'),
+        import('../js/executable-blocks.js'),
+        import('../js/editor-features.js'),
+        import('../js/ui-panels.js'),
+        import('../js/toolbar-overflow.js'),
+        import('../js/cloud-share.js'),
+        import('../js/ai-models.js'),
+        import('../js/llm-memory.js'),
+        import('../js/speechToText.js'),
+    ]);
+
+    // Phase 3: Templates (parallel — all independent data modules)
+    await Promise.all([
+        import('../js/templates/documentation.js'),
+        import('../js/templates/project.js'),
+        import('../js/templates/technical.js'),
+        import('../js/templates/creative.js'),
+        import('../js/templates/coding.js'),
+        import('../js/templates/maths.js'),
+        import('../js/templates/ppt.js'),
+        import('../js/templates/quiz.js'),
+    ]);
     await import('../js/templates.js');
-    await import('../js/cloud-share.js');
-    await import('../js/ai-models.js');
+
+    // Phase 4: AI (depends on ai-models from phase 2)
     await import('../js/ai-assistant.js');
-    await import('../js/llm-memory.js');
-    await import('../js/speechToText.js');
+
+    // Phase 5: Init wiring (must be last — wires everything together)
     await import('../js/app-init.js');
 }
 

@@ -139,15 +139,8 @@
             });
             M.markdownPreview.innerHTML = sanitizedHtml;
 
-            M.markdownPreview.querySelectorAll("pre code").forEach(function (block) {
-                try {
-                    if (!block.classList.contains('mermaid')) {
-                        hljs.highlightElement(block);
-                    }
-                } catch (e) {
-                    console.warn("Syntax highlighting failed for a code block:", e);
-                }
-            });
+            // Note: hljs.highlight() is already called in renderer.code() during
+            // marked.parse(). No need for a second hljs.highlightElement() pass.
 
             M.processEmojis(M.markdownPreview);
 

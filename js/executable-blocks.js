@@ -6,9 +6,11 @@
 
     // --- Shared HTML escape helper ---
     function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 
     // ========================================
@@ -148,7 +150,7 @@
         });
     };
 
-    function evaluateMathBlock(container, btnEval) {
+    async function evaluateMathBlock(container, btnEval) {
         var codeEl = container.querySelector('code');
         if (!codeEl) return;
         var code = codeEl.textContent.trim();
@@ -160,9 +162,14 @@
             container.appendChild(outputEl);
         }
 
-        if (typeof math === 'undefined') {
-            outputEl.innerHTML = '<span class="code-output-error">⏳ math.js is still loading. Please try again.</span>';
-            outputEl.style.display = 'block';
+        outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-hourglass-split"></i> Loading math engine...</span>';
+        outputEl.style.display = 'block';
+
+        var mathLib;
+        try {
+            mathLib = await window.getMathjs();
+        } catch (loadErr) {
+            outputEl.innerHTML = '<span class="code-output-error">Failed to load math.js: ' + escapeHtml(loadErr.message) + '</span>';
             return;
         }
 
@@ -177,11 +184,11 @@
 
             for (var i = 0; i < lines.length; i++) {
                 try {
-                    var result = math.evaluate(lines[i].trim(), scope);
+                    var result = mathLib.evaluate(lines[i].trim(), scope);
                     if (result !== undefined) {
                         var formatted;
-                        if (typeof result === 'object' && result.entries) { formatted = math.format(result, { precision: 10 }); }
-                        else if (typeof result === 'number') { formatted = math.format(result, { precision: 10 }); }
+                        if (typeof result === 'object' && result.entries) { formatted = mathLib.format(result, { precision: 10 }); }
+                        else if (typeof result === 'number') { formatted = mathLib.format(result, { precision: 10 }); }
                         else if (typeof result === 'function') { formatted = '(function defined)'; }
                         else { formatted = String(result); }
                         results.push({ expr: lines[i].trim(), value: formatted });

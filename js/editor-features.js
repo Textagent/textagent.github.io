@@ -259,7 +259,11 @@
         M.markdownEditor.dispatchEvent(new Event('input'));
     }
 
-    M.markdownEditor.addEventListener('input', pushUndoState);
+    var _undoDebounceTimer = null;
+    M.markdownEditor.addEventListener('input', function () {
+        clearTimeout(_undoDebounceTimer);
+        _undoDebounceTimer = setTimeout(pushUndoState, 500);
+    });
 
     // --- Formatting toolbar action handler ---
     var FORMATTING_ACTIONS = {

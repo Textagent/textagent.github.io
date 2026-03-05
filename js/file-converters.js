@@ -95,8 +95,8 @@
 
     // --- DOCX Converter (Mammoth.js + Turndown.js) ---
     async function convertDocxToMarkdown(file) {
-        if (typeof mammoth === 'undefined') throw new Error('Mammoth.js library not loaded');
-        if (typeof TurndownService === 'undefined') throw new Error('Turndown.js library not loaded');
+        var mammoth = await window.getMammoth();
+        var TurndownService = await window.getTurndownService();
 
         var arrayBuffer = await file.arrayBuffer();
         var result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
@@ -126,7 +126,7 @@
 
     // --- XLSX/XLS Converter (SheetJS) ---
     async function convertXlsxToMarkdown(file) {
-        if (typeof XLSX === 'undefined') throw new Error('SheetJS (XLSX) library not loaded');
+        var XLSX = await window.getXLSX();
 
         var arrayBuffer = await file.arrayBuffer();
         var workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -162,7 +162,7 @@
 
     // --- HTML Converter (Turndown.js) ---
     async function convertHtmlToMarkdown(file) {
-        if (typeof TurndownService === 'undefined') throw new Error('Turndown.js library not loaded');
+        var TurndownService = await window.getTurndownService();
 
         var html = await file.text();
         var turndown = new TurndownService({

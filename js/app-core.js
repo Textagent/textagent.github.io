@@ -8,7 +8,7 @@
 
     // --- Timing / Render State ---
     M.markdownRenderTimeout = null;
-    M.RENDER_DELAY = 100;
+    M.RENDER_DELAY = 300;
     M.syncScrollingEnabled = true;
     M.isEditorScrolling = false;
     M.isPreviewScrolling = false;

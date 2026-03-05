@@ -256,13 +256,15 @@
             }
 
             var pdfOptions = { orientation: 'portrait', unit: 'mm', format: 'a4', compress: true, hotfixes: ["px_scaling"] };
-            var pdf = new jspdf.jsPDF(pdfOptions);
+            var jsPDF = await window.getJsPDF();
+            var pdf = new jsPDF(pdfOptions);
             var pageWidth = pdf.internal.pageSize.getWidth();
             var pageHeight = pdf.internal.pageSize.getHeight();
             var margin = 15;
             var contentWidth = pageWidth - (margin * 2);
 
-            var canvas = await html2canvas(tempElement, {
+            var _html2canvas = await window.getHtml2canvas();
+            var canvas = await _html2canvas(tempElement, {
                 scale: 2, useCORS: true, allowTaint: true, logging: false,
                 windowWidth: 1000, windowHeight: tempElement.scrollHeight
             });
