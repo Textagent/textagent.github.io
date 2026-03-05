@@ -1,0 +1,38 @@
+#!/bin/sh
+# Pre-commit hook: Require a CHANGELOG-*.md file in every commit
+#
+# Checks that at least one CHANGELOG-*.md file is being committed
+# alongside code changes.
+
+# Get list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# Skip check if no files staged
+if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+# Check if any CHANGELOG file is staged
+CHANGELOG_FILE=$(echo "$STAGED_FILES" | grep -E '^CHANGELOG-.*\.md$')
+
+# Check if only non-code files are being committed (allow docs-only commits)
+CODE_FILES=$(echo "$STAGED_FILES" | grep -vE '\.(md|txt|json)$' | grep -vE '^\.agent/')
+if [ -z "$CODE_FILES" ]; then
+    exit 0
+fi
+
+if [ -z "$CHANGELOG_FILE" ]; then
+    echo ""
+    echo "❌ COMMIT BLOCKED: No CHANGELOG-*.md file found in staged files."
+    echo ""
+    echo "Every commit with code changes must include a changelog file."
+    echo "Create one with: CHANGELOG-<topic>.md"
+    echo ""
+    echo "Example:"
+    echo "  echo '# Changes\n- Fixed bug X' > CHANGELOG-bugfix.md"
+    echo "  git add CHANGELOG-bugfix.md"
+    echo ""
+    exit 1
+fi
+
+exit 0

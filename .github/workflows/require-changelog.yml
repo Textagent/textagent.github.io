@@ -1,0 +1,50 @@
+name: Require Changelog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for CHANGELOG file in commit
+        run: |
+          # Get files changed in this push/PR
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD)
+          else
+            FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          echo "Changed files:"
+          echo "$FILES"
+
+          # Check if any code files changed (ignore docs-only)
+          CODE_FILES=$(echo "$FILES" | grep -vE '\.(md|txt|json)$' | grep -vE '^\.(agent|github)/' || true)
+
+          if [ -z "$CODE_FILES" ]; then
+            echo "✅ Docs-only commit — changelog not required."
+            exit 0
+          fi
+
+          # Check for CHANGELOG file
+          CHANGELOG=$(echo "$FILES" | grep -E '^CHANGELOG-.*\.md$' || true)
+
+          if [ -z "$CHANGELOG" ]; then
+            echo ""
+            echo "❌ FAILED: No CHANGELOG-*.md file found in this commit."
+            echo ""
+            echo "Every commit with code changes must include a CHANGELOG-<topic>.md file"
+            echo "documenting what was changed."
+            echo ""
+            exit 1
+          fi
+
+          echo "✅ Found changelog: $CHANGELOG"
