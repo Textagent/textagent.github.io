@@ -502,39 +502,96 @@
         M.markdownPreview.querySelectorAll('.executable-html-container').forEach(function (container) {
             if (container.querySelector('.code-block-toolbar')) return;
 
+            var isAutorun = container.getAttribute('data-autorun') === 'true';
+
             var toolbar = document.createElement('div');
             toolbar.className = 'code-block-toolbar';
             toolbar.setAttribute('aria-label', 'HTML sandbox actions');
 
-            var btnPreview = document.createElement('button');
-            btnPreview.className = 'code-toolbar-btn html-preview-btn';
-            btnPreview.title = 'Preview in sandboxed iframe';
-            btnPreview.setAttribute('aria-label', 'Preview HTML');
-            btnPreview.innerHTML = '<i class="bi bi-play-fill"></i> Preview';
-            btnPreview.addEventListener('click', function () { previewHtmlBlock(container, btnPreview); });
+            if (isAutorun) {
+                // --- AUTORUN MODE: hide code, render immediately ---
+                var preEl = container.querySelector('pre');
+                if (preEl) preEl.style.display = 'none';
 
-            var btnCopy = document.createElement('button');
-            btnCopy.className = 'code-toolbar-btn code-copy-btn';
-            btnCopy.title = 'Copy code';
-            btnCopy.setAttribute('aria-label', 'Copy code');
-            btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
-            btnCopy.addEventListener('click', function () {
-                var codeEl = container.querySelector('code');
-                if (!codeEl) return;
-                navigator.clipboard.writeText(codeEl.textContent).then(function () {
-                    btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
-                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
-                }).catch(function () {
-                    btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
-                    setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                // Show/hide code toggle
+                var btnToggle = document.createElement('button');
+                btnToggle.className = 'code-toolbar-btn code-copy-btn';
+                btnToggle.title = 'Show / hide source code';
+                btnToggle.innerHTML = '<i class="bi bi-code-slash"></i> Show Code';
+                btnToggle.addEventListener('click', function () {
+                    if (preEl.style.display === 'none') {
+                        preEl.style.display = '';
+                        btnToggle.innerHTML = '<i class="bi bi-eye-slash"></i> Hide Code';
+                    } else {
+                        preEl.style.display = 'none';
+                        btnToggle.innerHTML = '<i class="bi bi-code-slash"></i> Show Code';
+                    }
                 });
-            });
+                toolbar.appendChild(btnToggle);
+                container.insertBefore(toolbar, container.firstChild);
 
-            toolbar.appendChild(btnPreview);
-            toolbar.appendChild(btnCopy);
-            container.insertBefore(toolbar, container.firstChild);
+                // Auto-render the iframe
+                autorunHtmlBlock(container);
+            } else {
+                // --- NORMAL MODE: show code, preview on click ---
+                var btnPreview = document.createElement('button');
+                btnPreview.className = 'code-toolbar-btn html-preview-btn';
+                btnPreview.title = 'Preview in sandboxed iframe';
+                btnPreview.setAttribute('aria-label', 'Preview HTML');
+                btnPreview.innerHTML = '<i class="bi bi-play-fill"></i> Preview';
+                btnPreview.addEventListener('click', function () { previewHtmlBlock(container, btnPreview); });
+
+                var btnCopy = document.createElement('button');
+                btnCopy.className = 'code-toolbar-btn code-copy-btn';
+                btnCopy.title = 'Copy code';
+                btnCopy.setAttribute('aria-label', 'Copy code');
+                btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>';
+                btnCopy.addEventListener('click', function () {
+                    var codeEl = container.querySelector('code');
+                    if (!codeEl) return;
+                    navigator.clipboard.writeText(codeEl.textContent).then(function () {
+                        btnCopy.innerHTML = '<i class="bi bi-check-lg"></i>';
+                        setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                    }).catch(function () {
+                        btnCopy.innerHTML = '<i class="bi bi-x-lg"></i>';
+                        setTimeout(function () { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                    });
+                });
+
+                toolbar.appendChild(btnPreview);
+                toolbar.appendChild(btnCopy);
+                container.insertBefore(toolbar, container.firstChild);
+            }
         });
     };
+
+    function autorunHtmlBlock(container) {
+        var codeEl = container.querySelector('code');
+        if (!codeEl) return;
+        var code = codeEl.textContent;
+
+        var outputEl = document.createElement('div');
+        outputEl.className = 'html-preview-output';
+        container.appendChild(outputEl);
+
+        var iframe = document.createElement('iframe');
+        iframe.className = 'html-preview-frame';
+        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.srcdoc = code;
+        outputEl.appendChild(iframe);
+        outputEl.style.display = 'block';
+
+        iframe.addEventListener('load', function () {
+            try {
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                var height = Math.min(doc.body.scrollHeight + 20, 800);
+                iframe.style.height = Math.max(height, 60) + 'px';
+            } catch (e) {
+                iframe.style.height = '400px';
+            }
+        });
+    }
 
     function previewHtmlBlock(container, btnPreview) {
         var codeEl = container.querySelector('code');

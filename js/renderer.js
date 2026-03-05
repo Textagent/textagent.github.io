@@ -19,9 +19,12 @@
         }
 
         // Detect executable HTML code blocks (web sandbox)
-        if ((language || '').toLowerCase() === 'html') {
+        // html-autorun: auto-runs and hides source code (great for quizzes, widgets)
+        const htmlLang = (language || '').toLowerCase();
+        if (htmlLang === 'html' || htmlLang === 'html-autorun') {
             const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return `<div class="executable-html-container"><pre><code class="hljs html">${escapedCode}</code></pre></div>`;
+            const autorun = htmlLang === 'html-autorun' ? ' data-autorun="true"' : '';
+            return `<div class="executable-html-container"${autorun}><pre><code class="hljs html">${escapedCode}</code></pre></div>`;
         }
 
         // Detect executable Python code blocks (Pyodide sandbox)
@@ -132,7 +135,7 @@
             const html = marked.parse(markdown);
             const sanitizedHtml = DOMPurify.sanitize(html, {
                 ADD_TAGS: ['mjx-container'],
-                ADD_ATTR: ['id', 'class', 'data-lang']
+                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun']
             });
             M.markdownPreview.innerHTML = sanitizedHtml;
 
