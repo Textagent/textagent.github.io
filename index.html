@@ -243,54 +243,64 @@
                         <i class="bi bi-share"></i>
                     </button>
 
-                    <button id="present-button" class="tool-button" title="Presentation Mode">
-                        <i class="bi bi-easel"></i>
-                    </button>
-
-                    <button id="word-wrap-toggle" class="tool-button" title="Toggle Word Wrap">
-                        <i class="bi bi-text-wrap"></i>
-                    </button>
-
-                    <button id="focus-mode-toggle" class="tool-button" title="Focus Mode">
-                        <i class="bi bi-body-text"></i>
-                    </button>
-
-                    <button id="zen-mode-button" class="tool-button" title="Zen Mode (Distraction-free)">
-                        <i class="bi bi-fullscreen"></i>
-                    </button>
-
-                    <button id="speech-to-text-btn" class="tool-button" title="Voice Dictation (Speech to Text)">
-                        <i class="bi bi-mic"></i>
-                    </button>
-
+                    <!-- Overflow group: lower-priority buttons hidden at narrow widths -->
                     <span class="toolbar-separator"></span>
 
                     <button id="ai-toggle-button" class="tool-button ai-sparkle-btn" title="AI Assistant">
                         <i class="bi bi-stars"></i> <span>AI</span>
                     </button>
 
-                    <div class="dropdown">
-                        <button class="tool-button dropdown-toggle" type="button" id="themePickerDropdown"
-                            data-bs-toggle="dropdown" aria-expanded="false" title="Preview Theme">
-                            <i class="bi bi-palette"></i>
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="themePickerDropdown">
-                            <li><button class="dropdown-item theme-option" data-theme-name="github"
-                                    type="button">GitHub</button></li>
-                            <li><button class="dropdown-item theme-option" data-theme-name="gitlab"
-                                    type="button">GitLab</button></li>
-                            <li><button class="dropdown-item theme-option" data-theme-name="notion"
-                                    type="button">Notion</button></li>
-                            <li><button class="dropdown-item theme-option" data-theme-name="dracula"
-                                    type="button">Dracula</button></li>
-                            <li><button class="dropdown-item theme-option" data-theme-name="solarized"
-                                    type="button">Solarized</button></li>
-                        </ul>
-                    </div>
+                    <div class="toolbar-overflow-wrapper">
+                        <div class="toolbar-overflow-group">
+                            <button id="present-button" class="tool-button" title="Presentation Mode">
+                                <i class="bi bi-easel"></i>
+                            </button>
 
-                    <button id="theme-toggle" class="tool-button" title="Toggle Dark Mode">
-                        <i class="bi bi-moon"></i>
-                    </button>
+                            <button id="word-wrap-toggle" class="tool-button" title="Toggle Word Wrap">
+                                <i class="bi bi-text-wrap"></i>
+                            </button>
+
+                            <button id="focus-mode-toggle" class="tool-button" title="Focus Mode">
+                                <i class="bi bi-body-text"></i>
+                            </button>
+
+                            <button id="zen-mode-button" class="tool-button" title="Zen Mode (Distraction-free)">
+                                <i class="bi bi-fullscreen"></i>
+                            </button>
+
+                            <button id="speech-to-text-btn" class="tool-button"
+                                title="Voice Dictation (Speech to Text)">
+                                <i class="bi bi-mic"></i>
+                            </button>
+
+                            <div class="dropdown">
+                                <button class="tool-button dropdown-toggle" type="button" id="themePickerDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false" title="Preview Theme">
+                                    <i class="bi bi-palette"></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="themePickerDropdown">
+                                    <li><button class="dropdown-item theme-option" data-theme-name="github"
+                                            type="button">GitHub</button></li>
+                                    <li><button class="dropdown-item theme-option" data-theme-name="gitlab"
+                                            type="button">GitLab</button></li>
+                                    <li><button class="dropdown-item theme-option" data-theme-name="notion"
+                                            type="button">Notion</button></li>
+                                    <li><button class="dropdown-item theme-option" data-theme-name="dracula"
+                                            type="button">Dracula</button></li>
+                                    <li><button class="dropdown-item theme-option" data-theme-name="solarized"
+                                            type="button">Solarized</button></li>
+                                </ul>
+                            </div>
+
+                            <button id="theme-toggle" class="tool-button" title="Toggle Dark Mode">
+                                <i class="bi bi-moon"></i>
+                            </button>
+                        </div>
+                        <button id="toolbar-overflow-btn" class="tool-button toolbar-overflow-toggle"
+                            title="More tools">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Hamburger menu for mobile -->
@@ -638,6 +648,7 @@
     <script src="js/executable-blocks.js"></script>
     <script src="js/editor-features.js"></script>
     <script src="js/ui-panels.js"></script>
+    <script src="js/toolbar-overflow.js"></script>
     <script src="js/templates/documentation.js"></script>
     <script src="js/templates/project.js"></script>
     <script src="js/templates/technical.js"></script>

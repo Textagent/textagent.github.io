@@ -375,3 +375,92 @@ a:focus {
 }
 
 
+/* ========================================
+   TOOLBAR OVERFLOW MENU (kebab ⋮)
+   ======================================== */
+
+.toolbar-overflow-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Kebab button – hidden by default, shown at narrow widths */
+.toolbar-overflow-toggle {
+  display: none !important;
+}
+
+/* When inline, the group is just a row of buttons */
+.toolbar-overflow-group {
+  display: contents;
+}
+
+/* When collapsed: show kebab, hide inline buttons, show as dropdown */
+@media (max-width: 1400px) {
+  .toolbar-overflow-toggle {
+    display: flex !important;
+  }
+
+  .toolbar-overflow-group {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 300;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+  }
+
+  .toolbar-overflow-group.open {
+    display: flex;
+  }
+
+  /* Make buttons inside the overflow panel full-width, left-aligned */
+  .toolbar-overflow-group .tool-button {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .toolbar-overflow-group .tool-button::after {
+    content: attr(title);
+    margin-left: 6px;
+    font-size: 13px;
+  }
+
+  /* Don't add ::after to Bootstrap dropdown toggle (already has caret) */
+  .toolbar-overflow-group .dropdown-toggle::after {
+    content: '';
+    margin-left: 0.255em;
+  }
+
+  /* Make dropdown full-width inside overflow panel */
+  .toolbar-overflow-group .dropdown {
+    width: 100%;
+  }
+
+  .toolbar-overflow-group .dropdown .tool-button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Ensure dropdown menu renders inline inside overflow panel */
+  .toolbar-overflow-group .dropdown-menu {
+    position: relative !important;
+    transform: none !important;
+    border: none;
+    box-shadow: none;
+    background-color: var(--button-bg);
+    border-radius: 4px;
+    margin-top: 2px;
+    padding: 4px;
+  }
+}

@@ -54,11 +54,7 @@
 /* Stage 1: Tighter at <=1400px – hide stats, shrink buttons */
 @media (max-width: 1400px) {
   .stats-container {
-    font-size: 0.72rem;
-  }
-
-  .stat-item i {
-    font-size: 0.78rem;
+    display: none !important;
   }
 
   .view-mode-btn {
@@ -97,12 +93,8 @@
   }
 }
 
-/* Stage 2: Compact at <=1280px – hide stats fully */
+/* Stage 2: Compact at <=1280px */
 @media (max-width: 1280px) {
-  .stats-container {
-    display: none !important;
-  }
-
   .view-mode-btn {
     padding: 3px 6px;
     font-size: 11px;
@@ -197,6 +189,33 @@
 
 .view-mode-btn i {
   font-size: 16px;
+}
+
+/* Hide text labels for Split, Preview, PPT – show on hover */
+.view-mode-btn:not([data-mode="editor"]) {
+  position: relative;
+}
+
+.view-mode-btn:not([data-mode="editor"])>span {
+  display: none;
+}
+
+/* Tooltip-style label on hover */
+.view-mode-btn:not([data-mode="editor"]):hover>span {
+  display: block;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
 }
 
 /* Pane View States */
@@ -430,5 +449,3 @@
 [data-theme="dark"] .pdf-export table td[rowspan] {
   background-color: var(--table-bg, #161b22) !important;
 }
-
-
