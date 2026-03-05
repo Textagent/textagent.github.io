@@ -35,6 +35,33 @@
 
     <title>MDview</title>
     <link href="assets/icon.jpg" rel="icon" type="image/jpg">
+
+    <!-- Anti-flicker: set theme BEFORE any CSS/JS loads -->
+    <script>
+        (function () {
+            var t = localStorage.getItem('markdown-viewer-theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <style>
+        /* Critical CSS to prevent white flash in dark mode */
+        html[data-theme="dark"] {
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+
+        html[data-theme="light"] {
+            background: #ffffff;
+            color: #1f2328;
+        }
+
+        body {
+            background: inherit;
+            color: inherit;
+        }
+    </style>
+
     <!-- Updated libraries to latest versions -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"
