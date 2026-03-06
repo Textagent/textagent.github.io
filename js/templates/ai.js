@@ -7,10 +7,16 @@ window.__MDV_TEMPLATES_AI = [
         category: 'ai',
         icon: 'bi-briefcase',
         description: 'Generate a persuasive business proposal — fill in client & project details, AI does the rest',
-        content: `# Business Proposal — [Project Name]
+        variables: [
+            { name: 'projectName', value: 'Project Alpha', desc: 'Project or service name' },
+            { name: 'clientName', value: 'Acme Corp', desc: 'Client / target company' },
+            { name: 'yourName', value: 'Your Name', desc: 'Your name or company' },
+            { name: 'yourEmail', value: 'email@company.com', desc: 'Contact email' },
+        ],
+        content: `# Business Proposal — $(projectName)
 
-**Prepared for:** [Client / Company Name]
-**Prepared by:** [Your Name / Company]
+**Prepared for:** $(clientName)
+**Prepared by:** $(yourName)
 **Date:** $(date)
 
 ---
@@ -80,9 +86,9 @@ gantt
 
 ---
 
-**Contact:** [Your Name] · [email@company.com] · [Phone Number]
+**Contact:** $(yourName) · $(yourEmail)
 
-> 💡 **How to use:** Replace the bracketed placeholders, then click **✨ Fill** to generate all AI sections.
+> 💡 **How to use:** Edit the variable table at the top, click **⚡ Vars** to apply, then click **✨ Fill** to generate all AI sections.
 `
     },
     {
@@ -597,11 +603,16 @@ Format as a table with before/after estimates.}}
         category: 'ai',
         icon: 'bi-envelope-paper-heart',
         description: 'Job applications — paste the job description and your background, AI writes a personalized letter',
+        variables: [
+            { name: 'applicantName', value: 'Your Full Name', desc: 'Your name' },
+            { name: 'position', value: 'Job Title', desc: 'Position applying for' },
+            { name: 'targetCompany', value: 'Company Name', desc: 'Company you\'re applying to' },
+        ],
         content: `# Cover Letter
 
-**Applicant:** [Your Full Name]
-**Position:** [Job Title]
-**Company:** [Company Name]
+**Applicant:** $(applicantName)
+**Position:** $(position)
+**Company:** $(targetCompany)
 **Date:** $(date)
 
 ---
@@ -653,9 +664,13 @@ Format as numbered sections.}}
         category: 'ai',
         icon: 'bi-grid-3x3-gap',
         description: 'Strategic planning — describe your company/product, AI generates comprehensive SWOT analysis',
-        content: `# SWOT Analysis — [Company / Product Name]
+        variables: [
+            { name: 'companyName', value: 'Company Name', desc: 'Company or product to analyze' },
+            { name: 'authorName', value: 'Your Name', desc: 'Analysis author' },
+        ],
+        content: `# SWOT Analysis — $(companyName)
 
-**Prepared by:** [Your Name]
+**Prepared by:** $(authorName)
 **Date:** $(date)
 **Industry:** [Your Industry]
 

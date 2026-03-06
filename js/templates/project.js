@@ -7,12 +7,17 @@ window.__MDV_TEMPLATES_PROJECT = [
     category: 'project',
     icon: 'bi-people',
     description: 'Structured meeting notes with attendees, agenda, decisions, and action items',
-    content: `# Meeting Notes
+    variables: [
+      { name: 'meetingTitle', value: 'Team Standup', desc: 'Meeting title or topic' },
+      { name: 'facilitator', value: 'Your Name', desc: 'Meeting facilitator' },
+      { name: 'location', value: 'Conference Room / Zoom', desc: 'Meeting location' },
+    ],
+    content: `# $(meetingTitle) — Meeting Notes
 
 **Date:** $(date)
 **Time:** 10:00 AM — 11:00 AM
-**Location:** Conference Room / Zoom
-**Facilitator:** [Name]
+**Location:** $(location)
+**Facilitator:** $(facilitator)
 
 ## Attendees
 
@@ -66,6 +71,7 @@ window.__MDV_TEMPLATES_PROJECT = [
 ---
 
 **Next Meeting:** [Date & Time]
+**Facilitator:** $(facilitator)
 `
   },
   {
@@ -73,9 +79,14 @@ window.__MDV_TEMPLATES_PROJECT = [
     category: 'project',
     icon: 'bi-lightbulb',
     description: 'Comprehensive project proposal with objectives, timeline, and budget',
-    content: `# Project Proposal: [Project Name]
+    variables: [
+      { name: 'projectName', value: 'Project Alpha', desc: 'Name of the project' },
+      { name: 'authorName', value: 'Your Name', desc: 'Proposal author' },
+      { name: 'sponsor', value: 'Sponsor Name', desc: 'Project sponsor' },
+    ],
+    content: `# Project Proposal: $(projectName)
 
-**Prepared by:** [Your Name]
+**Prepared by:** $(authorName)
 **Date:** $(date)
 **Version:** 1.0
 
@@ -150,8 +161,8 @@ gantt
 
 | Role | Name | Signature | Date |
 |------|------|-----------|------|
-| Project Sponsor | | | |
-| Technical Lead | | | |
+| Project Sponsor | $(sponsor) | | |
+| Technical Lead | $(authorName) | | |
 | Stakeholder | | | |
 `
   },
@@ -160,10 +171,16 @@ gantt
     category: 'project',
     icon: 'bi-kanban',
     description: 'Agile sprint planning document with user stories and task breakdown',
-    content: `# Sprint Planning — Sprint [#]
+    variables: [
+      { name: 'sprintNumber', value: '1', desc: 'Sprint number' },
+      { name: 'sprintGoal', value: 'Deliver MVP features', desc: 'One-sentence sprint goal' },
+      { name: 'startDate', value: '2026-03-10', desc: 'Sprint start date' },
+      { name: 'endDate', value: '2026-03-24', desc: 'Sprint end date' },
+    ],
+    content: `# Sprint Planning — Sprint $(sprintNumber)
 
-**Sprint Duration:** [Start Date] → [End Date]
-**Sprint Goal:** [One-sentence goal]
+**Sprint Duration:** $(startDate) → $(endDate)
+**Sprint Goal:** $(sprintGoal)
 **Team Velocity:** [X] story points
 
 ---
@@ -239,7 +256,10 @@ gantt
     category: 'project',
     icon: 'bi-robot',
     description: 'AI-fillable product launch doc — outline your product, let AI write the copy',
-    content: `# [Product Name] — Launch Document
+    variables: [
+      { name: 'productName', value: 'My Product', desc: 'Product name' },
+    ],
+    content: `# $(productName) — Launch Document
 
 **Launch Date:** $(date)
 **Version:** 1.0

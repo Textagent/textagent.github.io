@@ -7,11 +7,16 @@ window.__MDV_TEMPLATES_TECHNICAL = [
     category: 'technical',
     icon: 'bi-bug',
     description: 'Detailed bug report with reproduction steps and environment info',
+    variables: [
+      { name: 'bugTitle', value: 'Brief description of the bug', desc: 'Bug title' },
+      { name: 'reporter', value: 'Your Name', desc: 'Who found the bug' },
+      { name: 'severity', value: '🟠 Major', desc: 'Severity level' },
+    ],
     content: `# Bug Report
 
-**Title:** [Brief description of the bug]
-**Severity:** 🔴 Critical / 🟠 Major / 🟡 Minor / 🟢 Trivial
-**Reporter:** [Your Name]
+**Title:** $(bugTitle)
+**Severity:** $(severity)
+**Reporter:** $(reporter)
 **Date:** $(date)
 **Status:** Open
 
@@ -77,10 +82,14 @@ Add any other context about the problem here. Include:
     category: 'technical',
     icon: 'bi-diagram-3',
     description: 'Technical specification document with architecture and implementation details',
+    variables: [
+      { name: 'featureName', value: 'Feature Name', desc: 'Feature being specified' },
+      { name: 'authorName', value: 'Your Name', desc: 'Spec author' },
+    ],
     content: `# Technical Specification
 
-**Feature:** [Feature Name]
-**Author:** [Your Name]
+**Feature:** $(featureName)
+**Author:** $(authorName)
 **Date:** $(date)
 **Status:** Draft / In Review / Approved
 
@@ -173,11 +182,17 @@ CREATE TABLE example (
     category: 'technical',
     icon: 'bi-git',
     description: 'Code review checklist and feedback template',
+    variables: [
+      { name: 'prNumber', value: '42', desc: 'Pull request number' },
+      { name: 'prTitle', value: 'PR Title', desc: 'Pull request title' },
+      { name: 'prAuthor', value: 'author', desc: 'PR author username' },
+      { name: 'reviewer', value: 'reviewer', desc: 'Reviewer username' },
+    ],
     content: `# Code Review
 
-**PR:** #[number] — [PR Title]
-**Author:** @[username]
-**Reviewer:** @[username]
+**PR:** #$(prNumber) — $(prTitle)
+**Author:** @$(prAuthor)
+**Reviewer:** @$(reviewer)
 **Date:** $(date)
 
 ---
@@ -245,9 +260,13 @@ Brief description of what this PR does.
     category: 'technical',
     icon: 'bi-robot',
     description: 'AI-fillable technical report — describe your findings, let AI write the analysis',
-    content: `# Technical Report: [Topic]
+    variables: [
+      { name: 'reportTopic', value: 'Topic', desc: 'Report topic or title' },
+      { name: 'authorName', value: 'Your Name', desc: 'Report author' },
+    ],
+    content: `# Technical Report: $(reportTopic)
 
-**Author:** [Your Name]
+**Author:** $(authorName)
 **Date:** $(date)
 **Status:** Draft
 

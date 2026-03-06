@@ -128,10 +128,178 @@
     });
   }
 
+  // ============================
+  // Template Variable Engine
+  // ============================
+
+  /**
+   * Built-in global variables — auto-resolved, no user input needed.
+   */
+  function resolveGlobalVariables(text) {
+    const now = new Date();
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    const globals = {
+      date: now.toISOString().split('T')[0],
+      time: now.toTimeString().slice(0, 5),
+      year: String(now.getFullYear()),
+      month: months[now.getMonth()],
+      day: days[now.getDay()],
+      timestamp: now.toISOString(),
+      uuid: crypto.randomUUID ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36)),
+    };
+
+    let result = text;
+    for (const [key, val] of Object.entries(globals)) {
+      result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), val);
+    }
+    return result;
+  }
+
+  /**
+   * Generate a <!-- @variables --> markdown table from a template's variables array.
+   */
+  function generateVariableBlock(variables) {
+    if (!variables || variables.length === 0) return '';
+
+    let block = '<!-- @variables -->\n';
+    block += '| Variable | Value | Description |\n';
+    block += '|----------|-------|-------------|\n';
+    for (const v of variables) {
+      const name = v.name || '';
+      const value = v.value || v.default || '';
+      const desc = v.desc || v.description || '';
+      block += `| ${name} | ${value} | ${desc} |\n`;
+    }
+    block += '<!-- @/variables -->\n\n';
+    return block;
+  }
+
+  /**
+   * Parse the @variables block from editor content and return { vars, contentWithoutBlock }.
+   */
+  function parseVariableBlock(text) {
+    const regex = /<!--\s*@variables\s*-->\s*\n([\s\S]*?)<!--\s*@\/variables\s*-->\s*\n*/;
+    const match = text.match(regex);
+    if (!match) return { vars: {}, contentWithoutBlock: text, hasBlock: false };
+
+    const tableText = match[1];
+    const vars = {};
+
+    // Parse markdown table rows (skip header + separator)
+    const rows = tableText.trim().split('\n');
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i].trim();
+      if (!row.startsWith('|')) continue;
+      // Skip header and separator rows
+      if (row.includes('Variable') && row.includes('Value')) continue;
+      if (/^\|[\s-|]+\|$/.test(row)) continue;
+
+      const cells = row.split('|').map(c => c.trim()).filter(c => c !== '');
+      if (cells.length >= 2) {
+        const varName = cells[0].trim();
+        const varValue = cells[1].trim();
+        if (varName && !varName.match(/^-+$/)) {
+          vars[varName] = varValue;
+        }
+      }
+    }
+
+    const contentWithoutBlock = text.replace(regex, '');
+    return { vars, contentWithoutBlock, hasBlock: true };
+  }
+
+  /**
+   * Known global variable names — these are auto-resolved and should NOT
+   * appear in the user-editable variable table.
+   */
+  const GLOBAL_VAR_NAMES = new Set(['date', 'time', 'year', 'month', 'day', 'timestamp', 'uuid']);
+
+  /**
+   * Scan text for all $(varName) patterns and return unique non-global variable names.
+   */
+  function scanForVariables(text) {
+    const found = new Set();
+    const re = /\$\(([a-zA-Z_]\w*)\)/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const name = m[1];
+      if (!GLOBAL_VAR_NAMES.has(name)) {
+        found.add(name);
+      }
+    }
+    return [...found];
+  }
+
+  /**
+   * Apply template variables: parse the @variables block, replace all $(varName)
+   * in the document, and remove the variable block.
+   *
+   * If NO block exists, auto-detect $(varName) patterns and generate the table
+   * at the top so the user can fill in values, then click Vars again to apply.
+   */
+  function applyTemplateVariables() {
+    const editor = M.markdownEditor;
+    let text = editor.value;
+
+    const { vars, contentWithoutBlock, hasBlock } = parseVariableBlock(text);
+
+    if (!hasBlock) {
+      // No variable block found — scan for $(varName) patterns
+      const detected = scanForVariables(text);
+
+      if (detected.length === 0) {
+        // No variables at all — just resolve globals
+        editor.value = resolveGlobalVariables(text);
+        M.renderMarkdown();
+        return false;
+      }
+
+      // Auto-generate the variable table at the top
+      const autoVars = detected.map(name => ({ name, value: '', desc: '' }));
+      const block = generateVariableBlock(autoVars);
+
+      // Also resolve globals in the content (but keep $(localVars) as-is)
+      editor.value = block + text;
+      M.renderMarkdown();
+      editor.scrollTop = 0;
+
+      // Flash the button in a "waiting" state (amber pulse) so user knows to fill in values
+      const btn = document.getElementById('apply-vars-btn');
+      if (btn) {
+        btn.classList.add('apply-vars-waiting');
+        setTimeout(() => btn.classList.remove('apply-vars-waiting'), 3000);
+      }
+      return 'generated';
+    }
+
+    // Resolve local variables from the table
+    let result = contentWithoutBlock;
+    for (const [key, val] of Object.entries(vars)) {
+      result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), val);
+    }
+
+    // Also resolve global built-ins
+    result = resolveGlobalVariables(result);
+
+    editor.value = result;
+    M.renderMarkdown();
+    editor.scrollTop = 0;
+    return true;
+  }
+
   function selectTemplate(tpl) {
-    // Replace $(date) placeholders with current date
-    const today = new Date().toISOString().split('T')[0];
-    const content = tpl.content.replace(/\$\(date\)/g, today);
+    let content = tpl.content;
+
+    // If the template defines variables, generate the block at the top
+    if (tpl.variables && tpl.variables.length > 0) {
+      content = generateVariableBlock(tpl.variables) + content;
+    }
+
+    // Resolve global built-in variables (date, time, etc.)
+    content = resolveGlobalVariables(content);
 
     M.markdownEditor.value = content;
     M.renderMarkdown();
@@ -206,10 +374,22 @@
     });
   }
 
+  // Wire up Apply Variables button
+  const applyVarsBtn = document.getElementById('apply-vars-btn');
+  if (applyVarsBtn) {
+    applyVarsBtn.addEventListener('click', () => {
+      const applied = applyTemplateVariables();
+      if (applied) {
+        applyVarsBtn.classList.add('apply-vars-success');
+        setTimeout(() => applyVarsBtn.classList.remove('apply-vars-success'), 1500);
+      }
+    });
+  }
 
   // Expose for other modules
   M.openTemplateModal = openTemplateModal;
   M.closeTemplateModal = closeTemplateModal;
+  M.applyTemplateVariables = applyTemplateVariables;
   M.getDefaultContent = function () { return MARKDOWN_TEMPLATES[0].content; };
 
 })(window.MDView);

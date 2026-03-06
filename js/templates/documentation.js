@@ -350,12 +350,19 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
     category: 'documentation',
     icon: 'bi-book',
     description: 'Standard project README with badges, install, usage, and contributing sections',
-    content: `# Project Name
+    variables: [
+      { name: 'projectName', value: 'my-project', desc: 'Repository / project name' },
+      { name: 'authorName', value: 'Your Name', desc: 'Author or maintainer' },
+      { name: 'authorGithub', value: 'yourname', desc: 'GitHub username' },
+      { name: 'projectDesc', value: 'A brief description of what this project does and who it\'s for.', desc: 'One-line project summary' },
+      { name: 'license', value: 'MIT', desc: 'License type (MIT, Apache-2.0, GPL-3.0)' },
+    ],
+    content: `# $(projectName)
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-$(license)-blue.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
-> A brief description of what this project does and who it's for.
+> $(projectDesc)
 
 ## ✨ Features
 
@@ -367,10 +374,10 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
 
 \`\`\`bash
 # Clone the repository
-git clone https://github.com/username/project-name.git
+git clone https://github.com/$(authorGithub)/$(projectName).git
 
 # Navigate to the project directory
-cd project-name
+cd $(projectName)
 
 # Install dependencies
 npm install
@@ -379,7 +386,7 @@ npm install
 ## 🚀 Usage
 
 \`\`\`javascript
-const project = require('project-name');
+const project = require('$(projectName)');
 
 // Example usage
 project.doSomething();
@@ -401,12 +408,12 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the $(license) License — see the [LICENSE](LICENSE) file for details.
 
 ## 📞 Contact
 
-- **Author** — [@yourname](https://github.com/yourname)
-- **Email** — your.email@example.com
+- **Author** — [@$(authorGithub)](https://github.com/$(authorGithub))
+- **Email** — $(authorName)@example.com
 `
   },
   {
