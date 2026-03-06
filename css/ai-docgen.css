@@ -5,6 +5,45 @@
    Uses teal/emerald accent to match the app theme
    ============================================ */
 
+/* --- AI Tags Group Container --- */
+.fmt-ai-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid rgba(45, 212, 191, 0.25);
+    border-radius: 8px;
+    padding: 2px 4px;
+    background: rgba(45, 212, 191, 0.05);
+    position: relative;
+    margin-left: 2px;
+}
+
+.fmt-ai-group-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(45, 212, 191, 0.7);
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    background: var(--color-canvas-default, #161b22);
+    padding: 0 4px;
+    line-height: 1;
+    pointer-events: none;
+}
+
+[data-theme="light"] .fmt-ai-group-label {
+    background: var(--color-canvas-default, #f6f8fa);
+    color: rgba(13, 148, 136, 0.7);
+}
+
+[data-theme="light"] .fmt-ai-group {
+    border-color: rgba(20, 184, 166, 0.3);
+    background: rgba(20, 184, 166, 0.04);
+}
+
+
 /* --- Toolbar Buttons --- */
 .fmt-ai-btn,
 .fmt-think-btn {
