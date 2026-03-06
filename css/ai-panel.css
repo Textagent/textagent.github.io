@@ -13,12 +13,12 @@
   align-self: center;
 }
 
-/* Sparkle button glow */
+/* Sparkle button — monochrome */
 .ai-sparkle-btn {
   position: relative;
-  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  background: #1a1a2e !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 20px !important;
   padding: 5px 12px !important;
   display: flex;
   align-items: center;
@@ -26,39 +26,36 @@
   color: #fff !important;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-  animation: aiPulse 3s ease-in-out infinite;
 }
 
-@keyframes aiPulse {
-
-  0%,
-  100% {
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
-  }
-
-  50% {
-    box-shadow: 0 2px 16px rgba(118, 75, 162, 0.5);
-  }
+[data-theme="dark"] .ai-sparkle-btn {
+  background: #fff !important;
+  color: #1a1a2e !important;
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
 }
 
 .ai-sparkle-btn i {
   background: none !important;
-  -webkit-text-fill-color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
   font-size: 14px;
 }
 
 .ai-sparkle-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(102, 126, 234, 0.5) !important;
-  filter: brightness(1.1);
+  opacity: 0.85;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .ai-sparkle-btn:hover {
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
 }
 
 .ai-sparkle-btn.ai-active {
-  background: linear-gradient(135deg, #764ba2, #f093fb) !important;
-  box-shadow: 0 4px 18px rgba(118, 75, 162, 0.5);
-  animation: none;
+  background: var(--accent-color) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
 }
 
 /* --- AI Floating Panel --- */
@@ -1230,5 +1227,3 @@
     transform: rotate(360deg);
   }
 }
-
-

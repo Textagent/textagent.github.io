@@ -113,18 +113,25 @@
                         title="View on GitHub" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-github"></i>
                     </a>
-                    <div id="stats-container" class="stats-container d-flex align-items-center d-none d-xl-flex">
-                        <div class="stat-item me-3">
-                            <i class="bi bi-clock me-1"></i> <span id="reading-time">0</span> Min Read
-                        </div>
-                        <div class="stat-item me-3">
-                            <i class="bi bi-text-paragraph me-1"></i> <span id="word-count">0</span> Words
-                        </div>
-                        <div class="stat-item me-3">
-                            <i class="bi bi-fonts me-1"></i> <span id="char-count">0</span> Chars
-                        </div>
-                        <div class="stat-item autosave-indicator" id="autosave-indicator" style="display:none">
-                            <span class="autosave-dot"></span> <span id="autosave-text">Saved</span>
+                    <div class="stats-pill-wrapper d-none d-xl-flex">
+                        <button id="stats-toggle" class="stats-toggle-btn" title="Document stats">
+                            <i class="bi bi-info-circle"></i>
+                        </button>
+                        <div id="stats-container" class="stats-pill">
+                            <div class="stats-pill-inner">
+                                <div class="stat-chip">
+                                    <i class="bi bi-clock"></i> <span id="reading-time">0</span> min
+                                </div>
+                                <div class="stat-chip">
+                                    <i class="bi bi-text-paragraph"></i> <span id="word-count">0</span> words
+                                </div>
+                                <div class="stat-chip">
+                                    <i class="bi bi-fonts"></i> <span id="char-count">0</span> chars
+                                </div>
+                                <div class="stat-chip autosave-indicator" id="autosave-indicator" style="display:none">
+                                    <span class="autosave-dot"></span> <span id="autosave-text">Saved</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -363,12 +370,14 @@
             </div>
         </header>
 
-        <div id="dropzone" class="dropzone container-fluid mt-2">
+        <div id="dropzone" class="dropzone container-fluid mt-1">
             <button id="close-dropzone" class="close-btn" title="Close dropzone">
                 <i class="bi bi-x-lg"></i>
             </button>
-            <p class="mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Drop your file here or click to browse</p>
-            <small class="text-muted mt-1 d-block">Supports: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF</small>
+            <p class="mb-0"><i class="bi bi-cloud-arrow-up me-1"></i>Drop your file here or click to browse
+                <small class="text-muted ms-2" style="font-size:0.8rem">MD, DOCX, XLSX, CSV, HTML, JSON, XML,
+                    PDF</small>
+            </p>
         </div>
 
         <!-- Formatting Toolbar -->

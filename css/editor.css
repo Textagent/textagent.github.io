@@ -12,8 +12,9 @@
 
 .editor-pane {
   background-color: var(--editor-bg);
-  border-right: 1px solid var(--border-color);
+  border-right: none;
   padding-right: 0px;
+  box-shadow: 1px 0 0 var(--border-color);
 }
 
 .preview-pane {
@@ -21,25 +22,25 @@
   /* Using the new variable for preview background */
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — rounded and subtle */
 .editor-pane::-webkit-scrollbar,
 .preview-pane::-webkit-scrollbar,
 #markdown-editor::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 .editor-pane::-webkit-scrollbar-track,
 .preview-pane::-webkit-scrollbar-track,
 #markdown-editor::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
+  background: transparent;
 }
 
 .editor-pane::-webkit-scrollbar-thumb,
 .preview-pane::-webkit-scrollbar-thumb,
 #markdown-editor::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
-  border-radius: 4px;
+  border-radius: 10px;
 }
 
 .editor-pane::-webkit-scrollbar-thumb:hover,
@@ -57,8 +58,8 @@
   resize: none;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 14px;
-  line-height: 1.5;
-  padding: 10px;
+  line-height: 1.6;
+  padding: 12px;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-y: auto;
 }
@@ -106,5 +107,3 @@
   border-radius: 3px;
   padding: 0.2em 0.4em;
 }
-
-

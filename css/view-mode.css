@@ -1,7 +1,7 @@
 /* View mode controls, resize divider, mobile view mode, responsive fixes, PDF export table fix */
 
 /* ========================================
-   VIEW MODE CONTROLS - Story 1.1
+   VIEW MODE CONTROLS - Pill Segmented Control
    ======================================== */
 
 /* Header layout for three sections */
@@ -24,7 +24,7 @@
 
 /* Stage 0: Gentle tightening at <=1600px */
 @media (max-width: 1600px) {
-  .stats-container {
+  .stats-pill-wrapper {
     font-size: 0.8rem;
   }
 
@@ -53,7 +53,7 @@
 
 /* Stage 1: Tighter at <=1400px – hide stats, shrink buttons */
 @media (max-width: 1400px) {
-  .stats-container {
+  .stats-pill-wrapper {
     display: none !important;
   }
 
@@ -106,7 +106,7 @@
   }
 
   .view-mode-btn.active {
-    padding: 2px 5px;
+    padding: 3px 6px;
   }
 
   .tool-button {
@@ -136,59 +136,64 @@
 }
 
 
-/* View Mode Button Group */
+/* ========================================
+   PILL-SHAPED VIEW MODE BUTTON GROUP
+   ======================================== */
+
 .view-mode-group {
   display: flex;
   gap: 0;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  background-color: var(--button-bg);
+  border-radius: 100px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
 }
 
 .view-mode-btn {
-  background-color: var(--button-bg);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
   color: var(--text-color);
-  padding: 6px 12px;
+  padding: 5px 12px;
   font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
+  gap: 5px;
+  transition: all 0.25s ease;
+  border-radius: 100px;
+  opacity: 0.7;
 }
 
 .view-mode-btn:first-child {
-  border-radius: 6px 0 0 6px;
+  border-radius: 100px;
 }
 
 .view-mode-btn:last-child {
-  border-radius: 0 6px 6px 0;
-}
-
-.view-mode-btn:not(:last-child) {
-  border-right: none;
+  border-radius: 100px;
 }
 
 .view-mode-btn:hover {
   background-color: var(--button-hover);
+  opacity: 1;
 }
 
 .view-mode-btn.active {
-  background-color: var(--button-bg);
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-  border-width: 2px;
-  padding: 5px 11px;
-  /* Adjust for thicker border */
+  background-color: var(--accent-color);
+  color: #fff;
+  opacity: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  padding: 5px 12px;
 }
 
 .view-mode-btn.active:not(:last-child) {
-  border-right: 2px solid var(--accent-color);
+  border-right: none;
 }
 
 .view-mode-btn i {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 /* Hide text labels for Split, Preview, PPT – show on hover */
@@ -204,21 +209,24 @@
 .view-mode-btn:not([data-mode="editor"]):hover>span {
   display: block;
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 3px 8px;
+  border-radius: 6px;
+  padding: 3px 10px;
   font-size: 12px;
   white-space: nowrap;
   z-index: 200;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
 
-/* Pane View States */
+/* ========================================
+   PANE VIEW STATES
+   ======================================== */
+
 .content-container.view-editor-only .preview-pane {
   display: none;
 }
@@ -285,13 +293,16 @@
   height: 40px;
   background-color: var(--border-color);
   border-radius: 2px;
-  transition: background-color 0.2s ease, width 0.2s ease;
+  transition: background-color 0.2s ease, width 0.2s ease, height 0.2s ease;
+  opacity: 0.6;
 }
 
 .resize-divider:hover .resize-divider-handle,
 .resize-divider.dragging .resize-divider-handle {
   background-color: var(--accent-color);
   width: 3px;
+  height: 50px;
+  opacity: 1;
 }
 
 /* Hide divider in single-pane modes */
@@ -323,15 +334,19 @@
 
 .mobile-view-mode-group {
   display: flex;
-  gap: 0;
+  gap: 2px;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 0.75rem;
+  background-color: var(--button-bg);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 0.75rem;
 }
 
 .mobile-view-mode-btn {
   flex: 1;
-  background-color: var(--button-bg);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
   color: var(--text-color);
   padding: 8px 12px;
   font-size: 14px;
@@ -342,35 +357,34 @@
   justify-content: center;
   gap: 4px;
   transition: all 0.2s ease;
+  border-radius: 8px;
+  opacity: 0.7;
 }
 
 .mobile-view-mode-btn:first-child {
-  border-radius: 6px 0 0 6px;
+  border-radius: 8px;
 }
 
 .mobile-view-mode-btn:last-child {
-  border-radius: 0 6px 6px 0;
-}
-
-.mobile-view-mode-btn:not(:last-child) {
-  border-right: none;
+  border-radius: 8px;
 }
 
 .mobile-view-mode-btn:hover,
 .mobile-view-mode-btn:active {
   background-color: var(--button-hover);
+  opacity: 1;
 }
 
 .mobile-view-mode-btn.active {
-  background-color: var(--button-bg);
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-  border-width: 2px;
-  padding: 7px 11px;
+  background-color: var(--accent-color);
+  color: #fff;
+  opacity: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  padding: 8px 12px;
 }
 
 .mobile-view-mode-btn.active:not(:last-child) {
-  border-right: 2px solid var(--accent-color);
+  border-right: none;
 }
 
 .mobile-view-mode-btn i {
@@ -403,9 +417,6 @@
    PDF EXPORT TABLE FIX - Rowspan/Colspan
    ======================================== */
 
-/* Fix for html2canvas not properly rendering rowspan/colspan cells.
-   Apply backgrounds to cells instead of rows to prevent row backgrounds
-   from painting over rowspan cells during canvas capture. */
 .pdf-export table tr {
   background-color: transparent !important;
 }

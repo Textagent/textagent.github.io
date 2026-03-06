@@ -229,5 +229,22 @@
     // INITIAL VIEW MODE
     // ========================================
     M.setViewMode('split');
+    // ========================================
+    // STATS PILL TOGGLE
+    // ========================================
+    var statsToggle = document.getElementById('stats-toggle');
+    var statsPill = document.getElementById('stats-container');
+    if (statsToggle && statsPill) {
+        // restore saved state
+        if (localStorage.getItem('mdview-stats-open') === 'true') {
+            statsPill.classList.add('expanded');
+            statsToggle.classList.add('active');
+        }
+        statsToggle.addEventListener('click', function () {
+            var open = statsPill.classList.toggle('expanded');
+            statsToggle.classList.toggle('active', open);
+            localStorage.setItem('mdview-stats-open', open);
+        });
+    }
 
 })(window.MDView);

@@ -99,8 +99,9 @@ body.ai-panel-active .app-container {
 
 .editor-pane {
   background-color: var(--editor-bg);
-  border-right: 1px solid var(--border-color);
+  border-right: none;
   padding-right: 0px;
+  box-shadow: 1px 0 0 var(--border-color);
 }
 
 .preview-pane {
@@ -196,17 +197,17 @@ body.ai-panel-active .app-container {
 
 .toolbar {
   display: flex;
-  gap: 2px;
+  gap: 1px;
   flex-wrap: nowrap;
   align-items: center;
 }
 
 .tool-button {
-  background-color: var(--button-bg);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--text-color);
-  border-radius: 6px;
-  padding: 5px 6px;
+  border-radius: 8px;
+  padding: 6px 7px;
   font-size: 14px;
   cursor: pointer;
   display: flex;
@@ -215,14 +216,19 @@ body.ai-panel-active .app-container {
   transition: all 0.2s ease;
   flex-shrink: 0;
   white-space: nowrap;
+  position: relative;
 }
 
 .tool-button:hover {
   background-color: var(--button-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .tool-button:active {
   background-color: var(--button-active);
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .tool-button i {
@@ -234,37 +240,50 @@ body.ai-panel-active .app-container {
 }
 
 .dropzone {
-  border: 2px dashed var(--border-color);
-  border-radius: 6px;
-  padding: 20px;
+  border: 1.5px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 10px 20px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   background-color: var(--dropzone-bg);
+  position: relative;
 }
 
 .dropzone.active {
   border-color: var(--accent-color);
-  background-color: rgba(var(--accent-color), 0.05);
+  background-color: rgba(88, 166, 255, 0.05);
 }
 
 .dropzone p {
   transition: transform 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.dropzone:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .dropzone:hover p {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 
 /* Dropdown improvements */
 .dropdown-menu {
   background-color: var(--bg-color);
-  border-color: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 4px;
 }
 
 .dropdown-item {
   color: var(--text-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  transition: background-color 0.15s ease;
 }
 
 .dropdown-item:hover,
@@ -327,10 +346,11 @@ a:focus {
   background: var(--button-bg);
   border: 1px solid var(--border-color);
   padding: 5px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Styles for GitHub markdown preview light mode */
@@ -3556,12 +3576,12 @@ body.focus-mode #markdown-editor {
   align-self: center;
 }
 
-/* Sparkle button glow */
+/* Sparkle button — monochrome */
 .ai-sparkle-btn {
   position: relative;
-  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  background: #1a1a2e !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 20px !important;
   padding: 5px 12px !important;
   display: flex;
   align-items: center;
@@ -3569,39 +3589,36 @@ body.focus-mode #markdown-editor {
   color: #fff !important;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-  animation: aiPulse 3s ease-in-out infinite;
 }
 
-@keyframes aiPulse {
-
-  0%,
-  100% {
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
-  }
-
-  50% {
-    box-shadow: 0 2px 16px rgba(118, 75, 162, 0.5);
-  }
+[data-theme="dark"] .ai-sparkle-btn {
+  background: #fff !important;
+  color: #1a1a2e !important;
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
 }
 
 .ai-sparkle-btn i {
   background: none !important;
-  -webkit-text-fill-color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
   font-size: 14px;
 }
 
 .ai-sparkle-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(102, 126, 234, 0.5) !important;
-  filter: brightness(1.1);
+  opacity: 0.85;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .ai-sparkle-btn:hover {
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
 }
 
 .ai-sparkle-btn.ai-active {
-  background: linear-gradient(135deg, #764ba2, #f093fb) !important;
-  box-shadow: 0 4px 18px rgba(118, 75, 162, 0.5);
-  animation: none;
+  background: var(--accent-color) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
 }
 
 /* --- AI Floating Panel --- */
