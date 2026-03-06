@@ -26,6 +26,7 @@ import '../css/slides.css';
 import '../css/ai-panel.css';
 import '../css/speech.css';
 import '../css/table-tools.css';
+import '../css/ai-docgen.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -67,6 +68,9 @@ async function loadModules() {
 
     // Phase 4: AI (depends on ai-models from phase 2)
     await import('../js/ai-assistant.js');
+
+    // Phase 4.5: DocGen (depends on ai-assistant's requestAiTask API)
+    await import('../js/ai-docgen.js');
 
     // Phase 5: Init wiring (must be last — wires everything together)
     await import('../js/app-init.js');

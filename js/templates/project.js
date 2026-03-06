@@ -2,12 +2,12 @@
 // templates/project.js — Project Templates
 // ============================================
 window.__MDV_TEMPLATES_PROJECT = [
-    {
-      name: 'Meeting Notes',
-      category: 'project',
-      icon: 'bi-people',
-      description: 'Structured meeting notes with attendees, agenda, decisions, and action items',
-      content: `# Meeting Notes
+  {
+    name: 'Meeting Notes',
+    category: 'project',
+    icon: 'bi-people',
+    description: 'Structured meeting notes with attendees, agenda, decisions, and action items',
+    content: `# Meeting Notes
 
 **Date:** $(date)
 **Time:** 10:00 AM — 11:00 AM
@@ -67,13 +67,13 @@ window.__MDV_TEMPLATES_PROJECT = [
 
 **Next Meeting:** [Date & Time]
 `
-    },
-    {
-      name: 'Project Proposal',
-      category: 'project',
-      icon: 'bi-lightbulb',
-      description: 'Comprehensive project proposal with objectives, timeline, and budget',
-      content: `# Project Proposal: [Project Name]
+  },
+  {
+    name: 'Project Proposal',
+    category: 'project',
+    icon: 'bi-lightbulb',
+    description: 'Comprehensive project proposal with objectives, timeline, and budget',
+    content: `# Project Proposal: [Project Name]
 
 **Prepared by:** [Your Name]
 **Date:** $(date)
@@ -154,13 +154,13 @@ gantt
 | Technical Lead | | | |
 | Stakeholder | | | |
 `
-    },
-    {
-      name: 'Sprint Planning',
-      category: 'project',
-      icon: 'bi-kanban',
-      description: 'Agile sprint planning document with user stories and task breakdown',
-      content: `# Sprint Planning — Sprint [#]
+  },
+  {
+    name: 'Sprint Planning',
+    category: 'project',
+    icon: 'bi-kanban',
+    description: 'Agile sprint planning document with user stories and task breakdown',
+    content: `# Sprint Planning — Sprint [#]
 
 **Sprint Duration:** [Start Date] → [End Date]
 **Sprint Goal:** [One-sentence goal]
@@ -233,5 +233,43 @@ gantt
 - [ ] QA verified
 - [ ] Deployed to staging
 `
-    },
+  },
+  {
+    name: 'Product Launch (AI Fill)',
+    category: 'project',
+    icon: 'bi-robot',
+    description: 'AI-fillable product launch doc — outline your product, let AI write the copy',
+    content: `# [Product Name] — Launch Document
+
+**Launch Date:** $(date)
+**Version:** 1.0
+
+---
+
+## Executive Summary
+
+{{AI: Write a concise executive summary for a product launch. The product is [describe your product]. Cover what it does, who it's for, and why it matters.}}
+
+## Key Features
+
+{{AI: Create a features section with 4-5 key features. For each feature, include an icon emoji, a bold title, and a one-line description. Format as a markdown table with columns: Feature, Description, Benefit.}}
+
+## Competitive Analysis
+
+{{Think: Compare this product to 3 competitors. Create a comparison table with features, pricing, and unique advantages. Highlight where our product wins.}}
+
+## Pricing
+
+{{AI: Create a pricing section with Free, Pro ($9/mo), and Enterprise tiers. Use a comparison table showing what's included in each tier. Make the Pro tier the recommended option.}}
+
+## Launch Checklist
+
+- [ ] Product demo video
+- [ ] Landing page live
+- [ ] Press release sent
+- [ ] Social media posts scheduled
+- [ ] Email campaign ready
+- [ ] Support docs updated
+`
+  },
 ];

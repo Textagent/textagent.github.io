@@ -2,12 +2,12 @@
 // templates/creative.js — Creative Templates
 // ============================================
 window.__MDV_TEMPLATES_CREATIVE = [
-    {
-      name: 'Blog Post',
-      category: 'creative',
-      icon: 'bi-pencil-square',
-      description: 'Blog post template with title, sections, and call-to-action',
-      content: `# [Blog Post Title: Make It Catchy and SEO-Friendly]
+  {
+    name: 'Blog Post',
+    category: 'creative',
+    icon: 'bi-pencil-square',
+    description: 'Blog post template with title, sections, and call-to-action',
+    content: `# [Blog Post Title: Make It Catchy and SEO-Friendly]
 
 *Published on $(date) · X min read*
 
@@ -68,13 +68,13 @@ Summarize what was covered. Reinforce the main message. End with a forward-looki
 
 **Tags:** #topic1 #topic2 #topic3
 `
-    },
-    {
-      name: 'Newsletter',
-      category: 'creative',
-      icon: 'bi-envelope-paper',
-      description: 'Newsletter template with sections for updates, highlights, and links',
-      content: `# 📬 [Newsletter Name] — Issue #[X]
+  },
+  {
+    name: 'Newsletter',
+    category: 'creative',
+    icon: 'bi-envelope-paper',
+    description: 'Newsletter template with sections for updates, highlights, and links',
+    content: `# 📬 [Newsletter Name] — Issue #[X]
 
 *$(date)*
 
@@ -153,13 +153,13 @@ That's all for this week! See you next time. ✌️
 
 *[Unsubscribe](https://example.com/unsubscribe) · [View in browser](https://example.com/newsletter/1)*
 `
-    },
-    {
-      name: 'Resume / CV',
-      category: 'creative',
-      icon: 'bi-person-badge',
-      description: 'Professional resume template with experience, skills, and education',
-      content: `# [Your Full Name]
+  },
+  {
+    name: 'Resume / CV',
+    category: 'creative',
+    icon: 'bi-person-badge',
+    description: 'Professional resume template with experience, skills, and education',
+    content: `# [Your Full Name]
 
 **[Your Title / Role]**
 
@@ -237,5 +237,51 @@ Brief description of the project, what problem it solves, and technologies used.
 ### **[Project Name](https://github.com/yourname/project)**
 Brief description of the project.
 `
-    },
+  },
+  {
+    name: 'Blog Post (AI Fill)',
+    category: 'creative',
+    icon: 'bi-robot',
+    description: 'AI-fillable blog post — write notes, tag sections, click Fill to generate',
+    content: `# [Your Blog Post Title]
+
+*Published on $(date) · X min read*
+
+---
+
+## Introduction
+
+{{AI: Write a compelling introduction that hooks the reader. The blog topic is about [describe your topic here]. Set the context and preview the key takeaways.}}
+
+## The Problem
+
+{{Think: Analyze the core problem or challenge that readers face regarding [your topic]. Use relatable examples and data points to make it tangible.}}
+
+## The Solution
+
+### Key Insight 1
+
+{{AI: Write about the first key insight or solution point. Include practical examples and actionable advice.}}
+
+### Key Insight 2
+
+{{AI: Write about the second key insight. Include a comparison table if relevant.}}
+
+### Key Insight 3
+
+{{AI: Write about the third key insight. Include code snippets or step-by-step instructions if applicable.}}
+
+## Conclusion
+
+{{AI: Write a strong conclusion that summarizes the key points, provides a clear takeaway, and includes a call-to-action for the reader.}}
+
+---
+
+> **💡 How to use this template:**
+> 1. Replace the bracketed placeholders with your topic details
+> 2. Edit the AI/Think instructions to be more specific
+> 3. Click **✨ Fill** in the toolbar to generate all sections
+> 4. Refine the output using the AI context menu (select text → right-click)
+`
+  },
 ];

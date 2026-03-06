@@ -1439,4 +1439,82 @@
   M.hideAiConsentDialog = typeof hideAiConsentDialog !== "undefined" ? hideAiConsentDialog : function () { };
   M.hideApiKeyModal = typeof hideApiKeyModal !== "undefined" ? hideApiKeyModal : function () { };
 
+  // ===========================================================
+  // Public AI Request API — for non-chat modules (e.g. ai-docgen)
+  // ===========================================================
+  M.requestAiTask = function ({ taskType, context, userPrompt, enableThinking, onToken, silent }) {
+    return new Promise(function (resolve, reject) {
+      // Block if another generation is in progress
+      if (aiIsGenerating) {
+        return reject(new Error('Another AI generation is already in progress.'));
+      }
+
+      var activeWorker = getActiveWorker();
+      var isReady = isCurrentModelReady();
+
+      if (!isReady || !activeWorker) {
+        return reject(new Error('AI model not ready. Please select a model or check your API key.'));
+      }
+
+      aiIsGenerating = true;
+      if (aiSendBtn) aiSendBtn.disabled = true;
+
+      var messageId = ++aiMessageIdCounter;
+      var accumulated = '';
+      var finished = false;
+
+      function onWorkerMessage(e) {
+        var msg = e.data;
+        if (msg.messageId !== messageId) return; // not ours
+
+        switch (msg.type) {
+          case 'token':
+            accumulated += msg.token;
+            if (onToken) {
+              try { onToken(msg.token, accumulated); } catch (_) { /* ignore callback errors */ }
+            }
+            break;
+
+          case 'complete':
+            cleanup();
+            resolve(msg.text || accumulated);
+            break;
+
+          case 'error':
+            cleanup();
+            reject(new Error(msg.message || 'AI generation failed.'));
+            break;
+        }
+      }
+
+      function cleanup() {
+        if (finished) return;
+        finished = true;
+        aiIsGenerating = false;
+        if (aiSendBtn) aiSendBtn.disabled = false;
+        activeWorker.removeEventListener('message', onWorkerMessage);
+      }
+
+      activeWorker.addEventListener('message', onWorkerMessage);
+
+      activeWorker.postMessage({
+        type: 'generate',
+        taskType: taskType || 'generate',
+        context: context || '',
+        userPrompt: userPrompt || '',
+        messageId: messageId,
+        enableThinking: !!enableThinking
+      });
+    });
+  };
+
+  M.isAiGenerating = function () { return aiIsGenerating; };
+
+  // Expose model management for docgen setup flow
+  M.showApiKeyModal = showApiKeyModal;
+  M.switchToModel = switchToModel;
+  M.getCloudProviders = function () { return CLOUD_PROVIDERS; };
+  M.getCurrentAiModel = function () { return currentAiModel; };
+  M.isCurrentModelReady = isCurrentModelReady;
+
 })(window.MDView);

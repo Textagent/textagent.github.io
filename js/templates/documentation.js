@@ -552,4 +552,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - User onboarding flow
 `
   },
+  {
+    name: 'Meeting Notes (AI Fill)',
+    category: 'documentation',
+    icon: 'bi-robot',
+    description: 'AI-fillable meeting notes — jot rough notes, let AI organize them',
+    content: `# Meeting Notes — [Meeting Title]
+
+**Date:** $(date)
+**Attendees:** [List names]
+**Duration:** [X] minutes
+
+---
+
+## Agenda
+
+1. [Topic 1]
+2. [Topic 2]
+3. [Topic 3]
+
+## Discussion Notes
+
+Paste or type your rough notes here — as messy as you want:
+
+{{AI: Organize the rough notes above into a clean, structured discussion summary. Group by topic, highlight key points, and use bullet points. Keep the tone professional but concise.}}
+
+## Decisions Made
+
+{{AI: Based on the discussion above, extract and list all decisions that were made. Format as a markdown table with columns: Decision, Owner, Deadline.}}
+
+## Action Items
+
+{{AI: Extract all action items from the discussion. Format as a task list with checkboxes, assignee in bold, description, and due date in italics.}}
+
+## Follow-Up
+
+{{Think: Based on the meeting content, suggest 2-3 follow-up items or topics that should be address in the next meeting. Explain why each is important.}}
+
+---
+
+**Next Meeting:** [Date & Time]
+`
+  },
 ];

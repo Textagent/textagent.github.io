@@ -285,6 +285,13 @@
         redo: function () { M.markdownEditor.focus(); performRedo(); }
     };
 
+    // Expose formatting registry for other modules (e.g. ai-docgen.js)
+    M.formattingActions = FORMATTING_ACTIONS;
+    M.registerFormattingAction = function (name, handler) {
+        FORMATTING_ACTIONS[name] = handler;
+    };
+    M.wrapSelectionWith = wrapSelection;
+
     document.querySelectorAll('.fmt-btn[data-action]').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
             e.preventDefault();

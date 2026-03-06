@@ -132,10 +132,14 @@
     M.renderMarkdown = function () {
         try {
             const markdown = M.markdownEditor.value;
-            const html = marked.parse(markdown);
+            // DocGen: preprocess markers into placeholder HTML before rendering
+            const markdownForRender = M.transformDocgenMarkdown
+                ? M.transformDocgenMarkdown(markdown)
+                : markdown;
+            const html = marked.parse(markdownForRender);
             const sanitizedHtml = DOMPurify.sanitize(html, {
                 ADD_TAGS: ['mjx-container'],
-                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun']
+                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block']
             });
             M.markdownPreview.innerHTML = sanitizedHtml;
 
@@ -186,6 +190,9 @@
 
             // Table spreadsheet tools (sort, filter, stats, chart, etc.)
             if (M.addTableToolbars) M.addTableToolbars();
+
+            // DocGen: bind preview placeholder card actions
+            if (M.bindDocgenPreviewActions) M.bindDocgenPreviewActions(M.markdownPreview);
 
             if (window.MathJax) {
                 try {

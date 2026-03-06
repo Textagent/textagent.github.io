@@ -2,12 +2,12 @@
 // templates/technical.js — Technical Templates
 // ============================================
 window.__MDV_TEMPLATES_TECHNICAL = [
-    {
-      name: 'Bug Report',
-      category: 'technical',
-      icon: 'bi-bug',
-      description: 'Detailed bug report with reproduction steps and environment info',
-      content: `# Bug Report
+  {
+    name: 'Bug Report',
+    category: 'technical',
+    icon: 'bi-bug',
+    description: 'Detailed bug report with reproduction steps and environment info',
+    content: `# Bug Report
 
 **Title:** [Brief description of the bug]
 **Severity:** 🔴 Critical / 🟠 Major / 🟡 Minor / 🟢 Trivial
@@ -71,13 +71,13 @@ Add any other context about the problem here. Include:
 **Root Cause:**
 **Fix Description:**
 `
-    },
-    {
-      name: 'Technical Spec',
-      category: 'technical',
-      icon: 'bi-diagram-3',
-      description: 'Technical specification document with architecture and implementation details',
-      content: `# Technical Specification
+  },
+  {
+    name: 'Technical Spec',
+    category: 'technical',
+    icon: 'bi-diagram-3',
+    description: 'Technical specification document with architecture and implementation details',
+    content: `# Technical Specification
 
 **Feature:** [Feature Name]
 **Author:** [Your Name]
@@ -167,13 +167,13 @@ CREATE TABLE example (
 - [ ] Question 1?
 - [ ] Question 2?
 `
-    },
-    {
-      name: 'Code Review',
-      category: 'technical',
-      icon: 'bi-git',
-      description: 'Code review checklist and feedback template',
-      content: `# Code Review
+  },
+  {
+    name: 'Code Review',
+    category: 'technical',
+    icon: 'bi-git',
+    description: 'Code review checklist and feedback template',
+    content: `# Code Review
 
 **PR:** #[number] — [PR Title]
 **Author:** @[username]
@@ -239,5 +239,47 @@ Brief description of what this PR does.
 
 **Verdict:** ✅ Approve / 🔄 Request Changes / ❌ Reject
 `
-    },
+  },
+  {
+    name: 'Technical Report (AI Fill)',
+    category: 'technical',
+    icon: 'bi-robot',
+    description: 'AI-fillable technical report — describe your findings, let AI write the analysis',
+    content: `# Technical Report: [Topic]
+
+**Author:** [Your Name]
+**Date:** $(date)
+**Status:** Draft
+
+---
+
+## Abstract
+
+{{AI: Write a concise abstract (150-200 words) for a technical report about [describe your topic]. Summarize the purpose, methodology, key findings, and conclusions.}}
+
+## Introduction
+
+{{Think: Write an introduction that establishes the context, states the problem, and outlines the approach. The topic is [your topic]. Include relevant background and why this investigation matters.}}
+
+## Methodology
+
+{{AI: Describe the methodology used. Include tools, frameworks, data sources, and evaluation criteria. Use bullet points for clarity.}}
+
+## Findings
+
+{{AI: Present the key findings in a structured format. Use a combination of prose, bullet points, and a summary table. Include 3-5 significant results.}}
+
+## Analysis
+
+{{Think: Provide a deep analysis of the findings. Compare with expected outcomes, identify patterns, discuss implications, and note any anomalies or limitations.}}
+
+## Recommendations
+
+{{AI: Based on the analysis, provide 4-5 actionable recommendations. Format as numbered list with bold titles and supporting explanations.}}
+
+## Conclusion
+
+{{AI: Write a conclusion that ties everything together. Restate the key findings, their significance, and next steps for future work.}}
+`
+  },
 ];

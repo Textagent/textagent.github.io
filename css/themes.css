@@ -209,6 +209,136 @@
   background-color: #073642 !important;
 }
 
+/* ========================================
+   EVERGREEN THEME — Full-App Green
+   ======================================== */
+
+/* --- Light variant: App shell --- */
+[data-preview-theme="evergreen"] {
+  --bg-color: #f0f7f0;
+  --editor-bg: #e6f0e6;
+  --preview-bg: #f0f7f0;
+  --text-color: #1a3a2a;
+  --preview-text-color: #1a3a2a;
+  --border-color: #c2dcc2;
+  --header-bg: #e4ede4;
+  --button-bg: #eaeeea;
+  --button-hover: #dde2dd;
+  --button-active: #cdd4cd;
+  --dropzone-bg: rgba(240, 247, 240, 0.9);
+  --scrollbar-thumb: #a3b0a3;
+  --scrollbar-track: #e2efe2;
+  --accent-color: #2e7d52;
+  --table-bg: #f0f7f0;
+  --code-bg: #dceadc;
+}
+
+/* --- Dark variant: App shell --- */
+[data-theme="dark"][data-preview-theme="evergreen"] {
+  --bg-color: #0d1a14;
+  --editor-bg: #0f2018;
+  --preview-bg: #0d1a14;
+  --text-color: #c8e6c9;
+  --preview-text-color: #c8e6c9;
+  --border-color: #1e3a28;
+  --header-bg: #141e18;
+  --button-bg: #1e2824;
+  --button-hover: #2a3530;
+  --button-active: #38443e;
+  --dropzone-bg: rgba(13, 26, 20, 0.9);
+  --scrollbar-thumb: #3a4a42;
+  --scrollbar-track: #1a2420;
+  --accent-color: #66bb6a;
+  --table-bg: #0f2018;
+  --code-bg: #0a1410;
+}
+
+/* --- Light variant: Preview pane --- */
+[data-preview-theme="evergreen"] .markdown-body {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --color-canvas-default: #f0f7f0;
+  --color-canvas-subtle: #e2efe2;
+  --color-fg-default: #1a3a2a;
+  --color-fg-muted: #3d6b50;
+  --color-border-default: #c2dcc2;
+  --color-border-muted: #d4e8d4;
+  --color-accent-fg: #2e7d52;
+  --color-accent-emphasis: #1f6b3f;
+  --color-neutral-muted: rgba(46, 125, 82, 0.12);
+  --color-attention-subtle: #e6f7e6;
+  --color-danger-fg: #c0392b;
+  --color-prettylights-syntax-comment: #6b8f71;
+  --color-prettylights-syntax-constant: #1a6b4f;
+  --color-prettylights-syntax-entity: #5f4b8b;
+  --color-prettylights-syntax-keyword: #2e7d52;
+  --color-prettylights-syntax-string: #1b5e20;
+  --color-prettylights-syntax-entity-tag: #388e3c;
+  --color-prettylights-syntax-variable: #e65100;
+  --color-prettylights-syntax-markup-heading: #1a6b4f;
+  --color-prettylights-syntax-markup-inserted-text: #2e7d52;
+  --color-prettylights-syntax-markup-inserted-bg: #e8f5e9;
+  --color-prettylights-syntax-markup-deleted-text: #c0392b;
+  --color-prettylights-syntax-markup-deleted-bg: #fdecea;
+  background-color: #f0f7f0 !important;
+  color: #1a3a2a !important;
+}
+
+[data-preview-theme="evergreen"] .markdown-body pre,
+[data-preview-theme="evergreen"] .markdown-body code {
+  background-color: #dceadc !important;
+}
+
+[data-preview-theme="evergreen"] .markdown-body table tr:nth-child(2n) {
+  background-color: #e2efe2;
+}
+
+/* --- Dark variant: Preview pane --- */
+[data-theme="dark"][data-preview-theme="evergreen"] .markdown-body {
+  --color-canvas-default: #0d1a14;
+  --color-canvas-subtle: #142a1e;
+  --color-fg-default: #c8e6c9;
+  --color-fg-muted: #81c784;
+  --color-border-default: #1e3a28;
+  --color-border-muted: #163020;
+  --color-accent-fg: #66bb6a;
+  --color-accent-emphasis: #43a047;
+  --color-neutral-muted: rgba(102, 187, 106, 0.2);
+  --color-attention-subtle: rgba(76, 175, 80, 0.15);
+  --color-danger-fg: #ef5350;
+  --color-prettylights-syntax-comment: #6b9f71;
+  --color-prettylights-syntax-constant: #80cbc4;
+  --color-prettylights-syntax-entity: #ce93d8;
+  --color-prettylights-syntax-keyword: #81c784;
+  --color-prettylights-syntax-string: #a5d6a7;
+  --color-prettylights-syntax-entity-tag: #66bb6a;
+  --color-prettylights-syntax-variable: #ffb74d;
+  --color-prettylights-syntax-markup-heading: #43a047;
+  --color-prettylights-syntax-markup-inserted-text: #a5d6a7;
+  --color-prettylights-syntax-markup-inserted-bg: #1b5e20;
+  --color-prettylights-syntax-markup-deleted-text: #ef9a9a;
+  --color-prettylights-syntax-markup-deleted-bg: #4a1515;
+  background-color: #0d1a14 !important;
+  color: #c8e6c9 !important;
+}
+
+[data-theme="dark"][data-preview-theme="evergreen"] .markdown-body pre,
+[data-theme="dark"][data-preview-theme="evergreen"] .markdown-body code {
+  background-color: #0a1410 !important;
+}
+
+[data-theme="dark"][data-preview-theme="evergreen"] .markdown-body table tr:nth-child(2n) {
+  background-color: #142a1e;
+}
+
+/* --- Editor text color override for Evergreen --- */
+[data-preview-theme="evergreen"] #markdown-editor {
+  color: #1a3a2a;
+}
+
+[data-theme="dark"][data-preview-theme="evergreen"] #markdown-editor {
+  color: #c8e6c9;
+}
+
 /* Active theme indicator in dropdown */
 .theme-option.active-theme {
   font-weight: 700;
@@ -218,5 +348,3 @@
 .theme-option.active-theme::before {
   content: '✓ ';
 }
-
-
