@@ -566,6 +566,7 @@ const chatResponse = await openai.chat.completions.create({
             <div class="template-categories" id="template-categories">
                 <div class="template-cat-pills">
                     <button class="template-cat-btn active" data-category="all">All</button>
+                    <button class="template-cat-btn" data-category="ai">AI</button>
                     <button class="template-cat-btn" data-category="documentation">Documentation</button>
                     <button class="template-cat-btn" data-category="project">Project</button>
                     <button class="template-cat-btn" data-category="technical">Technical</button>
