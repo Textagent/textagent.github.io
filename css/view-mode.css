@@ -7,6 +7,8 @@
 /* Header layout for three sections */
 .header-container {
   position: relative;
+  padding-left: 0 !important;
+  /* align brand toggle with QAB */
 }
 
 .header-left {

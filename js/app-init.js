@@ -55,6 +55,56 @@
     var dropzone = M.dropzone;
     var fileInput = M.fileInput;
     var closeDropzoneBtn = M.closeDropzoneBtn;
+    var quickActionBar = document.getElementById('quick-action-bar');
+    var siteHeader = document.querySelector('header');
+
+    // Toggle dropzone ↔ action bar visibility (+ hide/show header)
+    function syncQabVisibility() {
+        if (quickActionBar) {
+            var dropzoneHidden = dropzone.style.display === 'none';
+            quickActionBar.style.display = dropzoneHidden ? 'flex' : 'none';
+            if (siteHeader) siteHeader.style.display = dropzoneHidden ? 'none' : '';
+        }
+    }
+
+    // QAB view mode buttons — sync with header view-mode buttons
+    var qabViewBtns = quickActionBar ? quickActionBar.querySelectorAll('.qab-view-btn') : [];
+    var headerViewBtns = document.querySelectorAll('.view-mode-group .view-mode-btn');
+
+    // Sync QAB active state from header on init
+    function syncQabViewState() {
+        var activeMode = '';
+        headerViewBtns.forEach(function (btn) {
+            if (btn.classList.contains('active')) activeMode = btn.getAttribute('data-mode');
+        });
+        qabViewBtns.forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-mode') === activeMode);
+        });
+    }
+
+    // Wire QAB view buttons to trigger existing header view-mode buttons
+    qabViewBtns.forEach(function (qBtn) {
+        qBtn.addEventListener('click', function () {
+            var mode = this.getAttribute('data-mode');
+            // Click the matching header button (which has all the logic)
+            headerViewBtns.forEach(function (hBtn) {
+                if (hBtn.getAttribute('data-mode') === mode) hBtn.click();
+            });
+            // Update QAB active state
+            qabViewBtns.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+        });
+    });
+
+    // Also sync when header buttons are clicked directly
+    headerViewBtns.forEach(function (hBtn) {
+        hBtn.addEventListener('click', function () {
+            syncQabViewState();
+        });
+    });
+
+    // Initial sync
+    syncQabViewState();
 
     var dropEvents = ['dragenter', 'dragover', 'dragleave', 'drop'];
     dropEvents.forEach(function (eventName) {
@@ -72,27 +122,137 @@
     });
 
     dropzone.addEventListener('drop', handleDrop, false);
+    // Also handle drops anywhere on the page (editor, preview, etc.)
+    // The dropzone's own handler has stopPropagation, so this won't double-fire
+    document.body.addEventListener('drop', function (e) {
+        handleDrop(e);
+    }, false);
     dropzone.addEventListener('click', function (e) {
         if (e.target !== closeDropzoneBtn && !closeDropzoneBtn.contains(e.target)) fileInput.click();
     });
     closeDropzoneBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         dropzone.style.display = 'none';
+        syncQabVisibility();
     });
 
     function handleDrop(e) {
         var dt = e.dataTransfer;
         var files = dt.files;
         if (files.length) {
-            var file = files[0];
-            var ext = M.getFileExtension(file.name);
-            if (M.SUPPORTED_EXTENSIONS[ext]) {
-                M.importFile(file);
-            } else {
-                alert('Unsupported file format: .' + ext + '\n\nSupported: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF');
-            }
+            M.importFile(files[0]);
         }
     }
+
+    // ========================================
+    // QUICK ACTION BAR WIRING
+    // ========================================
+    if (quickActionBar) {
+        // Header toggle — restore full header + dropzone view
+        var qabHeaderToggle = document.getElementById('qab-header-toggle');
+        if (qabHeaderToggle) qabHeaderToggle.addEventListener('click', function () {
+            dropzone.style.display = 'block';
+            quickActionBar.style.display = 'none';
+            if (siteHeader) siteHeader.style.display = '';
+        });
+
+        // New — delegate to existing new-document button
+        var qabNew = document.getElementById('qab-new');
+        if (qabNew) qabNew.addEventListener('click', function () {
+            var btn = document.getElementById('new-document-btn');
+            if (btn) btn.click();
+        });
+
+        // Import — open file picker directly
+        var qabImport = document.getElementById('qab-import');
+        if (qabImport) qabImport.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        // Export MD / HTML / PDF — delegate to existing export buttons
+        var qabExportMd = document.getElementById('qab-export-md');
+        if (qabExportMd) qabExportMd.addEventListener('click', function () {
+            document.getElementById('export-md').click();
+        });
+        var qabExportHtml = document.getElementById('qab-export-html');
+        if (qabExportHtml) qabExportHtml.addEventListener('click', function () {
+            document.getElementById('export-html').click();
+        });
+        var qabExportPdf = document.getElementById('qab-export-pdf');
+        if (qabExportPdf) qabExportPdf.addEventListener('click', function () {
+            document.getElementById('export-pdf').click();
+        });
+
+        // Search — open find/replace bar
+        var qabSearch = document.getElementById('qab-search');
+        if (qabSearch) qabSearch.addEventListener('click', function () {
+            M.openFindBar();
+        });
+
+        // Template — open template modal
+        var qabTemplate = document.getElementById('qab-template');
+        if (qabTemplate) qabTemplate.addEventListener('click', function () {
+            var btn = document.getElementById('template-btn');
+            if (btn) btn.click();
+        });
+
+        // TOC — toggle table of contents
+        var qabToc = document.getElementById('qab-toc');
+        if (qabToc) qabToc.addEventListener('click', function () {
+            var btn = document.getElementById('toc-toggle');
+            if (btn) btn.click();
+        });
+
+        // Share — share markdown
+        var qabShare = document.getElementById('qab-share');
+        if (qabShare) qabShare.addEventListener('click', function () {
+            var btn = document.getElementById('share-button');
+            if (btn) btn.click();
+        });
+
+        // Copy — copy markdown
+        var qabCopy = document.getElementById('qab-copy');
+        if (qabCopy) qabCopy.addEventListener('click', function () {
+            var btn = document.getElementById('copy-markdown-button');
+            if (btn) btn.click();
+        });
+
+        // Present — presentation mode
+        var qabPresent = document.getElementById('qab-present');
+        if (qabPresent) qabPresent.addEventListener('click', function () {
+            var btn = document.getElementById('present-button');
+            if (btn) btn.click();
+        });
+
+        // AI — toggle AI assistant panel
+        var qabAi = document.getElementById('qab-ai');
+        if (qabAi) qabAi.addEventListener('click', function () {
+            var btn = document.getElementById('ai-toggle-button');
+            if (btn) btn.click();
+        });
+
+        // Theme — toggle dark/light
+        var qabTheme = document.getElementById('qab-theme');
+        if (qabTheme) qabTheme.addEventListener('click', function () {
+            var toggle = document.getElementById('theme-toggle');
+            if (toggle) toggle.click();
+        });
+
+        // Upload — toggle dropzone in-place (header stays hidden)
+        var qabMore = document.getElementById('qab-more');
+        if (qabMore) qabMore.addEventListener('click', function () {
+            var isVisible = dropzone.style.display !== 'none';
+            dropzone.style.display = isVisible ? 'none' : 'block';
+        });
+    }
+
+    // Collapse header button — hide full header, show QAB
+    var collapseHeaderBtn = document.getElementById('collapse-header-btn');
+    if (collapseHeaderBtn) collapseHeaderBtn.addEventListener('click', function () {
+        dropzone.style.display = 'none';
+        syncQabVisibility();
+        syncQabViewState();
+    });
 
     // ========================================
     // GLOBAL KEYBOARD SHORTCUTS

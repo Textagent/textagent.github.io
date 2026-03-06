@@ -312,41 +312,68 @@
     });
 
     // ========================================
-    // FIND & REPLACE
+    // FIND & REPLACE (supports QAB inline + legacy bar)
     // ========================================
     var findReplaceBar = document.getElementById('find-replace-bar');
-    var findInput = document.getElementById('find-input');
-    var replaceInput = document.getElementById('replace-input');
-    var findRegexToggle = document.getElementById('find-regex-toggle');
-    var findMatchCount = document.getElementById('find-match-count');
-    var findPrevBtn = document.getElementById('find-prev');
-    var findNextBtn = document.getElementById('find-next');
-    var replaceOneBtn = document.getElementById('replace-one');
-    var replaceAllBtn = document.getElementById('replace-all');
-    var findCloseBtn = document.getElementById('find-close');
+    var qabFindSection = document.getElementById('qab-find-section');
+
+    // Resolve elements: prefer QAB inline if QAB is visible, else fall back to legacy bar
+    function getActiveFindEls() {
+        var qab = document.getElementById('quick-action-bar');
+        var useQab = qab && qab.style.display !== 'none' && qabFindSection;
+        return {
+            findInput: document.getElementById(useQab ? 'qab-find-input' : 'find-input'),
+            replaceInput: document.getElementById(useQab ? 'qab-replace-input' : 'replace-input'),
+            matchCount: document.getElementById(useQab ? 'qab-match-count' : 'find-match-count'),
+            regexToggle: document.getElementById(useQab ? 'qab-regex-toggle' : 'find-regex-toggle'),
+            prevBtn: document.getElementById(useQab ? 'qab-find-prev' : 'find-prev'),
+            nextBtn: document.getElementById(useQab ? 'qab-find-next' : 'find-next'),
+            replaceOneBtn: document.getElementById(useQab ? 'qab-replace-one' : 'replace-one'),
+            replaceAllBtn: document.getElementById(useQab ? 'qab-replace-all' : 'replace-all'),
+            useQab: useQab
+        };
+    }
+
     var findMatches = [];
     var findCurrentIndex = -1;
     var findRegexMode = false;
 
     M.openFindBar = function () {
-        findReplaceBar.style.display = 'block';
-        findInput.focus();
+        var els = getActiveFindEls();
+        if (els.useQab) {
+            // Show inline find section in QAB
+            qabFindSection.style.display = 'flex';
+            var searchBtn = document.getElementById('qab-search');
+            if (searchBtn) searchBtn.classList.add('qab-active');
+        } else {
+            findReplaceBar.style.display = 'block';
+        }
+        els.findInput.focus();
         var selected = M.markdownEditor.value.substring(M.markdownEditor.selectionStart, M.markdownEditor.selectionEnd);
-        if (selected) findInput.value = selected;
+        if (selected) els.findInput.value = selected;
         performFind();
     };
 
     M.closeFindBar = function () {
-        findReplaceBar.style.display = 'none';
+        var els = getActiveFindEls();
+        if (els.useQab) {
+            qabFindSection.style.display = 'none';
+            var searchBtn = document.getElementById('qab-search');
+            if (searchBtn) searchBtn.classList.remove('qab-active');
+        } else {
+            findReplaceBar.style.display = 'none';
+        }
         findMatches = [];
         findCurrentIndex = -1;
-        findMatchCount.textContent = '0 results';
+        var mc = els.matchCount;
+        if (mc) mc.textContent = '0 results';
         M.markdownEditor.focus();
     };
 
     function performFind() {
-        var query = findInput.value;
-        if (!query) { findMatches = []; findCurrentIndex = -1; findMatchCount.textContent = '0 results'; return; }
+        var els = getActiveFindEls();
+        var query = els.findInput ? els.findInput.value : '';
+        if (!query) { findMatches = []; findCurrentIndex = -1; if (els.matchCount) els.matchCount.textContent = '0 results'; return; }
         var text = M.markdownEditor.value;
         findMatches = [];
         try {
@@ -371,8 +398,8 @@
                     if (findMatches.length > 10000) break;
                 }
             }
-        } catch (e) { findMatchCount.textContent = 'Invalid regex'; return; }
-        findMatchCount.textContent = findMatches.length + ' result' + (findMatches.length !== 1 ? 's' : '');
+        } catch (e) { if (els.matchCount) els.matchCount.textContent = 'Invalid regex'; return; }
+        if (els.matchCount) els.matchCount.textContent = findMatches.length + ' result' + (findMatches.length !== 1 ? 's' : '');
         if (findMatches.length > 0) {
             var cursor = M.markdownEditor.selectionStart;
             findCurrentIndex = 0;
@@ -392,7 +419,8 @@
         var lineHeight = parseInt(getComputedStyle(M.markdownEditor).lineHeight) || 20;
         var linesBefore = M.markdownEditor.value.substring(0, match.start).split('\n').length;
         M.markdownEditor.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
-        findMatchCount.textContent = (index + 1) + ' / ' + findMatches.length;
+        var els = getActiveFindEls();
+        if (els.matchCount) els.matchCount.textContent = (index + 1) + ' / ' + findMatches.length;
     }
 
     function findNext() { if (findMatches.length === 0) return; selectMatch((findCurrentIndex + 1) % findMatches.length); }
@@ -400,9 +428,10 @@
 
     function replaceOne() {
         if (findCurrentIndex < 0 || findCurrentIndex >= findMatches.length) return;
+        var els = getActiveFindEls();
         var match = findMatches[findCurrentIndex];
         var text = M.markdownEditor.value;
-        M.markdownEditor.value = text.substring(0, match.start) + replaceInput.value + text.substring(match.end);
+        M.markdownEditor.value = text.substring(0, match.start) + els.replaceInput.value + text.substring(match.end);
         M.markdownEditor.dispatchEvent(new Event('input'));
         performFind();
     }
@@ -410,8 +439,9 @@
     function escapeRegExpChars(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
     function replaceAll() {
-        var query = findInput.value;
-        var replacement = replaceInput.value;
+        var els = getActiveFindEls();
+        var query = els.findInput ? els.findInput.value : '';
+        var replacement = els.replaceInput ? els.replaceInput.value : '';
         if (!query) return;
         var text = M.markdownEditor.value;
         try {
@@ -423,22 +453,43 @@
         performFind();
     }
 
-    findInput.addEventListener('input', performFind);
-    findNextBtn.addEventListener('click', findNext);
-    findPrevBtn.addEventListener('click', findPrev);
-    replaceOneBtn.addEventListener('click', replaceOne);
-    replaceAllBtn.addEventListener('click', replaceAll);
-    findCloseBtn.addEventListener('click', M.closeFindBar);
-    findRegexToggle.addEventListener('click', function () {
-        findRegexMode = !findRegexMode;
-        this.classList.toggle('active', findRegexMode);
-        performFind();
-    });
-    findInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) findPrev(); else findNext(); }
-        if (e.key === 'Escape') M.closeFindBar();
-    });
-    replaceInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') M.closeFindBar(); });
+    // Wire up BOTH sets of elements (legacy bar + QAB inline)
+    function wireFind(prefix) {
+        var fi = document.getElementById(prefix + 'find-input') || document.getElementById(prefix + '-find-input');
+        var rt = document.getElementById(prefix + 'regex-toggle') || document.getElementById(prefix + '-regex-toggle');
+        var fp = document.getElementById(prefix + 'find-prev') || document.getElementById(prefix + '-find-prev');
+        var fn = document.getElementById(prefix + 'find-next') || document.getElementById(prefix + '-find-next');
+        var ro = document.getElementById(prefix + 'replace-one') || document.getElementById(prefix + '-replace-one');
+        var ra = document.getElementById(prefix + 'replace-all') || document.getElementById(prefix + '-replace-all');
+        var ri = document.getElementById(prefix + 'replace-input') || document.getElementById(prefix + '-replace-input');
+        if (fi) fi.addEventListener('input', performFind);
+        if (fp) fp.addEventListener('click', findPrev);
+        if (fn) fn.addEventListener('click', findNext);
+        if (ro) ro.addEventListener('click', replaceOne);
+        if (ra) ra.addEventListener('click', replaceAll);
+        if (rt) rt.addEventListener('click', function () {
+            findRegexMode = !findRegexMode;
+            // Update both regex toggles
+            var t1 = document.getElementById('find-regex-toggle');
+            var t2 = document.getElementById('qab-regex-toggle');
+            if (t1) t1.classList.toggle('active', findRegexMode);
+            if (t2) t2.classList.toggle('active', findRegexMode);
+            performFind();
+        });
+        if (fi) fi.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) findPrev(); else findNext(); }
+            if (e.key === 'Escape') M.closeFindBar();
+        });
+        if (ri) ri.addEventListener('keydown', function (e) { if (e.key === 'Escape') M.closeFindBar(); });
+    }
+
+    // Wire legacy bar elements
+    wireFind('find-');
+    var findCloseBtn = document.getElementById('find-close');
+    if (findCloseBtn) findCloseBtn.addEventListener('click', M.closeFindBar);
+
+    // Wire QAB inline elements
+    wireFind('qab-');
 
     // ========================================
     // WORD WRAP TOGGLE

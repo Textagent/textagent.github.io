@@ -108,7 +108,9 @@
             <div class="container-fluid d-flex justify-content-between align-items-center header-container">
                 <!-- Left section: Logo, GitHub, Stats -->
                 <div class="d-flex align-items-center header-left">
-                    <h1 class="h4 mb-0 me-2">MDview</h1>
+                    <button id="collapse-header-btn" class="tool-button header-brand-toggle" title="Hide full header">
+                        <i class="bi bi-chevron-up"></i> <span class="brand-label">MDview</span>
+                    </button>
                     <a href="https://github.com/markdownview/markdownview.github.io/" class="github-link"
                         title="View on GitHub" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-github"></i>
@@ -380,6 +382,96 @@
             </p>
         </div>
 
+        <!-- Quick Action Bar (visible when dropzone is closed) -->
+        <div id="quick-action-bar" class="quick-action-bar" style="display:none">
+            <!-- Header toggle — restores full header view -->
+            <button id="qab-header-toggle" class="qab-logo-btn qab-brand-toggle" title="Show full header">
+                <i class="bi bi-chevron-down"></i> <span class="brand-label">MDview</span>
+            </button>
+            <span class="qab-separator"></span>
+
+            <!-- View mode buttons (mirrored from header) -->
+            <div class="qab-view-modes">
+                <button class="qab-view-btn active" data-mode="editor" title="Editor only">
+                    <i class="bi bi-file-text"></i> Editor
+                </button>
+                <button class="qab-view-btn" data-mode="split" title="Split view">
+                    <i class="bi bi-layout-split"></i> Split
+                </button>
+                <button class="qab-view-btn" data-mode="preview" title="Preview only">
+                    <i class="bi bi-eye"></i> Preview
+                </button>
+                <button class="qab-view-btn" data-mode="ppt" title="Presentation view">
+                    <i class="bi bi-easel"></i> PPT
+                </button>
+            </div>
+            <span class="qab-separator"></span>
+
+            <!-- Find/Replace section (hidden by default, toggles on Search click) -->
+            <div id="qab-find-section" class="qab-find-section" style="display:none">
+                <div class="qab-find-group">
+                    <input type="text" id="qab-find-input" placeholder="Find..." autocomplete="off" class="qab-input" />
+                    <button class="qab-find-btn" id="qab-regex-toggle" title="Toggle Regex">.*</button>
+                    <span class="qab-match-count" id="qab-match-count">0 results</span>
+                    <button class="qab-find-btn" id="qab-find-prev" title="Previous"><i
+                            class="bi bi-chevron-up"></i></button>
+                    <button class="qab-find-btn" id="qab-find-next" title="Next"><i
+                            class="bi bi-chevron-down"></i></button>
+                </div>
+                <div class="qab-replace-group">
+                    <input type="text" id="qab-replace-input" placeholder="Replace..." autocomplete="off"
+                        class="qab-input" />
+                    <button class="qab-find-btn" id="qab-replace-one" title="Replace">Replace</button>
+                    <button class="qab-find-btn" id="qab-replace-all" title="Replace All">All</button>
+                </div>
+                <span class="qab-separator"></span>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="qab-actions">
+                <button id="qab-new" class="qab-btn" title="New Document">
+                    <i class="bi bi-plus-lg"></i> New
+                </button>
+                <button id="qab-template" class="qab-btn" title="Templates">
+                    <i class="bi bi-file-earmark-richtext"></i> Template
+                </button>
+                <button id="qab-import" class="qab-btn" title="Import File">
+                    <i class="bi bi-upload"></i> Import
+                </button>
+                <div class="dropdown qab-dropdown">
+                    <button class="qab-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false" title="Export">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" type="button" id="qab-export-md">Markdown (.md)</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-export-html">HTML</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-export-pdf">PDF</button></li>
+                    </ul>
+                </div>
+                <button id="qab-search" class="qab-btn" title="Find & Replace (Ctrl+F)">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <button id="qab-toc" class="qab-btn" title="Table of Contents">
+                    <i class="bi bi-list-nested"></i> TOC
+                </button>
+                <button id="qab-share" class="qab-btn" title="Share Markdown">
+                    <i class="bi bi-share"></i> Share
+                </button>
+                <button id="qab-copy" class="qab-btn" title="Copy Markdown">
+                    <i class="bi bi-clipboard"></i> Copy
+                </button>
+                <button id="qab-present" class="qab-btn" title="Presentation Mode">
+                    <i class="bi bi-easel"></i> Present
+                </button>
+                <button id="qab-ai" class="qab-btn" title="AI Assistant">
+                    <i class="bi bi-stars"></i> AI
+                </button>
+                <button id="qab-more" class="qab-btn" title="Open Dropzone">
+                    <i class="bi bi-cloud-arrow-up"></i> Upload
+                </button>
+            </div>
+        </div>
         <!-- Formatting Toolbar -->
         <div class="formatting-toolbar" id="formatting-toolbar">
             <button class="fmt-btn" data-action="undo" title="Undo (Ctrl+Z)"><i

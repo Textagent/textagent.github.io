@@ -1,4 +1,27 @@
-# UI Redesign — Premium, Clean, Simple
+# CHANGELOG — UI Redesign
+
+---
+
+## 2026-03-06 — Header/QAB Brand Toggle & File Drop Fix
+
+### Header & QAB Brand Toggle Alignment
+- Moved collapse/expand toggle to far-left of both header and QAB
+- Both views now show `chevron + MDview` as a unified brand toggle button
+- Header: `▲ MDview` (collapse) | QAB: `▼ MDview` (expand)
+- Pixel-aligned both toggles to same horizontal position (~1-2px tolerance)
+- Added shared `.brand-label`, `.header-brand-toggle`, `.qab-brand-toggle` CSS classes
+- Overrode Bootstrap `container-fluid` left padding on header to match QAB position
+
+### File Drop Fix
+- **Root cause 1**: `handleDrop()` referenced `M.getFileExtension()` and `M.SUPPORTED_EXTENSIONS` — local variables in `file-converters.js`, never exposed on `M`. Silent TypeError.
+- **Root cause 2**: Body-level drop handler only fired when dropzone was hidden (QAB mode); drops on editor/preview were silently lost when header was open.
+- **Fix**: Simplified `handleDrop()` to call `M.importFile()` directly. Removed display-check from body drop handler.
+
+**Files:** `index.html`, `css/header.css`, `css/view-mode.css`, `js/app-init.js`
+
+---
+
+## 2026-03-05 — Premium, Clean, Simple
 
 - Ghost-style borderless toolbar buttons with hover lift and subtle shadow
 - Pill-shaped segmented control for view mode (Editor, Split, Preview, PPT)
@@ -20,65 +43,15 @@
 - Polished mobile menu with backdrop blur overlay
 - All changes are CSS-only — zero JavaScript logic changes, all features preserved
 
----
+### Detailed Changes
 
-## Summary
-Complete visual refresh of the MDview interface. CSS-only redesign (no JavaScript logic changes) that modernizes the toolbar, view controls, and stats display while preserving all existing features.
+1. **Ghost-Style Toolbar Buttons** (`css/header.css`, `styles.css`) — Borderless ghost-style with hover lift and shadow
+2. **Pill-Shaped View Mode Control** (`css/view-mode.css`) — Rounded pill container with blue accent active fill
+3. **Compact Single-Line Dropzone** (`index.html`, `styles.css`, `css/header.css`) — Slim bar, saves ~30px vertical
+4. **Collapsible Stats Pill Bar** (`index.html`, `css/header.css`, `js/app-init.js`) — Toggle ⓘ, persisted in localStorage
+5. **Ghost Formatting Toolbar** (`css/formatting.css`) — Consistent ghost style with opacity transitions
+6. **Editor Pane Shadow Separator** (`css/editor.css`, `styles.css`) — Soft box-shadow instead of hard border
+7. **Monochrome AI Button** (`css/header.css`, `css/ai-panel.css`, `styles.css`) — Black/white, no purple gradient
+8. **Rounded Dropdown Menus** (`css/header.css`, `styles.css`) — 10px radius, 24px shadow, hover transitions
 
----
-
-## 1. Ghost-Style Toolbar Buttons
-**Files:** `css/header.css`, `styles.css`
-**What:** Toolbar buttons changed from bordered boxes (`border: 1px solid`) to borderless ghost-style (`background: transparent; border: transparent`).
-**Impact:** Cleaner, less cluttered header. Buttons only reveal themselves on hover with a subtle lift (`translateY(-1px)`) and shadow. Reduces visual noise significantly.
-
-## 2. Pill-Shaped View Mode Control
-**Files:** `css/view-mode.css`
-**What:** View mode buttons (Editor, Split, Preview, PPT) wrapped in a rounded pill container (`border-radius: 100px`) with a shared background. Active button now uses blue accent fill instead of a border highlight.
-**Impact:** Instantly recognizable segmented control pattern. Active mode is clearer at a glance. Non-editor labels hidden by default, shown as tooltip on hover.
-
-## 3. Compact Single-Line Dropzone
-**Files:** `index.html`, `styles.css`, `css/header.css`
-**What:** Dropzone reduced from 2-line padded box (`padding: 20px`) to a slim single-line bar (`padding: 10px 20px`). Supported formats moved inline.
-**Impact:** Saves ~30px of vertical space. Less visual dominance while remaining fully functional for drag-and-drop.
-
-## 4. Collapsible Stats Pill Bar
-**Files:** `index.html`, `css/header.css`, `js/app-init.js`
-**What:** Stats (reading time, word count, chars, autosave) moved from always-visible inline items to a collapsible pill. Toggle ⓘ button expands/collapses with a smooth `max-width` CSS animation. State saved in `localStorage('mdview-stats-open')`.
-**Impact:** Header becomes much cleaner when collapsed. Users who want stats can expand on demand. Persists across page reloads.
-
-## 5. Ghost Formatting Toolbar
-**Files:** `css/formatting.css`
-**What:** Format buttons (Bold, Italic, etc.) changed to transparent ghost-style with hover lift and opacity transitions. Separators made semi-transparent.
-**Impact:** Consistent design language with the header toolbar. Less visual clutter above the editor.
-
-## 6. Editor Pane Shadow Separator
-**Files:** `css/editor.css`, `styles.css`
-**What:** Hard `border-right: 1px solid` between editor and preview replaced with subtle `box-shadow: 1px 0 0`. Scrollbar tracks made transparent with rounded thumb.
-**Impact:** Softer visual division between panes. Scrollbars feel more integrated.
-
-## 7. Monochrome AI Button
-**Files:** `css/header.css`, `css/ai-panel.css`, `styles.css`
-**What:** AI sparkle button changed from purple gradient (`linear-gradient #667eea → #764ba2`) to monochrome: black (`#1a1a2e`) in light mode, white in dark mode. Purple pulsing animation (`aiPulse`) removed.
-**Impact:** AI button now blends with the overall monochrome design while still standing out as a pill shape. Active state uses the theme accent color.
-
-## 8. Rounded Dropdown Menus
-**Files:** `css/header.css`, `styles.css`
-**What:** Dropdown menus updated with `border-radius: 10px`, inner item radius `6px`, and `box-shadow: 0 8px 24px`. Items get padding and hover transitions.
-**Impact:** Menus feel modern and polished instead of flat/boxy.
-
----
-
-## Files Changed (9 total)
-
-| File | Lines Changed | Type |
-|------|:---:|------|
-| `css/header.css` | +280 −120 | Rewritten — ghost buttons, stats pill, dropzone, mobile menu |
-| `css/view-mode.css` | +8 −8 | Pill container, responsive class updates |
-| `css/editor.css` | +6 −4 | Shadow separator, scrollbar polish |
-| `css/formatting.css` | +12 −8 | Ghost format buttons, opacity transitions |
-| `css/ai-panel.css` | +18 −22 | Monochrome AI button, removed purple gradient |
-| `styles.css` | +30 −28 | Synced duplicates: toolbar, dropzone, AI button, tooltips |
-| `index.html` | +16 −8 | Stats pill HTML, compact dropzone markup |
-| `js/app-init.js` | +17 −0 | Stats toggle wiring with localStorage |
-| `CHANGELOG-ui-redesign.md` | NEW | This file |
+**Files changed:** `css/header.css`, `css/view-mode.css`, `css/editor.css`, `css/formatting.css`, `css/ai-panel.css`, `styles.css`, `index.html`, `js/app-init.js`

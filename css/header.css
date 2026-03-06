@@ -125,6 +125,224 @@
   transform: scale(1.01);
 }
 
+/* ========================================
+   QUICK ACTION BAR
+   ======================================== */
+
+.quick-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 4px 12px;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Header toggle button (far left of QAB) */
+.qab-logo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: all 0.2s ease;
+}
+
+.qab-logo-btn:hover {
+  opacity: 1;
+  background-color: var(--button-hover);
+}
+
+/* Brand toggle — shared style for both header & QAB */
+.brand-label {
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.header-brand-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  padding: 4px 8px;
+  /* match qab-logo-btn */
+  border-radius: 6px;
+}
+
+.qab-brand-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  margin-left: 4px;
+  /* align with header brand toggle */
+}
+
+/* View mode buttons in QAB */
+.qab-view-modes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--button-hover);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.qab-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.qab-view-btn i {
+  font-size: 0.82rem;
+}
+
+.qab-view-btn:hover {
+  opacity: 0.85;
+}
+
+.qab-view-btn.active {
+  opacity: 1;
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Find/Replace section (left side) */
+.qab-find-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.qab-find-group,
+.qab-replace-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.qab-input {
+  padding: 3px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--editor-bg);
+  color: var(--text-color);
+  font-size: 0.8rem;
+  width: 120px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.qab-input:focus {
+  border-color: var(--accent-color);
+}
+
+.qab-find-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 0.78rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s;
+}
+
+.qab-find-btn:hover {
+  opacity: 1;
+  background-color: var(--button-hover);
+}
+
+.qab-find-btn.active {
+  opacity: 1;
+  color: var(--accent-color);
+}
+
+.qab-match-count {
+  font-size: 0.75rem;
+  color: var(--text-color);
+  opacity: 0.5;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.qab-separator {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-color);
+  margin: 0 8px;
+  opacity: 0.5;
+}
+
+/* Action buttons section (right side) */
+.qab-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.qab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+.qab-btn i {
+  font-size: 0.85rem;
+}
+
+.qab-btn:hover {
+  opacity: 1;
+  background-color: var(--button-hover);
+}
+
+.qab-btn:active {
+  transform: scale(0.97);
+}
+
+.qab-btn.qab-active {
+  opacity: 1;
+  color: var(--accent-color);
+}
+
+.qab-dropdown {
+  display: inline-flex;
+}
+
 .close-btn {
   position: absolute;
   top: 50%;
