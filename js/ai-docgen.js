@@ -79,6 +79,19 @@
         var blockIndex = 0;
         var match;
 
+        // Build model options for per-card selector
+        var models = window.AI_MODELS || {};
+        var modelIds = Object.keys(models);
+        var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
+
+        var modelOptionsHtml = '';
+        modelIds.forEach(function (id) {
+            var m = models[id];
+            var name = m.dropdownName || m.label || id;
+            var sel = id === currentModel ? ' selected' : '';
+            modelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+        });
+
         while ((match = re.exec(markdown)) !== null) {
             if (isInsideFence(match.index, fencedRanges)) continue;
 
@@ -86,7 +99,7 @@
 
             var type = match[1];
             var prompt = match[2].trim();
-            var icon = type === 'Think' ? '🧠' : '🤖';
+            var icon = type === 'Think' ? '🧠' : '✨';
             var label = type === 'Think' ? 'Think' : 'AI Generate';
 
             result += '<div class="ai-placeholder-card" data-ai-type="' + type + '" data-ai-index="' + blockIndex + '">'
@@ -94,6 +107,9 @@
                 + '<span class="ai-placeholder-icon">' + icon + '</span>'
                 + '<span class="ai-placeholder-label">' + label + '</span>'
                 + '<div class="ai-placeholder-actions">'
+                + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">'
+                + modelOptionsHtml
+                + '</select>'
                 + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                 + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                 + '</div>'
@@ -204,7 +220,7 @@
             reviewCard.className = 'ai-inline-review';
             reviewCard.dataset.aiType = block.type;
 
-            var icon = block.type === 'Think' ? '🧠' : '🤖';
+            var icon = block.type === 'Think' ? '🧠' : '✨';
             var typeLabel = block.type === 'Think' ? 'Think' : 'AI Generate';
 
             reviewCard.innerHTML =
@@ -242,12 +258,11 @@
                 if (resolved) return;
                 resolved = true;
                 resolve(decision);
-                // If rejected, restore the placeholder card
-                if (decision === 'reject' && placeholderCard) {
-                    reviewCard.parentNode.replaceChild(placeholderCard, reviewCard);
-                    M.bindDocgenPreviewActions(placeholderCard.parentNode);
-                } else {
-                    reviewCard.remove();
+                // Remove the review card and force re-render to restore placeholder
+                reviewCard.remove();
+                if (decision === 'reject' || decision === 'regenerate') {
+                    // Re-render preview to show the placeholder card again
+                    if (M.renderMarkdown) M.renderMarkdown();
                 }
             }
 
@@ -280,28 +295,37 @@
     }
 
     // ==============================================
-    // AI SETUP POPUP — shown when no model is ready
+    // AI MODEL PANEL — right-side sliding, selectable
     // ==============================================
 
     function showAiSetupPopup() {
         return new Promise(function (resolve) {
-            dismissReviewPanel(); // reuse overlay cleanup
+            closeSetupPanel();
 
             var models = window.AI_MODELS || {};
-            var overlay = document.createElement('div');
-            overlay.className = 'ai-review-overlay';
-            overlay.id = 'ai-review-overlay';
+            var modelIds = Object.keys(models);
+            var currentModel = M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0];
+            var selectedId = currentModel || modelIds[0];
 
+            // Overlay
+            var overlay = document.createElement('div');
+            overlay.className = 'ai-setup-overlay';
+            overlay.id = 'ai-setup-overlay';
+
+            // Right-side sliding panel
             var panel = document.createElement('div');
-            panel.className = 'ai-review-panel ai-setup-panel';
+            panel.className = 'ai-setup-slide-panel';
+            panel.id = 'ai-setup-slide-panel';
 
             var cardsHtml = '';
-            Object.keys(models).forEach(function (id) {
+            modelIds.forEach(function (id, idx) {
                 var m = models[id];
-                var isLocal = !!m.isLocal;
-                var btnText = isLocal ? 'Use Local' : 'Connect';
                 var desc = m.dropdownDesc || '';
-                cardsHtml += '<div class="ai-setup-card" data-model-id="' + id + '">'
+                var isSelected = id === selectedId;
+                cardsHtml += '<div class="ai-setup-card' + (isSelected ? ' selected' : '') + '" data-model-id="' + id + '">'
+                    + '<div class="ai-setup-card-radio">'
+                    + '<span class="ai-setup-radio' + (isSelected ? ' active' : '') + '"></span>'
+                    + '</div>'
                     + '<div class="ai-setup-card-info">'
                     + '<i class="' + (m.icon || 'bi bi-cpu') + ' ai-setup-card-icon"></i>'
                     + '<div>'
@@ -309,49 +333,88 @@
                     + '<div class="ai-setup-card-desc">' + desc + '</div>'
                     + '</div>'
                     + '</div>'
-                    + '<button class="ai-setup-connect-btn" data-model-id="' + id + '">' + btnText + '</button>'
                     + '</div>';
             });
 
             panel.innerHTML =
-                '<div class="ai-review-header">'
-                + '<span class="ai-review-title">Connect an AI Model</span>'
-                + '<button class="ai-review-close" id="ai-setup-close" title="Close">✕</button>'
+                '<div class="ai-setup-slide-header">'
+                + '<span class="ai-setup-slide-title">Select AI Model</span>'
+                + '<button class="ai-setup-slide-close" id="ai-setup-close" title="Close"><i class="bi bi-x-lg"></i></button>'
                 + '</div>'
-                + '<div class="ai-review-prompt">'
-                + 'Select a model to power AI document generation. Cloud models need a free API key.'
-                + '</div>'
-                + '<div class="ai-setup-cards">' + cardsHtml + '</div>';
+                + '<div class="ai-setup-slide-desc">Pick a model for this generation. Cloud models need a free API key.</div>'
+                + '<div class="ai-setup-cards">' + cardsHtml + '</div>'
+                + '<div class="ai-setup-slide-footer">'
+                + '<button class="ai-setup-use-btn" id="ai-setup-use">Use Selected</button>'
+                + '</div>';
 
-            overlay.appendChild(panel);
             document.body.appendChild(overlay);
+            document.body.appendChild(panel);
 
-            // Wire up connect buttons
-            panel.querySelectorAll('.ai-setup-connect-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var modelId = this.dataset.modelId;
-                    overlay.remove();
-                    M.switchToModel(modelId);
+            // Trigger slide-in
+            void panel.offsetWidth;
+            panel.classList.add('ai-setup-slide-open');
+            overlay.classList.add('active');
 
-                    var provider = M.getCloudProviders()[modelId];
-                    if (provider && !provider.getKey()) {
-                        // Show the existing API key modal
-                        M.showApiKeyModal(modelId);
-                    }
-                    resolve(modelId);
+            // Selection logic
+            function selectCard(modelId) {
+                selectedId = modelId;
+                panel.querySelectorAll('.ai-setup-card').forEach(function (card) {
+                    var isMatch = card.dataset.modelId === modelId;
+                    card.classList.toggle('selected', isMatch);
+                    card.querySelector('.ai-setup-radio').classList.toggle('active', isMatch);
+                });
+            }
+
+            // Click cards to select
+            panel.querySelectorAll('.ai-setup-card').forEach(function (card) {
+                card.addEventListener('click', function () {
+                    selectCard(this.dataset.modelId);
                 });
             });
 
-            // Close
-            document.getElementById('ai-setup-close').addEventListener('click', function () {
-                overlay.remove();
-                resolve(null);
+            var resolved = false;
+            function finish(result) {
+                if (resolved) return;
+                resolved = true;
+                closeSetupPanel();
+                resolve(result);
+            }
+
+            // Use Selected button
+            document.getElementById('ai-setup-use').addEventListener('click', function () {
+                M.switchToModel(selectedId);
+                var provider = M.getCloudProviders()[selectedId];
+                if (provider && !provider.getKey()) {
+                    M.showApiKeyModal(selectedId);
+                }
+                finish(selectedId);
             });
-            overlay.addEventListener('click', function (e) {
-                if (e.target === overlay) { overlay.remove(); resolve(null); }
+
+            // Close button
+            document.getElementById('ai-setup-close').addEventListener('click', function () {
+                finish(null);
+            });
+
+            // Overlay click closes
+            overlay.addEventListener('click', function () {
+                finish(null);
             });
         });
     }
+
+    function closeSetupPanel() {
+        var panel = document.getElementById('ai-setup-slide-panel');
+        var overlay = document.getElementById('ai-setup-overlay');
+        if (panel) {
+            panel.classList.remove('ai-setup-slide-open');
+            setTimeout(function () { if (panel.parentNode) panel.remove(); }, 300);
+        }
+        if (overlay) {
+            overlay.classList.remove('active');
+            setTimeout(function () { if (overlay.parentNode) overlay.remove(); }, 300);
+        }
+    }
+
 
     // ==============================================
     // GENERATE → REVIEW FLOW
@@ -365,6 +428,22 @@
         if (isDocgenRunning) {
             showToast('Another operation is in progress.', 'warning');
             return;
+        }
+
+        // Per-card model selection: read the dropdown, switch model if different
+        var originalModel = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+        var cardSelect = document.querySelector('.ai-card-model-select[data-ai-index="' + blockIndex + '"]');
+        var perCardModel = cardSelect ? cardSelect.value : null;
+        if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
+            M.switchToModel(perCardModel);
+            // If cloud model needs API key, prompt for it
+            var provider = M.getCloudProviders ? M.getCloudProviders()[perCardModel] : null;
+            if (provider && !provider.getKey()) {
+                M.showApiKeyModal(perCardModel);
+                // Restore original model since user hasn't provided key yet
+                if (originalModel) M.switchToModel(originalModel);
+                return;
+            }
         }
 
         var block = blocks[blockIndex];
@@ -403,11 +482,14 @@
             } catch (err) {
                 isDocgenRunning = false;
 
-                // If model not ready, show setup popup instead of error toast
+                // If model not ready, show API key modal directly (model already selected in card)
                 if (err.message && err.message.indexOf('AI model not ready') !== -1) {
-                    var chosenModel = await showAiSetupPopup();
-                    if (chosenModel) {
-                        showToast('Model selected — try generating again.', 'info');
+                    var selectedModelId = perCardModel || (M.getCurrentAiModel ? M.getCurrentAiModel() : null);
+                    if (selectedModelId && M.showApiKeyModal) {
+                        M.showApiKeyModal(selectedModelId);
+                        showToast('Please enter your API key, then try again.', 'info');
+                    } else {
+                        showToast('❌ No model selected. Use the Model button to pick one.', 'error');
                     }
                     return null;
                 }
@@ -568,6 +650,14 @@
     M.registerFormattingAction('think-tag', function () { insertDocgenTag('Think'); });
     M.registerFormattingAction('fill-all', function () { fillAllDocgenBlocks(); });
 
+    // Toolbar button for model selection panel
+    var modelSelectBtn = document.getElementById('ai-model-select-btn');
+    if (modelSelectBtn) {
+        modelSelectBtn.addEventListener('click', function () {
+            showAiSetupPopup();
+        });
+    }
+
     // ==============================================
     // EXPOSE FOR RENDERER
     // ==============================================
@@ -575,5 +665,6 @@
     M.transformDocgenMarkdown = transformDocgenMarkdown;
     M.bindDocgenPreviewActions = bindDocgenPreviewActions;
     M.parseDocgenBlocks = parseDocgenBlocks;
+    M.openModelSelector = showAiSetupPopup;
 
 })(window.MDView);

@@ -138,8 +138,8 @@
                 : markdown;
             const html = marked.parse(markdownForRender);
             const sanitizedHtml = DOMPurify.sanitize(html, {
-                ADD_TAGS: ['mjx-container'],
-                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block']
+                ADD_TAGS: ['mjx-container', 'button', 'select', 'option'],
+                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'value', 'title', 'selected', 'data-model-id']
             });
             M.markdownPreview.innerHTML = sanitizedHtml;
 

@@ -231,6 +231,13 @@
             if (btn) btn.click();
         });
 
+        // Model — open model selection panel
+        var qabModel = document.getElementById('qab-model');
+        if (qabModel) qabModel.addEventListener('click', function () {
+            var btn = document.getElementById('ai-model-select-btn');
+            if (btn) btn.click();
+        });
+
         // Theme — toggle dark/light
         var qabTheme = document.getElementById('qab-theme');
         if (qabTheme) qabTheme.addEventListener('click', function () {
