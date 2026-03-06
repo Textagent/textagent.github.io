@@ -60,6 +60,44 @@
             dropdownDesc: 'Google · Fast · Free tier',
         },
 
+        // ── Cloud: Google Imagen 4 Ultra (Image Generation) ───
+        'imagen-ultra': {
+            label: 'Imagen 4 Ultra · Google',
+            badge: 'Imagen 4 Ultra',
+            icon: 'bi bi-image',
+            isImageModel: true,
+            statusReady: 'Imagen 4 Ultra · Google',
+            workerFile: 'ai-worker-imagen.js',
+            keyStorageKey: 'md-viewer-gemini-key',
+            dialogTitle: 'Connect to Gemini (for Imagen)',
+            dialogDesc: 'Enter your Gemini API key to use <strong>Imagen 4 Ultra</strong> image generation',
+            dialogPlaceholder: 'AIzaSy_xxxxxxxxxxxxxxxxxxxxx',
+            dialogLink: 'https://aistudio.google.com/apikey',
+            dialogLinkText: 'aistudio.google.com/apikey',
+            dialogIcon: 'bi bi-image',
+            dropdownName: 'Imagen 4 Ultra',
+            dropdownDesc: 'Google · Image Generation · 25/day free',
+        },
+
+        // ── Cloud: Nano Banana 2 (Gemini 3.1 Flash Image) ─────
+        'nano-banana-2': {
+            label: 'Nano Banana 2 · Google',
+            badge: 'Nano Banana 2',
+            icon: 'bi bi-palette',
+            isImageModel: true,
+            statusReady: 'Nano Banana 2 · Gemini 3.1 Flash Image',
+            workerFile: 'ai-worker-gemini-image.js',
+            workerModelId: 'gemini-3.1-flash-image-preview',
+            keyStorageKey: 'md-viewer-gemini-key',
+            dialogTitle: 'Connect to Gemini (for Image Gen)',
+            dialogDesc: 'Enter your Gemini API key to use <strong>Nano Banana 2</strong> native image generation',
+            dialogPlaceholder: 'AIzaSy_xxxxxxxxxxxxxxxxxxxxx',
+            dialogLink: 'https://aistudio.google.com/apikey',
+            dialogLinkText: 'aistudio.google.com/apikey',
+            dialogIcon: 'bi bi-palette',
+            dropdownName: 'Nano Banana 2',
+            dropdownDesc: 'Gemini 3.1 Flash Image · Google',
+        },
 
         // ── Cloud: Grok 4.1 Fast via OpenRouter ───────────────
         'openrouter-grok': {

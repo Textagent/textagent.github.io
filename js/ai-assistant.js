@@ -116,6 +116,7 @@
     aiModelDropdown.innerHTML = '';
     Object.keys(_models).forEach(id => {
       const cfg = _models[id];
+      if (cfg.isImageModel) return; // image models only in per-card selectors
       const btn = document.createElement('button');
       btn.className = 'ai-model-option' + (id === currentAiModel ? ' active' : '');
       btn.dataset.model = id;
@@ -599,6 +600,14 @@
           handleGroqComplete(msg.text, msg.messageId);
           break;
 
+        case 'image-complete':
+          handleImageComplete(msg.imageBase64, msg.mimeType, msg.prompt, msg.messageId);
+          break;
+
+        case 'image-error':
+          handleAiError(msg.message, msg.messageId);
+          break;
+
         case 'error':
           if (!provider.isLoaded()) {
             if (onError) { onError(msg.message); onError = null; }
@@ -1075,6 +1084,13 @@
     // Show the user's message immediately in chat for feedback
     addUserMessage(text);
 
+    // If current model is an image model, route to image generation
+    const currentModelCfg = _models[currentAiModel];
+    if (currentModelCfg && currentModelCfg.isImageModel) {
+      generateImage(text, selectedAspectRatio);
+      return;
+    }
+
     // Detect if it's a Q&A about the document or a generation request
     const editorContent = markdownEditor.value;
     const isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
@@ -1410,6 +1426,239 @@
     });
   });
 
+  // ===========================================================
+  // --- AI Image Generation (Imagen 4 Ultra) ---
+  // ===========================================================
+  const aiImageModal = document.getElementById('ai-image-modal');
+  const aiImagePromptInput = document.getElementById('ai-image-prompt');
+  const aiImageGenerateBtn = document.getElementById('ai-image-generate');
+  const aiImageCancelBtn = document.getElementById('ai-image-cancel');
+  let selectedAspectRatio = '1:1';
+  let imagenWorker = null;
+  let imagenWorkerReady = false;
+
+  // Aspect ratio pill selection
+  if (aiImageModal) {
+    aiImageModal.querySelectorAll('.ai-aspect-pill').forEach(pill => {
+      pill.addEventListener('click', function () {
+        aiImageModal.querySelectorAll('.ai-aspect-pill').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        selectedAspectRatio = this.dataset.ratio;
+      });
+    });
+  }
+
+  function showImageModal() {
+    if (!aiImageModal) return;
+    aiImageModal.style.display = 'flex';
+    if (aiImagePromptInput) {
+      aiImagePromptInput.value = '';
+      aiImagePromptInput.focus();
+    }
+    if (aiImageGenerateBtn) {
+      aiImageGenerateBtn.disabled = false;
+      aiImageGenerateBtn.innerHTML = '<i class="bi bi-stars me-1"></i> Generate';
+    }
+  }
+
+  function hideImageModal() {
+    if (aiImageModal) aiImageModal.style.display = 'none';
+  }
+
+  if (aiImageCancelBtn) aiImageCancelBtn.addEventListener('click', hideImageModal);
+  if (aiImageModal) {
+    aiImageModal.addEventListener('click', (e) => {
+      if (e.target === aiImageModal) hideImageModal();
+    });
+  }
+
+  // Initialize or get the Imagen worker (reuses Gemini API key)
+  function getImagenWorker() {
+    if (imagenWorker && imagenWorkerReady) return imagenWorker;
+
+    const imagenConfig = window.AI_MODELS?.['imagen-ultra'];
+    if (!imagenConfig) return null;
+
+    const geminiKey = localStorage.getItem(imagenConfig.keyStorageKey);
+    if (!geminiKey) return null;
+
+    if (imagenWorker) { imagenWorker.terminate(); }
+    imagenWorker = new Worker(imagenConfig.workerFile);
+    imagenWorkerReady = false;
+
+    imagenWorker.addEventListener('message', (e) => {
+      const msg = e.data;
+      switch (msg.type) {
+        case 'loaded':
+          imagenWorkerReady = true;
+          break;
+        case 'image-complete':
+          handleImageComplete(msg.imageBase64, msg.mimeType, msg.prompt, msg.messageId);
+          break;
+        case 'image-error':
+          handleAiError(msg.message, msg.messageId);
+          aiIsGenerating = false;
+          aiSendBtn.disabled = false;
+          break;
+        case 'error':
+          handleAiError(msg.message, msg.messageId);
+          break;
+      }
+    });
+
+    imagenWorker.postMessage({ type: 'setApiKey', apiKey: geminiKey });
+    imagenWorker.postMessage({ type: 'load' });
+    return imagenWorker;
+  }
+
+  // Handle completed image from worker
+  function handleImageComplete(imageBase64, mimeType, prompt, messageId) {
+    aiIsGenerating = false;
+    aiSendBtn.disabled = false;
+    removeTypingIndicator();
+
+    const welcome = aiChatArea.querySelector('.ai-welcome-message');
+    if (welcome) welcome.remove();
+
+    const dataUri = `data:${mimeType || 'image/png'};base64,${imageBase64}`;
+    const mdText = `![${prompt}](${dataUri})`;
+
+    const msg = document.createElement('div');
+    msg.className = 'ai-message ai-message-ai';
+    msg.innerHTML = `
+      <span class="ai-msg-label">AI</span>
+      <div class="ai-msg-bubble ai-image-bubble">
+        <div class="ai-image-prompt-label"><i class="bi bi-image me-1"></i> ${escapeHtml(prompt)}</div>
+        <img src="${dataUri}" alt="${escapeHtml(prompt)}" class="ai-generated-image" />
+      </div>
+      <div class="ai-msg-actions">
+        <button class="ai-msg-action-btn ai-img-insert-btn" title="Insert image into editor">
+          <i class="bi bi-box-arrow-in-down"></i> Insert
+        </button>
+        <button class="ai-msg-action-btn ai-img-copy-btn" title="Copy markdown">
+          <i class="bi bi-clipboard"></i> Copy MD
+        </button>
+      </div>
+    `;
+    aiChatArea.appendChild(msg);
+    aiChatArea.scrollTop = aiChatArea.scrollHeight;
+
+    // Wire up Insert button
+    msg.querySelector('.ai-img-insert-btn').addEventListener('click', function () {
+      const pos = markdownEditor.selectionStart;
+      const before = markdownEditor.value.substring(0, pos);
+      const after = markdownEditor.value.substring(pos);
+      markdownEditor.value = before + '\n' + mdText + '\n' + after;
+      markdownEditor.dispatchEvent(new Event('input'));
+      this.innerHTML = '<i class="bi bi-check-lg"></i> Inserted';
+      setTimeout(() => { this.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Insert'; }, 1500);
+    });
+
+    // Wire up Copy button
+    msg.querySelector('.ai-img-copy-btn').addEventListener('click', function () {
+      navigator.clipboard.writeText(mdText).then(() => {
+        this.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+        setTimeout(() => { this.innerHTML = '<i class="bi bi-clipboard"></i> Copy MD'; }, 1500);
+      });
+    });
+  }
+
+  // Generate image from prompt — uses the current image model or defaults to imagen-ultra
+  function generateImage(prompt, aspectRatio) {
+    // Determine which image model to use
+    const currentModelCfg = _models[currentAiModel];
+    const imageModelId = (currentModelCfg && currentModelCfg.isImageModel) ? currentAiModel : 'imagen-ultra';
+    const provider = CLOUD_PROVIDERS[imageModelId];
+
+    if (!provider) {
+      addAiStatusBar('error', 'Image model not configured.');
+      return;
+    }
+
+    if (!provider.getKey()) {
+      showApiKeyModal(imageModelId);
+      return;
+    }
+
+    // Ensure panel is open
+    if (!aiPanelOpen) openAiPanel();
+
+    // Init worker if needed
+    if (!provider.getWorker() || !provider.isLoaded()) {
+      initCloudWorker(imageModelId, () => {
+        _doImageGenerate(provider, prompt, aspectRatio);
+      });
+      return;
+    }
+
+    _doImageGenerate(provider, prompt, aspectRatio);
+  }
+
+  function _doImageGenerate(provider, prompt, aspectRatio) {
+    aiIsGenerating = true;
+    aiSendBtn.disabled = true;
+    const messageId = ++aiMessageIdCounter;
+
+    // Only add user message if not already shown (sendChatMessage adds it)
+    const lastMsg = aiChatArea.querySelector('.ai-message:last-child .ai-msg-bubble');
+    const alreadyShown = lastMsg && lastMsg.textContent.includes(prompt);
+    if (!alreadyShown) {
+      addUserMessage(`🖼️ Generate: ${prompt}`);
+    }
+    addTypingIndicator();
+
+    provider.getWorker().postMessage({
+      type: 'generate-image',
+      prompt,
+      aspectRatio: aspectRatio || '1:1',
+      messageId,
+    });
+  }
+
+  // Generate button click
+  if (aiImageGenerateBtn) {
+    aiImageGenerateBtn.addEventListener('click', () => {
+      const prompt = aiImagePromptInput ? aiImagePromptInput.value.trim() : '';
+      if (!prompt) {
+        if (aiImagePromptInput) aiImagePromptInput.focus();
+        return;
+      }
+      hideImageModal();
+      generateImage(prompt, selectedAspectRatio);
+    });
+  }
+
+  // Enter key in image prompt
+  if (aiImagePromptInput) {
+    aiImagePromptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (aiImageGenerateBtn) aiImageGenerateBtn.click();
+      }
+    });
+  }
+
+  // Handle the generate-image action chip
+  const imageChip = document.getElementById('ai-image-chip');
+  if (imageChip) {
+    imageChip.addEventListener('click', () => {
+      const imagenConfig = window.AI_MODELS?.['imagen-ultra'];
+      if (!imagenConfig) return;
+
+      const geminiKey = localStorage.getItem(imagenConfig.keyStorageKey);
+      if (!geminiKey) {
+        // Need API key first — open panel and show key dialog
+        if (!aiPanelOpen) openAiPanel();
+        showApiKeyModal('imagen-ultra');
+        return;
+      }
+      showImageModal();
+    });
+  }
+
+  // Expose for external use
+  M.generateImage = generateImage;
+
   // --- Clear Chat ---
   if (aiClearChatBtn) {
     aiClearChatBtn.addEventListener('click', () => {
@@ -1517,5 +1766,6 @@
   M.getCurrentAiModel = function () { return currentAiModel; };
   M.isCurrentModelReady = isCurrentModelReady;
   M.initLocalAiWorker = initAiWorker;
+  M.initCloudWorker = initCloudWorker;
 
 })(window.MDView);

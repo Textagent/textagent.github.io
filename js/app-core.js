@@ -15,8 +15,9 @@
     M.scrollSyncTimeout = null;
     M.SCROLL_SYNC_DELAY = 10;
 
-    // View Mode State
-    M.currentViewMode = 'split';
+    // View Mode State — initialised to null so the first setViewMode('split')
+    // in app-init.js runs its full path (including renderMarkdown).
+    M.currentViewMode = null;
 
     // --- DOM Element References ---
     M.markdownEditor = document.getElementById("markdown-editor");

@@ -331,6 +331,41 @@
         </div>
     </div>
 
+    <!-- AI Image Generation Modal -->
+    <div id="ai-image-modal" class="ai-consent-modal" style="display:none">
+        <div class="ai-consent-content ai-image-modal-content">
+            <div class="ai-consent-header">
+                <div class="ai-consent-icon" style="background:linear-gradient(135deg,#8b5cf6,#a855f7)"><i class="bi bi-image"></i></div>
+                <h4>Generate Image</h4>
+                <p>Powered by <strong>Imagen 4 Ultra</strong> · Google</p>
+            </div>
+            <div class="ai-consent-body">
+                <div class="ai-image-form">
+                    <div class="ai-image-field">
+                        <label for="ai-image-prompt">Describe your image</label>
+                        <textarea id="ai-image-prompt" class="ai-image-prompt-input" rows="3" placeholder="A futuristic city at sunset with flying cars and neon lights..."></textarea>
+                    </div>
+                    <div class="ai-image-field">
+                        <label>Aspect Ratio</label>
+                        <div class="ai-image-aspect-pills">
+                            <button class="ai-aspect-pill active" data-ratio="1:1" title="Square">1:1</button>
+                            <button class="ai-aspect-pill" data-ratio="16:9" title="Landscape wide">16:9</button>
+                            <button class="ai-aspect-pill" data-ratio="9:16" title="Portrait tall">9:16</button>
+                            <button class="ai-aspect-pill" data-ratio="4:3" title="Landscape">4:3</button>
+                            <button class="ai-aspect-pill" data-ratio="3:4" title="Portrait">3:4</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-consent-footer">
+                <button id="ai-image-cancel" class="ai-consent-btn ai-consent-btn-secondary">Cancel</button>
+                <button id="ai-image-generate" class="ai-consent-btn ai-consent-btn-primary" style="background:linear-gradient(135deg,#8b5cf6,#a855f7)">
+                    <i class="bi bi-stars me-1"></i> Generate
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- File Conversion Progress Overlay -->
     <div id="conversion-overlay" class="conversion-overlay" style="display:none">
         <div class="conversion-modal">

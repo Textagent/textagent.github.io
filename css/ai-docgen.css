@@ -118,6 +118,74 @@
     box-shadow: 0 2px 12px rgba(56, 189, 248, 0.12);
 }
 
+.ai-placeholder-card[data-ai-type="Image"] {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: linear-gradient(135deg,
+            rgba(168, 85, 247, 0.06),
+            rgba(139, 92, 246, 0.04));
+}
+
+.ai-placeholder-card[data-ai-type="Image"]:hover {
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 2px 12px rgba(168, 85, 247, 0.12);
+}
+
+.ai-placeholder-card[data-ai-type="Image"] .ai-placeholder-label {
+    color: #a855f7;
+}
+
+.ai-placeholder-card[data-ai-type="Image"] .ai-placeholder-btn {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.25);
+    color: #a855f7;
+}
+
+.ai-placeholder-card[data-ai-type="Image"] .ai-placeholder-btn:hover {
+    background: rgba(168, 85, 247, 0.25);
+}
+
+.ai-placeholder-card[data-ai-type="Image"] .ai-card-model-select {
+    background-color: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.35);
+    color: #d8b4fe;
+    font-weight: 600;
+    max-width: 160px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23d8b4fe'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+}
+
+.ai-placeholder-card[data-ai-type="Image"] .ai-card-model-select:hover {
+    background-color: rgba(168, 85, 247, 0.22);
+    border-color: rgba(168, 85, 247, 0.5);
+}
+
+.ai-placeholder-card[data-ai-type="Image"] .ai-card-model-select option {
+    background: #1e1030;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .ai-placeholder-card[data-ai-type="Image"] .ai-card-model-select {
+    color: #7c3aed;
+    background-color: rgba(168, 85, 247, 0.08);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237c3aed'/%3E%3C/svg%3E");
+}
+
+[data-theme="light"] .ai-placeholder-card[data-ai-type="Image"] .ai-card-model-select option {
+    background: #ffffff;
+    color: #1e293b;
+}
+
+/* Image tag toolbar button — purple accent */
+.fmt-image-btn {
+    color: #a855f7 !important;
+    font-weight: 600;
+}
+
+.fmt-image-btn:hover {
+    background: rgba(168, 85, 247, 0.15);
+}
+
 .ai-placeholder-header {
     display: flex;
     align-items: center;

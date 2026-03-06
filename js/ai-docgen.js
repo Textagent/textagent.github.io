@@ -13,12 +13,14 @@
     var fillAllQueue = null;       // { remaining, filled, total, prevSections }
 
     // ==============================================
-    // TAGGING — wrap selection with {{AI:}} or {{Think:}}
+    // TAGGING — wrap selection with {{AI:}}, {{Think:}}, or {{Image:}}
     // ==============================================
     function insertDocgenTag(type) {
         var placeholder = type === 'Think'
             ? 'describe what to analyze or reason through'
-            : 'describe what to generate';
+            : type === 'Image'
+                ? 'describe the image to generate'
+                : 'describe what to generate';
         M.wrapSelectionWith('{{' + type + ': ', '}}', placeholder);
     }
 
@@ -46,7 +48,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{(AI|Think):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{(AI|Think|Image):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -73,7 +75,7 @@
 
     function transformDocgenMarkdown(markdown) {
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{(AI|Think):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{(AI|Think|Image):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -84,13 +86,21 @@
         var modelIds = Object.keys(models);
         var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
 
-        var modelOptionsHtml = '';
+        // Separate text and image model options
+        var textModelOptionsHtml = '';
+        var imageModelOptionsHtml = '';
         modelIds.forEach(function (id) {
             var m = models[id];
             var name = m.dropdownName || m.label || id;
-            var sel = id === currentModel ? ' selected' : '';
-            modelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+            if (m.isImageModel) {
+                var sel = id === 'imagen-ultra' ? ' selected' : '';
+                imageModelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+            } else {
+                var sel = id === currentModel ? ' selected' : '';
+                textModelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+            }
         });
+        var modelOptionsHtml = textModelOptionsHtml;
 
         while ((match = re.exec(markdown)) !== null) {
             if (isInsideFence(match.index, fencedRanges)) continue;
@@ -99,8 +109,9 @@
 
             var type = match[1];
             var prompt = match[2].trim();
-            var icon = type === 'Think' ? '🧠' : '✨';
-            var label = type === 'Think' ? 'Think' : 'AI Generate';
+            var icon = type === 'Think' ? '🧠' : type === 'Image' ? '🖼️' : '✨';
+            var label = type === 'Think' ? 'Think' : type === 'Image' ? 'Image Generate' : 'AI Generate';
+            var cardModelOpts = type === 'Image' ? imageModelOptionsHtml : modelOptionsHtml;
 
             result += '<div class="ai-placeholder-card" data-ai-type="' + type + '" data-ai-index="' + blockIndex + '">'
                 + '<div class="ai-placeholder-header">'
@@ -108,7 +119,7 @@
                 + '<span class="ai-placeholder-label">' + label + '</span>'
                 + '<div class="ai-placeholder-actions">'
                 + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">'
-                + modelOptionsHtml
+                + cardModelOpts
                 + '</select>'
                 + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                 + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
@@ -228,6 +239,58 @@
         var newText = before + replacement.trim() + after;
         M.markdownEditor.value = newText;
         M.markdownEditor.dispatchEvent(new Event('input'));
+    }
+
+    // Generate image for an {{Image:}} block via the image worker
+    async function generateImageForBlock(block, modelId) {
+        var imageModelId = modelId || 'imagen-ultra';
+        var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+        var provider = providers[imageModelId];
+
+        if (!provider) {
+            throw new Error('Image model "' + imageModelId + '" not configured. Please select an image model.');
+        }
+
+        if (!provider.getKey()) {
+            M.showApiKeyModal(imageModelId);
+            throw new Error('API key required for image generation. Please enter your Gemini API key.');
+        }
+
+        // Ensure worker is initialized
+        if (!provider.getWorker() || !provider.isLoaded()) {
+            await new Promise(function (resolve, reject) {
+                M.initCloudWorker(imageModelId, function () { resolve(); });
+                // Timeout after 10s
+                setTimeout(function () { reject(new Error('Worker init timeout')); }, 10000);
+            });
+        }
+
+        // Send generate-image request and wait for response
+        return new Promise(function (resolve, reject) {
+            var worker = provider.getWorker();
+            if (!worker) { reject(new Error('Image worker not available')); return; }
+
+            function onMessage(e) {
+                var data = e.data;
+                if (data.type === 'image-complete') {
+                    worker.removeEventListener('message', onMessage);
+                    var mime = data.mimeType || 'image/png';
+                    var md = '![' + block.prompt.substring(0, 60) + '](data:' + mime + ';base64,' + data.imageBase64 + ')';
+                    resolve(md);
+                } else if (data.type === 'image-error') {
+                    worker.removeEventListener('message', onMessage);
+                    reject(new Error(data.message || 'Image generation failed'));
+                }
+            }
+
+            worker.addEventListener('message', onMessage);
+            worker.postMessage({
+                type: 'generate-image',
+                prompt: block.prompt,
+                aspectRatio: '1:1',
+                messageId: Date.now(),
+            });
+        });
     }
 
     function removeDocgenTag(blockIndex) {
@@ -397,7 +460,9 @@
             closeSetupPanel();
 
             var models = window.AI_MODELS || {};
-            var modelIds = Object.keys(models);
+            var modelIds = Object.keys(models).filter(function (id) {
+                return !models[id].isImageModel; // hide image models from this panel
+            });
             var currentModel = M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0];
             var selectedId = currentModel || modelIds[0];
 
@@ -566,13 +631,19 @@
             showToast('🪄 Generating...', 'info');
 
             try {
-                var result = await M.requestAiTask({
-                    taskType: 'generate',
-                    context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                    userPrompt: buildPrompt(block, prevContent),
-                    enableThinking: block.type === 'Think',
-                    silent: true
-                });
+                var result;
+                if (block.type === 'Image') {
+                    // Route Image blocks to image generation
+                    result = await generateImageForBlock(block, perCardModel);
+                } else {
+                    result = await M.requestAiTask({
+                        taskType: 'generate',
+                        context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
+                        userPrompt: buildPrompt(block, prevContent),
+                        enableThinking: block.type === 'Think',
+                        silent: true
+                    });
+                }
 
                 activeBlockOps.delete(blockIndex);
                 setCardLoading(false);
@@ -834,6 +905,7 @@
 
     M.registerFormattingAction('ai-tag', function () { insertDocgenTag('AI'); });
     M.registerFormattingAction('think-tag', function () { insertDocgenTag('Think'); });
+    M.registerFormattingAction('image-tag', function () { insertDocgenTag('Image'); });
     M.registerFormattingAction('fill-all', function () { fillAllDocgenBlocks(); });
 
     // Toolbar button for model selection panel
