@@ -127,29 +127,30 @@
 
 .close-btn {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: var(--text-color);
-  font-size: 1rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  padding: 5px;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  opacity: 0.6;
+  width: 24px;
+  height: 24px;
+  opacity: 0.5;
   transition: all 0.2s ease;
-  background-color: var(--button-bg);
-  border: 1px solid var(--border-color);
+  z-index: 10;
 }
 
 .close-btn:hover {
   opacity: 1;
-  background-color: var(--color-danger-fg);
+  background-color: var(--button-hover);
+  color: var(--color-danger-fg, #d73a49);
 }
 
 /* ========================================
