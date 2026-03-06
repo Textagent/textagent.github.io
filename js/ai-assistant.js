@@ -1516,5 +1516,6 @@
   M.getCloudProviders = function () { return CLOUD_PROVIDERS; };
   M.getCurrentAiModel = function () { return currentAiModel; };
   M.isCurrentModelReady = isCurrentModelReady;
+  M.initLocalAiWorker = initAiWorker;
 
 })(window.MDView);

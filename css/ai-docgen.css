@@ -188,6 +188,36 @@
     white-space: pre-wrap;
 }
 
+/* --- Card Loading State --- */
+.ai-card-loading {
+    animation: ai-card-pulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.ai-card-loading .ai-placeholder-label {
+    color: var(--color-accent-fg, #2dd4bf) !important;
+}
+
+.ai-card-loading .ai-placeholder-actions {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+@keyframes ai-card-pulse {
+
+    0%,
+    100% {
+        border-color: rgba(45, 212, 191, 0.25);
+        box-shadow: 0 0 4px rgba(45, 212, 191, 0.1);
+    }
+
+    50% {
+        border-color: rgba(45, 212, 191, 0.6);
+        box-shadow: 0 0 16px rgba(45, 212, 191, 0.3);
+    }
+}
+
 /* --- Progress Toast --- */
 .ai-docgen-toast {
     position: fixed;

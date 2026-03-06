@@ -66,19 +66,23 @@ A flat list of every change made, one bullet per change. This is for fast scanni
 - Include a summary table at the bottom listing ALL files with approximate line counts
 - Use clear, specific language — avoid vague descriptions
 
-3. Stage the changelog and all changed files:
+3. Update `README.md` to reflect the changes:
+   - Update the **Features at a Glance** table if any feature category description needs expanding
+   - Add new entries to the **Release Notes** table at the top (date descending), one row per distinct feature/fix
+
+4. Stage the changelog, README, and all changed files:
 ```
-git add CHANGELOG-<topic>.md <files...>
+git add CHANGELOG-<topic>.md README.md <files...>
 ```
 
-4. Commit with a descriptive message following conventional commits format:
+5. Commit with a descriptive message following conventional commits format:
 ```
 git commit -m "feat|fix|refactor|chore: <short description>
 
 <bullet list of key changes>"
 ```
 
-5. Push to origin:
+6. Push to origin:
 ```
 git push origin main
 ```

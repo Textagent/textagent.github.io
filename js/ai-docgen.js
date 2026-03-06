@@ -7,7 +7,7 @@
     'use strict';
 
     // --- State ---
-    var isDocgenRunning = false;
+    var activeBlockOps = new Set(); // Track which block indices are currently generating
     var abortRequested = false;
     var pendingReview = null;      // { blockIndex, result, block, resolve, reject }
     var fillAllQueue = null;       // { remaining, filled, total, prevSections }
@@ -155,10 +155,13 @@
 
     function buildPrompt(block, prevSections) {
         var base = block.type === 'Think'
-            ? 'Reason step by step through the following topic, then write polished markdown content.\n\n'
-            : 'Write well-formatted markdown content for this section.\n\n';
+            ? 'You are a thoughtful writer. Think carefully about the topic, then produce polished markdown content.\n\n'
+            + 'IMPORTANT: Output ONLY the final polished markdown content. Do NOT include your thinking process, '
+            + 'reasoning steps, analysis, or any text like "Thinking Process:" or "Drafting:". '
+            + 'Just write the final, high-quality markdown article directly.\n\n'
+            : 'You are an expert writer. Write well-formatted, high-quality markdown content for this section.\n\n';
 
-        var instructions = 'Instructions:\n' + block.prompt + '\n\n';
+        var instructions = 'Topic/Instructions:\n' + block.prompt + '\n\n';
 
         var context = '';
         if (prevSections) {
@@ -167,22 +170,61 @@
         }
 
         return base + instructions + context
-            + 'Write ONLY the markdown content. Do not include explanations about what you wrote.';
+            + 'Write ONLY the markdown content. Do not include any meta-commentary, explanations, '
+            + 'thinking process, or notes about what you wrote. Start directly with the content.';
+    }
+
+    // Strip thinking/reasoning artifacts from generated output
+    function cleanGeneratedOutput(text) {
+        if (!text) return text;
+
+        // Remove XML-style thinking blocks: <thinking>...</thinking>
+        text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+
+        // Remove "Thinking Process:" sections and everything before the actual content
+        // These patterns catch common reasoning dumps
+        var thinkingPatterns = [
+            /^[\s\S]*?Thinking Process:[\s\S]*?(?=^#|\n#)/m,
+            /^[\s\S]*?Analyze the Request:[\s\S]*?(?=^#|\n#)/m,
+            /^[\s\S]*?Drafting the Content:[\s\S]*?(?=^#|\n#)/m,
+        ];
+        for (var i = 0; i < thinkingPatterns.length; i++) {
+            text = text.replace(thinkingPatterns[i], '');
+        }
+
+        // Remove repetitive "Wait, looking at the instruction" loops
+        text = text.replace(/(?:Wait,.*?(?:looking|the instruction).*?\n)+/gi, '');
+
+        // Remove leading/trailing whitespace
+        text = text.trim();
+
+        // If after cleanup the text starts with a reasoning line (no markdown heading),
+        // try to find the first heading and use content from there
+        if (text && !text.startsWith('#') && !text.startsWith('*') && !text.startsWith('-')) {
+            var headingMatch = text.match(/\n(#{1,6}\s)/);
+            if (headingMatch) {
+                var headingIdx = text.indexOf(headingMatch[0]);
+                // Only strip preamble if there's substantial content after the heading
+                var afterHeading = text.substring(headingIdx + 1);
+                if (afterHeading.length > text.length * 0.3) {
+                    text = afterHeading;
+                }
+            }
+        }
+
+        return text.trim();
     }
 
     // ==============================================
     // EDITOR HELPERS
     // ==============================================
 
-    function replaceBlockInEditor(blockIndex, replacement) {
+    function replaceBlockByTag(fullMatchText, replacement) {
         var text = M.markdownEditor.value;
-        var blocks = parseDocgenBlocks(text);
-        if (blockIndex >= blocks.length) return;
-
-        var block = blocks[blockIndex];
-        var before = text.substring(0, block.start);
-        var after = text.substring(block.end);
-
+        var idx = text.indexOf(fullMatchText);
+        if (idx === -1) return;
+        var before = text.substring(0, idx);
+        var after = text.substring(idx + fullMatchText.length);
         var newText = before + replacement.trim() + after;
         M.markdownEditor.value = newText;
         M.markdownEditor.dispatchEvent(new Event('input'));
@@ -192,7 +234,7 @@
         var text = M.markdownEditor.value;
         var blocks = parseDocgenBlocks(text);
         if (blockIndex >= blocks.length) return;
-        replaceBlockInEditor(blockIndex, blocks[blockIndex].prompt);
+        replaceBlockByTag(blocks[blockIndex].fullMatch, blocks[blockIndex].prompt);
     }
 
     // ==============================================
@@ -258,11 +300,63 @@
                 if (resolved) return;
                 resolved = true;
                 resolve(decision);
-                // Remove the review card and force re-render to restore placeholder
-                reviewCard.remove();
-                if (decision === 'reject' || decision === 'regenerate') {
-                    // Re-render preview to show the placeholder card again
-                    if (M.renderMarkdown) M.renderMarkdown();
+                if (decision === 'reject' && placeholderCard) {
+                    // Rebuild this specific placeholder card instead of re-rendering everything
+                    // This preserves other concurrent review panels
+                    var models = window.AI_MODELS || {};
+                    var modelIds = Object.keys(models);
+                    var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
+                    var modelOptionsHtml = '';
+                    modelIds.forEach(function (id) {
+                        var m = models[id];
+                        var name = m.dropdownName || m.label || id;
+                        var sel = id === currentModel ? ' selected' : '';
+                        modelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+                    });
+                    var newCard = document.createElement('div');
+                    newCard.className = 'ai-placeholder-card';
+                    newCard.dataset.aiType = block.type;
+                    newCard.dataset.aiIndex = blockIndex;
+                    var icon = block.type === 'Think' ? '🧠' : '✨';
+                    var label = block.type === 'Think' ? 'Think' : 'AI Generate';
+                    newCard.innerHTML =
+                        '<div class="ai-placeholder-header">'
+                        + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                        + '<span class="ai-placeholder-label">' + label + '</span>'
+                        + '<div class="ai-placeholder-actions">'
+                        + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">' + modelOptionsHtml + '</select>'
+                        + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
+                        + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                        + '</div></div>'
+                        + '<div class="ai-placeholder-prompt">' + block.prompt + '</div>';
+                    reviewCard.parentNode.replaceChild(newCard, reviewCard);
+                    M.bindDocgenPreviewActions(newCard.parentNode);
+                } else if (decision === 'accept') {
+                    // Replace review card with rendered accepted content directly in the DOM
+                    // This preserves other concurrent review panels
+                    var acceptedWrapper = document.createElement('div');
+                    acceptedWrapper.className = 'ai-accepted-content';
+                    try {
+                        acceptedWrapper.innerHTML = marked.parse(generatedText);
+                    } catch (_) {
+                        acceptedWrapper.textContent = generatedText;
+                    }
+                    reviewCard.parentNode.replaceChild(acceptedWrapper, reviewCard);
+                } else {
+                    // regenerate — rebuild placeholder card inline (preserves other reviews)
+                    var newCard2 = document.createElement('div');
+                    newCard2.className = 'ai-placeholder-card ai-card-loading';
+                    newCard2.dataset.aiType = block.type;
+                    newCard2.dataset.aiIndex = blockIndex;
+                    var icon2 = block.type === 'Think' ? '🧠' : '✨';
+                    var label2 = block.type === 'Think' ? 'Think' : 'AI Generate';
+                    newCard2.innerHTML =
+                        '<div class="ai-placeholder-header">'
+                        + '<span class="ai-placeholder-icon">' + icon2 + '</span>'
+                        + '<span class="ai-placeholder-label">Regenerating...</span>'
+                        + '</div>'
+                        + '<div class="ai-placeholder-prompt">' + block.prompt + '</div>';
+                    reviewCard.parentNode.replaceChild(newCard2, reviewCard);
                 }
             }
 
@@ -425,8 +519,8 @@
         var blocks = parseDocgenBlocks(text);
         if (blockIndex >= blocks.length) return;
 
-        if (isDocgenRunning) {
-            showToast('Another operation is in progress.', 'warning');
+        if (activeBlockOps.has(blockIndex)) {
+            showToast('This block is already being generated.', 'warning');
             return;
         }
 
@@ -450,8 +544,25 @@
         var prevContent = text.substring(0, block.start);
         var decision = 'regenerate';
 
+        // Show loading state on the placeholder card
+        var loadingCard = document.querySelector('.ai-placeholder-card[data-ai-index="' + blockIndex + '"]');
+        function setCardLoading(loading) {
+            if (!loadingCard) return;
+            if (loading) {
+                loadingCard.classList.add('ai-card-loading');
+                var label = loadingCard.querySelector('.ai-placeholder-label');
+                if (label) label.dataset.originalText = label.textContent;
+                if (label) label.textContent = 'Generating...';
+            } else {
+                loadingCard.classList.remove('ai-card-loading');
+                var label = loadingCard.querySelector('.ai-placeholder-label');
+                if (label && label.dataset.originalText) label.textContent = label.dataset.originalText;
+            }
+        }
+
         while (decision === 'regenerate') {
-            isDocgenRunning = true;
+            activeBlockOps.add(blockIndex);
+            setCardLoading(true);
             showToast('🪄 Generating...', 'info');
 
             try {
@@ -463,14 +574,23 @@
                     silent: true
                 });
 
-                isDocgenRunning = false;
+                activeBlockOps.delete(blockIndex);
+                setCardLoading(false);
+
+                // Clean up thinking artifacts from output
+                result = cleanGeneratedOutput(result);
 
                 // Show review panel and wait for user decision
                 decision = await showReviewPanel(blockIndex, result, block);
 
                 if (decision === 'accept') {
-                    // Re-parse to get fresh offsets
-                    replaceBlockInEditor(blockIndex, result);
+                    // Use fullMatch text to find and replace (index-independent)
+                    replaceBlockByTag(block.fullMatch, result);
+                    // Cancel debounced re-render if other review panels are still active
+                    var activeReviews = document.querySelectorAll('.ai-inline-review');
+                    if (activeReviews.length > 0) {
+                        clearTimeout(M.markdownRenderTimeout);
+                    }
                     showToast('✅ Accepted!', 'success');
                     return result;
                 } else if (decision === 'reject') {
@@ -480,12 +600,23 @@
                 // 'regenerate' → loops back
 
             } catch (err) {
-                isDocgenRunning = false;
+                activeBlockOps.delete(blockIndex);
+                setCardLoading(false);
 
-                // If model not ready, show API key modal directly (model already selected in card)
+                // If model not ready, handle appropriately
                 if (err.message && err.message.indexOf('AI model not ready') !== -1) {
                     var selectedModelId = perCardModel || (M.getCurrentAiModel ? M.getCurrentAiModel() : null);
-                    if (selectedModelId && M.showApiKeyModal) {
+                    var models = window.AI_MODELS || {};
+                    var modelCfg = selectedModelId ? models[selectedModelId] : null;
+
+                    if (modelCfg && modelCfg.isLocal) {
+                        // Local model (e.g. Qwen) — offer to download right here
+                        var downloadConfirmed = await showLocalModelDownloadPrompt(modelCfg);
+                        if (downloadConfirmed) {
+                            showToast('⬇️ Downloading model... This may take a moment. Try generating again once loaded.', 'info');
+                        }
+                    } else if (selectedModelId && M.showApiKeyModal) {
+                        // Cloud model — needs API key
                         M.showApiKeyModal(selectedModelId);
                         showToast('Please enter your API key, then try again.', 'info');
                     } else {
@@ -513,7 +644,7 @@
             return;
         }
 
-        if (isDocgenRunning) {
+        if (activeBlockOps.size > 0) {
             showToast('An operation is already in progress.', 'warning');
             return;
         }
@@ -523,6 +654,7 @@
 
         var filled = 0;
         var total = blocks.length;
+        var skipCount = 0; // How many blocks at the start to skip (rejected ones)
 
         for (var i = 0; i < total; i++) {
             if (abortRequested) {
@@ -537,16 +669,18 @@
             var currentBlocks = parseDocgenBlocks(currentText);
             if (currentBlocks.length === 0) break;
 
-            // Generate and show review for the FIRST remaining block
-            var result = await generateAndReview(0);
+            // Skip past rejected blocks (they stay in text at the front)
+            if (skipCount >= currentBlocks.length) break; // All remaining are skipped
+
+            // Generate and show review for the next unprocessed block
+            var result = await generateAndReview(skipCount);
             if (result !== null) {
+                // Accepted — block was removed from text, so skipCount stays same
+                // (next block shifts down to the same index)
                 filled++;
             } else {
-                // User rejected — skip this block, try next one
-                // But since we didn't replace, the block is still there.
-                // Ask the user: continue with remaining blocks?
-                var continueDecision = await showContinuePrompt(i + 1, total);
-                if (!continueDecision) break;
+                // Rejected — block stays in text, skip past it next time
+                skipCount++;
             }
         }
 
@@ -592,6 +726,58 @@
             });
             overlay.addEventListener('click', function (e) {
                 if (e.target === overlay) { overlay.remove(); resolve(false); }
+            });
+        });
+    }
+
+    // Prompt user to download local model (e.g. Qwen) right from the generation flow
+    function showLocalModelDownloadPrompt(modelCfg) {
+        return new Promise(function (resolve) {
+            var modelName = modelCfg.dropdownName || modelCfg.label || 'Local AI Model';
+
+            var overlay = document.createElement('div');
+            overlay.className = 'ai-review-overlay';
+            overlay.id = 'ai-download-overlay';
+
+            var panel = document.createElement('div');
+            panel.className = 'ai-review-panel ai-review-panel-compact';
+            panel.innerHTML =
+                '<div class="ai-review-header">'
+                + '<span class="ai-review-title">⬇️ Download ' + modelName + '</span>'
+                + '</div>'
+                + '<div class="ai-review-prompt">'
+                + '<strong>' + modelName + '</strong> needs a one-time <strong>~500 MB</strong> download to run locally in your browser.'
+                + '<br><br>Once downloaded, it runs 100% privately — no API key needed.'
+                + '</div>'
+                + '<div class="ai-review-actions">'
+                + '<button class="ai-review-btn ai-review-accept" id="ai-dl-yes"><i class="bi bi-download"></i> Download</button>'
+                + '<button class="ai-review-btn ai-review-reject" id="ai-dl-no">Cancel</button>'
+                + '</div>';
+
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            var resolved = false;
+            function finish(result) {
+                if (resolved) return;
+                resolved = true;
+                overlay.remove();
+                resolve(result);
+            }
+
+            document.getElementById('ai-dl-yes').addEventListener('click', function () {
+                // Start the download
+                localStorage.setItem('md-viewer-ai-consented', 'true');
+                if (M.initLocalAiWorker) M.initLocalAiWorker();
+                finish(true);
+            });
+
+            document.getElementById('ai-dl-no').addEventListener('click', function () {
+                finish(false);
+            });
+
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) finish(false);
             });
         });
     }

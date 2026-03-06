@@ -245,7 +245,7 @@
         if (isSecure && docId && !keyString) {
             try {
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-shield-lock"></i> Loading protected document...</div>';
-                M.setViewMode('preview');
+                M.setViewMode('split');
                 var doc = await db.collection('shares').doc(docId).get();
                 if (!doc.exists) throw new Error('Shared document not found.');
                 var data = doc.data();
@@ -254,7 +254,7 @@
             } catch (error) {
                 console.error('Failed to load secure shared markdown:', error);
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Document Not Found</h3><p style="opacity: 0.7;">The shared document may have been deleted or the link is invalid.</p></div>';
-                M.setViewMode('preview');
+                M.setViewMode('split');
             }
             return;
         }
@@ -263,7 +263,7 @@
         if (!keyString || (!docId && !inlineData)) return;
         try {
             M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-lock"></i> Decrypting shared content...</div>';
-            M.setViewMode('preview');
+            M.setViewMode('split');
             var dataString;
             if (docId) {
                 var doc = await db.collection('shares').doc(docId).get();
@@ -276,14 +276,14 @@
             var markdownContent = decompressData(compressed);
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            M.setViewMode('preview');
+            M.setViewMode('split');
             M.isViewingSharedDoc = true;
             showSharedBanner();
         } catch (error) {
             console.error('Failed to load shared markdown:', error);
             M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
             M.markdownPreview.querySelector('p:last-child').textContent = error.message;
-            M.setViewMode('preview');
+            M.setViewMode('split');
         }
     };
 
@@ -298,7 +298,7 @@
             hidePassphrasePrompt();
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            M.setViewMode('preview');
+            M.setViewMode('split');
             M.isViewingSharedDoc = true;
             showSharedBanner();
             pendingSecureDoc = null;
