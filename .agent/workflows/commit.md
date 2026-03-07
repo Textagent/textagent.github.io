@@ -31,7 +31,10 @@ When committing code changes, **always** include a changelog file that documents
 
 ## Rules
 
-- **Never** commit code without an accompanying changelog file
+- **MANDATORY: Never commit code without an accompanying CHANGELOG-<topic>.md file.** The GitHub Actions workflow `require-changelog.yml` will reject any push that contains code changes without a changelog. There are NO exceptions.
+- **NEVER use `--no-verify` flag.** This bypasses pre-commit hooks and must not be used under any circumstances.
+- **NEVER make empty commits** (e.g., `--allow-empty`). Every commit must contain meaningful changes.
 - The changelog should be human-readable markdown
-- Use descriptive topic names (e.g., `CHANGELOG-perf.md`, `CHANGELOG-ui-fixes.md`)
+- Use descriptive topic names (e.g., `CHANGELOG-perf.md`, `CHANGELOG-ui-fixes.md`, `CHANGELOG-rebrand.md`)
 - If amending a commit, include the changelog in the amended commit
+- If a commit only changes documentation files (.md, .txt) or config files (.json), a changelog is still recommended but not enforced by the action
