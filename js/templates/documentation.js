@@ -6,8 +6,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
     name: 'Feature Showcase',
     category: 'documentation',
     icon: 'bi-stars',
-    description: 'Explore every MDview feature: AI, diagrams, math, code, presentations, and more',
-    content: '# 🚀 Welcome to MDview\n\n' +
+    description: 'Explore every WriteAgent feature: AI, diagrams, math, code, presentations, and more',
+    content: '# 🚀 Welcome to WriteAgent\n\n' +
       '> Your all-in-one Markdown editor with live preview, AI assistance, executable code, and powerful export options — **100% client-side, zero tracking.**\n\n' +
       '---\n\n' +
       '## ✨ All Features at a Glance\n\n' +
@@ -17,7 +17,9 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Writing Modes** | Zen mode (distraction-free) · Focus mode (dimmed paragraphs) · Dark mode · 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |\n' +
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
       '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
-      '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation (Gemini Imagen) — per-card model selector · concurrent block operations |\n' +
+      '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation · `{{Agent:}}` multi-step pipeline — per-card model selector · concurrent block operations |\n' +
+      '| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipelines — chain Step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
+      '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
       '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) |\n' +
@@ -30,7 +32,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
-      'MDview can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
+      'WriteAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
       '| Language | Runtime | Button |\n' +
       '|:---------|:--------|:-------|\n' +
       '| **Bash** | [just-bash](https://justbash.dev/) (WASM) | ▶ Run |\n' +
@@ -44,7 +46,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
       'Hover over any bash code block and click **▶ Run**:\n\n' +
       '```bash\n' +
-      'echo "Hello from MDview! 🎉"\n' +
+      'echo "Hello from WriteAgent! 🎉"\n' +
       '```\n\n' +
       '```bash\n' +
       'echo "Today is $(date +%A), $(date +%B\\ %d,\\ %Y)"\n' +
@@ -154,6 +156,30 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '> [!TIP]\n' +
       '> Check out the **AI** category in Templates for 13 ready-made AI-fillable documents!\n\n' +
       '---\n\n' +
+      '## 🔗 Agent Flow\n\n' +
+      'Create **multi-step AI pipelines** directly in your markdown:\n\n' +
+      '```\n' +
+      '{{Agent:\n' +
+      '  Step 1: Research the latest AI trends\n' +
+      '  Step 2: Summarize key findings\n' +
+      '  Step 3: Create a comparison table\n' +
+      '}}\n' +
+      '```\n\n' +
+      '**How it works:**\n' +
+      '1. Each step runs sequentially — output from Step 1 feeds into Step 2 as context\n' +
+      '2. Pick a **model** and **search provider** (DuckDuckGo, Brave, Serper) per card\n' +
+      '3. Watch live status indicators: ⏳ running · ✅ done · ❌ error\n' +
+      '4. Review the combined output — **Accept**, **Regenerate**, or **Reject**\n\n' +
+      '> [!TIP]\n' +
+      '> Enable web search on the Agent card to give each step access to fresh web results!\n\n' +
+      '---\n\n' +
+      '## 🔍 Web Search for AI\n\n' +
+      'Toggle **web search** ON in the AI panel header to augment AI responses with live web data:\n\n' +
+      '- 🦆 **DuckDuckGo** — Free, no API key needed (default)\n' +
+      '- 🦁 **Brave Search** — Free tier, 2,000 queries/month\n' +
+      '- 🔎 **Serper.dev** — Free tier, 2,500 queries\n\n' +
+      'Search results are prepended to the AI context, and source citation links appear below responses.\n\n' +
+      '---\n\n' +
       '## 🔀 Template Variables\n\n' +
       'Create **reusable documents** with the template variable engine:\n\n' +
       '- Type `$(projectName)` or `$(authorName)` anywhere in your document\n' +
@@ -222,7 +248,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '```\n\n' +
       '### Pie Chart\n' +
       '```mermaid\n' +
-      'pie title MDview Usage\n' +
+      'pie title WriteAgent Usage\n' +
       '    "Code Docs" : 30\n' +
       '    "Notes" : 25\n' +
       '    "Blog Posts" : 20\n' +
@@ -235,8 +261,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '```plantuml\n' +
       '@startuml\n' +
       'actor User\n' +
-      'User -> MDview : Write Markdown\n' +
-      'MDview -> Preview : Render\n' +
+      'User -> WriteAgent : Write Markdown\n' +
+      'WriteAgent -> Preview : Render\n' +
       'Preview -> User : Live feedback\n' +
       '@enduml\n' +
       '```\n\n' +
@@ -260,7 +286,9 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- 📋 Insert AI responses directly into the editor\n' +
       '- ✨ AI Writing Tags: Polish · Formalize · Elaborate · Shorten · Image\n' +
       '- 🎯 Per-card model selection for each generated block\n' +
-      '- 🖼️ AI image generation via Gemini Imagen\n\n' +
+      '- 🖼️ AI image generation via Gemini Imagen\n' +
+      '- 🔗 Agent Flow — multi-step pipelines with chained outputs\n' +
+      '- 🔍 Web Search — toggle DuckDuckGo, Brave, or Serper to augment AI responses\n\n' +
       '> [!TIP]\n' +
       '> Click the **🤖 AI** button in the toolbar to open the assistant panel. Select text and right-click for quick AI actions via the enhanced context menu.\n\n' +
       '---\n\n' +
@@ -336,7 +364,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '<mark>Highlighted text</mark> and <u>underlined text</u>\n\n' +
       'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub> · Math: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
       '### Footnotes\n\n' +
-      'MDview supports footnotes[^1] with back-references — hover to preview!\n\n' +
+      'WriteAgent supports footnotes[^1] with back-references — hover to preview!\n\n' +
       '[^1]: This is a footnote. Click it to jump back.\n\n' +
       '### Anchor Links\n\n' +
       'Click any heading to copy its anchor URL — great for sharing deep links!\n\n' +
@@ -374,7 +402,9 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Mermaid diagrams with zoom/pan/export toolbar\n' +
       '- [x] PlantUML diagram rendering\n' +
       '- [x] AI Assistant — 3 local sizes (0.8B / 2B / 4B) + cloud models\n' +
-      '- [x] AI Document Tags (AI, Think, Image)\n' +
+      '- [x] AI Document Tags (AI, Think, Image, Agent)\n' +
+      '- [x] Agent Flow — multi-step AI pipelines with chained outputs\n' +
+      '- [x] Web Search — DuckDuckGo, Brave, Serper.dev\n' +
       '- [x] Per-card AI model selection\n' +
       '- [x] Template variable engine with auto-detect\n' +
       '- [x] Voice dictation with markdown commands\n' +

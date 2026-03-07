@@ -1384,3 +1384,248 @@
     transform: scale(1);
   }
 }
+
+/* ========================================
+   WEB SEARCH — Toggle, Provider, Citations
+   ======================================== */
+
+/* Search toggle in header (same aesthetic as thinking toggle) */
+.ai-search-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 16px;
+  font-size: 11.5px;
+  color: var(--text-color);
+  opacity: 0.65;
+  transition: all 0.25s;
+  user-select: none;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  white-space: nowrap;
+}
+
+.ai-search-toggle:hover {
+  opacity: 1;
+  border-color: #10b981;
+}
+
+.ai-search-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.ai-search-slider {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  background: var(--border-color);
+  border-radius: 8px;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.ai-search-slider::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.25s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ai-search-toggle input:checked~.ai-search-slider {
+  background: #10b981;
+}
+
+.ai-search-toggle input:checked~.ai-search-slider::after {
+  transform: translateX(12px);
+}
+
+.ai-search-toggle:has(input:checked) {
+  opacity: 1;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.ai-search-toggle:has(input:checked) i,
+.ai-search-toggle:has(input:checked) .ai-search-label {
+  color: #10b981;
+}
+
+[data-theme="dark"] .ai-search-toggle:has(input:checked) i,
+[data-theme="dark"] .ai-search-toggle:has(input:checked) .ai-search-label {
+  color: #34d399;
+}
+
+.ai-search-toggle i {
+  font-size: 13px;
+}
+
+.ai-search-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Provider selector bar */
+.ai-search-provider-bar {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(16, 185, 129, 0.04);
+  flex-shrink: 0;
+  animation: aiSearchBarSlide 0.2s ease;
+}
+
+@keyframes aiSearchBarSlide {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+
+  to {
+    opacity: 1;
+    max-height: 48px;
+  }
+}
+
+.ai-search-provider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-search-provider-icon {
+  font-size: 14px;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .ai-search-provider-icon {
+  color: #34d399;
+}
+
+.ai-search-provider-select {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--button-bg);
+  color: var(--text-color);
+  font-size: 11.5px;
+  cursor: pointer;
+  outline: none;
+}
+
+.ai-search-provider-select:focus {
+  border-color: #10b981;
+}
+
+.ai-search-key-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--button-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.ai-search-key-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+/* Search indicator in chat */
+.ai-search-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 12px;
+  font-size: 12px;
+  color: #10b981;
+  animation: aiSearchPulse 1.5s infinite ease-in-out;
+}
+
+[data-theme="dark"] .ai-search-indicator {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+@keyframes aiSearchPulse {
+
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.ai-search-indicator i {
+  animation: aiSearchSpin 1.2s linear infinite;
+}
+
+@keyframes aiSearchSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Source citations under AI response */
+.ai-source-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.ai-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  font-size: 10.5px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.ai-source-link:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+
+[data-theme="dark"] .ai-source-link {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.ai-source-link i {
+  font-size: 9px;
+}

@@ -150,8 +150,28 @@
                 <span class="ai-badge" id="ai-model-badge">Qwen 3.5 · Local</span>
             </div>
             <div class="ai-panel-controls">
+                <label class="ai-search-toggle" title="Toggle Web Search">
+                    <input type="checkbox" id="ai-search-toggle">
+                    <span class="ai-search-slider"></span>
+                    <i class="bi bi-globe-americas"></i>
+                    <span class="ai-search-label">Search</span>
+                </label>
                 <button class="ai-panel-btn" id="ai-clear-chat" title="Clear chat"><i class="bi bi-trash3"></i></button>
                 <button class="ai-panel-btn" id="ai-panel-close" title="Close"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </div>
+
+        <div class="ai-search-provider-bar" id="ai-search-provider-bar" style="display:none">
+            <div class="ai-search-provider-row">
+                <i class="bi bi-globe-americas ai-search-provider-icon"></i>
+                <select id="ai-search-provider-select" class="ai-search-provider-select" title="Search provider">
+                    <option value="duckduckgo">DuckDuckGo (Free)</option>
+                    <option value="brave">Brave Search</option>
+                    <option value="serper">Serper.dev</option>
+                </select>
+                <button class="ai-search-key-btn" id="ai-search-key-btn" title="Configure API key" style="display:none">
+                    <i class="bi bi-key"></i>
+                </button>
             </div>
         </div>
 
@@ -501,7 +521,7 @@
                         <div class="memory-share-icon"><i class="bi bi-link-45deg"></i></div>
                         <div>
                             <strong>Share as Link</strong>
-                            <small>Encrypted short link — opens in MDview</small>
+                            <small>Encrypted short link — opens in WriteAgent</small>
                         </div>
                         <div class="memory-share-actions">
                             <button class="memory-action-btn" id="memory-gen-link">Generate Link</button>

@@ -99,6 +99,9 @@
             rgba(20, 184, 166, 0.04));
     backdrop-filter: blur(8px);
     transition: border-color 0.2s, box-shadow 0.2s;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .ai-placeholder-card:hover {
@@ -1020,4 +1023,226 @@
         box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
         border-color: rgba(245, 158, 11, 0.7);
     }
+}
+
+/* ============================================
+   AGENT FLOW — Pipeline Card Styles
+   ============================================ */
+
+/* Agent toolbar button — orange accent */
+.fmt-agent-btn {
+    color: #f59e0b !important;
+    font-weight: 600;
+}
+
+.fmt-agent-btn:hover {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+/* Agent placeholder card — orange theme */
+.ai-agent-card {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    background: linear-gradient(135deg,
+            rgba(245, 158, 11, 0.06),
+            rgba(217, 119, 6, 0.04)) !important;
+}
+
+.ai-agent-card:hover {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.12) !important;
+}
+
+.ai-agent-card .ai-placeholder-label {
+    color: #f59e0b;
+}
+
+.ai-agent-card .ai-placeholder-btn {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.25);
+    color: #f59e0b;
+}
+
+.ai-agent-card .ai-placeholder-btn:hover {
+    background: rgba(245, 158, 11, 0.25);
+}
+
+.ai-agent-card .ai-card-model-select {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+/* Agent steps container */
+.ai-agent-steps {
+    padding: 8px 4px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Individual step */
+.ai-agent-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.04);
+    border: 1px solid rgba(245, 158, 11, 0.1);
+    transition: all 0.25s ease;
+}
+
+.ai-agent-step-num {
+    font-size: 1em;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.ai-agent-step-desc {
+    flex: 1;
+    font-size: 0.88em;
+    color: var(--color-fg-default, #e6edf3);
+    line-height: 1.4;
+}
+
+[data-theme="light"] .ai-agent-step-desc {
+    color: #334155;
+}
+
+.ai-agent-step-status {
+    font-size: 0.9em;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+/* Step states */
+.ai-step-active {
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
+}
+
+.ai-step-active .ai-agent-step-status {
+    opacity: 1;
+    animation: ai-step-pulse 1s ease-in-out infinite;
+}
+
+@keyframes ai-step-pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.ai-step-done {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.06);
+}
+
+.ai-step-done .ai-agent-step-status {
+    opacity: 1;
+}
+
+.ai-step-done .ai-agent-step-desc {
+    opacity: 0.7;
+}
+
+.ai-step-error {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.ai-step-error .ai-agent-step-status {
+    opacity: 1;
+}
+
+/* Step connecting arrow */
+.ai-agent-step-arrow {
+    text-align: center;
+    font-size: 0.85em;
+    color: rgba(245, 158, 11, 0.4);
+    padding: 0 0 0 12px;
+    line-height: 1;
+}
+
+/* Loading state for agent card */
+.ai-agent-card.ai-card-loading {
+    animation: ai-agent-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ai-agent-pulse {
+
+    0%,
+    100% {
+        border-color: rgba(245, 158, 11, 0.25);
+        box-shadow: 0 0 4px rgba(245, 158, 11, 0.1);
+    }
+
+    50% {
+        border-color: rgba(245, 158, 11, 0.6);
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+    }
+}
+
+/* Agent card loading — don't disable steps (we need live status updates) */
+.ai-agent-card.ai-card-loading .ai-agent-steps {
+    pointer-events: none;
+}
+
+.ai-agent-card.ai-card-loading .ai-placeholder-actions {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Search provider select on Agent card */
+.ai-agent-search-select {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #f59e0b;
+    border-radius: 6px;
+    padding: 2px 18px 2px 6px;
+    font-size: 0.75em;
+    cursor: pointer;
+    max-width: 120px;
+    outline: none;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f59e0b'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+}
+
+.ai-agent-search-select:hover {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.ai-agent-search-select option {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .ai-agent-search-select {
+    color: #b45309;
+    background-color: rgba(245, 158, 11, 0.06);
+}
+
+[data-theme="light"] .ai-agent-search-select option {
+    background: #fff;
+    color: #1e293b;
+}
+
+/* Ensure agent card actions wrap on narrow widths */
+.ai-agent-card .ai-placeholder-actions {
+    flex-wrap: wrap;
+    gap: 4px;
 }

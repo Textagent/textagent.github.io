@@ -1,7 +1,7 @@
-# MDview
+# WriteAgent
 
 <div align="center">
-    <img src="assets/icon.jpg" alt="MDview Logo" width="150px"/>
+    <img src="assets/icon.jpg" alt="WriteAgent Logo" width="150px"/>
     <h3>AI-Powered Markdown Editor & Viewer</h3>
     <p>Write, preview, present, and share — all in your browser, 100% client-side</p>
     <a href="https://markdownview.github.io/">Live Demo</a> • 
@@ -14,7 +14,7 @@
 
 ## 🚀 Overview
 
-**MDview** is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a split-screen interface, AI-powered writing assistance, voice dictation, multi-format file import, encrypted sharing, slide presentations, executable code & math blocks, and powerful export options — all without any server-side processing.
+**WriteAgent** is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a split-screen interface, AI-powered writing assistance, voice dictation, multi-format file import, encrypted sharing, slide presentations, executable code & math blocks, and powerful export options — all without any server-side processing.
 
 **No sign-up. No server. No data leaves your device.**
 
@@ -34,13 +34,15 @@
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
 | **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
 | **Security** | Content Security Policy (CSP), SRI integrity hashes, XSS sanitization (DOMPurify), ReDoS protection, Firestore write-token ownership, API keys via HTTP headers, postMessage origin validation, 8-char passphrase minimum, sandboxed code execution |
-| **AI Document Tags** | `{{AI:}}` text generation, `{{Think:}}` deep reasoning, `{{Image:}}` image generation (Gemini Imagen) — per-card model selector, concurrent independent block operations |
+| **AI Document Tags** | `{{AI:}}` text generation, `{{Think:}}` deep reasoning, `{{Image:}}` image generation (Gemini Imagen) — per-card model selector, concurrent block operations |
+| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipeline — define Step 1/2/3, chain outputs, per-card model + search provider selector, live step status indicators (⏳/✅/❌), review combined output |
+| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free), Brave Search, Serper.dev; search results injected into LLM context; source citations in responses; per-agent-card search provider selector |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
 | **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 81+ templates (11 categories: AI, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
 
 ## 🤖 AI Assistant
 
-MDview includes a built-in AI assistant panel with **three local model sizes** and cloud providers:
+WriteAgent includes a built-in AI assistant panel with **three local model sizes** and cloud providers:
 
 | Model | Provider | Type | Speed |
 |:------|:---------|:-----|:------|
@@ -106,7 +108,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 <details open>
 <summary><strong>🔒 Privacy-First — No Sign-Up, 100% Client-Side</strong></summary>
 
-**Your data never leaves your browser.** MDview runs entirely client-side with no server, no account, and no tracking. Type sensitive content with confidence — even your saved data stays in localStorage on your device.
+**Your data never leaves your browser.** WriteAgent runs entirely client-side with no server, no account, and no tracking. Type sensitive content with confidence — even your saved data stays in localStorage on your device.
 
 <img src="public/assets/demos/01_privacy_hero.webp" alt="Privacy-First Demo — no sign-up, live editing, dark mode toggle" width="100%">
 
@@ -247,6 +249,15 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
+<details open>
+<summary><strong>🔗 Agent Flow — Multi-Step AI Pipeline</strong></summary>
+
+**Chain AI steps together.** Write `{{Agent: Step 1: ... Step 2: ...}}` in markdown — a pipeline card renders with numbered steps and connecting arrows. Each step's output feeds into the next. Choose a model and search provider per card. Run, review, and accept/reject the combined output.
+
+<img src="public/assets/demos/17_agent_flow.webp" alt="Agent Flow — multi-step pipeline with search provider and model selection" width="100%">
+
+</details>
+
 ## 📝 Usage
 
 | Action | How |
@@ -342,12 +353,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📈 Development Journey
 
-MDview has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, AI-powered application with 40+ features. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
+WriteAgent has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, AI-powered application with 40+ features. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
 
 ## 📋 Release Notes
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-08** | 🔗 **Agent Flow** — new `{{Agent:}}` markdown tag for multi-step AI pipelines; define steps with `Step 1: ...`, `Step 2: ...`; outputs chain sequentially; pipeline card with numbered steps + connecting arrows; per-card model selector + search provider dropdown (DuckDuckGo/Brave/Serper); live status indicators (⏳/✅/❌); API key prompt for paid search providers; combined output review with accept/reject/regenerate |
+| **2026-03-08** | 🔍 **Web Search** — AI assistant can now search the web; toggle search ON in AI panel header; 3 providers: DuckDuckGo (free, default), Brave Search (API key), Serper.dev (API key); search results prepended to LLM context; source citation links below AI responses; per-agent-card search provider selector |
 | **2026-03-08** | 🧠 **LLM Memory overhaul** — fixed broken data flow (modular refactor regression); replaced generic format options with 5 useful formats: XML (structured tags), JSON (API-ready), Compact JSON (minified, ~60% token savings), Markdown (universal), Plain Text (no formatting); live per-format token count |
 | **2026-03-08** | 🛠️ **Enhanced Quick Action Bar** — compact header now includes File Tree, Help, and collapsible Tools dropdown (Presentation, Zen Mode, Word Wrap, Focus Mode, Voice Dictation, Dark Mode with sun/moon toggle, Preview Theme picker with checkmarks); header toolbar slides behind AI panel instead of shrinking |
 | **2026-03-08** | 🐛 **AI panel overlap fix** — header toolbar stays full-width when AI panel opens; sub-header elements (content, dropzone, formatting toolbar) receive `margin-right` to avoid overlap; AI panel overlays naturally via z-index |
@@ -405,7 +418,7 @@ MDview has undergone significant evolution since its inception. What started as 
 | **2026-03-05** | 🎨 **Template UI polish** — category pill tabs, improved card layout, better spacing |
 | **2026-03-05** | ✨ **AI writing tags** — Polish, Formalize, Elaborate, Shorten actions for selected text or full document |
 | **2026-03-05** | 📄 **Feature Showcase as default** — comprehensive showcase loads on first visit |
-| **2026-03-04** | 🏷️ **Rebranded to MDview** — new display name across all pages, meta tags, and templates |
+| **2026-03-04** | 🏷️ **Rebranded to WriteAgent** — new display name across all pages, meta tags, and templates |
 | **2026-03-04** | 🔄 **Non-blocking AI panel** — AI panel opens instantly; Qwen download deferred until first use |
 | **2026-03-04** | 🧩 **Multi-model AI selector** — switch between Qwen (local), Groq Llama 3.3, Gemini, and OpenRouter |
 | **2026-03-04** | 🌐 **Google Gemini** — free-tier Gemini AI model with SSE streaming and 1M tokens/min |
@@ -447,10 +460,10 @@ MDview has undergone significant evolution since its inception. What started as 
 | **2025-05-09** | 🖨 **PDF rendering fixes** — PDF export bug fixes |
 | **2025-05-01** | 🎨 **New UI & dark mode fixes** — refreshed interface |
 | **2024-04-12** | 📊 **Reading stats** — word count, character count, reading time |
-| **2024-04-09** | 🚀 **Initial commit** — MDview project created |
+| **2024-04-09** | 🚀 **Initial commit** — WriteAgent project created |
 
 ---
 
 <div align="center">
-    <p>Created with ❤️ by the <a href="https://github.com/markdownview">MDview</a> team</p>
+    <p>Created with ❤️ by the <a href="https://github.com/markdownview">WriteAgent</a> team</p>
 </div>

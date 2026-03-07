@@ -235,9 +235,15 @@
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
+        '[data-action="agent-tag"]': {
+            name: 'Agent Flow Tag',
+            desc: 'Insert a multi-step {{Agent:}} pipeline — define Step 1, Step 2, etc. Each step\'s output chains into the next. Pick a search provider (DuckDuckGo, Brave, Serper) and model per card.',
+            shortcut: null,
+            demo: 'assets/demos/17_agent_flow.webp'
+        },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
-            desc: 'Process all {{AI:}}, {{Think:}}, and {{Image:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
+            desc: 'Process all {{AI:}}, {{Think:}}, {{Image:}}, and {{Agent:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
