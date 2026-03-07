@@ -510,7 +510,7 @@
         var safeName = heading.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50);
         var filename = 'markdownview-' + safeName + '.txt';
         var fileContent = '===================================\n';
-        fileContent += '  MDview — Secure Share Credentials\n';
+        fileContent += '  WriteAgent — Secure Share Credentials\n';
         fileContent += '===================================\n\n';
         fileContent += 'Document: ' + heading + '\n';
         fileContent += 'Created:  ' + new Date().toISOString() + '\n\n';

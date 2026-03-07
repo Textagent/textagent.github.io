@@ -3,7 +3,7 @@
 ## New Features
 
 ### Interactive Help Mode
-- Added ❓ Help pill button in left header (near MDview branding)
+- Added ❓ Help pill button in left header (near WriteAgent branding)
 - Teal gradient pill styled like Demo badges
 - Clicking activates "learning mode" — all toolbar buttons get teal ring highlights
 - Clicking any highlighted button shows a popover with:

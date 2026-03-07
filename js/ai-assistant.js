@@ -926,8 +926,15 @@
     if (indicator) indicator.remove();
   }
 
+  // Track last search results for citation rendering
+  var _lastSearchResults = null;
+
   function addAiMessage(text, messageId) {
     removeTypingIndicator();
+
+    // Remove search indicator if present
+    const searchInd = aiChatArea.querySelector('.ai-search-indicator');
+    if (searchInd) searchInd.remove();
 
     // Remove welcome message
     const welcome = aiChatArea.querySelector('.ai-welcome-message');
@@ -939,9 +946,29 @@
     // Simple markdown-to-html for AI response (basic formatting)
     const formattedText = formatAiResponse(text);
 
+    // Build source citations if we have search results
+    let citationsHtml = '';
+    if (_lastSearchResults && _lastSearchResults.length > 0) {
+      citationsHtml = '<div class="ai-source-citations">';
+      const seen = new Set();
+      _lastSearchResults.forEach(r => {
+        try {
+          const domain = new URL(r.url).hostname.replace('www.', '');
+          if (!seen.has(domain)) {
+            seen.add(domain);
+            citationsHtml += `<a class="ai-source-link" href="${r.url}" target="_blank" rel="noopener">`
+              + `<i class="bi bi-link-45deg"></i>${domain}</a>`;
+          }
+        } catch (_) { /* invalid url */ }
+      });
+      citationsHtml += '</div>';
+      _lastSearchResults = null;
+    }
+
     msg.innerHTML = `
     <span class="ai-msg-label">AI</span>
     <div class="ai-msg-bubble">${formattedText}</div>
+    ${citationsHtml}
     <div class="ai-msg-actions">
       <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
         <i class="bi bi-box-arrow-in-down"></i> Insert
@@ -1197,6 +1224,43 @@
     // Detect if it's a Q&A about the document or a generation request
     const editorContent = markdownEditor.value;
     const isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
+
+    // Web search integration — if search is enabled, search first then augment context
+    if (M.webSearch && M.webSearch.isSearchEnabled()) {
+      // Show search indicator
+      const searchIndicator = document.createElement('div');
+      searchIndicator.className = 'ai-search-indicator';
+      searchIndicator.innerHTML = '<i class="bi bi-globe-americas"></i> Searching the web...';
+      aiChatArea.appendChild(searchIndicator);
+      aiChatArea.scrollTop = aiChatArea.scrollHeight;
+
+      M.webSearch.performSearch(text).then(results => {
+        const searchContext = M.webSearch.formatResultsForLLM(results);
+        _lastSearchResults = results;
+
+        // Remove search indicator (addAiMessage will also remove it, but just in case)
+        const ind = aiChatArea.querySelector('.ai-search-indicator');
+        if (ind) ind.remove();
+
+        // Combine search results with document context
+        let context = searchContext;
+        if (isQuestion && editorContent.trim()) {
+          context = searchContext + '\n\n[Document Content]\n' + editorContent;
+        }
+
+        sendToAi(isQuestion && editorContent.trim() ? 'qa' : 'generate', context || null, text);
+      }).catch(() => {
+        // Search failed — proceed without search
+        const ind = aiChatArea.querySelector('.ai-search-indicator');
+        if (ind) ind.remove();
+        if (isQuestion && editorContent.trim()) {
+          sendToAi('qa', editorContent, text);
+        } else {
+          sendToAi('generate', null, text);
+        }
+      });
+      return;
+    }
 
     if (isQuestion && editorContent.trim()) {
       sendToAi('qa', editorContent, text);
@@ -1779,6 +1843,93 @@
     `;
     });
   }
+
+  // --- Web Search Toggle & Provider Selector ---
+  (function initSearchUI() {
+    const searchToggle = document.getElementById('ai-search-toggle');
+    const providerBar = document.getElementById('ai-search-provider-bar');
+    const providerSelect = document.getElementById('ai-search-provider-select');
+    const keyBtn = document.getElementById('ai-search-key-btn');
+    if (!searchToggle || !M.webSearch) return;
+
+    // Restore saved state
+    searchToggle.checked = M.webSearch.isSearchEnabled();
+    if (searchToggle.checked && providerBar) providerBar.style.display = '';
+    if (providerSelect) providerSelect.value = M.webSearch.getActiveProvider();
+    updateKeyBtnVisibility();
+
+    // Toggle search on/off
+    searchToggle.addEventListener('change', () => {
+      M.webSearch.setSearchEnabled(searchToggle.checked);
+      if (providerBar) providerBar.style.display = searchToggle.checked ? '' : 'none';
+    });
+
+    // Switch provider
+    if (providerSelect) {
+      providerSelect.addEventListener('change', () => {
+        M.webSearch.setActiveProvider(providerSelect.value);
+        updateKeyBtnVisibility();
+      });
+    }
+
+    // Show/hide API key button based on whether provider needs a key
+    function updateKeyBtnVisibility() {
+      if (!keyBtn) return;
+      const p = M.webSearch.PROVIDERS[M.webSearch.getActiveProvider()];
+      keyBtn.style.display = (p && p.requiresKey) ? '' : 'none';
+    }
+
+    // API key button → show a mini prompt
+    if (keyBtn) {
+      keyBtn.addEventListener('click', () => {
+        const providerId = M.webSearch.getActiveProvider();
+        const p = M.webSearch.PROVIDERS[providerId];
+        if (!p || !p.requiresKey) return;
+
+        // Reuse the existing AI API key modal by adapting its fields
+        const modal = document.getElementById('ai-apikey-modal');
+        const titleEl = document.getElementById('ai-apikey-title');
+        const descEl = document.getElementById('ai-apikey-desc');
+        const inputEl = document.getElementById('ai-groq-key-input');
+        const linkEl = document.getElementById('ai-apikey-link');
+        const iconEl = document.getElementById('ai-apikey-icon');
+        const errorEl = document.getElementById('ai-apikey-error');
+
+        if (modal && titleEl && inputEl) {
+          titleEl.textContent = p.dialogTitle || 'API Key';
+          if (descEl) descEl.textContent = p.dialogDesc || 'Enter your API key';
+          if (iconEl) iconEl.className = p.icon || 'bi bi-key';
+          if (linkEl) {
+            linkEl.href = p.dialogLink || '#';
+            linkEl.textContent = p.dialogLinkText || 'Get API key';
+          }
+          inputEl.value = M.webSearch.getProviderKey(providerId);
+          inputEl.placeholder = p.dialogPlaceholder || 'API key...';
+          if (errorEl) errorEl.style.display = 'none';
+          modal.style.display = 'flex';
+
+          // Override save handler for search provider key
+          const saveBtn = document.getElementById('ai-apikey-save');
+          const cancelBtn = document.getElementById('ai-apikey-cancel');
+          const onSave = () => {
+            M.webSearch.setProviderKey(providerId, inputEl.value.trim());
+            modal.style.display = 'none';
+            cleanup();
+          };
+          const onCancel = () => {
+            modal.style.display = 'none';
+            cleanup();
+          };
+          function cleanup() {
+            saveBtn.removeEventListener('click', onSave);
+            cancelBtn.removeEventListener('click', onCancel);
+          }
+          saveBtn.addEventListener('click', onSave, { once: true });
+          cancelBtn.addEventListener('click', onCancel, { once: true });
+        }
+      });
+    }
+  })();
 
   // Expose for other modules
   M.aiPanelOpen = false;

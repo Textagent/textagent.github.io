@@ -386,7 +386,7 @@
     };
 
     function updatePageTitle(fileName) {
-        var base = 'MDview';
+        var base = 'WriteAgent';
         if (fileName) document.title = fileName.replace(/\.md$/i, '') + ' — ' + base;
         else document.title = base;
     }

@@ -8,7 +8,7 @@ window.__MDV_TEMPLATES_QUIZ = [
         icon: 'bi-patch-question',
         description: 'Full interactive quiz with MCQ, True/False, Fill-in-the-Blanks, Match, and Arrange questions',
         content: '# 📝 Interactive Quiz\n\n' +
-            '> Test your knowledge! This quiz uses MDview\'s **HTML sandbox** to create a fully interactive assessment.\n\n' +
+            '> Test your knowledge! This quiz uses WriteAgent\'s **HTML sandbox** to create a fully interactive assessment.\n\n' +
             '---\n\n' +
             '```html-autorun\n' +
             '<style>\n' +
@@ -298,7 +298,7 @@ window.__MDV_TEMPLATES_QUIZ = [
             '```\n\n' +
             '---\n\n' +
             '## 🧩 Quiz Question Types\n\n' +
-            'This template demonstrates **5 interactive question types** you can use in MDview:\n\n' +
+            'This template demonstrates **5 interactive question types** you can use in WriteAgent:\n\n' +
             '| # | Type | Description |\n' +
             '|:--|:-----|:------------|\n' +
             '| 1 | **🔘 Multiple Choice (MCQ)** | Select one correct answer from several options |\n' +

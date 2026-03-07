@@ -74,6 +74,7 @@ async function loadModules() {
     await import('../js/templates.js');
 
     // Phase 4: AI (depends on ai-models from phase 2)
+    await import('../js/ai-web-search.js');
     await import('../js/ai-assistant.js');
 
     // Phase 4.5: DocGen (depends on ai-assistant's requestAiTask API)

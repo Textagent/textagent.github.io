@@ -65,7 +65,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': 'https://markdownview.github.io',
-                'X-Title': 'MDview',
+                'X-Title': 'WriteAgent',
             },
             body: JSON.stringify({
                 model: modelId,
