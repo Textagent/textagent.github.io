@@ -102,7 +102,12 @@
 
     function saveToLocalStorage() {
         try {
-            localStorage.setItem(AUTOSAVE_KEY, M.markdownEditor.value);
+            // Per-file save: use workspace active file ID if available
+            if (M.wsActiveFileId) {
+                localStorage.setItem('mdview-file-' + M.wsActiveFileId, M.markdownEditor.value);
+            } else {
+                localStorage.setItem(AUTOSAVE_KEY, M.markdownEditor.value);
+            }
             localStorage.setItem(AUTOSAVE_TIME_KEY, Date.now().toString());
             showAutosaveIndicator();
         } catch (e) { console.warn('Auto-save failed:', e); }
@@ -113,7 +118,13 @@
     function restoreFromLocalStorage() {
         var hash = window.location.hash;
         if (hash && (hash.includes('d=') || hash.includes('id=')) && hash.includes('k=')) return false;
-        var saved = localStorage.getItem(AUTOSAVE_KEY);
+        // Per-file restore: use workspace active file ID if available
+        var saved;
+        if (M.wsActiveFileId) {
+            saved = localStorage.getItem('mdview-file-' + M.wsActiveFileId);
+        } else {
+            saved = localStorage.getItem(AUTOSAVE_KEY);
+        }
         if (saved && saved.trim()) {
             M.markdownEditor.value = saved;
             var savedTime = localStorage.getItem(AUTOSAVE_TIME_KEY);
@@ -571,7 +582,13 @@
     // --- New Document Button ---
     var newDocBtn = document.getElementById('new-document-btn');
     if (newDocBtn) {
-        newDocBtn.addEventListener('click', function () { window.open(window.location.pathname, '_blank'); });
+        newDocBtn.addEventListener('click', function () {
+            if (M.wsCreateFile) {
+                M.wsCreateFile();
+            } else {
+                window.open(window.location.pathname, '_blank');
+            }
+        });
     }
 
     // --- Restore Auto-Saved Content or Load Default ---

@@ -1,0 +1,239 @@
+/* ========================================
+   Workspace Sidebar — file tree panel
+   ======================================== */
+
+/* --- Sidebar Panel --- */
+.workspace-sidebar {
+    position: relative;
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--header-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.workspace-sidebar.open {
+    width: 220px;
+    min-width: 220px;
+}
+
+/* --- Sidebar Header --- */
+.ws-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ws-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ws-header-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-color);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ws-header-title i {
+    font-size: 13px;
+}
+
+.ws-new-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.ws-new-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+/* --- File List --- */
+.ws-file-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.ws-file-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ws-file-list::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 2px;
+}
+
+/* --- File Item --- */
+.ws-file-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-color);
+    transition: background 0.12s ease;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    border-left: 3px solid transparent;
+}
+
+.ws-file-item:hover {
+    background: var(--button-hover);
+}
+
+.ws-file-item.active {
+    background: var(--button-active);
+    border-left-color: var(--accent-color);
+    font-weight: 500;
+}
+
+.ws-file-icon {
+    font-size: 14px;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.ws-file-item.active .ws-file-icon {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+.ws-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+/* --- Inline Rename Input --- */
+.ws-rename-input {
+    background: var(--editor-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--text-color);
+    font-size: 13px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    outline: none;
+    width: 100%;
+    flex: 1;
+    font-family: inherit;
+}
+
+/* --- Context Menu --- */
+.ws-context-menu {
+    display: none;
+    position: absolute;
+    background: var(--header-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 140px;
+    padding: 4px 0;
+    overflow: hidden;
+}
+
+.ws-ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+}
+
+.ws-ctx-item:hover {
+    background: var(--button-hover);
+}
+
+.ws-ctx-item i {
+    font-size: 14px;
+    opacity: 0.7;
+    width: 16px;
+    text-align: center;
+}
+
+.ws-ctx-item.danger {
+    color: #e74c3c;
+}
+
+.ws-ctx-item.danger:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.ws-ctx-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 3px 0;
+}
+
+/* --- Empty state --- */
+.ws-empty {
+    padding: 20px 12px;
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.5;
+    color: var(--text-color);
+}
+
+/* --- Responsive: hide sidebar on mobile --- */
+@media (max-width: 767px) {
+    .workspace-sidebar.open {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 200;
+        box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* --- Active toolbar button --- */
+#workspace-toggle.active {
+    background: var(--button-active);
+}

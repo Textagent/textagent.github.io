@@ -286,6 +286,11 @@
                 M.openFindBar();
             }
         }
+        // Ctrl+B → Toggle Workspace Sidebar
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B') && !e.shiftKey) {
+            e.preventDefault();
+            if (M.wsToggleSidebar) M.wsToggleSidebar();
+        }
     });
 
     // ========================================
@@ -391,6 +396,7 @@
         var shareResultModal = document.getElementById('share-result-modal');
         if (shareResultModal && shareResultModal.classList.contains('active')) { M.closeShareResultModal(); return; }
         if (M.aiPanelOpen) { M.closeAiPanel(); return; }
+        if (M.wsIsSidebarOpen && M.wsIsSidebarOpen()) { M.wsCloseSidebar(); return; }
         var findBar = document.getElementById('find-replace-bar');
         if (findBar && findBar.style.display === 'block') { M.closeFindBar(); return; }
         if (M.isZenMode) { M.toggleZenMode(); return; }

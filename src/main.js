@@ -29,6 +29,7 @@ import '../css/table-tools.css';
 import '../css/ai-docgen.css';
 import '../css/feature-demos.css';
 import '../css/help-mode.css';
+import '../css/workspace.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -37,6 +38,7 @@ async function loadModules() {
     await import('../js/modal-templates.js');
     await import('../js/app-core.js');
     await import('../js/renderer.js');
+    await import('../js/workspace.js');
 
     // Phase 2: Independent features (parallel — no inter-dependencies)
     await Promise.all([

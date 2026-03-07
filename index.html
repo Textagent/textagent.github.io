@@ -190,6 +190,9 @@
                         title="Toggle Sync Scrolling (Ctrl+Shift+S)">
                         <i class="bi bi-link"></i>
                     </button>
+                    <button id="workspace-toggle" class="tool-button" title="File Tree">
+                        <i class="bi bi-folder2-open"></i>
+                    </button>
                     <button id="toc-toggle" class="tool-button" title="Table of Contents">
                         <i class="bi bi-list-nested"></i>
                     </button>
@@ -592,6 +595,29 @@
         </div>
 
         <div class="content-container">
+            <!-- Workspace Sidebar -->
+            <aside class="workspace-sidebar" id="workspace-sidebar">
+                <div class="ws-header">
+                    <span class="ws-header-title"><i class="bi bi-folder2-open"></i> Files</span>
+                    <div class="ws-header-actions">
+                        <button class="ws-new-btn" id="workspace-new-file" title="New file">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        <button class="ws-new-btn" id="workspace-close" title="Close sidebar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <ul class="ws-file-list" id="workspace-file-list"></ul>
+                <!-- Context menu -->
+                <div class="ws-context-menu" id="workspace-context-menu">
+                    <button class="ws-ctx-item" id="ws-ctx-rename"><i class="bi bi-pencil"></i> Rename</button>
+                    <button class="ws-ctx-item" id="ws-ctx-duplicate"><i class="bi bi-copy"></i> Duplicate</button>
+                    <div class="ws-ctx-divider"></div>
+                    <button class="ws-ctx-item danger" id="ws-ctx-delete"><i class="bi bi-trash"></i> Delete</button>
+                </div>
+            </aside>
+
             <!-- TOC Side Panel -->
             <aside class="toc-panel" id="toc-panel" style="display:none">
                 <div class="toc-header">

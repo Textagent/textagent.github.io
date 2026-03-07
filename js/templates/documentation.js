@@ -27,7 +27,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 9 product demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Scrollable Quick Action Bar on mobile |\n\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Scrollable Quick Action Bar on mobile · Multi-file workspace sidebar (Ctrl+B) |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'MDview can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
