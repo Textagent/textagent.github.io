@@ -1,8 +1,8 @@
 # TextAgent
 
 <div align="center">
-    <img src="assets/icon.jpg" alt="TextAgent Logo" width="150px"/>
-    <h3>AI-Powered Markdown Editor & Viewer</h3>
+    <img src="assets/icon.png" alt="TextAgent Logo" width="150px"/>
+    <h3>Write with AI Agents — Markdown Editor & Viewer</h3>
     <p>Write, preview, present, and share — all in your browser, 100% client-side</p>
     <a href="https://textagent.github.io/">Live Demo</a> • 
     <a href="#-features-at-a-glance">Features</a> • 

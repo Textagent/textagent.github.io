@@ -1,7 +1,7 @@
 {
   "name": "textagent",
   "version": "1.0.0",
-  "description": "AI-Powered Markdown Editor & Viewer",
+  "description": "Write with AI Agents — Markdown Editor & Viewer",
   "private": true,
   "type": "module",
   "scripts": {
