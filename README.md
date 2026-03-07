@@ -38,7 +38,7 @@
 | **🔗 Agent Flow** | `{{Agent:}}` multi-step pipeline — define Step 1/2/3, chain outputs, per-card model + search provider selector, live step status indicators (⏳/✅/❌), review combined output |
 | **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free), Brave Search, Serper.dev; search results injected into LLM context; source citations in responses; per-agent-card search provider selector |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 81+ templates (11 categories: AI, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 96+ templates (12 categories: AI, Agents, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
 
 ## 🤖 AI Assistant
 
@@ -89,7 +89,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 ### AI Writing Assistant — Local & Cloud Models
 ![AI Assistant panel with model selector, action chips, and three-column layout](assets/ai-assistant.png)
 
-### Templates Gallery — 81+ Templates, 11 Categories
+### Templates Gallery — 96+ Templates, 12 Categories
 ![Templates modal with category tabs, search, and template cards](assets/templates-gallery.png)
 
 ### LaTeX Math & Mermaid Diagrams
@@ -126,7 +126,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 <details open>
 <summary><strong>📄 Templates Gallery — 81+ Templates, 11 Categories</strong></summary>
 
-**Start any document in seconds.** Browse 81+ professionally designed templates across 11 categories: AI, Documentation, Project, Technical, Creative, Coding, Maths, PPT, Quiz, Tables, and Financial. AI-powered templates include `{{AI:}}` tags for one-click document generation.
+**Start any document in seconds.** Browse 96+ professionally designed templates across 12 categories: AI, Agents, Documentation, Project, Technical, Creative, Coding, Maths, PPT, Quiz, Tables, and Financial. AI-powered templates include `{{AI:}}` tags for one-click document generation.
 
 <img src="public/assets/demos/03_templates_gallery.webp" alt="Templates Gallery — browsing categories and loading AI Business Proposal template" width="100%">
 
@@ -359,6 +359,7 @@ WriteAgent has undergone significant evolution since its inception. What started
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-08** | 🤖 **Agent Templates** — 15 complex agent templates in new Agents category: Data Science Pipeline, SQL Database Workshop, Full-Stack App Blueprint, AI Research Agent, DevOps Runbook, Financial Modeling, ML Model Evaluation, API Testing Suite, HTML Dashboard Builder, Competitive Intel, Algorithm Visualizer, System Design Document, Data Cleaning Toolkit, Project Retrospective, Science Lab Notebook; each showcases code, math, SQL, HTML, tables, mermaid, and AI tags |
 | **2026-03-08** | 🔗 **Agent Flow** — new `{{Agent:}}` markdown tag for multi-step AI pipelines; define steps with `Step 1: ...`, `Step 2: ...`; outputs chain sequentially; pipeline card with numbered steps + connecting arrows; per-card model selector + search provider dropdown (DuckDuckGo/Brave/Serper); live status indicators (⏳/✅/❌); API key prompt for paid search providers; combined output review with accept/reject/regenerate |
 | **2026-03-08** | 🔍 **Web Search** — AI assistant can now search the web; toggle search ON in AI panel header; 3 providers: DuckDuckGo (free, default), Brave Search (API key), Serper.dev (API key); search results prepended to LLM context; source citation links below AI responses; per-agent-card search provider selector |
 | **2026-03-08** | 🧠 **LLM Memory overhaul** — fixed broken data flow (modular refactor regression); replaced generic format options with 5 useful formats: XML (structured tags), JSON (API-ready), Compact JSON (minified, ~60% token savings), Markdown (universal), Plain Text (no formatting); live per-format token count |

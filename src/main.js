@@ -70,6 +70,7 @@ async function loadModules() {
         import('../js/templates/quiz.js'),
         import('../js/templates/tables.js'),
         import('../js/templates/ai.js'),
+        import('../js/templates/agents.js'),
     ]);
     await import('../js/templates.js');
 
