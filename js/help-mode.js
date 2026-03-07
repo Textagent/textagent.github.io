@@ -25,13 +25,13 @@
             name: 'Sync Scrolling',
             desc: 'Link the editor and preview panels so they scroll together. Keeps your writing position in sync with the rendered output.',
             shortcut: 'Ctrl+Shift+S',
-            demo: 'assets/demos/11_editor_tools.webp'
+            demo: 'assets/demos/07_writing_modes.webp'
         },
         '#toc-toggle, #qab-toc': {
             name: 'Table of Contents',
             desc: 'Toggle an auto-generated sidebar showing all headings in your document. Click any heading to jump to that section.',
             shortcut: null,
-            demo: 'assets/demos/11_editor_tools.webp'
+            demo: 'assets/demos/07_writing_modes.webp'
         },
         '#import-button, #qab-import, #mobile-import-button': {
             name: 'Import File',
@@ -49,7 +49,7 @@
             name: 'Copy Markdown',
             desc: 'Copy the raw Markdown source text to your clipboard.',
             shortcut: null,
-            demo: 'assets/demos/11_editor_tools.webp'
+            demo: 'assets/demos/07_writing_modes.webp'
         },
         '#share-button, #qab-share, #mobile-share-button': {
             name: 'Encrypted Share',
@@ -79,7 +79,7 @@
             name: 'Word Wrap',
             desc: 'Toggle line wrapping in the editor. When off, long lines scroll horizontally.',
             shortcut: null,
-            demo: 'assets/demos/11_editor_tools.webp'
+            demo: 'assets/demos/07_writing_modes.webp'
         },
         '#focus-mode-toggle': {
             name: 'Focus Mode',
@@ -97,7 +97,7 @@
             name: 'Voice Dictation',
             desc: 'Dictate Markdown hands-free with speech-to-text. Supports voice commands like "new line", "bold", "heading", "bullet", and more. Multi-language support.',
             shortcut: null,
-            demo: 'assets/demos/11_editor_tools.webp'
+            demo: 'assets/demos/07_writing_modes.webp'
         },
         '#themePickerDropdown': {
             name: 'Preview Theme',
@@ -115,7 +115,7 @@
             name: 'Document Stats',
             desc: 'Show reading time, word count, and character count for your document.',
             shortcut: null,
-            demo: 'assets/demos/11_editor_tools.webp'
+            demo: 'assets/demos/07_writing_modes.webp'
         },
 
         // ─── Formatting Toolbar ───
