@@ -13,7 +13,7 @@
             name: 'New Document',
             desc: 'Clear the editor and start with a fresh, empty document.',
             shortcut: null,
-            demo: 'assets/demos/01_privacy_hero.webp'
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '#template-btn, #qab-template, #mobile-template-btn': {
             name: 'Templates',
@@ -25,13 +25,13 @@
             name: 'Sync Scrolling',
             desc: 'Link the editor and preview panels so they scroll together. Keeps your writing position in sync with the rendered output.',
             shortcut: 'Ctrl+Shift+S',
-            demo: 'assets/demos/07_writing_modes.webp'
+            demo: 'assets/demos/12_sync_scrolling.webp'
         },
         '#toc-toggle, #qab-toc': {
             name: 'Table of Contents',
             desc: 'Toggle an auto-generated sidebar showing all headings in your document. Click any heading to jump to that section.',
             shortcut: null,
-            demo: 'assets/demos/07_writing_modes.webp'
+            demo: 'assets/demos/13_table_of_contents.webp'
         },
         '#import-button, #qab-import, #mobile-import-button': {
             name: 'Import File',
@@ -49,7 +49,7 @@
             name: 'Copy Markdown',
             desc: 'Copy the raw Markdown source text to your clipboard.',
             shortcut: null,
-            demo: 'assets/demos/07_writing_modes.webp'
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '#share-button, #qab-share, #mobile-share-button': {
             name: 'Encrypted Share',
@@ -67,7 +67,7 @@
             name: 'AI Model Selector',
             desc: 'Switch between AI models — Local Qwen 3.5 (private, runs in browser), Gemini Flash, Groq Llama 70B, or OpenRouter auto-routing.',
             shortcut: null,
-            demo: 'assets/demos/02_ai_assistant.webp'
+            demo: 'assets/demos/11_ai_model_selector.webp'
         },
         '#present-button, #qab-present': {
             name: 'Presentation Mode',
@@ -97,7 +97,7 @@
             name: 'Voice Dictation',
             desc: 'Dictate Markdown hands-free with speech-to-text. Supports voice commands like "new line", "bold", "heading", "bullet", and more. Multi-language support.',
             shortcut: null,
-            demo: 'assets/demos/07_writing_modes.webp'
+            demo: 'assets/demos/14_voice_dictation.webp'
         },
         '#themePickerDropdown': {
             name: 'Preview Theme',
@@ -115,7 +115,7 @@
             name: 'Document Stats',
             desc: 'Show reading time, word count, and character count for your document.',
             shortcut: null,
-            demo: 'assets/demos/07_writing_modes.webp'
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
 
         // ─── Formatting Toolbar ───
@@ -221,31 +221,31 @@
             name: 'AI Generate Tag',
             desc: 'Wrap text in {{AI: ...}} — when you click Fill, AI generates content based on your prompt. Great for automated document creation.',
             shortcut: null,
-            demo: 'assets/demos/02_ai_assistant.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="think-tag"]': {
             name: 'AI Think Tag',
             desc: 'Wrap text in {{Think: ...}} — AI uses deep reasoning mode to analyze and respond with step-by-step thinking.',
             shortcut: null,
-            demo: 'assets/demos/02_ai_assistant.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="image-tag"]': {
             name: 'AI Image Tag',
             desc: 'Wrap text in {{Image: ...}} — AI generates an image from your text description using Gemini Imagen.',
             shortcut: null,
-            demo: 'assets/demos/02_ai_assistant.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
             desc: 'Process all {{AI:}}, {{Think:}}, and {{Image:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
             shortcut: null,
-            demo: 'assets/demos/02_ai_assistant.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '#apply-vars-btn': {
             name: 'Template Variables',
             desc: 'Apply $(varName) variable substitutions. If no variable block exists, auto-detects variables in your text and creates a table for you to fill in.',
             shortcut: null,
-            demo: 'assets/demos/03_templates_gallery.webp'
+            demo: 'assets/demos/16_template_variables.webp'
         },
 
         // ─── View Mode Buttons ───

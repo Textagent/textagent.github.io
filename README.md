@@ -35,7 +35,7 @@
 | **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
 | **Security** | SRI integrity hashes, XSS sanitization, ReDoS protection, encrypted API key storage, Firestore security rules |
 | **AI Document Tags** | `{{AI:}}` text generation, `{{Think:}}` deep reasoning, `{{Image:}}` image generation (Gemini Imagen) — per-card model selector, concurrent independent block operations |
-| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; all 9 product demo videos mapped |
+| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
 | **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 81+ templates (11 categories: AI, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI |
 
 ## 🤖 AI Assistant
@@ -283,6 +283,7 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-07** | 🎥 **Demo mapping audit** — fixed 10 incorrect Help Mode demo mappings; recorded 6 new dedicated demo videos (AI Model Selector, Sync Scrolling, Table of Contents, Voice Dictation, AI Doc Tags, Template Variables); total demos increased from 10 to 16 |
 | **2026-03-07** | ❓ **Interactive Help Mode** — teal ❓ Help pill in header activates learning mode; all buttons get teal ring highlights; click any button for popover with feature name, description, keyboard shortcut, and ▶ Watch Demo button; demo videos play in a 50% screen dark panel with fullscreen expand; all 9 product demos mapped to ~35 toolbar buttons; Esc key navigation; AI Document Tags inline-code rendering fix |
 | **2026-03-07** | ▶ **Feature demo badges** — clickable ▶ Demo badges on Feature Showcase headings open fullscreen animated video modal; 9 features mapped to demo videos; right-click + D shortcut; teal gradient badge with dark mode support |
 | **2026-03-07** | 🎬 **Product demo videos** — 9 animated WebP demos added to README (Privacy Hero, AI Assistant, Templates Gallery, Code Execution, Presentation Mode, Table Tools, Writing Modes, Import/Export, Encrypted Sharing) showcasing all key features with feature descriptions |
