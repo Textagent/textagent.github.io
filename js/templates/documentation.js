@@ -16,7 +16,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Editor** | Live preview · Split/Editor/Preview modes · Sync scrolling · Formatting toolbar · Find \\& Replace (regex) · Word wrap toggle · Draggable resize divider |\n' +
       '| **Writing Modes** | Zen mode (distraction-free) · Focus mode (dimmed paragraphs) · Dark mode · 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |\n' +
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
-      '| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
+      '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
       '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation (Gemini Imagen) — per-card model selector · concurrent block operations |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
       '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
@@ -245,7 +245,9 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'Open the AI panel and chat with **multiple models** — local or cloud:\n\n' +
       '| Model | Type | Speed |\n' +
       '|:------|:-----|:------|\n' +
-      '| **Qwen 3.5** | 🏠 Local (runs in browser via WebGPU/WASM) | ⚡ Fast |\n' +
+      '| **Qwen 3.5 Small (0.8B)** | 🏠 Local (WebGPU/WASM) — ~500 MB | ⚡ Fast |\n' +
+      '| **Qwen 3.5 Medium (2B)** | 🏠 Local (WebGPU/WASM) — ~1.2 GB | ⚡ Fast |\n' +
+      '| **Qwen 3.5 Large (4B)** | 🏠 Local (WebGPU/WASM) — ~2.5 GB, high-end | ⚡ Best quality |\n' +
       '| **Gemini 3.1 Flash Lite** | ☁️ Cloud (Google free tier) | 🚀 Very Fast |\n' +
       '| **Llama 3.3 70B** | ☁️ Cloud via Groq | ⚡ Ultra Fast |\n' +
       '| **Auto · Best Free** | ☁️ Cloud via OpenRouter | 🧠 Powerful |\n\n' +
@@ -370,7 +372,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] LaTeX math rendering (MathJax)\n' +
       '- [x] Mermaid diagrams with zoom/pan/export toolbar\n' +
       '- [x] PlantUML diagram rendering\n' +
-      '- [x] AI Assistant — 4 models (local + cloud)\n' +
+      '- [x] AI Assistant — 3 local sizes (0.8B / 2B / 4B) + cloud models\n' +
       '- [x] AI Document Tags (AI, Think, Image)\n' +
       '- [x] Per-card AI model selection\n' +
       '- [x] Template variable engine with auto-detect\n' +

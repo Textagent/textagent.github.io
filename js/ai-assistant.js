@@ -44,8 +44,19 @@
   const aiGroqKeyInput = document.getElementById('ai-groq-key-input');
   const aiApikeyError = document.getElementById('ai-apikey-error');
 
-  let aiWorker = null;       // Qwen local worker
-  let aiModelLoaded = false; // Qwen loaded flag
+  // --- Per-model local worker state ---
+  // Map of modelId -> { worker, loaded }
+  const localWorkers = {};
+
+  function isLocalModel(id) {
+    const cfg = _models[id];
+    return cfg && cfg.isLocal;
+  }
+  function getLocalState(id) {
+    if (!localWorkers[id]) localWorkers[id] = { worker: null, loaded: false };
+    return localWorkers[id];
+  }
+
   let aiIsGenerating = false;
   let aiMessageIdCounter = 0;
   let aiPanelOpen = false;
@@ -59,7 +70,7 @@
   const CLOUD_PROVIDERS = {};
   Object.keys(_models).forEach(id => {
     const cfg = _models[id];
-    if (cfg.isLocal) return; // skip local models
+    if (cfg.isLocal) return; // skip local models — handled separately
     // Per-provider runtime state (kept in closure)
     const _state = {
       key: localStorage.getItem(cfg.keyStorageKey) || null,
@@ -78,12 +89,18 @@
 
   // Unified helpers
   function getActiveWorker() {
-    if (currentAiModel === 'qwen-local') return aiWorker;
+    if (isLocalModel(currentAiModel)) {
+      const ls = getLocalState(currentAiModel);
+      return ls.worker;
+    }
     const p = CLOUD_PROVIDERS[currentAiModel];
     return p ? p.getWorker() : null;
   }
   function isCurrentModelReady() {
-    if (currentAiModel === 'qwen-local') return aiModelLoaded;
+    if (isLocalModel(currentAiModel)) {
+      const ls = getLocalState(currentAiModel);
+      return ls.loaded;
+    }
     const p = CLOUD_PROVIDERS[currentAiModel];
     return p ? p.isLoaded() : false;
   }
@@ -128,6 +145,9 @@
         if (provider) {
           if (!provider.getKey()) { showApiKeyModal(id); return; }
           switchToModel(id);
+        } else if (cfg.requiresHighEnd) {
+          // Show warning before switching to high-end local models
+          showHighEndWarning(id, () => switchToModel(id));
         } else {
           switchToModel(id);  // local model
         }
@@ -173,25 +193,30 @@
       });
     }
 
-    const provider = CLOUD_PROVIDERS[modelId];
-    if (provider) {
-      if (!provider.isLoaded() && !provider.getWorker()) {
-        initCloudWorker(modelId);
-      }
-      if (provider.isLoaded()) {
-        addAiStatusBar('ready', provider.statusReady);
-      }
-    } else {
-      // Qwen local
-      if (!aiModelLoaded && !aiWorker) {
-        if (localStorage.getItem('md-viewer-ai-consented')) {
-          initAiWorker();
+    if (isLocalModel(modelId)) {
+      const ls = getLocalState(modelId);
+      const consentKey = 'md-viewer-ai-consented-' + modelId;
+      if (!ls.loaded && !ls.worker) {
+        if (localStorage.getItem(consentKey)) {
+          initAiWorker(modelId);
           addAiStatusBar('loading', 'Loading cached model...');
         } else {
-          addAiStatusBar('loading', 'Qwen not loaded — click AI button to download');
+          const cfg = _models[modelId];
+          addAiStatusBar('loading', `${cfg.dropdownName} not loaded — click AI button to download`);
         }
-      } else if (aiModelLoaded) {
-        addAiStatusBar('ready', 'Qwen 3.5 · Local');
+      } else if (ls.loaded) {
+        const cfg = _models[modelId];
+        addAiStatusBar('ready', cfg.statusReady);
+      }
+    } else {
+      const provider = CLOUD_PROVIDERS[modelId];
+      if (provider) {
+        if (!provider.isLoaded() && !provider.getWorker()) {
+          initCloudWorker(modelId);
+        }
+        if (provider.isLoaded()) {
+          addAiStatusBar('ready', provider.statusReady);
+        }
       }
     }
   }
@@ -295,14 +320,18 @@
     aiInput.focus();
 
     // Then handle model loading in the background
-    if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
-      if (localStorage.getItem('md-viewer-ai-consented')) {
-        // Model was previously downloaded — auto-load from cache
-        initAiWorker();
-        addAiStatusBar('loading', 'Loading cached model...');
+    if (isLocalModel(currentAiModel)) {
+      const ls = getLocalState(currentAiModel);
+      const consentKey = 'md-viewer-ai-consented-' + currentAiModel;
+      if (!ls.loaded && !ls.worker) {
+        if (localStorage.getItem(consentKey)) {
+          // Model was previously downloaded — auto-load from cache
+          initAiWorker(currentAiModel);
+          addAiStatusBar('loading', 'Loading cached model...');
+        }
+        // Otherwise do nothing — user can pick a cloud model or send a message
+        // to trigger the consent dialog
       }
-      // Otherwise do nothing — user can pick a cloud model or send a message
-      // to trigger the consent dialog
       return;
     }
 
@@ -422,19 +451,68 @@
     aiConsentDownload.disabled = true;
     aiConsentDownload.innerHTML = '<span class="ai-status-spinner"></span> Loading...';
     aiProgressSection.style.display = 'block';
-    initAiWorker();
+    initAiWorker(currentAiModel);
   });
 
-  // --- Worker Lifecycle ---
-  function initAiWorker() {
-    if (aiWorker) return;
+  // --- High-end device warning for 4B model ---
+  function showHighEndWarning(modelId, onConfirm) {
+    const cfg = _models[modelId];
+    const overlay = document.createElement('div');
+    overlay.className = 'ai-highend-warning-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:var(--color-canvas-default,#0d1117);border:1px solid var(--color-border-default,#30363d);border-radius:12px;padding:24px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.4)">
+        <h3 style="margin:0 0 12px;color:var(--color-fg-default,#e6edf3);font-size:1.1rem">
+          <i class="bi bi-exclamation-triangle" style="color:#f0b429;margin-right:6px"></i>
+          High-End Device Recommended
+        </h3>
+        <p style="color:var(--color-fg-muted,#8b949e);font-size:0.9rem;margin:0 0 8px;line-height:1.5">
+          <strong>${cfg.dropdownName}</strong> requires a <strong>${cfg.downloadSize}</strong> download
+          and <strong>8 GB+ GPU VRAM</strong>.
+        </p>
+        <p style="color:var(--color-fg-muted,#8b949e);font-size:0.85rem;margin:0 0 16px;line-height:1.4">
+          This model may not run well on phones, tablets, or older laptops. For most devices,
+          the <strong>0.8B</strong> or <strong>2B</strong> model is recommended.
+        </p>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="highend-cancel" style="background:transparent;color:var(--color-fg-muted,#8b949e);border:1px solid var(--color-border-default,#30363d);border-radius:6px;padding:6px 16px;cursor:pointer;font-size:0.85rem">Cancel</button>
+          <button id="highend-continue" style="background:var(--color-accent-emphasis,#2f81f7);color:#fff;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:0.85rem;font-weight:500"><i class="bi bi-check-lg me-1"></i>Continue Anyway</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#highend-cancel').addEventListener('click', () => {
+      overlay.remove();
+    });
+    overlay.querySelector('#highend-continue').addEventListener('click', () => {
+      overlay.remove();
+      if (onConfirm) onConfirm();
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
 
-    aiWorker = new Worker('ai-worker.js', { type: 'module' });
+  // --- Worker Lifecycle for Local Models ---
+  function initAiWorker(modelId) {
+    modelId = modelId || 'qwen-local';
+    const ls = getLocalState(modelId);
+    if (ls.worker) return;
+
+    const cfg = _models[modelId];
+    const localModelOnnxId = (cfg && cfg.localModelId) || 'onnx-community/Qwen3.5-0.8B-ONNX';
+    const modelLabel = (cfg && cfg.label) || 'Qwen 3.5';
+
+    const worker = new Worker('ai-worker.js', { type: 'module' });
+    ls.worker = worker;
+
+    // Send model ID before loading
+    worker.postMessage({ type: 'setModelId', modelId: localModelOnnxId, modelLabel: modelLabel });
 
     // Track download progress per file
     const fileProgress = {};
 
-    aiWorker.addEventListener('message', (e) => {
+    worker.addEventListener('message', (e) => {
       const msg = e.data;
 
       switch (msg.type) {
@@ -467,7 +545,8 @@
               if (aiProgressDetail) aiProgressDetail.textContent = `${mbLoaded} MB / ${mbTotal} MB`;
 
               // Also update inline progress in AI panel
-              updateAiInlineProgress(overallPercent, `Downloading Qwen 3.5... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
+              const dlLabel = (cfg && cfg.dropdownName) || 'Qwen 3.5';
+              updateAiInlineProgress(overallPercent, `Downloading ${dlLabel}... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
 
               setTimeout(() => { initAiWorker._progressThrottle = false; }, 200);
             });
@@ -482,9 +561,11 @@
           break;
 
         case 'loaded':
-          aiModelLoaded = true;
+          ls.loaded = true;
           // Remember consent so we skip the dialog next time
-          localStorage.setItem('md-viewer-ai-consented', 'true');
+          localStorage.setItem('md-viewer-ai-consented-' + modelId, 'true');
+          // Backward compat: also set the old key for qwen-local
+          if (modelId === 'qwen-local') localStorage.setItem('md-viewer-ai-consented', 'true');
           hideAiConsentDialog();
           // Open the panel if not already open
           if (!aiPanelOpen) {
@@ -497,8 +578,9 @@
             document.body.classList.add('ai-panel-active');
           }
           // Add a status bar — show current model name
-          if (currentAiModel === 'qwen-local') {
-            addAiStatusBar('ready', `Qwen 3.5 · Local (${msg.device.toUpperCase()})`);
+          if (currentAiModel === modelId) {
+            const readyLabel = (cfg && cfg.statusReady) || 'Qwen 3.5 · Local';
+            addAiStatusBar('ready', `${readyLabel} (${msg.device.toUpperCase()})`);
           }
           aiInput.focus();
           // Replay any queued message that was waiting for the model to load
@@ -510,9 +592,10 @@
           break;
 
         case 'error':
-          if (!aiModelLoaded) {
+          if (!ls.loaded) {
             // Clear consent so user gets the dialog again
-            localStorage.removeItem('md-viewer-ai-consented');
+            localStorage.removeItem('md-viewer-ai-consented-' + modelId);
+            if (modelId === 'qwen-local') localStorage.removeItem('md-viewer-ai-consented');
             // Model failed to load — show error in consent dialog and allow retry
             if (aiConsentModal.style.display === 'flex') {
               aiProgressStatus.textContent = '❌ ' + msg.message;
@@ -525,7 +608,7 @@
               addAiStatusBar('error', msg.message);
             }
             // Reset worker so user can retry
-            if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+            if (ls.worker) { ls.worker.terminate(); ls.worker = null; }
           } else {
             handleAiError(msg.message, msg.messageId);
           }
@@ -534,10 +617,10 @@
     });
 
     // Handle worker-level crashes (network failure, script error, etc.)
-    aiWorker.addEventListener('error', (e) => {
+    worker.addEventListener('error', (e) => {
       console.error('AI Worker error:', e);
-      aiModelLoaded = false;
-      if (aiWorker) { aiWorker.terminate(); aiWorker = null; }
+      ls.loaded = false;
+      if (ls.worker) { ls.worker.terminate(); ls.worker = null; }
       // If consent dialog is open, show error there
       if (aiConsentModal.style.display === 'flex') {
         aiProgressStatus.textContent = '❌ Worker failed to initialize. Check your connection and retry.';
@@ -547,11 +630,10 @@
       } else {
         // Panel is open but model died — show re-download notice
         addAiStatusBar('error', 'Model unavailable — click AI button to re-download');
-        aiModelLoaded = false;
       }
     });
 
-    aiWorker.postMessage({ type: 'load' });
+    worker.postMessage({ type: 'load' });
   }
 
   // --- Groq Worker Lifecycle ---
@@ -738,7 +820,12 @@
   }
 
   // Show inline consent bar for Qwen download (not a popup)
-  function showInlineDownloadConsent() {
+  function showInlineDownloadConsent(modelId) {
+    modelId = modelId || currentAiModel;
+    const cfg = _models[modelId];
+    const modelName = (cfg && cfg.dropdownName) || 'Qwen 3.5';
+    const dlSize = (cfg && cfg.downloadSize) || '~500 MB';
+
     // Remove any existing status bar
     const existing = aiPanel.querySelector('.ai-status-bar');
     if (existing) existing.remove();
@@ -747,7 +834,7 @@
     bar.className = 'ai-status-bar ai-consent-inline';
     bar.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
-        <span style="font-size:0.82rem"><i class="bi bi-download me-1"></i> Qwen 3.5 requires a one-time <strong>~500 MB</strong> download (runs locally, 100% private)</span>
+        <span style="font-size:0.82rem"><i class="bi bi-download me-1"></i> ${modelName} requires a one-time <strong>${dlSize}</strong> download (runs locally, 100% private)</span>
         <button id="ai-inline-agree-btn" style="
           background:var(--color-accent-emphasis,#2f81f7);color:#fff;border:none;
           border-radius:6px;padding:4px 14px;font-size:0.8rem;cursor:pointer;
@@ -763,9 +850,10 @@
     const agreeBtn = document.getElementById('ai-inline-agree-btn');
     if (agreeBtn) {
       agreeBtn.addEventListener('click', () => {
-        localStorage.setItem('md-viewer-ai-consented', 'true');
-        initAiWorker();
-        addAiStatusBar('loading', 'Downloading Qwen model — your message will be sent automatically...');
+        localStorage.setItem('md-viewer-ai-consented-' + modelId, 'true');
+        if (modelId === 'qwen-local') localStorage.setItem('md-viewer-ai-consented', 'true');
+        initAiWorker(modelId);
+        addAiStatusBar('loading', `Downloading ${modelName} — your message will be sent automatically...`);
       });
     }
   }
@@ -981,27 +1069,42 @@
 
   // --- Send to AI (routes to active model's worker) ---
   function sendToAi(taskType, context, userPrompt) {
-    // If Qwen is selected but not loaded yet, show inline consent before downloading
-    if (currentAiModel === 'qwen-local' && !aiModelLoaded && !aiWorker) {
-      // Queue the message so it auto-sends once the model is loaded
-      pendingAiMessage = { taskType, context, userPrompt };
+    // If a local model is selected but not loaded yet, show inline consent before downloading
+    if (isLocalModel(currentAiModel)) {
+      const ls = getLocalState(currentAiModel);
+      const consentKey = 'md-viewer-ai-consented-' + currentAiModel;
+      // Backward compat for old key
+      const hasConsent = localStorage.getItem(consentKey) || (currentAiModel === 'qwen-local' && localStorage.getItem('md-viewer-ai-consented'));
 
-      // If already consented (model cached from before), auto-load from cache
-      if (localStorage.getItem('md-viewer-ai-consented')) {
-        initAiWorker();
-        addAiStatusBar('loading', 'Loading cached model — your message will be sent automatically...');
-      } else {
-        // Show inline consent bar (not a popup) — user must agree before download
-        showInlineDownloadConsent();
+      if (!ls.loaded && !ls.worker) {
+        // Queue the message so it auto-sends once the model is loaded
+        pendingAiMessage = { taskType, context, userPrompt };
+
+        // If already consented (model cached from before), auto-load from cache
+        if (hasConsent) {
+          initAiWorker(currentAiModel);
+          addAiStatusBar('loading', 'Loading cached model — your message will be sent automatically...');
+        } else {
+          // For high-end models, show warning first
+          const cfg = _models[currentAiModel];
+          if (cfg && cfg.requiresHighEnd) {
+            showHighEndWarning(currentAiModel, () => {
+              showInlineDownloadConsent(currentAiModel);
+            });
+          } else {
+            // Show inline consent bar (not a popup) — user must agree before download
+            showInlineDownloadConsent(currentAiModel);
+          }
+        }
+        return;
       }
-      return;
-    }
 
-    // If Qwen is loading (worker exists but model not ready yet), queue the message
-    if (currentAiModel === 'qwen-local' && !aiModelLoaded && aiWorker) {
-      pendingAiMessage = { taskType, context, userPrompt };
-      addAiStatusBar('loading', 'Model still loading — your message will be sent automatically...');
-      return;
+      // If local model is loading (worker exists but model not ready yet), queue the message
+      if (!ls.loaded && ls.worker) {
+        pendingAiMessage = { taskType, context, userPrompt };
+        addAiStatusBar('loading', 'Model still loading — your message will be sent automatically...');
+        return;
+      }
     }
 
     // If a cloud model is selected but not ready, prompt for API key or init
@@ -1765,7 +1868,7 @@
   M.getCloudProviders = function () { return CLOUD_PROVIDERS; };
   M.getCurrentAiModel = function () { return currentAiModel; };
   M.isCurrentModelReady = isCurrentModelReady;
-  M.initLocalAiWorker = initAiWorker;
+  M.initLocalAiWorker = function (modelId) { initAiWorker(modelId || currentAiModel); };
   M.initCloudWorker = initCloudWorker;
 
 })(window.MDView);

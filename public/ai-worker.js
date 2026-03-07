@@ -1,9 +1,11 @@
 /**
  * AI Worker — Handles Transformers.js model loading and text generation
- * Uses Qwen 3.5 Small (0.8B) running locally via WebGPU/WASM
+ * Supports Qwen 3.5 Small (0.8B), Medium (2B), and Large (4B) via WebGPU/WASM
  *
  * This is an ES Module worker (loaded with { type: "module" }).
  * Uses Transformers.js v4 (next) which supports the qwen3_5 architecture.
+ *
+ * The model ID is configurable via a `setModelId` message sent before `load`.
  */
 
 import {
@@ -12,8 +14,9 @@ import {
     TextStreamer,
 } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.5";
 
-// Model config — Qwen 3.5 Small 0.8B
-const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+// Model config — default to 0.8B, overridable via setModelId message
+let MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+let MODEL_LABEL = "Qwen 3.5";
 
 // Task-specific token limits to keep responses fast
 const TOKEN_LIMITS = {
@@ -57,7 +60,7 @@ async function loadModel() {
 
         self.postMessage({
             type: "status",
-            message: `Loading Qwen 3.5 processor...`,
+            message: `Loading ${MODEL_LABEL} processor...`,
         });
 
         processor = await AutoProcessor.from_pretrained(MODEL_ID, {
@@ -81,7 +84,7 @@ async function loadModel() {
 
         self.postMessage({
             type: "status",
-            message: `Loading Qwen 3.5 model (${device.toUpperCase()})...`,
+            message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...`,
         });
 
         model = await Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
@@ -262,6 +265,10 @@ self.addEventListener("message", async (event) => {
     const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
 
     switch (type) {
+        case "setModelId":
+            MODEL_ID = event.data.modelId || MODEL_ID;
+            MODEL_LABEL = event.data.modelLabel || MODEL_LABEL;
+            break;
         case "load":
             await loadModel();
             break;

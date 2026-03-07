@@ -25,7 +25,7 @@
 | **Editor** | Live preview, split/editor/preview modes, sync scrolling, formatting toolbar, find & replace (regex), word wrap toggle, draggable resize divider |
 | **Writing Modes** | Zen mode (distraction-free fullscreen), Focus mode (dimmed paragraphs), Dark mode, multiple preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |
 | **Rendering** | GitHub-style Markdown, syntax highlighting (180+ languages), LaTeX math (MathJax), Mermaid diagrams (zoom/pan/export), PlantUML diagrams, callout blocks, footnotes, emoji, anchor links |
-| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM), Gemini 3.1 Flash Lite, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten, Image); enhanced context menu; per-card model selection; concurrent block generation; inline review with accept/reject/regenerate; AI-powered image generation |
+| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM), Gemini 3.1 Flash Lite, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten, Image); enhanced context menu; per-card model selection; concurrent block generation; inline review with accept/reject/regenerate; AI-powered image generation |
 | **🎤 Voice Dictation** | Speech-to-text with Markdown-aware commands — hash headings, bold, italic, lists, code blocks, links, and more |
 | **Import** | MD, DOCX, XLSX/XLS, CSV, HTML, JSON, XML, PDF — drag & drop or click to import |
 | **Export** | Markdown, HTML, PDF (smart page-breaks), LLM Memory (4 formats + shareable link) |
@@ -40,11 +40,13 @@
 
 ## 🤖 AI Assistant
 
-MDview includes a built-in AI assistant panel with **four model options**:
+MDview includes a built-in AI assistant panel with **three local model sizes** and cloud providers:
 
 | Model | Provider | Type | Speed |
 |:------|:---------|:-----|:------|
-| **Qwen 3.5 Small** | Local (WebGPU/WASM) | 🔒 Private — no data leaves browser | ⚡ Fast |
+| **Qwen 3.5 Small (0.8B)** | Local (WebGPU/WASM) | 🔒 Private — no data leaves browser | ⚡ Fast |
+| **Qwen 3.5 Medium (2B)** | Local (WebGPU/WASM) | 🔒 Private — smarter, ~1.2 GB | ⚡ Fast |
+| **Qwen 3.5 Large (4B)** | Local (WebGPU/WASM) | 🔒 Private — best quality, ~2.5 GB | ⚡ High-end |
 | **Gemini 3.1 Flash Lite** | Google (free tier) | ☁️ Cloud — 1M tokens/min | 🚀 Very Fast |
 | **Llama 3.3 70B** | Groq (free tier) | ☁️ Cloud — ultra-low latency | ⚡ Ultra Fast |
 | **Auto · Best Free** | OpenRouter (free tier) | ☁️ Cloud — multi-model routing | 🧠 Powerful |
@@ -113,7 +115,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 <details open>
 <summary><strong>🤖 AI Writing Assistant — Local & Cloud Models</strong></summary>
 
-**Built-in AI with 4 model options** including a fully local Qwen model that never sends data outside your browser. Open the AI panel, choose a model (Gemini, Groq, OpenRouter, or local Qwen), and use quick actions like Summarize, Expand, Rephrase, Fix Grammar, Explain, and Simplify.
+**Built-in AI with 3 local model sizes + cloud providers** — choose Qwen 3.5 Small (0.8B), Medium (2B), or Large (4B) for fully private local inference, or use cloud models (Gemini, Groq, OpenRouter). High-end device warning before 4B download.
 
 <img src="public/assets/demos/02_ai_assistant.webp" alt="AI Writing Assistant — model selection, action chips, streaming response" width="100%">
 
@@ -236,7 +238,7 @@ Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Orde
 ### AI
 | Technology | Purpose |
 |:-----------|:--------|
-| [Transformers.js](https://huggingface.co/docs/transformers.js) | Local AI inference (Qwen 3.5 Small) |
+| [Transformers.js](https://huggingface.co/docs/transformers.js) | Local AI inference (Qwen 3.5 — 0.8B / 2B / 4B) |
 | [Groq API](https://groq.com/) | Cloud AI (Llama 3.3 70B) |
 | [Google Gemini API](https://ai.google.dev/) | Cloud AI (Gemini 3.1 Flash Lite) |
 | [OpenRouter API](https://openrouter.ai/) | Multi-model AI routing |
@@ -283,6 +285,7 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-07** | 🤖 **Multi-size local Qwen models** — added Qwen 3.5 Medium (2B, ~1.2 GB) and Large (4B, ~2.5 GB) alongside existing Small (0.8B); per-model workers with independent consent tracking; high-end device warning popup before 4B download; dynamic model ID via `setModelId` message to shared `ai-worker.js` |
 | **2026-03-07** | 📂 **Workspace sidebar** — multi-file support with sidebar file tree (`Ctrl+B` toggle); create, rename, duplicate, and delete files; per-file localStorage persistence; right-click context menu; active file highlighting; "New" button creates files in workspace instead of new tabs |
 | **2026-03-07** | 📱 **Mobile toolbar overflow fix** — Quick Action Bar and formatting toolbar now horizontally scrollable on mobile/tablet instead of overflowing; `overflow-x: hidden` on page; header collapse disabled at sub-desktop widths; GitHub link and Help pill hidden on phones for compact layout |
 | **2026-03-07** | 🛡️ **Security hardening v2** — Content Security Policy (CSP) with full CDN allowlist; Firestore write-token ownership to prevent anonymous document overwrites; API keys moved from URL query strings to `x-goog-api-key` headers; `postMessage` origin validation for sandboxed iframes; passphrase minimum increased to 8 characters; Firestore rules fixed for secure-share documents |

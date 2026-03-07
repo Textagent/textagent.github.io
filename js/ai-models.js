@@ -13,15 +13,44 @@
     'use strict';
 
     window.AI_MODELS = {
-        // ── Local ──────────────────────────────────────────────
+        // ── Local: Qwen 3.5 Small (0.8B) ─────────────────────
         'qwen-local': {
             label: 'Qwen 3.5 · Local',
             badge: 'Qwen 3.5 · Local',
             icon: 'bi bi-pc-display',
             statusReady: 'Qwen 3.5 · Local',
-            dropdownName: 'Qwen 3.5 Small',
-            dropdownDesc: 'Local · Private · No API key needed',
+            dropdownName: 'Qwen 3.5 Small (0.8B)',
+            dropdownDesc: 'Local · Private · ~500 MB download',
             isLocal: true,
+            localModelId: 'onnx-community/Qwen3.5-0.8B-ONNX',
+            downloadSize: '~500 MB',
+        },
+
+        // ── Local: Qwen 3.5 Medium (2B) ──────────────────────
+        'qwen-local-2b': {
+            label: 'Qwen 3.5 2B · Local',
+            badge: 'Qwen 3.5 2B · Local',
+            icon: 'bi bi-pc-display',
+            statusReady: 'Qwen 3.5 2B · Local',
+            dropdownName: 'Qwen 3.5 Medium (2B)',
+            dropdownDesc: 'Local · Smarter · ~1.2 GB download',
+            isLocal: true,
+            localModelId: 'onnx-community/Qwen3.5-2B-ONNX',
+            downloadSize: '~1.2 GB',
+        },
+
+        // ── Local: Qwen 3.5 Large (4B) ───────────────────────
+        'qwen-local-4b': {
+            label: 'Qwen 3.5 4B · Local',
+            badge: 'Qwen 3.5 4B · Local',
+            icon: 'bi bi-pc-display',
+            statusReady: 'Qwen 3.5 4B · Local',
+            dropdownName: 'Qwen 3.5 Large (4B)',
+            dropdownDesc: 'Local · Best quality · ~2.5 GB · High-end',
+            isLocal: true,
+            localModelId: 'onnx-community/Qwen3.5-4B-ONNX',
+            downloadSize: '~2.5 GB',
+            requiresHighEnd: true,
         },
 
         // ── Cloud: Groq ────────────────────────────────────────
