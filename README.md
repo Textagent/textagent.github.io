@@ -36,7 +36,7 @@
 | **Security** | Content Security Policy (CSP), SRI integrity hashes, XSS sanitization (DOMPurify), ReDoS protection, Firestore write-token ownership, API keys via HTTP headers, postMessage origin validation, 8-char passphrase minimum, sandboxed code execution |
 | **AI Document Tags** | `{{AI:}}` text generation, `{{Think:}}` deep reasoning, `{{Image:}}` image generation (Gemini Imagen) — per-card model selector, concurrent independent block operations |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 81+ templates (11 categories: AI, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar and formatting toolbar, multi-file workspace sidebar |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 81+ templates (11 categories: AI, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
 
 ## 🤖 AI Assistant
 
@@ -184,6 +184,69 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
+<details open>
+<summary><strong>🛠 Formatting Toolbar — Bold, Lists, Tables & More</strong></summary>
+
+**Full formatting power at your fingertips.** Bold, italic, strikethrough, headings, links, images, code blocks, ordered and unordered lists, tables, and undo/redo — all accessible from the toolbar without memorizing Markdown syntax.
+
+<img src="public/assets/demos/10_formatting_toolbar.webp" alt="Formatting Toolbar — bold, headings, lists, table insertion, and undo/redo" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🤖 AI Model Selector — Choose Your Engine</strong></summary>
+
+**Pick the right model for the job.** Switch between 3 local Qwen sizes (0.8B / 2B / 4B) and cloud providers (Gemini, Groq, OpenRouter) directly from the AI panel. Per-card model selection lets you use different models for different blocks.
+
+<img src="public/assets/demos/11_ai_model_selector.webp" alt="AI Model Selector — switching between local and cloud models" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🔗 Sync Scrolling — Editor & Preview in Lockstep</strong></summary>
+
+**Keep your place effortlessly.** Two-way synchronized scrolling links the editor and preview pane so you always see the rendered output for the line you're editing. Toggle on/off with the link icon.
+
+<img src="public/assets/demos/12_sync_scrolling.webp" alt="Sync Scrolling — editor and preview scrolling together" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>📑 Table of Contents — Auto-Generated Navigation</strong></summary>
+
+**Navigate long documents instantly.** A clickable sidebar TOC is auto-generated from your headings. Jump to any section with a single click, and the TOC highlights your current position as you scroll.
+
+<img src="public/assets/demos/13_table_of_contents.webp" alt="Table of Contents — sidebar navigation generated from document headings" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🎤 Voice Dictation — Speak Your Markdown</strong></summary>
+
+**Hands-free writing with Markdown awareness.** Dictate naturally and use voice commands for headings, bold, italic, lists, code blocks, and links. The speech engine understands Markdown — say "hash hash" for an H2 heading.
+
+<img src="public/assets/demos/14_voice_dictation.webp" alt="Voice Dictation — speech-to-text with Markdown-aware commands" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🏷️ AI Document Tags — Generate Entire Sections</strong></summary>
+
+**One-click document generation.** Use `{{AI:}}` for text, `{{Think:}}` for deep reasoning, and `{{Image:}}` for AI-generated images. Each tag becomes a card with generate, review, accept/reject, and regenerate controls — all operating independently.
+
+<img src="public/assets/demos/15_ai_doc_tags.webp" alt="AI Document Tags — generating content with AI, Think, and Image tags" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🔀 Template Variables — Dynamic Reusable Documents</strong></summary>
+
+**Templates that adapt to you.** Define `$(varName)` placeholders in any document, click ⚡ Vars to auto-detect them, fill in the generated table, and apply. Built-in globals like `$(date)` and `$(time)` work automatically. 12 templates include variable support.
+
+<img src="public/assets/demos/16_template_variables.webp" alt="Template Variables — auto-detecting variables, filling table, and applying substitutions" width="100%">
+
+</details>
+
 ## 📝 Usage
 
 | Action | How |
@@ -285,6 +348,8 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-08** | 🛠️ **Enhanced Quick Action Bar** — compact header now includes File Tree, Help, and collapsible Tools dropdown (Presentation, Zen Mode, Word Wrap, Focus Mode, Voice Dictation, Dark Mode with sun/moon toggle, Preview Theme picker with checkmarks); header toolbar slides behind AI panel instead of shrinking |
+| **2026-03-08** | 🐛 **AI panel overlap fix** — header toolbar stays full-width when AI panel opens; sub-header elements (content, dropzone, formatting toolbar) receive `margin-right` to avoid overlap; AI panel overlays naturally via z-index |
 | **2026-03-08** | 🐛 **AI worker fix** — fixed "Model unavailable" error caused by CSP missing `huggingface.co` in `connect-src` and static ES module import silently crashing the worker; converted to dynamic `import()` with try/catch for graceful error reporting and retry support |
 | **2026-03-07** | 🤖 **Multi-size local Qwen models** — added Qwen 3.5 Medium (2B, ~1.2 GB) and Large (4B, ~2.5 GB) alongside existing Small (0.8B); per-model workers with independent consent tracking; high-end device warning popup before 4B download; dynamic model ID via `setModelId` message to shared `ai-worker.js` |
 | **2026-03-07** | 📂 **Workspace sidebar** — multi-file support with sidebar file tree (`Ctrl+B` toggle); create, rename, duplicate, and delete files; per-file localStorage persistence; right-click context menu; active file highlighting; "New" button creates files in workspace instead of new tabs |

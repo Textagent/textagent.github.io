@@ -26,8 +26,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
-      '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 9 product demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Scrollable Quick Action Bar on mobile · Multi-file workspace sidebar (Ctrl+B) |\n\n' +
+      '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'MDview can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -401,6 +401,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Image paste from clipboard\n' +
       '- [x] Footnotes \\& anchor links\n' +
       '- [x] Desktop app (Neutralino.js)\n' +
+      '- [x] Multi-file workspace sidebar (Ctrl+B)\n' +
+      '- [x] Compact header with collapsible Tools dropdown\n' +
       '- [ ] Your feature suggestion here!\n\n' +
       '---\n\n' +
       '## 😀 Emoji Support\n\n' +

@@ -1143,8 +1143,13 @@
   }
 
   /* On mobile, AI panel is full-width overlay, don't push content */
-  body.ai-panel-active .app-container {
-    width: 100%;
+  body.ai-panel-active .content-container,
+  body.ai-panel-active .dropzone,
+  body.ai-panel-active .quick-action-bar,
+  body.ai-panel-active .formatting-toolbar,
+  body.ai-panel-active .find-replace-bar,
+  body.ai-panel-active .speech-status-bar {
+    margin-right: 0;
   }
 
   .ai-resize-divider {

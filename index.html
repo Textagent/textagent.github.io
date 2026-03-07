@@ -486,6 +486,9 @@
                 <button id="qab-search" class="qab-btn" title="Find & Replace (Ctrl+F)">
                     <i class="bi bi-search"></i> Search
                 </button>
+                <button id="qab-files" class="qab-btn" title="File Tree">
+                    <i class="bi bi-folder2-open"></i> Files
+                </button>
                 <button id="qab-toc" class="qab-btn" title="Table of Contents">
                     <i class="bi bi-list-nested"></i> TOC
                 </button>
@@ -495,9 +498,55 @@
                 <button id="qab-copy" class="qab-btn" title="Copy Markdown">
                     <i class="bi bi-clipboard"></i> Copy
                 </button>
-                <button id="qab-present" class="qab-btn" title="Presentation Mode">
-                    <i class="bi bi-easel"></i> Present
-                </button>
+                <div class="dropdown qab-dropdown">
+                    <button class="qab-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false" title="Tools">
+                        <i class="bi bi-tools"></i> Tools
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" type="button" id="qab-present"><i
+                                    class="bi bi-easel me-2"></i>Presentation</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-zen"><i
+                                    class="bi bi-fullscreen me-2"></i>Zen Mode</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-wordwrap"><i
+                                    class="bi bi-text-wrap me-2"></i>Word Wrap</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-focus"><i
+                                    class="bi bi-body-text me-2"></i>Focus Mode</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-voice"><i
+                                    class="bi bi-mic me-2"></i>Voice Dictation</button></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><button class="dropdown-item" type="button" id="qab-theme"><i class="bi bi-moon me-2"
+                                    id="qab-theme-icon"></i><span id="qab-theme-label">Dark Mode</span></button></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><button class="dropdown-item" type="button" id="qab-preview-theme-toggle"><i
+                                    class="bi bi-palette me-2"></i>Preview Theme <i class="bi bi-chevron-right ms-auto"
+                                    id="qab-theme-chevron" style="font-size:10px"></i></button></li>
+                        <div id="qab-theme-list" style="display:none">
+                            <li><button class="dropdown-item qab-theme-option ps-4" type="button"
+                                    data-theme-name="github"><i
+                                        class="bi bi-check2 me-2 qab-theme-check"></i>GitHub</button></li>
+                            <li><button class="dropdown-item qab-theme-option ps-4" type="button"
+                                    data-theme-name="gitlab"><i
+                                        class="bi bi-check2 me-2 qab-theme-check"></i>GitLab</button></li>
+                            <li><button class="dropdown-item qab-theme-option ps-4" type="button"
+                                    data-theme-name="notion"><i
+                                        class="bi bi-check2 me-2 qab-theme-check"></i>Notion</button></li>
+                            <li><button class="dropdown-item qab-theme-option ps-4" type="button"
+                                    data-theme-name="dracula"><i
+                                        class="bi bi-check2 me-2 qab-theme-check"></i>Dracula</button></li>
+                            <li><button class="dropdown-item qab-theme-option ps-4" type="button"
+                                    data-theme-name="solarized"><i
+                                        class="bi bi-check2 me-2 qab-theme-check"></i>Solarized</button></li>
+                            <li><button class="dropdown-item qab-theme-option ps-4" type="button"
+                                    data-theme-name="evergreen"><i class="bi bi-check2 me-2 qab-theme-check"></i>🌿
+                                    Evergreen</button></li>
+                        </div>
+                    </ul>
+                </div>
                 <button id="qab-ai" class="qab-btn" title="AI Assistant">
                     <i class="bi bi-stars"></i> AI
                 </button>
@@ -507,6 +556,10 @@
                 <button id="qab-more" class="qab-btn" title="Open Dropzone">
                     <i class="bi bi-cloud-arrow-up"></i> Upload
                 </button>
+                <button id="qab-help" class="qab-btn" title="Help Mode">
+                    <i class="bi bi-question-circle"></i> Help
+                </button>
+
             </div>
         </div>
         <!-- Formatting Toolbar -->

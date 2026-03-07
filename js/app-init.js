@@ -200,6 +200,13 @@
             if (btn) btn.click();
         });
 
+        // Files — toggle workspace sidebar
+        var qabFiles = document.getElementById('qab-files');
+        if (qabFiles) qabFiles.addEventListener('click', function () {
+            var btn = document.getElementById('workspace-toggle');
+            if (btn) btn.click();
+        });
+
         // TOC — toggle table of contents
         var qabToc = document.getElementById('qab-toc');
         if (qabToc) qabToc.addEventListener('click', function () {
@@ -228,6 +235,34 @@
             if (btn) btn.click();
         });
 
+        // Zen — zen mode
+        var qabZen = document.getElementById('qab-zen');
+        if (qabZen) qabZen.addEventListener('click', function () {
+            var btn = document.getElementById('zen-mode-button');
+            if (btn) btn.click();
+        });
+
+        // Word Wrap — toggle word wrap
+        var qabWordwrap = document.getElementById('qab-wordwrap');
+        if (qabWordwrap) qabWordwrap.addEventListener('click', function () {
+            var btn = document.getElementById('word-wrap-toggle');
+            if (btn) btn.click();
+        });
+
+        // Focus — focus mode
+        var qabFocus = document.getElementById('qab-focus');
+        if (qabFocus) qabFocus.addEventListener('click', function () {
+            var btn = document.getElementById('focus-mode-toggle');
+            if (btn) btn.click();
+        });
+
+        // Voice — voice dictation
+        var qabVoice = document.getElementById('qab-voice');
+        if (qabVoice) qabVoice.addEventListener('click', function () {
+            var btn = document.getElementById('speech-to-text-btn');
+            if (btn) btn.click();
+        });
+
         // AI — toggle AI assistant panel
         var qabAi = document.getElementById('qab-ai');
         if (qabAi) qabAi.addEventListener('click', function () {
@@ -242,11 +277,63 @@
             if (btn) btn.click();
         });
 
-        // Theme — toggle dark/light
+        // Theme — toggle dark/light (direct implementation, header may be hidden)
         var qabTheme = document.getElementById('qab-theme');
+        var qabThemeIcon = document.getElementById('qab-theme-icon');
+        var qabThemeLabel = document.getElementById('qab-theme-label');
+        // Sync icon on init
+        if (qabThemeIcon && qabThemeLabel) {
+            var curTheme = document.documentElement.getAttribute('data-theme');
+            qabThemeIcon.className = curTheme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon me-2';
+            qabThemeLabel.textContent = curTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+        }
         if (qabTheme) qabTheme.addEventListener('click', function () {
-            var toggle = document.getElementById('theme-toggle');
-            if (toggle) toggle.click();
+            var currentTheme = document.documentElement.getAttribute('data-theme');
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            // Update the header toggle icon
+            var headerIcon = document.querySelector('#theme-toggle i');
+            if (headerIcon) headerIcon.className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+            // Update this dropdown icon + label
+            if (qabThemeIcon) qabThemeIcon.className = newTheme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon me-2';
+            if (qabThemeLabel) qabThemeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+            localStorage.setItem('markdown-viewer-theme', newTheme);
+            M.isDarkMode = newTheme === 'dark';
+            M.initMermaid();
+            M.renderMarkdown();
+        });
+
+        // Preview Theme — collapsible section toggle
+        var qabPreviewToggle = document.getElementById('qab-preview-theme-toggle');
+        var qabThemeList = document.getElementById('qab-theme-list');
+        var qabChevron = document.getElementById('qab-theme-chevron');
+        if (qabPreviewToggle && qabThemeList) {
+            qabPreviewToggle.addEventListener('click', function (e) {
+                e.stopPropagation(); // prevent dropdown from closing
+                var isOpen = qabThemeList.style.display !== 'none';
+                qabThemeList.style.display = isOpen ? 'none' : 'block';
+                if (qabChevron) qabChevron.className = isOpen ? 'bi bi-chevron-right ms-auto' : 'bi bi-chevron-down ms-auto';
+            });
+        }
+
+        // Preview Theme — wire each QAB theme option to the header's theme-option
+        var qabThemeOptions = document.querySelectorAll('.qab-theme-option');
+        function syncQabThemeChecks(activeThemeName) {
+            qabThemeOptions.forEach(function (opt) {
+                var check = opt.querySelector('.qab-theme-check');
+                if (check) check.style.visibility = opt.getAttribute('data-theme-name') === activeThemeName ? 'visible' : 'hidden';
+            });
+        }
+        // Sync checkmarks on init
+        syncQabThemeChecks(localStorage.getItem('mdview-preview-theme') || 'github');
+        qabThemeOptions.forEach(function (qOpt) {
+            qOpt.addEventListener('click', function () {
+                var themeName = this.getAttribute('data-theme-name');
+                // Delegate to the header's theme-option button
+                var headerOpt = document.querySelector('.theme-option[data-theme-name="' + themeName + '"]');
+                if (headerOpt) headerOpt.click();
+                syncQabThemeChecks(themeName);
+            });
         });
 
         // Upload — toggle dropzone in-place (header stays hidden)
@@ -254,6 +341,13 @@
         if (qabMore) qabMore.addEventListener('click', function () {
             var isVisible = dropzone.style.display !== 'none';
             dropzone.style.display = isVisible ? 'none' : 'block';
+        });
+
+        // Help — toggle help mode
+        var qabHelp = document.getElementById('qab-help');
+        if (qabHelp) qabHelp.addEventListener('click', function () {
+            var btn = document.getElementById('help-mode-btn');
+            if (btn) btn.click();
         });
     }
 

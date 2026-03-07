@@ -90,7 +90,13 @@ body {
   overflow: hidden;
 }
 
-/* Push ENTIRE app-container left when AI panel is open (desktop only) */
-body.ai-panel-active .app-container {
-  width: calc(100% - var(--ai-panel-width));
+/* When AI panel is open: keep header full-width (slides behind panel)
+   but shrink everything below the header so content stays visible. */
+body.ai-panel-active .content-container,
+body.ai-panel-active .dropzone,
+body.ai-panel-active .quick-action-bar,
+body.ai-panel-active .formatting-toolbar,
+body.ai-panel-active .find-replace-bar,
+body.ai-panel-active .speech-status-bar {
+  margin-right: var(--ai-panel-width);
 }
