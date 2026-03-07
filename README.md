@@ -1,10 +1,10 @@
-# WriteAgent
+# TextAgent
 
 <div align="center">
-    <img src="assets/icon.jpg" alt="WriteAgent Logo" width="150px"/>
+    <img src="assets/icon.jpg" alt="TextAgent Logo" width="150px"/>
     <h3>AI-Powered Markdown Editor & Viewer</h3>
     <p>Write, preview, present, and share — all in your browser, 100% client-side</p>
-    <a href="https://markdownview.github.io/">Live Demo</a> • 
+    <a href="https://textagent.github.io/">Live Demo</a> • 
     <a href="#-features-at-a-glance">Features</a> • 
     <a href="#-screenshots">Screenshots</a> • 
     <a href="#-usage">Usage</a> • 
@@ -14,7 +14,7 @@
 
 ## 🚀 Overview
 
-**WriteAgent** is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a split-screen interface, AI-powered writing assistance, voice dictation, multi-format file import, encrypted sharing, slide presentations, executable code & math blocks, and powerful export options — all without any server-side processing.
+**TextAgent** is a professional, full-featured Markdown editor and preview application that runs entirely in your browser. It provides a GitHub-style rendering experience with a split-screen interface, AI-powered writing assistance, voice dictation, multi-format file import, encrypted sharing, slide presentations, executable code & math blocks, and powerful export options — all without any server-side processing.
 
 **No sign-up. No server. No data leaves your device.**
 
@@ -42,7 +42,7 @@
 
 ## 🤖 AI Assistant
 
-WriteAgent includes a built-in AI assistant panel with **three local model sizes** and cloud providers:
+TextAgent includes a built-in AI assistant panel with **three local model sizes** and cloud providers:
 
 | Model | Provider | Type | Speed |
 |:------|:---------|:-----|:------|
@@ -108,7 +108,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 <details open>
 <summary><strong>🔒 Privacy-First — No Sign-Up, 100% Client-Side</strong></summary>
 
-**Your data never leaves your browser.** WriteAgent runs entirely client-side with no server, no account, and no tracking. Type sensitive content with confidence — even your saved data stays in localStorage on your device.
+**Your data never leaves your browser.** TextAgent runs entirely client-side with no server, no account, and no tracking. Type sensitive content with confidence — even your saved data stays in localStorage on your device.
 
 <img src="public/assets/demos/01_privacy_hero.webp" alt="Privacy-First Demo — no sign-up, live editing, dark mode toggle" width="100%">
 
@@ -353,7 +353,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📈 Development Journey
 
-WriteAgent has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, AI-powered application with 40+ features. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
+TextAgent has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, AI-powered application with 40+ features. By comparing the [current version](https://textagent.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
 
 ## 📋 Release Notes
 
@@ -419,7 +419,7 @@ WriteAgent has undergone significant evolution since its inception. What started
 | **2026-03-05** | 🎨 **Template UI polish** — category pill tabs, improved card layout, better spacing |
 | **2026-03-05** | ✨ **AI writing tags** — Polish, Formalize, Elaborate, Shorten actions for selected text or full document |
 | **2026-03-05** | 📄 **Feature Showcase as default** — comprehensive showcase loads on first visit |
-| **2026-03-04** | 🏷️ **Rebranded to WriteAgent** — new display name across all pages, meta tags, and templates |
+| **2026-03-04** | 🏷️ **Rebranded to TextAgent** — new display name across all pages, meta tags, and templates |
 | **2026-03-04** | 🔄 **Non-blocking AI panel** — AI panel opens instantly; Qwen download deferred until first use |
 | **2026-03-04** | 🧩 **Multi-model AI selector** — switch between Qwen (local), Groq Llama 3.3, Gemini, and OpenRouter |
 | **2026-03-04** | 🌐 **Google Gemini** — free-tier Gemini AI model with SSE streaming and 1M tokens/min |
@@ -452,7 +452,7 @@ WriteAgent has undergone significant evolution since its inception. What started
 | **2026-03-04** | 📱 **Mobile menu** — dedicated responsive sidebar menu |
 | **2026-03-04** | 📑 **Smart PDF export** — page-break detection, cascading adjustments, graphic scaling |
 | **2026-03-03** | 🔐 **Encrypted sharing** — AES-256-GCM encrypted markdown sharing |
-| **2026-03-03** | 🌐 **GitHub Pages deployment** — hosted on `markdownview.github.io` |
+| **2026-03-03** | 🌐 **GitHub Pages deployment** — hosted on `textagent.github.io` |
 | **2026-03-03** | 📖 **README overhaul** — comprehensive docs with screenshots |
 | **2026-03-01** | 🐛 **Mermaid toolbar UX** — copy button label, toolbar order, modal size improvements |
 | **2026-02-28** | ✨ **Code review polish** — rounded dimensions, CSS variable backgrounds |
@@ -461,10 +461,10 @@ WriteAgent has undergone significant evolution since its inception. What started
 | **2025-05-09** | 🖨 **PDF rendering fixes** — PDF export bug fixes |
 | **2025-05-01** | 🎨 **New UI & dark mode fixes** — refreshed interface |
 | **2024-04-12** | 📊 **Reading stats** — word count, character count, reading time |
-| **2024-04-09** | 🚀 **Initial commit** — WriteAgent project created |
+| **2024-04-09** | 🚀 **Initial commit** — TextAgent project created |
 
 ---
 
 <div align="center">
-    <p>Created with ❤️ by the <a href="https://github.com/markdownview">WriteAgent</a> team</p>
+    <p>Created with ❤️ by the <a href="https://github.com/Textagent">TextAgent</a> team</p>
 </div>

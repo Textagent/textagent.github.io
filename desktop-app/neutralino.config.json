@@ -21,7 +21,7 @@
   "globalVariables": {},
   "modes": {
     "window": {
-      "title": "WriteAgent",
+      "title": "TextAgent",
       "width": 800,
       "height": 500,
       "minWidth": 400,

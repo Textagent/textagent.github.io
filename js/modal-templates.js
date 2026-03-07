@@ -521,7 +521,7 @@
                         <div class="memory-share-icon"><i class="bi bi-link-45deg"></i></div>
                         <div>
                             <strong>Share as Link</strong>
-                            <small>Encrypted short link — opens in WriteAgent</small>
+                            <small>Encrypted short link — opens in TextAgent</small>
                         </div>
                         <div class="memory-share-actions">
                             <button class="memory-action-btn" id="memory-gen-link">Generate Link</button>

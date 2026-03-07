@@ -2,7 +2,7 @@
   "name": "markdown-viewer-desktop",
   "version": "1.0.0",
   "private": true,
-  "description": "Neutralinojs desktop port of WriteAgent",
+  "description": "Neutralinojs desktop port of TextAgent",
   "scripts": {
     "setup": "node setup-binaries.js",
     "postsetup": "node prepare.js",

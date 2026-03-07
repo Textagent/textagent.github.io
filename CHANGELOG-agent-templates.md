@@ -24,7 +24,7 @@
 ---
 
 ## Summary
-Added 15 complex agent templates in a new `agents` category that comprehensively showcase every content type WriteAgent supports: executable Python/Bash/JS code blocks, math blocks, SQL, HTML-autorun widgets, markdown tables, mermaid diagrams, AI/Think generation tags, LaTeX formulas, and template variables.
+Added 15 complex agent templates in a new `agents` category that comprehensively showcase every content type TextAgent supports: executable Python/Bash/JS code blocks, math blocks, SQL, HTML-autorun widgets, markdown tables, mermaid diagrams, AI/Think generation tags, LaTeX formulas, and template variables.
 
 ---
 

@@ -6,8 +6,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
     name: 'Feature Showcase',
     category: 'documentation',
     icon: 'bi-stars',
-    description: 'Explore every WriteAgent feature: AI, diagrams, math, code, presentations, and more',
-    content: '# 🚀 Welcome to WriteAgent\n\n' +
+    description: 'Explore every TextAgent feature: AI, diagrams, math, code, presentations, and more',
+    content: '# 🚀 Welcome to TextAgent\n\n' +
       '> Your all-in-one Markdown editor with live preview, AI assistance, executable code, and powerful export options — **100% client-side, zero tracking.**\n\n' +
       '---\n\n' +
       '## ✨ All Features at a Glance\n\n' +
@@ -32,7 +32,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
-      'WriteAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
+      'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
       '| Language | Runtime | Button |\n' +
       '|:---------|:--------|:-------|\n' +
       '| **Bash** | [just-bash](https://justbash.dev/) (WASM) | ▶ Run |\n' +
@@ -46,7 +46,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
       'Hover over any bash code block and click **▶ Run**:\n\n' +
       '```bash\n' +
-      'echo "Hello from WriteAgent! 🎉"\n' +
+      'echo "Hello from TextAgent! 🎉"\n' +
       '```\n\n' +
       '```bash\n' +
       'echo "Today is $(date +%A), $(date +%B\\ %d,\\ %Y)"\n' +
@@ -248,7 +248,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '```\n\n' +
       '### Pie Chart\n' +
       '```mermaid\n' +
-      'pie title WriteAgent Usage\n' +
+      'pie title TextAgent Usage\n' +
       '    "Code Docs" : 30\n' +
       '    "Notes" : 25\n' +
       '    "Blog Posts" : 20\n' +
@@ -261,8 +261,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '```plantuml\n' +
       '@startuml\n' +
       'actor User\n' +
-      'User -> WriteAgent : Write Markdown\n' +
-      'WriteAgent -> Preview : Render\n' +
+      'User -> TextAgent : Write Markdown\n' +
+      'TextAgent -> Preview : Render\n' +
       'Preview -> User : Live feedback\n' +
       '@enduml\n' +
       '```\n\n' +
@@ -364,7 +364,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '<mark>Highlighted text</mark> and <u>underlined text</u>\n\n' +
       'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub> · Math: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
       '### Footnotes\n\n' +
-      'WriteAgent supports footnotes[^1] with back-references — hover to preview!\n\n' +
+      'TextAgent supports footnotes[^1] with back-references — hover to preview!\n\n' +
       '[^1]: This is a footnote. Click it to jump back.\n\n' +
       '### Anchor Links\n\n' +
       'Click any heading to copy its anchor URL — great for sharing deep links!\n\n' +

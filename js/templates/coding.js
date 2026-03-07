@@ -691,14 +691,14 @@ echo "Octal 77 = $((8#77))"
       '  echo "Hello, $name! Welcome to bash scripting."\n' +
       '}\n\n' +
       'greet "World"\n' +
-      'greet "WriteAgent"\n' +
+      'greet "TextAgent"\n' +
       'greet "$(whoami)"\n' +
       '```\n\n' +
       '---\n\n' +
       '## 🎨 ASCII Art\n\n' +
       '```bash\n' +
       '# Draw a box\n' +
-      'msg="WriteAgent Bash Sandbox"\n' +
+      'msg="TextAgent Bash Sandbox"\n' +
       'len=${#msg}\n' +
       'border=$(printf "%0.s─" $(seq 1 $((len + 2))))\n' +
       'echo "┌${border}┐"\n' +

@@ -1,13 +1,13 @@
-# CHANGELOG — WriteAgent
+# CHANGELOG — TextAgent
 
-All changes to WriteAgent, in reverse chronological order.
+All changes to TextAgent, in reverse chronological order.
 
 ---
 
 ## 2026-03-06
 
 ### fix: header/QAB brand toggle alignment + file drop handler
-- Unified brand toggle (`chevron + WriteAgent`) at same far-left position in both header and QAB
+- Unified brand toggle (`chevron + TextAgent`) at same far-left position in both header and QAB
 - Fixed file drop: `handleDrop` called undefined `M.getFileExtension`/`M.SUPPORTED_EXTENSIONS`
 - Body-level drop handler now catches files in all modes (header open or QAB)
 - Simplified `handleDrop` to delegate to `M.importFile()` which has its own validation
@@ -216,12 +216,12 @@ All changes to WriteAgent, in reverse chronological order.
 - Callouts, footnotes, anchor links, image paste, preview themes
 - **Files:** `js/app-init.js`, `index.html`, `styles.css`
 
-### Rebrand: Markdown Viewer → WriteAgent
+### Rebrand: Markdown Viewer → TextAgent
 - Updated branding across all files
 - **Files:** `index.html`, `README.md`, `manifest.json`
 
 ### docs: comprehensive README rewrite
-- WriteAgent branding, feature tables, organized tech stack
+- TextAgent branding, feature tables, organized tech stack
 - **Files:** `README.md`
 
 ---

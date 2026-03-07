@@ -1,7 +1,7 @@
 # CHANGELOG — Pending Updates
 
 ## Product Rename & Misc Updates
-- Product renamed from "MDview" to "WriteAgent" across desktop app config, changelogs, and worker files
+- Product renamed from "MDview" to "TextAgent" across desktop app config, changelogs, and worker files
 - `index.html` — updated title, meta tags, and CSP headers
 - `js/ai-assistant.js` — AI assistant panel and chat integration updates
 - `js/templates/coding.js` — coding templates restructured and updated
@@ -10,7 +10,7 @@
 - `js/cloud-share.js` — cloud sharing branding updates
 - `src/main.js` — main entry point updates
 - `firestore.rules` / `public/firestore.rules` — security rules sync
-- `desktop-app/` — README, package.json, neutralino.config.json updated for WriteAgent branding
+- `desktop-app/` — README, package.json, neutralino.config.json updated for TextAgent branding
 - `package.json` / `package-lock.json` — project name updated
 
 ## Files Modified

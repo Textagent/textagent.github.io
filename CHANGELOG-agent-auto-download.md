@@ -18,7 +18,7 @@
 - `css/ai-docgen.css` — New `.ai-agent-download-bar` styles (progress bar, hint text, light/dark theme)
 
 ## Also Included (from previous pending changes)
-- WriteAgent product rename across desktop-app configs, changelogs, worker files
+- TextAgent product rename across desktop-app configs, changelogs, worker files
 - `js/ai-assistant.js` — AI panel integration updates
 - `js/templates/coding.js` — Coding templates restructured
 - Firestore rules sync

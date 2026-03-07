@@ -386,7 +386,7 @@
     };
 
     function updatePageTitle(fileName) {
-        var base = 'WriteAgent';
+        var base = 'TextAgent';
         if (fileName) document.title = fileName.replace(/\.md$/i, '') + ' — ' + base;
         else document.title = base;
     }

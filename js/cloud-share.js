@@ -4,7 +4,7 @@
 (function (M) {
     'use strict';
 
-    var SHARE_BASE_URL = 'https://markdownview.github.io/';
+    var SHARE_BASE_URL = 'https://textagent.github.io/';
     M.SHARE_BASE_URL = SHARE_BASE_URL;
 
     // --- Firebase Config ---
@@ -508,9 +508,9 @@
         if (headingMatch) heading = headingMatch[1].trim();
         // Sanitize filename
         var safeName = heading.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50);
-        var filename = 'writeagent-' + safeName + '.txt';
+        var filename = 'textagent-' + safeName + '.txt';
         var fileContent = '===================================\n';
-        fileContent += '  WriteAgent — Secure Share Credentials\n';
+        fileContent += '  TextAgent — Secure Share Credentials\n';
         fileContent += '===================================\n\n';
         fileContent += 'Document: ' + heading + '\n';
         fileContent += 'Created:  ' + new Date().toISOString() + '\n\n';
