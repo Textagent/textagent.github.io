@@ -8,11 +8,13 @@
  * The model ID is configurable via a `setModelId` message sent before `load`.
  */
 
-import {
-    AutoProcessor,
-    Qwen3_5ForConditionalGeneration,
-    TextStreamer,
-} from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.5";
+// Transformers.js classes — loaded dynamically in loadModel() to avoid
+// a top-level import that silently kills the worker when the CDN is unreachable.
+let AutoProcessor = null;
+let Qwen3_5ForConditionalGeneration = null;
+let TextStreamer = null;
+
+const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.5";
 
 // Model config — default to 0.8B, overridable via setModelId message
 let MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
@@ -45,6 +47,26 @@ let model = null;
  */
 async function loadModel() {
     try {
+        // Dynamically import Transformers.js (avoids top-level import crash)
+        if (!AutoProcessor) {
+            self.postMessage({
+                type: "status",
+                message: "Loading Transformers.js library...",
+            });
+            try {
+                const transformers = await import(TRANSFORMERS_URL);
+                AutoProcessor = transformers.AutoProcessor;
+                Qwen3_5ForConditionalGeneration = transformers.Qwen3_5ForConditionalGeneration;
+                TextStreamer = transformers.TextStreamer;
+            } catch (importError) {
+                self.postMessage({
+                    type: "error",
+                    message: `Failed to load AI library from CDN: ${importError.message}. Check your internet connection or try again later.`,
+                });
+                return;
+            }
+        }
+
         // Check WebGPU support
         let device = "wasm";
         if (typeof navigator !== "undefined" && navigator.gpu) {
@@ -114,9 +136,12 @@ async function loadModel() {
 
         self.postMessage({ type: "loaded", device: device });
     } catch (error) {
+        const hint = error.message.includes("Failed to fetch") || error.message.includes("NetworkError")
+            ? " (Check your internet connection and ensure huggingface.co is not blocked by CSP or firewall)"
+            : "";
         self.postMessage({
             type: "error",
-            message: `Failed to load model: ${error.message}`,
+            message: `Failed to load model: ${error.message}${hint}`,
         });
     }
 }
