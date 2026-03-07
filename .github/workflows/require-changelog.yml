@@ -34,15 +34,26 @@ jobs:
             exit 0
           fi
 
+          # Reject changelogs placed in repo root instead of changelogs/
+          ROOT_CHANGELOG=$(echo "$FILES" | grep -E '^CHANGELOG-.*\.md$' || true)
+          if [ -n "$ROOT_CHANGELOG" ]; then
+            echo ""
+            echo "❌ FAILED: Changelog found in repo root — must be in changelogs/ directory."
+            echo "   Found: $ROOT_CHANGELOG"
+            echo "   Move it: git mv $ROOT_CHANGELOG changelogs/"
+            echo ""
+            exit 1
+          fi
+
           # Check for CHANGELOG file in changelogs/ directory
           CHANGELOG=$(echo "$FILES" | grep -E '^changelogs/CHANGELOG-.*\.md$' || true)
 
           if [ -z "$CHANGELOG" ]; then
             echo ""
-            echo "❌ FAILED: No CHANGELOG-*.md file found in this commit."
+            echo "❌ FAILED: No changelog found in changelogs/ directory."
             echo ""
-            echo "Every commit with code changes must include a CHANGELOG-<topic>.md file"
-            echo "documenting what was changed."
+            echo "Every commit with code changes must include a changelogs/CHANGELOG-<topic>.md file."
+            echo "Example: changelogs/CHANGELOG-my-feature.md"
             echo ""
             exit 1
           fi
