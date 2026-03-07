@@ -1246,3 +1246,51 @@
     flex-wrap: wrap;
     gap: 4px;
 }
+
+/* Inline download progress bar on Agent card */
+.ai-agent-download-bar {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.ai-agent-dl-text {
+    font-size: 0.85em;
+    color: #818cf8;
+    margin-bottom: 6px;
+}
+
+.ai-agent-dl-progress {
+    height: 6px;
+    background: rgba(99, 102, 241, 0.15);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ai-agent-dl-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #818cf8, #6366f1);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.ai-agent-dl-hint {
+    font-size: 0.75em;
+    color: rgba(148, 163, 184, 0.7);
+    margin-top: 5px;
+}
+
+[data-theme="light"] .ai-agent-download-bar {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .ai-agent-dl-text {
+    color: #4f46e5;
+}
+
+[data-theme="light"] .ai-agent-dl-hint {
+    color: rgba(100, 116, 139, 0.7);
+}

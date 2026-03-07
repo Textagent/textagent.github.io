@@ -963,10 +963,86 @@
                 updateStepStatus(i, 'done');
 
             } catch (err) {
-                updateStepStatus(i, 'error');
-                showToast('❌ Step ' + steps[i].number + ' failed: ' + (err.message || 'Unknown error'), 'error');
-                failed = true;
-                break;
+                // Gracefully handle model not ready — download with inline progress and retry
+                if (err.message && err.message.indexOf('AI model not ready') !== -1) {
+                    var selectedModelId = perCardModel || (M.getCurrentAiModel ? M.getCurrentAiModel() : null);
+                    var models = window.AI_MODELS || {};
+                    var modelCfg = selectedModelId ? models[selectedModelId] : null;
+
+                    if (modelCfg && modelCfg.isLocal) {
+                        // Show inline download bar on the Agent card
+                        var modelName = modelCfg.dropdownName || modelCfg.label || 'Model';
+                        var dlBar = document.createElement('div');
+                        dlBar.className = 'ai-agent-download-bar';
+                        dlBar.innerHTML =
+                            '<div class="ai-agent-dl-text">⬇️ Downloading <strong>' + modelName + '</strong>...</div>'
+                            + '<div class="ai-agent-dl-progress"><div class="ai-agent-dl-fill"></div></div>'
+                            + '<div class="ai-agent-dl-hint">This is a one-time download. The model runs 100% locally.</div>';
+                        if (agentCard) agentCard.appendChild(dlBar);
+                        updateStepStatus(i, 'running'); // show ⏳ instead of ❌
+
+                        // Trigger the download
+                        localStorage.setItem('md-viewer-ai-consented', 'true');
+                        if (M.initLocalAiWorker) M.initLocalAiWorker(selectedModelId);
+
+                        // Animate the progress bar while waiting
+                        var fill = dlBar.querySelector('.ai-agent-dl-fill');
+                        var progress = 0;
+
+                        // Poll for model readiness (every 2s, up to 5 minutes)
+                        var modelReady = await new Promise(function (resolve) {
+                            var maxAttempts = 150; // 5 min at 2s intervals
+                            var attempts = 0;
+                            var pollInterval = setInterval(function () {
+                                attempts++;
+                                // Animate progress bar (asymptotically approaches 95%)
+                                progress = Math.min(95, progress + (95 - progress) * 0.08);
+                                if (fill) fill.style.width = progress + '%';
+
+                                if (M.isCurrentModelReady && M.isCurrentModelReady()) {
+                                    clearInterval(pollInterval);
+                                    if (fill) fill.style.width = '100%';
+                                    resolve(true);
+                                } else if (attempts >= maxAttempts) {
+                                    clearInterval(pollInterval);
+                                    resolve(false);
+                                }
+                            }, 2000);
+                        });
+
+                        // Remove download bar
+                        if (dlBar.parentNode) dlBar.remove();
+
+                        if (modelReady) {
+                            showToast('✅ Model ready! Resuming agent flow...', 'success');
+                            // Retry this step — decrement i so the for loop retries
+                            i--;
+                            continue;
+                        } else {
+                            updateStepStatus(i, 'error');
+                            showToast('❌ Model download timed out. Try again or select a cloud model.', 'error');
+                            failed = true;
+                            break;
+                        }
+                    } else if (selectedModelId && M.showApiKeyModal) {
+                        // Cloud model — needs API key
+                        updateStepStatus(i, 'error');
+                        M.showApiKeyModal(selectedModelId);
+                        showToast('Please enter your API key, then run the agent flow again.', 'info');
+                        failed = true;
+                        break;
+                    } else {
+                        updateStepStatus(i, 'error');
+                        showToast('❌ No model selected. Use the Model button to pick one.', 'error');
+                        failed = true;
+                        break;
+                    }
+                } else {
+                    updateStepStatus(i, 'error');
+                    showToast('❌ Step ' + steps[i].number + ' failed: ' + (err.message || 'Unknown error'), 'error');
+                    failed = true;
+                    break;
+                }
             }
         }
 
