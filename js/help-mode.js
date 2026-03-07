@@ -25,13 +25,13 @@
             name: 'Sync Scrolling',
             desc: 'Link the editor and preview panels so they scroll together. Keeps your writing position in sync with the rendered output.',
             shortcut: 'Ctrl+Shift+S',
-            demo: null
+            demo: 'assets/demos/11_editor_tools.webp'
         },
         '#toc-toggle, #qab-toc': {
             name: 'Table of Contents',
             desc: 'Toggle an auto-generated sidebar showing all headings in your document. Click any heading to jump to that section.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/11_editor_tools.webp'
         },
         '#import-button, #qab-import, #mobile-import-button': {
             name: 'Import File',
@@ -49,7 +49,7 @@
             name: 'Copy Markdown',
             desc: 'Copy the raw Markdown source text to your clipboard.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/11_editor_tools.webp'
         },
         '#share-button, #qab-share, #mobile-share-button': {
             name: 'Encrypted Share',
@@ -79,7 +79,7 @@
             name: 'Word Wrap',
             desc: 'Toggle line wrapping in the editor. When off, long lines scroll horizontally.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/11_editor_tools.webp'
         },
         '#focus-mode-toggle': {
             name: 'Focus Mode',
@@ -97,7 +97,7 @@
             name: 'Voice Dictation',
             desc: 'Dictate Markdown hands-free with speech-to-text. Supports voice commands like "new line", "bold", "heading", "bullet", and more. Multi-language support.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/11_editor_tools.webp'
         },
         '#themePickerDropdown': {
             name: 'Preview Theme',
@@ -115,7 +115,7 @@
             name: 'Document Stats',
             desc: 'Show reading time, word count, and character count for your document.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/11_editor_tools.webp'
         },
 
         // ─── Formatting Toolbar ───
@@ -123,55 +123,55 @@
             name: 'Undo',
             desc: 'Undo the last edit in the editor.',
             shortcut: 'Ctrl+Z',
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="redo"]': {
             name: 'Redo',
             desc: 'Redo the last undone edit.',
             shortcut: 'Ctrl+Y',
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="bold"]': {
             name: 'Bold',
             desc: 'Wrap selected text in **bold** markers. If nothing is selected, inserts a bold placeholder.',
             shortcut: 'Ctrl+B',
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="italic"]': {
             name: 'Italic',
             desc: 'Wrap selected text in *italic* markers.',
             shortcut: 'Ctrl+I',
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="strikethrough"]': {
             name: 'Strikethrough',
             desc: 'Wrap selected text in ~~strikethrough~~ markers.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="heading"]': {
             name: 'Heading',
             desc: 'Insert a # heading. Repeated clicks cycle through ## and ### levels.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="link"]': {
             name: 'Link',
             desc: 'Insert a Markdown link [text](url). If text is selected, it becomes the link text.',
             shortcut: 'Ctrl+K',
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="image"]': {
             name: 'Image',
             desc: 'Insert a Markdown image ![alt](url). You can also paste images from clipboard.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="code"]': {
             name: 'Inline Code',
             desc: 'Wrap selected text in `backticks` for inline code formatting.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="codeblock"]': {
             name: 'Code Block',
@@ -183,25 +183,25 @@
             name: 'Bullet List',
             desc: 'Insert an unordered list item with a - prefix.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="ol"]': {
             name: 'Numbered List',
             desc: 'Insert an ordered list item with a number prefix.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="tasklist"]': {
             name: 'Task List',
             desc: 'Insert a checkbox task item — - [ ] for unchecked, - [x] for checked. Renders as interactive checkboxes in the preview.',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="quote"]': {
             name: 'Blockquote',
             desc: 'Insert a > blockquote. Supports GitHub-style alerts: > [!NOTE], > [!TIP], > [!WARNING], > [!IMPORTANT], > [!CAUTION].',
             shortcut: null,
-            demo: null
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="hr"]': {
             name: 'Horizontal Rule',
