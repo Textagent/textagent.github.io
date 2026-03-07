@@ -182,6 +182,10 @@
         if (qabExportPdf) qabExportPdf.addEventListener('click', function () {
             document.getElementById('export-pdf').click();
         });
+        var qabExportLlm = document.getElementById('qab-export-llm-memory');
+        if (qabExportLlm) qabExportLlm.addEventListener('click', function () {
+            document.getElementById('export-llm-memory').click();
+        });
 
         // Search — open find/replace bar
         var qabSearch = document.getElementById('qab-search');
