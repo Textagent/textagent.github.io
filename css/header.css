@@ -698,6 +698,84 @@ a:focus {
 }
 
 /* ========================================
+   MOBILE OVERFLOW FIX
+   ======================================== */
+
+/* Make QAB scrollable at sub-desktop widths instead of overflowing */
+@media (max-width: 1199px) {
+  .quick-action-bar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Firefox */
+    max-width: 100vw;
+    flex-wrap: nowrap;
+  }
+
+  .quick-action-bar::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+  }
+
+  /* Prevent action buttons from shrinking */
+  .qab-actions {
+    flex-shrink: 0;
+  }
+
+  .qab-btn {
+    flex-shrink: 0;
+  }
+
+  .qab-view-modes {
+    flex-shrink: 0;
+  }
+
+  .qab-separator {
+    flex-shrink: 0;
+  }
+
+  .qab-logo-btn {
+    flex-shrink: 0;
+  }
+
+  .header-container {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}
+
+/* Further tightening for phone-sized screens */
+@media (max-width: 767px) {
+  .header-left {
+    min-width: 0;
+    overflow: hidden;
+    gap: 4px;
+  }
+
+  .github-link {
+    display: none;
+  }
+
+  .help-mode-pill {
+    display: none;
+  }
+
+  .header-brand-toggle {
+    margin-right: 4px;
+    padding: 4px 6px;
+  }
+
+  .brand-label {
+    font-size: 0.8rem;
+  }
+
+  .app-header {
+    padding: 0.5rem 0.4rem;
+  }
+}
+
+/* ========================================
    GITHUB LINK
    ======================================== */
 

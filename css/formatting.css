@@ -55,6 +55,18 @@
   .formatting-toolbar {
     padding: 3px 8px;
     gap: 1px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Firefox */
+    max-width: 100vw;
+  }
+
+  .formatting-toolbar::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
   }
 
   .fmt-btn {
@@ -62,6 +74,19 @@
     font-size: 13px;
     min-width: 26px;
     height: 26px;
+    flex-shrink: 0;
+  }
+
+  .fmt-separator {
+    flex-shrink: 0;
+  }
+
+  .fmt-ai-group {
+    flex-shrink: 0;
+  }
+
+  .fmt-vars-btn {
+    flex-shrink: 0;
   }
 }
 
