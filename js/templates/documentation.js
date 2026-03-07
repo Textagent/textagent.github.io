@@ -22,7 +22,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) |\n' +
       '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
-      '| **Export** | Markdown · HTML · PDF · LLM Memory (4 formats + shareable link) |\n' +
+      '| **Export** | Markdown · HTML · PDF · LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |\n' +
       '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
@@ -282,11 +282,12 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '> Click the **🎤 Microphone** button in the toolbar. Say "help" to see the voice commands cheat sheet.\n\n' +
       '---\n\n' +
       '## 🧠 LLM Memory Export\n\n' +
-      'Convert your markdown into **shareable LLM memory format** for use with AI tools:\n\n' +
-      '- **Standard** — Clean structured format\n' +
-      '- **System Prompt** — Ready for ChatGPT/Claude system messages\n' +
-      '- **OpenAI** — JSON format for OpenAI API\n' +
-      '- **Raw** — Plain text extraction\n\n' +
+      'Convert your markdown into **portable LLM context** in 5 formats:\n\n' +
+      '- **XML** — Structured tags, ideal for Claude and system prompts\n' +
+      '- **JSON** — Structured JSON, easy to parse and inject via API\n' +
+      '- **Compact JSON** — Minified with abbreviated keys, saves ~60% tokens\n' +
+      '- **Markdown** — Clean markdown, works with any LLM\n' +
+      '- **Plain Text** — No formatting, simple readable text\n\n' +
       'Includes metadata, token count, and one-click copy/download.\n\n' +
       '> [!TIP]\n' +
       '> Find "Export as LLM Memory" in the **Export** dropdown menu.\n\n' +
@@ -382,7 +383,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] HTML sandbox (iframe preview)\n' +
       '- [x] JavaScript sandbox\n' +
       '- [x] SQL sandbox (SQLite WASM)\n' +
-      '- [x] LLM Memory export (4 formats)\n' +
+      '- [x] LLM Memory export (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text)\n' +
       '- [x] Presentation mode with layouts \\& transitions\n' +
       '- [x] Encrypted cloud sharing with passphrase protection\n' +
       '- [x] Read-only shared links\n' +

@@ -414,21 +414,25 @@
                     <div class="memory-section">
                         <label class="memory-label">Memory Format</label>
                         <div class="memory-template-grid">
-                            <button class="memory-template-btn active" data-template="standard">
-                                <strong>Standard Memory</strong>
-                                <small>Clean structured context for any LLM</small>
+                            <button class="memory-template-btn active" data-template="xml">
+                                <strong>XML</strong>
+                                <small>Structured tags — ideal for Claude, system prompts</small>
                             </button>
-                            <button class="memory-template-btn" data-template="system">
-                                <strong>System Prompt Block</strong>
-                                <small>Ready to paste into system prompts</small>
+                            <button class="memory-template-btn" data-template="json">
+                                <strong>JSON</strong>
+                                <small>Structured JSON — easy to parse and inject via API</small>
                             </button>
-                            <button class="memory-template-btn" data-template="openai">
-                                <strong>OpenAI Custom Instructions</strong>
-                                <small>Formatted for ChatGPT memory/instructions</small>
+                            <button class="memory-template-btn" data-template="compact">
+                                <strong>Compact JSON</strong>
+                                <small>Minified — saves tokens for large contexts</small>
                             </button>
-                            <button class="memory-template-btn" data-template="raw">
-                                <strong>Raw Structured</strong>
-                                <small>Minimal formatting, maximum compatibility</small>
+                            <button class="memory-template-btn" data-template="markdown">
+                                <strong>Markdown</strong>
+                                <small>Clean markdown — universal, works with any LLM</small>
+                            </button>
+                            <button class="memory-template-btn" data-template="plaintext">
+                                <strong>Plain Text</strong>
+                                <small>No formatting — simple, readable text</small>
                             </button>
                         </div>
                     </div>

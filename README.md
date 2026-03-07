@@ -28,7 +28,7 @@
 | **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM), Gemini 3.1 Flash Lite, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten, Image); enhanced context menu; per-card model selection; concurrent block generation; inline review with accept/reject/regenerate; AI-powered image generation |
 | **🎤 Voice Dictation** | Speech-to-text with Markdown-aware commands — hash headings, bold, italic, lists, code blocks, links, and more |
 | **Import** | MD, DOCX, XLSX/XLS, CSV, HTML, JSON, XML, PDF — drag & drop or click to import |
-| **Export** | Markdown, HTML, PDF (smart page-breaks), LLM Memory (4 formats + shareable link) |
+| **Export** | Markdown, HTML, PDF (smart page-breaks), LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |
 | **Sharing** | AES-256-GCM encrypted sharing via Firebase; read-only shared links, optional passphrase protection — decryption key stays in URL fragment (never sent to server) |
 | **Presentation** | Slide mode using `---` separators, keyboard navigation, multiple layouts & transitions, speaker notes, overview grid, 20+ PPT templates with image backgrounds |
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
@@ -77,7 +77,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 | **Markdown (.md)** | Raw markdown with timestamped filename |
 | **HTML** | Self-contained HTML with all styling |
 | **PDF** | Smart page-break detection, cascading adjustments, oversized graphic scaling |
-| **LLM Memory** | 4 formats: Standard, System Prompt, OpenAI Instructions, Raw — with token count, metadata, copy/download, and shareable encrypted link |
+| **LLM Memory** | 5 formats: XML, JSON, Compact JSON (token-saving), Markdown, Plain Text — with live token count, metadata, copy/download, and shareable encrypted link |
 
 ## 📸 Screenshots
 
@@ -348,6 +348,7 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-08** | 🧠 **LLM Memory overhaul** — fixed broken data flow (modular refactor regression); replaced generic format options with 5 useful formats: XML (structured tags), JSON (API-ready), Compact JSON (minified, ~60% token savings), Markdown (universal), Plain Text (no formatting); live per-format token count |
 | **2026-03-08** | 🛠️ **Enhanced Quick Action Bar** — compact header now includes File Tree, Help, and collapsible Tools dropdown (Presentation, Zen Mode, Word Wrap, Focus Mode, Voice Dictation, Dark Mode with sun/moon toggle, Preview Theme picker with checkmarks); header toolbar slides behind AI panel instead of shrinking |
 | **2026-03-08** | 🐛 **AI panel overlap fix** — header toolbar stays full-width when AI panel opens; sub-header elements (content, dropzone, formatting toolbar) receive `margin-right` to avoid overlap; AI panel overlays naturally via z-index |
 | **2026-03-08** | 🐛 **AI worker fix** — fixed "Model unavailable" error caused by CSP missing `huggingface.co` in `connect-src` and static ES module import silently crashing the worker; converted to dynamic `import()` with try/catch for graceful error reporting and retry support |
