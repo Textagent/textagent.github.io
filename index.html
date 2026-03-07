@@ -17,6 +17,21 @@
     <meta name="rating" content="general">
     <meta name="referrer" content="no-referrer">
 
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://www.gstatic.com;
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        connect-src 'self' https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh;
+        img-src 'self' data: blob: https://www.plantuml.com https://markdownview.github.io;
+        font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        worker-src 'self' blob:;
+        child-src 'self' blob:;
+        frame-src 'self' blob:;
+        object-src 'none';
+        base-uri 'self';
+    ">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://markdownview.github.io/">

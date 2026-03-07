@@ -136,9 +136,16 @@
     var CLOUD_SAVE_INTERVAL = 60000;
     var CLOUD_DOC_KEY = 'md-viewer-cloud-doc-id';
     var CLOUD_KEY_KEY = 'md-viewer-cloud-enc-key';
+    var CLOUD_WT_KEY = 'md-viewer-cloud-write-token';
     var cloudSaveTimer = null;
     var cloudSaveDirty = false;
     var lastCloudContent = '';
+
+    // Generate a random write-token for Firestore document ownership
+    function generateWriteToken() {
+        var arr = crypto.getRandomValues(new Uint8Array(24));
+        return Array.from(arr, function (b) { return b.toString(36); }).join('').substring(0, 32);
+    }
 
     function scheduleCloudSave() {
         cloudSaveDirty = true;
@@ -163,8 +170,15 @@
             var dataString = uint8ArrayToBase64Url(encrypted);
             var keyString = await keyToBase64Url(key);
             var existingDocId = localStorage.getItem(CLOUD_DOC_KEY);
-            if (existingDocId) { await db.collection('shares').doc(existingDocId).set({ d: dataString, t: Date.now() }); }
-            else { var docRef = await db.collection('shares').add({ d: dataString, t: Date.now() }); localStorage.setItem(CLOUD_DOC_KEY, docRef.id); }
+            if (existingDocId) {
+                var wt = localStorage.getItem(CLOUD_WT_KEY) || '';
+                await db.collection('shares').doc(existingDocId).set({ d: dataString, t: Date.now(), wt: wt });
+            } else {
+                var wt = generateWriteToken();
+                var docRef = await db.collection('shares').add({ d: dataString, t: Date.now(), wt: wt });
+                localStorage.setItem(CLOUD_DOC_KEY, docRef.id);
+                localStorage.setItem(CLOUD_WT_KEY, wt);
+            }
             var docId = existingDocId || localStorage.getItem(CLOUD_DOC_KEY);
             var shareUrl = '#id=' + docId + '&k=' + keyString;
             if (window.location.hash !== shareUrl) history.replaceState(null, '', shareUrl);
@@ -205,7 +219,8 @@
         var keyString = await keyToBase64Url(key);
         var shareUrl;
         try {
-            var docRef = await db.collection('shares').add({ d: dataString, t: Date.now() });
+            var wt = generateWriteToken();
+            var docRef = await db.collection('shares').add({ d: dataString, t: Date.now(), wt: wt });
             shareUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&k=' + keyString;
         } catch (fbError) {
             console.warn('Firebase unavailable, using URL fallback:', fbError);
@@ -223,7 +238,8 @@
         var encrypted = await encryptData(key, compressed);
         var dataString = uint8ArrayToBase64Url(encrypted);
         var saltString = uint8ArrayToBase64Url(salt);
-        var docRef = await db.collection('shares').add({ d: dataString, salt: saltString, secure: true, t: Date.now() });
+        var wt = generateWriteToken();
+        var docRef = await db.collection('shares').add({ d: dataString, salt: saltString, secure: true, t: Date.now(), wt: wt });
         return SHARE_BASE_URL + '#id=' + docRef.id + '&secure=1';
     }
 
@@ -326,6 +342,7 @@
         M.isViewingSharedDoc = false;
         localStorage.removeItem(CLOUD_DOC_KEY);
         localStorage.removeItem(CLOUD_KEY_KEY);
+        localStorage.removeItem(CLOUD_WT_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
         M.setViewMode('split');
     });
@@ -334,6 +351,7 @@
         M.isViewingSharedDoc = false;
         localStorage.removeItem(CLOUD_DOC_KEY);
         localStorage.removeItem(CLOUD_KEY_KEY);
+        localStorage.removeItem(CLOUD_WT_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
     });
 
@@ -407,8 +425,8 @@
             if (isSecureShareMode) {
                 var pass = sharePassInput.value;
                 var passConfirm = sharePassConfirm.value;
-                if (!pass || pass.length < 4) {
-                    sharePassError.textContent = 'Passphrase must be at least 4 characters.';
+                if (!pass || pass.length < 8) {
+                    sharePassError.textContent = 'Passphrase must be at least 8 characters.';
                     sharePassError.style.display = '';
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';

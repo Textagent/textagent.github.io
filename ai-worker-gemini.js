@@ -25,7 +25,9 @@ async function validateApiKey() {
     }
     try {
         self.postMessage({ type: 'status', message: 'Validating Gemini API key...' });
-        const response = await fetch(`${GEMINI_BASE}?key=${apiKey}`);
+        const response = await fetch(GEMINI_BASE, {
+            headers: { 'x-goog-api-key': apiKey },
+        });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.error?.message || `HTTP ${response.status}`);
@@ -68,10 +70,10 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         }
 
         // Use streaming endpoint
-        const url = `${GEMINI_BASE}/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${apiKey}`;
+        const url = `${GEMINI_BASE}/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
             body: JSON.stringify(requestBody),
         });
 

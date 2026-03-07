@@ -930,6 +930,7 @@
 
         function handler(e) {
             if (!e.data || e.data.type !== 'js-result') return;
+            if (e.source !== iframe.contentWindow) return; // Security: only accept messages from our sandbox
             cleanup();
 
             var logs = e.data.logs || [];

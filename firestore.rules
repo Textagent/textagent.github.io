@@ -9,19 +9,45 @@ service cloud.firestore {
       allow read: if true;
 
       // Allow create with strict validation:
-      // - Only 'd' (data) and 't' (timestamp) fields allowed
-      // - Data must be a string under 1MB
-      // - Timestamp must be an integer
-      allow create: if request.resource.data.keys().hasOnly(['d', 't'])
-                    && request.resource.data.d is string
-                    && request.resource.data.d.size() < 1048576
-                    && request.resource.data.t is int;
+      // - Quick share: { d, t, wt }
+      // - Secure share: { d, t, salt, secure, wt }
+      // - 'wt' is the write-token for ownership verification
+      allow create: if (
+                      // Quick share / cloud auto-save
+                      (request.resource.data.keys().hasOnly(['d', 't', 'wt'])
+                       && request.resource.data.d is string
+                       && request.resource.data.d.size() < 1048576
+                       && request.resource.data.t is int
+                       && request.resource.data.wt is string
+                       && request.resource.data.wt.size() >= 16
+                       && request.resource.data.wt.size() <= 64)
+                      ||
+                      // Secure share
+                      (request.resource.data.keys().hasOnly(['d', 't', 'salt', 'secure', 'wt'])
+                       && request.resource.data.d is string
+                       && request.resource.data.d.size() < 1048576
+                       && request.resource.data.t is int
+                       && request.resource.data.salt is string
+                       && request.resource.data.secure == true
+                       && request.resource.data.wt is string
+                       && request.resource.data.wt.size() >= 16
+                       && request.resource.data.wt.size() <= 64)
+                    );
 
-      // Allow update with same validation (for cloud auto-save)
-      allow update: if request.resource.data.keys().hasOnly(['d', 't'])
+      // Allow update only if write-token matches (ownership proof)
+      // Backward compat: old docs without 'wt' can still be updated
+      allow update: if request.resource.data.keys().hasOnly(['d', 't', 'wt'])
                     && request.resource.data.d is string
                     && request.resource.data.d.size() < 1048576
-                    && request.resource.data.t is int;
+                    && request.resource.data.t is int
+                    && request.resource.data.wt is string
+                    && (
+                      // Doc has no write-token (legacy) — allow update
+                      !('wt' in resource.data)
+                      ||
+                      // Write-token matches — owner can update
+                      request.resource.data.wt == resource.data.wt
+                    );
 
       // Never allow deletes via client
       allow delete: if false;

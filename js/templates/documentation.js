@@ -416,14 +416,18 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- **Split / Editor / Preview** — Choose your view mode with draggable resize divider\n' +
       '- **Formatting Toolbar** — Bold, italic, strikethrough, heading, link, image, code, lists, table, undo/redo\n\n' +
       '---\n\n' +
-      '## 🛡️ Security \\& Privacy\n\n' +
-      '- **100% Client-Side** — No server processing, no data collection\n' +
-      '- **AES-256-GCM Encryption** — Shared links are end-to-end encrypted\n' +
-      '- **SRI Integrity Hashes** — All third-party scripts verified\n' +
-      '- **XSS Sanitization** — DOMPurify protects against injection attacks\n' +
-      '- **Encrypted API Keys** — AI provider keys are encrypted in localStorage\n' +
-      '- **No Tracking** — Zero analytics, zero cookies, zero telemetry\n' +
-      '- **Open Source** — Fully transparent, inspect every line of code\n'
+      '## \ud83d\udee1\ufe0f Security \\& Privacy\n\n' +
+      '- **100% Client-Side** \u2014 No server processing, no data collection\n' +
+      '- **Content Security Policy** \u2014 CSP meta tag restricts script/resource loading to known CDN origins\n' +
+      '- **AES-256-GCM Encryption** \u2014 Shared links are end-to-end encrypted\n' +
+      '- **Firestore Ownership Tokens** \u2014 Write-tokens prevent anonymous document overwrites\n' +
+      '- **Secure API Key Handling** \u2014 AI provider keys sent via HTTP headers, never in URLs\n' +
+      '- **SRI Integrity Hashes** \u2014 All third-party scripts verified\n' +
+      '- **XSS Sanitization** \u2014 DOMPurify protects against injection attacks\n' +
+      '- **postMessage Validation** \u2014 Origin checks on all sandboxed iframe communication\n' +
+      '- **Passphrase Policy** \u2014 Minimum 8-character passphrases for secure sharing\n' +
+      '- **No Tracking** \u2014 Zero analytics, zero cookies, zero telemetry\n' +
+      '- **Open Source** \u2014 Fully transparent, inspect every line of code\n'
   },
   {
     name: 'README',
