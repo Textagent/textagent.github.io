@@ -93,7 +93,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 > Click any feature below to watch a live demo.
 
-<details>
+<details open>
 <summary><strong>🔒 Privacy-First — No Sign-Up, 100% Client-Side</strong></summary>
 
 **Your data never leaves your browser.** MDview runs entirely client-side with no server, no account, and no tracking. Type sensitive content with confidence — even your saved data stays in localStorage on your device.
@@ -102,7 +102,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>🤖 AI Writing Assistant — Local & Cloud Models</strong></summary>
 
 **Built-in AI with 4 model options** including a fully local Qwen model that never sends data outside your browser. Open the AI panel, choose a model (Gemini, Groq, OpenRouter, or local Qwen), and use quick actions like Summarize, Expand, Rephrase, Fix Grammar, Explain, and Simplify.
@@ -111,7 +111,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>📄 Templates Gallery — 68+ Templates, 10 Categories</strong></summary>
 
 **Start any document in seconds.** Browse 68+ professionally designed templates across 10 categories: AI, Documentation, Project, Technical, Creative, Coding, Maths, PPT, Quiz, and Tables. AI-powered templates include `{{AI:}}` tags for one-click document generation.
@@ -120,7 +120,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>💻 Code Execution — Run Python, JS & SQL In-Browser</strong></summary>
 
 **Turn Markdown into an interactive notebook.** Execute code in 6 languages directly in the preview pane — Python (Pyodide), JavaScript, SQL (SQLite), Bash (just-bash), HTML, and Math (Nerdamer). All sandboxed, all client-side.
@@ -129,7 +129,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>🎬 Presentation Mode — Markdown to Slides</strong></summary>
 
 **Present from your Markdown.** Add `---` separators to create slides, then click Present. Navigate with arrow keys, view speaker notes, switch layouts, and use the overview grid. Choose from 20+ PPT templates with image backgrounds.
@@ -138,7 +138,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>📊 Table Spreadsheet Tools — Sort, Stats & Charts</strong></summary>
 
 **Interactive tables with spreadsheet-level power.** Hover over any rendered table to reveal a toolbar with Sort, Filter, Search, Stats (Σ), Chart, Add Row/Col, CSV/MD export, and inline cell editing. Generate bar charts directly from your data.
@@ -147,7 +147,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>🎨 Writing Modes & Themes — Zen, Dark & 6 Themes</strong></summary>
 
 **Your perfect writing environment.** Switch between 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen), toggle dark mode, and enter Zen mode for distraction-free fullscreen writing. Focus mode dims surrounding paragraphs.
@@ -156,7 +156,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>📂 Import & Export — 8 Formats In, PDF/HTML Out</strong></summary>
 
 **Import anything, export everything.** Drag and drop files in 8 formats (MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF) — all converted to Markdown client-side. Export as Markdown, HTML, or smart PDF with intelligent page breaks.
@@ -165,7 +165,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
-<details>
+<details open>
 <summary><strong>🔐 Encrypted Sharing — Zero-Knowledge Security</strong></summary>
 
 **Share securely with AES-256-GCM encryption.** Choose Quick Share (key in URL fragment, never sent to server) or Secure Share with a custom passphrase. Recipients need the passphrase to decrypt — the server never sees your content or keys.
