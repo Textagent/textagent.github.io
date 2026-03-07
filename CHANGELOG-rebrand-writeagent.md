@@ -41,4 +41,4 @@ Renamed all user-facing product branding from **MDview** to **WriteAgent** acros
 ## Intentionally Preserved
 - Firebase config keys (`mdview-share.*`) — infrastructure identifiers
 - localStorage keys (`mdview-*`) — existing user data preservation
-- GitHub URLs (`markdownview.github.io`) — separate concern
+- GitHub URLs (`writeagent.github.io`) — separate concern

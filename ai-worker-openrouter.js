@@ -64,7 +64,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://markdownview.github.io',
+                'HTTP-Referer': 'https://writeagent.github.io',
                 'X-Title': 'WriteAgent',
             },
             body: JSON.stringify({

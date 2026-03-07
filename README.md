@@ -4,7 +4,7 @@
     <img src="assets/icon.jpg" alt="WriteAgent Logo" width="150px"/>
     <h3>AI-Powered Markdown Editor & Viewer</h3>
     <p>Write, preview, present, and share — all in your browser, 100% client-side</p>
-    <a href="https://markdownview.github.io/">Live Demo</a> • 
+    <a href="https://writeagent.github.io/">Live Demo</a> • 
     <a href="#-features-at-a-glance">Features</a> • 
     <a href="#-screenshots">Screenshots</a> • 
     <a href="#-usage">Usage</a> • 
@@ -353,7 +353,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📈 Development Journey
 
-WriteAgent has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, AI-powered application with 40+ features. By comparing the [current version](https://markdownview.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
+WriteAgent has undergone significant evolution since its inception. What started as a simple markdown parser has grown into a full-featured, AI-powered application with 40+ features. By comparing the [current version](https://writeagent.github.io/) with the [original version](https://a1b91221.markdownviewer.pages.dev/), you can see the remarkable progress in UI design, performance optimization, and feature implementation.
 
 ## 📋 Release Notes
 
@@ -452,7 +452,7 @@ WriteAgent has undergone significant evolution since its inception. What started
 | **2026-03-04** | 📱 **Mobile menu** — dedicated responsive sidebar menu |
 | **2026-03-04** | 📑 **Smart PDF export** — page-break detection, cascading adjustments, graphic scaling |
 | **2026-03-03** | 🔐 **Encrypted sharing** — AES-256-GCM encrypted markdown sharing |
-| **2026-03-03** | 🌐 **GitHub Pages deployment** — hosted on `markdownview.github.io` |
+| **2026-03-03** | 🌐 **GitHub Pages deployment** — hosted on `writeagent.github.io` |
 | **2026-03-03** | 📖 **README overhaul** — comprehensive docs with screenshots |
 | **2026-03-01** | 🐛 **Mermaid toolbar UX** — copy button label, toolbar order, modal size improvements |
 | **2026-02-28** | ✨ **Code review polish** — rounded dimensions, CSS variable backgrounds |
@@ -466,5 +466,5 @@ WriteAgent has undergone significant evolution since its inception. What started
 ---
 
 <div align="center">
-    <p>Created with ❤️ by the <a href="https://github.com/markdownview">WriteAgent</a> team</p>
+    <p>Created with ❤️ by the <a href="https://github.com/writeagent">WriteAgent</a> team</p>
 </div>
