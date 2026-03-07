@@ -1,0 +1,413 @@
+/* ============================================
+   help-mode.css — Help Mode Toggle & Popover
+   ============================================ */
+
+/* ── Help Mode Pill Button (mirrors .demo-badge) ── */
+.help-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    padding: 3px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+}
+
+.help-mode-pill i {
+    font-size: 0.85em;
+}
+
+.help-mode-pill:hover {
+    background: linear-gradient(135deg, #0f766e, #0d9488);
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.5);
+    transform: translateY(-1px) scale(1.05);
+}
+
+.help-mode-pill:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Dark mode pill */
+.dark-mode .help-mode-pill {
+    background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
+}
+
+.dark-mode .help-mode-pill:hover {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    box-shadow: 0 4px 16px rgba(20, 184, 166, 0.6);
+}
+
+/* Active state — pulsing glow when help mode is on */
+.help-mode-pill.help-toggle-on {
+    background: linear-gradient(135deg, #0f766e, #0d9488);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.35), 0 4px 16px rgba(13, 148, 136, 0.5);
+    animation: helpBtnPulse 2s ease-in-out infinite;
+}
+
+.dark-mode .help-mode-pill.help-toggle-on {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.4), 0 4px 16px rgba(20, 184, 166, 0.5);
+}
+
+@keyframes helpBtnPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.35), 0 4px 16px rgba(13, 148, 136, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(13, 148, 136, 0.2), 0 4px 16px rgba(13, 148, 136, 0.5);
+    }
+}
+
+/* ── Button ring pulse in help mode ── */
+.help-mode-active .tool-button,
+.help-mode-active .fmt-btn,
+.help-mode-active .qab-btn,
+.help-mode-active .view-mode-btn,
+.help-mode-active .mobile-menu-item,
+.help-mode-active .mobile-view-mode-btn,
+.help-mode-active .qab-view-btn,
+.help-mode-active .dropdown-toggle {
+    outline: 2px solid rgba(13, 148, 136, 0.35);
+    outline-offset: 2px;
+    transition: outline 0.3s ease, outline-offset 0.3s ease, box-shadow 0.3s ease;
+    cursor: help !important;
+}
+
+.help-mode-active .tool-button:hover,
+.help-mode-active .fmt-btn:hover,
+.help-mode-active .qab-btn:hover,
+.help-mode-active .view-mode-btn:hover,
+.help-mode-active .mobile-menu-item:hover,
+.help-mode-active .mobile-view-mode-btn:hover,
+.help-mode-active .qab-view-btn:hover,
+.help-mode-active .dropdown-toggle:hover {
+    outline-color: rgba(13, 148, 136, 0.7);
+    box-shadow: 0 0 12px rgba(13, 148, 136, 0.25);
+}
+
+/* Don't ring the help button itself */
+.help-mode-active .help-mode-pill {
+    outline: none;
+}
+
+/* ── Help Popover ── */
+.help-popover {
+    position: fixed;
+    z-index: 99999;
+    width: 320px;
+    max-width: calc(100vw - 16px);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.help-popover.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* ── Dark mode popover ── */
+.dark-mode .help-popover {
+    background: #1c2333;
+    border-color: #2d3748;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Header ── */
+.help-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 0;
+}
+
+.help-popover-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0d9488;
+    letter-spacing: 0.2px;
+}
+
+.dark-mode .help-popover-title {
+    color: #2dd4bf;
+}
+
+.help-popover-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.help-popover-close:hover {
+    color: #6b7280;
+}
+
+.dark-mode .help-popover-close:hover {
+    color: #d1d5db;
+}
+
+/* ── Body ── */
+.help-popover-body {
+    padding: 8px 14px 4px;
+}
+
+.help-popover-desc {
+    font-size: 0.82rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0 0 6px;
+}
+
+.dark-mode .help-popover-desc {
+    color: #9ca3af;
+}
+
+/* ── Shortcut ── */
+.help-popover-shortcut {
+    margin: 6px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.help-popover-shortcut kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 #d1d5db;
+}
+
+.dark-mode .help-popover-shortcut kbd {
+    color: #d1d5db;
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 1px 0 #4a5568;
+}
+
+/* ── Watch Demo Button (inside popover) ── */
+.help-popover-watch-demo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 6px 0 2px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+}
+
+.help-popover-watch-demo i {
+    font-size: 1em;
+}
+
+.help-popover-watch-demo:hover {
+    background: linear-gradient(135deg, #0f766e, #0d9488);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.5);
+    transform: translateY(-1px);
+}
+
+/* ── Footer ── */
+.help-popover-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 14px 12px;
+}
+
+.help-popover-try {
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.help-popover-try:hover {
+    background: linear-gradient(135deg, #0f766e, #0d9488);
+    box-shadow: 0 3px 10px rgba(13, 148, 136, 0.3);
+    transform: translateY(-1px);
+}
+
+.help-popover-dismiss {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.help-popover-dismiss:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.dark-mode .help-popover-dismiss {
+    color: #9ca3af;
+    border-color: #374151;
+}
+
+.dark-mode .help-popover-dismiss:hover {
+    background: #2d3748;
+    color: #d1d5db;
+}
+
+/* ============================================
+   Demo Panel — 50% screen, expandable
+   ============================================ */
+.help-demo-panel {
+    position: fixed;
+    z-index: 100000;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.92);
+    width: 50vw;
+    max-height: 80vh;
+    background: #111827;
+    border-radius: 16px;
+    box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.help-demo-panel.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+/* Fullscreen state */
+.help-demo-panel.fullscreen {
+    width: 100vw;
+    max-height: 100vh;
+    top: 0;
+    left: 0;
+    transform: none;
+    border-radius: 0;
+}
+
+/* ── Panel Header ── */
+.help-demo-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.help-demo-panel-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #e5e7eb;
+    letter-spacing: 0.2px;
+}
+
+.help-demo-panel-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.help-demo-panel-expand,
+.help-demo-panel-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.help-demo-panel-expand:hover,
+.help-demo-panel-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Panel Body (video) ── */
+.help-demo-panel-body {
+    flex: 1;
+    overflow: auto;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.help-demo-panel-body img {
+    width: 100%;
+    max-height: calc(80vh - 56px);
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.help-demo-panel.fullscreen .help-demo-panel-body img {
+    max-height: calc(100vh - 56px);
+    border-radius: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .help-popover {
+        width: calc(100vw - 24px);
+        max-width: 340px;
+        border-radius: 12px;
+    }
+
+    .help-demo-panel {
+        width: 92vw;
+        max-height: 70vh;
+    }
+}

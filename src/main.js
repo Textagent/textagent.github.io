@@ -28,6 +28,7 @@ import '../css/speech.css';
 import '../css/table-tools.css';
 import '../css/ai-docgen.css';
 import '../css/feature-demos.css';
+import '../css/help-mode.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -52,6 +53,7 @@ async function loadModules() {
         import('../js/speechToText.js'),
         import('../js/table-tools.js'),
         import('../js/feature-demos.js'),
+        import('../js/help-mode.js'),
     ]);
 
     // Phase 3: Templates (parallel — all independent data modules)

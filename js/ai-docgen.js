@@ -31,8 +31,14 @@
     function getFencedRanges(text) {
         var ranges = [];
         var match;
+        // Fenced code blocks (``` or ~~~)
         var re = /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?\n\1\s*$/gm;
         while ((match = re.exec(text)) !== null) {
+            ranges.push({ start: match.index, end: match.index + match[0].length });
+        }
+        // Inline code spans (`...`)
+        var inlineRe = /`([^`\n]+)`/g;
+        while ((match = inlineRe.exec(text)) !== null) {
             ranges.push({ start: match.index, end: match.index + match[0].length });
         }
         return ranges;
