@@ -4,7 +4,7 @@
 (function (M) {
     'use strict';
 
-    var SHARE_BASE_URL = 'https://writeagent.github.io/';
+    var SHARE_BASE_URL = 'https://markdownview.github.io/';
     M.SHARE_BASE_URL = SHARE_BASE_URL;
 
     // --- Firebase Config ---
