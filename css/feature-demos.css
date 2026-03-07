@@ -1,0 +1,158 @@
+/* ============================================
+   feature-demos.css — Demo Badge & Modal Styles
+   ============================================ */
+
+/* ── ▶ Demo Badge ── */
+.demo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 10px;
+    padding: 2px 10px;
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border-radius: 20px;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+    position: relative;
+    top: -2px;
+}
+
+.demo-badge i {
+    font-size: 0.9em;
+}
+
+.demo-badge:hover {
+    background: linear-gradient(135deg, #0f766e, #0d9488);
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.5);
+    transform: translateY(-1px) scale(1.05);
+}
+
+.demo-badge:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Dark mode badge */
+.dark-mode .demo-badge {
+    background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
+}
+
+.dark-mode .demo-badge:hover {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    box-shadow: 0 4px 16px rgba(20, 184, 166, 0.6);
+}
+
+/* ── Demo Modal Overlay ── */
+.demo-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.demo-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* ── Demo Modal Content ── */
+.demo-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: demoModalIn 0.35s ease;
+}
+
+@keyframes demoModalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ── Title ── */
+.demo-modal-title {
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-align: center;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.3px;
+}
+
+/* ── Video (animated .webp) ── */
+.demo-modal-video {
+    max-width: 85vw;
+    max-height: 80vh;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    object-fit: contain;
+}
+
+/* ── Close Button ── */
+.demo-modal-close {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+    z-index: 1;
+}
+
+.demo-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .demo-badge {
+        font-size: 0.55em;
+        padding: 1px 7px;
+        margin-left: 6px;
+    }
+
+    .demo-modal-video {
+        max-width: 95vw;
+        max-height: 85vh;
+        border-radius: 8px;
+    }
+
+    .demo-modal-title {
+        font-size: 0.95rem;
+    }
+}

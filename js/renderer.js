@@ -191,6 +191,9 @@
             // Table spreadsheet tools (sort, filter, stats, chart, etc.)
             if (M.addTableToolbars) M.addTableToolbars();
 
+            // Feature demo badges (▶ Demo buttons on Feature Showcase headings)
+            if (M.attachDemoBadges) M.attachDemoBadges(M.markdownPreview);
+
             // DocGen: bind preview placeholder card actions
             if (M.bindDocgenPreviewActions) M.bindDocgenPreviewActions(M.markdownPreview);
 

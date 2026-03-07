@@ -78,17 +78,23 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 ## 📸 Screenshots
 
-### Code Syntax Highlighting
-![Code Syntax Highlighting](assets/code.png)
+### Split-View Editor — Live Preview
+![Split-View Editor with live preview, formatting toolbar, and feature overview](assets/split-view-editor.png)
 
-### Mathematical Expressions Support
-![Mathematical Expressions](assets/mathexp.png)
+### AI Writing Assistant — Local & Cloud Models
+![AI Assistant panel with model selector, action chips, and three-column layout](assets/ai-assistant.png)
 
-### Mermaid Diagrams
-![Mermaid Diagrams](assets/mermaid.png)
+### Templates Gallery — 81+ Templates, 11 Categories
+![Templates modal with category tabs, search, and template cards](assets/templates-gallery.png)
 
-### Tables Support
-![Tables Support](assets/table.png)
+### LaTeX Math & Mermaid Diagrams
+![Math expressions and interactive Mermaid diagrams with flowchart, sequence, and pie chart](assets/math-mermaid.png)
+
+### Code Execution & Table Spreadsheet Tools
+![In-browser SQL execution, interactive table tools with sort, filter, stats, and charts](assets/code-execution-tables.png)
+
+### Presentation Mode — Markdown to Slides
+![Slide presentation mode with dark theme and navigation controls](assets/presentation-mode.png)
 
 ## 🎬 Feature Demos
 
@@ -113,9 +119,9 @@ Import files directly — they're auto-converted to Markdown client-side:
 </details>
 
 <details open>
-<summary><strong>📄 Templates Gallery — 68+ Templates, 10 Categories</strong></summary>
+<summary><strong>📄 Templates Gallery — 81+ Templates, 11 Categories</strong></summary>
 
-**Start any document in seconds.** Browse 68+ professionally designed templates across 10 categories: AI, Documentation, Project, Technical, Creative, Coding, Maths, PPT, Quiz, and Tables. AI-powered templates include `{{AI:}}` tags for one-click document generation.
+**Start any document in seconds.** Browse 81+ professionally designed templates across 11 categories: AI, Documentation, Project, Technical, Creative, Coding, Maths, PPT, Quiz, Tables, and Financial. AI-powered templates include `{{AI:}}` tags for one-click document generation.
 
 <img src="assets/demos/03_templates_gallery.webp" alt="Templates Gallery — browsing categories and loading AI Business Proposal template" width="100%">
 
@@ -276,6 +282,7 @@ MDview has undergone significant evolution since its inception. What started as 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-07** | ▶ **Feature demo badges** — clickable ▶ Demo badges on Feature Showcase headings open fullscreen animated video modal; 9 features mapped to demo videos; right-click + D shortcut; teal gradient badge with dark mode support |
 | **2026-03-07** | 🎬 **Product demo videos** — 9 animated WebP demos added to README (Privacy Hero, AI Assistant, Templates Gallery, Code Execution, Presentation Mode, Table Tools, Writing Modes, Import/Export, Encrypted Sharing) showcasing all key features with feature descriptions |
 | **2026-03-07** | 🔀 **Template variables** — `$(varName)` substitution engine; in-editor variable table with ⚡ Vars button; auto-detect mode (type variables anywhere → click Vars → table generated → fill → apply); 7 built-in globals (`$(date)`, `$(time)`, etc.); 12 templates updated with variable support for instant reusability |
 | **2026-03-06** | 🤖 **AI templates** — new AI category with 13 AI-powered templates (Business Proposal, Research Paper, PRD, Marketing Copy, Lesson Plan, RFC, Cover Letter, SWOT, Content Calendar, Stock Research, Financial Analysis, Investment Thesis, Portfolio Review); one-click `{{AI:}}` / `{{Think:}}` document generation |

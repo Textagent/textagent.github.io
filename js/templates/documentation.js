@@ -13,15 +13,20 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '## ✨ All Features at a Glance\n\n' +
       '| Category | Features |\n' +
       '|:---------|:---------|\n' +
-      '| **Editing** | Live Preview · Sync Scrolling · Find & Replace (Regex) · Zen Mode · Word Wrap Toggle |\n' +
-      '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math · Mermaid Diagrams · Emoji |\n' +
-      '| **AI** | Built-in AI Assistant — Local Qwen 3.5 + Cloud: Gemini, Groq, OpenRouter |\n' +
-      '| **Voice** | 🎤 Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
+      '| **Editor** | Live preview · Split/Editor/Preview modes · Sync scrolling · Formatting toolbar · Find \\& Replace (regex) · Word wrap toggle · Draggable resize divider |\n' +
+      '| **Writing Modes** | Zen mode (distraction-free) · Focus mode (dimmed paragraphs) · Dark mode · 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |\n' +
+      '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
+      '| **🤖 AI Assistant** | Local Qwen 3.5 (WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
+      '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation (Gemini Imagen) — per-card model selector · concurrent block operations |\n' +
+      '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
+      '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) |\n' +
       '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
-      '| **Export** | Markdown · HTML · PDF · LLM Memory Format |\n' +
-      '| **Sharing** | ☁️ End-to-end encrypted cloud sharing via Firebase |\n' +
-      '| **Extras** | Presentation Mode (PPT) · Preview Themes · Dark Mode · Templates (19+) |\n\n' +
+      '| **Export** | Markdown · HTML · PDF · LLM Memory (4 formats + shareable link) |\n' +
+      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links |\n' +
+      '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
+      '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'MDview can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -89,7 +94,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'data = [{"name": "Alice", "score": 95}, {"name": "Bob", "score": 87}, {"name": "Carol", "score": 92}]\n' +
       'avg = sum(d["score"] for d in data) / len(data)\n' +
       'print(f"Average score: {avg:.1f}")\n' +
-      'print(f"Top scorer: {max(data, key=lambda d: d[\'score\'])[\'name\']}")\n' +
+      "print(f\"Top scorer: {max(data, key=lambda d: d['score'])['name']}\")\n" +
       '```\n\n' +
       '---\n\n' +
       '## 🌐 HTML Sandbox\n\n' +
@@ -108,7 +113,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '<p>This HTML, CSS, and JS runs inside a secure iframe.</p>\n' +
       '```\n\n' +
       '```html\n' +
-      '<button onclick="document.getElementById(\'c\').textContent = ++n">Click me!</button>\n' +
+      "<button onclick=\"document.getElementById('c').textContent = ++n\">Click me!</button>\n" +
       '<p>Count: <span id="c">0</span></p>\n' +
       '<script>let n = 0;</script>\n' +
       '```\n\n' +
@@ -126,27 +131,53 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '---\n\n' +
       '## 🗄️ SQL Sandbox\n\n' +
       'Run SQL queries on an **in-memory SQLite database** — results display as formatted tables.\n' +
-      'Tables persist across blocks on the same page, so you can CREATE in one block and SELECT in the next!\n\n' +
+      "Tables persist across blocks on the same page, so you can CREATE in one block and SELECT in the next!\n\n" +
       '```sql\n' +
-      'CREATE TABLE IF NOT EXISTS demo (id INTEGER PRIMARY KEY, name TEXT, score REAL);\n' +
-      'INSERT INTO demo VALUES (1, \'Alice\', 95.5), (2, \'Bob\', 87.3), (3, \'Carol\', 92.1);\n' +
+      "CREATE TABLE IF NOT EXISTS demo (id INTEGER PRIMARY KEY, name TEXT, score REAL);\n" +
+      "INSERT INTO demo VALUES (1, 'Alice', 95.5), (2, 'Bob', 87.3), (3, 'Carol', 92.1);\n" +
       'SELECT name, score FROM demo ORDER BY score DESC;\n' +
       '```\n\n' +
       '---\n\n' +
-      '## \ud83d\udcca Table Spreadsheet Tools\n\n' +
-      'Every rendered markdown table gets an **interactive toolbar** on hover \u2014 like a mini Excel!\n\n' +
+      '## 🏷️ AI Document Tags\n\n' +
+      'Embed AI-powered content generation **directly in your document** using three specialized tags:\n\n' +
+      '| Tag | Purpose | Example |\n' +
+      '|:----|:--------|:--------|\n' +
+      '| `{{AI: prompt}}` | Generate text content | Marketing copy, PRD sections, summaries |\n' +
+      '| `{{Think: prompt}}` | Deep reasoning / analysis | Comparisons, evaluations, strategic analysis |\n' +
+      '| `{{Image: prompt}}` | Generate images (Gemini Imagen) | Product mockups, illustrations, diagrams |\n\n' +
+      '**How it works:**\n' +
+      '1. Write a tag like `{{AI: Write an executive summary for a SaaS product}}`\n' +
+      '2. Click **Generate** on the placeholder card (or **Fill All** for all tags)\n' +
+      '3. Review the AI output — **Accept**, **Regenerate**, or **Reject**\n' +
+      '4. Each card has its own **model selector** — switch models per-block!\n\n' +
+      '> [!TIP]\n' +
+      '> Check out the **AI** category in Templates for 13 ready-made AI-fillable documents!\n\n' +
+      '---\n\n' +
+      '## 🔀 Template Variables\n\n' +
+      'Create **reusable documents** with the template variable engine:\n\n' +
+      '- Type `$(projectName)` or `$(authorName)` anywhere in your document\n' +
+      '- Click the **⚡ Vars** button — the system auto-detects all variables\n' +
+      '- A variable table appears at the top — fill in your values\n' +
+      '- Click **⚡ Vars** again — all occurrences are replaced instantly!\n\n' +
+      '**7 Built-in Global Variables** (auto-resolved, no input needed):\n' +
+      '`$(date)` · `$(time)` · `$(year)` · `$(month)` · `$(day)` · `$(timestamp)` · `$(uuid)`\n\n' +
+      '> [!TIP]\n' +
+      '> Many templates come with pre-defined variables. Load one and click ⚡ Vars to customize!\n\n' +
+      '---\n\n' +
+      '## 📊 Table Spreadsheet Tools\n\n' +
+      'Every rendered markdown table gets an **interactive toolbar** on hover — like a mini Excel!\n\n' +
       '| Tool | What it does |\n' +
       '|:-----|:------------|\n' +
       '| **Sort** | Click any column header to sort ascending/descending |\n' +
       '| **Filter** | Per-column text filter to narrow down rows |\n' +
       '| **Search** | Full-text search across all cells with highlighting |\n' +
-      '| **\u03a3 Stats** | Sum, Average, Min, Max, Count, Unique per column |\n' +
+      '| **Σ Stats** | Sum, Average, Min, Max, Count, Unique per column |\n' +
       '| **Chart** | Generate a canvas bar chart from any column |\n' +
-      '| **+ Row / + Col** | One-click \u2014 adds new rows or columns to the editor |\n' +
+      '| **+ Row / + Col** | One-click — adds new rows or columns to the editor |\n' +
       '| **CSV / MD** | Copy table as CSV or Markdown to clipboard |\n' +
       '| **Download** | Download table as a .csv file |\n' +
       '| **Cell Edit** | Double-click any cell to edit inline, Enter to save |\n\n' +
-      'Try it on this sample table \u2014 hover to see the toolbar!\n\n' +
+      'Try it on this sample table — hover to see the toolbar!\n\n' +
       '| Name | Department | Salary | Rating |\n' +
       '|------|-----------|-------:|-------:|\n' +
       '| Alice | Engineering | 125000 | 4.8 |\n' +
@@ -167,6 +198,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '---\n\n' +
       '## 📊 Mermaid Diagrams\n\n' +
       'Interactive diagrams with zoom, pan, and fullscreen — click any diagram!\n\n' +
+      '**Mermaid Toolbar** — hover any diagram to reveal: ⛶ Zoom/Pan modal · PNG download · 📋 Copy to clipboard · SVG download\n\n' +
       '### Flowchart\n' +
       '```mermaid\n' +
       'flowchart LR\n' +
@@ -197,23 +229,37 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '    "AI Writing" : 10\n' +
       '```\n\n' +
       '---\n\n' +
+      '## 🌱 PlantUML Diagrams\n\n' +
+      'Render PlantUML diagrams with live preview — powered by the PlantUML server:\n\n' +
+      '```plantuml\n' +
+      '@startuml\n' +
+      'actor User\n' +
+      'User -> MDview : Write Markdown\n' +
+      'MDview -> Preview : Render\n' +
+      'Preview -> User : Live feedback\n' +
+      '@enduml\n' +
+      '```\n\n' +
+      '---\n\n' +
       '## 🤖 AI Assistant\n\n' +
       'Open the AI panel and chat with **multiple models** — local or cloud:\n\n' +
       '| Model | Type | Speed |\n' +
       '|:------|:-----|:------|\n' +
-      '| **Qwen 3.5** | 🏠 Local (runs in browser) | ⚡ Fast |\n' +
-      '| **Gemini 2.0 Flash** | ☁️ Cloud (free tier) | 🚀 Very Fast |\n' +
-      '| **Llama 3.3 70B** | ☁️ Cloud via OpenRouter | 🧠 Powerful |\n' +
-      '| **Llama via Groq** | ☁️ Cloud via Groq | ⚡ Ultra Fast |\n\n' +
+      '| **Qwen 3.5** | 🏠 Local (runs in browser via WebGPU/WASM) | ⚡ Fast |\n' +
+      '| **Gemini 3.1 Flash Lite** | ☁️ Cloud (Google free tier) | 🚀 Very Fast |\n' +
+      '| **Llama 3.3 70B** | ☁️ Cloud via Groq | ⚡ Ultra Fast |\n' +
+      '| **Auto · Best Free** | ☁️ Cloud via OpenRouter | 🧠 Powerful |\n\n' +
       '**AI Capabilities:**\n' +
       '- 📝 Summarize documents (agent-style chunked processing)\n' +
       '- ✍️ Improve writing style and grammar\n' +
       '- 🌐 Translate to any language\n' +
       '- 💬 Chat about your content with full context\n' +
       '- 🧠 Thinking mode for detailed step-by-step analysis\n' +
-      '- 📋 Insert AI responses directly into the editor\n\n' +
+      '- 📋 Insert AI responses directly into the editor\n' +
+      '- ✨ AI Writing Tags: Polish · Formalize · Elaborate · Shorten · Image\n' +
+      '- 🎯 Per-card model selection for each generated block\n' +
+      '- 🖼️ AI image generation via Gemini Imagen\n\n' +
       '> [!TIP]\n' +
-      '> Click the **🤖 AI** button in the toolbar to open the assistant panel. API keys are encrypted in localStorage.\n\n' +
+      '> Click the **🤖 AI** button in the toolbar to open the assistant panel. Select text and right-click for quick AI actions via the enhanced context menu.\n\n' +
       '---\n\n' +
       '## 🎤 Voice Dictation (Speech-to-Text)\n\n' +
       'Dictate your markdown hands-free with **voice commands**:\n\n' +
@@ -226,7 +272,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| "italic \\<text\\>" | `*text*` |\n' +
       '| "bullet" | `- ` list item |\n' +
       '| "checkbox" | `- [ ] ` task item |\n' +
-      '| "code" | Inline `` ` `` backtick |\n' +
+      '| "code" | Inline `` \` `` backtick |\n' +
       '| "link \\<url\\>" | `[url](url)` |\n\n' +
       'Supports **multiple languages** — switch via the language picker in the mic menu.\n\n' +
       '> [!TIP]\n' +
@@ -246,22 +292,30 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'Turn your markdown into a **slideshow presentation**!\n\n' +
       '- Each `---` horizontal rule creates a new slide\n' +
       '- Navigate with ← → arrow keys or on-screen controls\n' +
-      '- Full-screen presentation with clean styling\n' +
-      '- Perfect for meetings, demos, and teaching\n\n' +
+      '- **Multiple layouts** — title, section, two-column, image\n' +
+      '- **Transitions** — smooth slide transitions\n' +
+      '- **Speaker notes** — add notes visible only to the presenter\n' +
+      '- **Overview grid** — see all slides at a glance\n' +
+      '- **20+ PPT templates** with Unsplash image backgrounds\n' +
+      '- Full-screen presentation with clean styling\n\n' +
       '> [!TIP]\n' +
       '> Click the **📊 Presentation** icon in the toolbar to start your slideshow.\n\n' +
       '---\n\n' +
-      '## ☁️ Cloud Save & Encrypted Sharing\n\n' +
+      '## ☁️ Cloud Save \\& Encrypted Sharing\n\n' +
       '**Auto-save** to localStorage every second. **Cloud sync** to Firebase with end-to-end AES-256-GCM encryption:\n\n' +
       '1. Click **Share** → generates an encrypted link\n' +
       '2. Content is compressed (pako gzip) and encrypted client-side\n' +
       '3. Only the link holder with the key can decrypt\n' +
       '4. No one (not even the server) can read your content\n\n' +
+      '**Additional sharing features:**\n' +
+      '- 🔑 **Passphrase protection** — optionally add a passphrase to shared links\n' +
+      '- 🔒 **Read-only shared links** — recipients cannot overwrite the original\n' +
+      '- ✏️ **Edit Copy** — creates a local fork instead of overwriting\n\n' +
       '> [!NOTE]\n' +
       '> Your encryption key is in the URL hash (`#k=...`) and is **never** sent to the server.\n\n' +
       '---\n\n' +
       '## 📁 Smart File Import\n\n' +
-      'Drag & drop or click **Import** to convert from **8 formats**:\n\n' +
+      'Drag \\& drop or click **Import** to convert from **8 formats**:\n\n' +
       '| Format | Description |\n' +
       '|:-------|:------------|\n' +
       '| `.md` | Markdown files |\n' +
@@ -273,22 +327,26 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| `.xml` | XML documents |\n' +
       '| `.pdf` | PDF text extraction |\n\n' +
       '---\n\n' +
-      '## 😀 Emoji Support\n\n' +
-      'Use GitHub-style emoji shortcodes:\n\n' +
-      ':rocket: :star: :heart: :fire: :tada: :sparkles: :zap: :bulb: :memo: :pushpin:\n\n' +
-      'Or just paste Unicode emoji directly: 🎉 🚀 ⭐ 🔥 💡 ✅ 🎯 🧠\n\n' +
-      '---\n\n' +
-      '## 📝 Text Formatting\n\n' +
+      '## 📝 Text Formatting \\& Markdown Features\n\n' +
       '**Bold**, *italic*, ***bold italic***, ~~strikethrough~~\n\n' +
       '<mark>Highlighted text</mark> and <u>underlined text</u>\n\n' +
       'Chemical formulas: H<sub>2</sub>O, CO<sub>2</sub> · Math: x<sup>2</sup>, e<sup>iπ</sup>\n\n' +
+      '### Footnotes\n\n' +
+      'MDview supports footnotes[^1] with back-references — hover to preview!\n\n' +
+      '[^1]: This is a footnote. Click it to jump back.\n\n' +
+      '### Anchor Links\n\n' +
+      'Click any heading to copy its anchor URL — great for sharing deep links!\n\n' +
+      '### Image Paste\n\n' +
+      'Paste images directly from your clipboard — they\'re embedded as base64 inline.\n\n' +
+      '### Table of Contents\n\n' +
+      'Auto-generated clickable sidebar TOC for easy navigation.\n\n' +
       '### Tables\n\n' +
       '| Feature | Shortcut | Description |\n' +
       '|:--------|:---------|:------------|\n' +
       '| Bold | <kbd>Ctrl</kbd>+<kbd>B</kbd> | **Bold text** |\n' +
       '| Italic | <kbd>Ctrl</kbd>+<kbd>I</kbd> | *Italic text* |\n' +
       '| Save | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Export as .md |\n' +
-      '| Find | <kbd>Ctrl</kbd>+<kbd>F</kbd> | Find & Replace |\n' +
+      '| Find | <kbd>Ctrl</kbd>+<kbd>F</kbd> | Find \\& Replace |\n' +
       '| Zen Mode | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Distraction-free |\n' +
       '| Sync Scroll | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Toggle sync |\n\n' +
       '### Blockquotes\n\n' +
@@ -305,42 +363,63 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '> [!CAUTION]\n' +
       '> Negative potential consequences of an action.\n\n' +
       '---\n\n' +
-      '## 📋 Task Lists & Checklists\n\n' +
+      '## 📋 Task Lists \\& Checklists\n\n' +
       '- [x] Live preview with GitHub styling\n' +
       '- [x] Syntax highlighting for 180+ languages\n' +
-      '- [x] LaTeX math rendering (KaTeX)\n' +
-      '- [x] Mermaid diagrams with zoom/pan\n' +
+      '- [x] LaTeX math rendering (MathJax)\n' +
+      '- [x] Mermaid diagrams with zoom/pan/export toolbar\n' +
+      '- [x] PlantUML diagram rendering\n' +
       '- [x] AI Assistant — 4 models (local + cloud)\n' +
+      '- [x] AI Document Tags (AI, Think, Image)\n' +
+      '- [x] Per-card AI model selection\n' +
+      '- [x] Template variable engine with auto-detect\n' +
       '- [x] Voice dictation with markdown commands\n' +
-      '- [x] Executable bash & math blocks\n' +
+      '- [x] Executable bash \\& math blocks\n' +
       '- [x] Python sandbox (Pyodide WASM)\n' +
       '- [x] HTML sandbox (iframe preview)\n' +
+      '- [x] JavaScript sandbox\n' +
+      '- [x] SQL sandbox (SQLite WASM)\n' +
       '- [x] LLM Memory export (4 formats)\n' +
-      '- [x] Presentation mode (slideshow)\n' +
-      '- [x] Encrypted cloud sharing (Firebase)\n' +
+      '- [x] Presentation mode with layouts \\& transitions\n' +
+      '- [x] Encrypted cloud sharing with passphrase protection\n' +
+      '- [x] Read-only shared links\n' +
       '- [x] Multi-format file import (8 types)\n' +
-      '- [x] Dark mode & Zen mode\n' +
-      '- [x] Find & Replace with regex\n' +
-      '- [x] Word count & reading time\n' +
-      '- [x] Preview themes\n' +
+      '- [x] Dark mode, Focus mode \\& Zen mode\n' +
+      '- [x] 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen)\n' +
+      '- [x] Find \\& Replace with regex\n' +
+      '- [x] Word count \\& reading time\n' +
       '- [x] Word wrap toggle\n' +
       '- [x] Emoji shortcodes\n' +
-      '- [x] PDF export\n' +
-      '- [x] 55+ templates (9 categories)\n' +
-      '- [x] Table spreadsheet tools\n' +
+      '- [x] PDF export with smart page breaks\n' +
+      '- [x] 81+ templates (11 categories)\n' +
+      '- [x] Table spreadsheet tools (sort, filter, stats, chart)\n' +
+      '- [x] Formatting toolbar\n' +
+      '- [x] Table of contents\n' +
+      '- [x] Image paste from clipboard\n' +
+      '- [x] Footnotes \\& anchor links\n' +
+      '- [x] Desktop app (Neutralino.js)\n' +
       '- [ ] Your feature suggestion here!\n\n' +
+      '---\n\n' +
+      '## 😀 Emoji Support\n\n' +
+      'Use GitHub-style emoji shortcodes:\n\n' +
+      ':rocket: :star: :heart: :fire: :tada: :sparkles: :zap: :bulb: :memo: :pushpin:\n\n' +
+      'Or just paste Unicode emoji directly: 🎉 🚀 ⭐ 🔥 💡 ✅ 🎯 🧠\n\n' +
       '---\n\n' +
       '## 🌙 Editor Customization\n\n' +
       '- **Dark Mode** — Toggle with the 🌙 moon icon\n' +
       '- **Zen Mode** — Distraction-free writing (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>)\n' +
-      '- **Preview Themes** — Switch between GitHub, classic, and other preview styles\n' +
+      '- **Focus Mode** — Dims surrounding paragraphs to keep you focused on current text\n' +
+      '- **Preview Themes** — Switch between: GitHub · GitLab · Notion · Dracula · Solarized · Evergreen\n' +
       '- **Word Wrap** — Toggle editor line wrapping\n' +
       '- **Sync Scrolling** — Editor and preview scroll together\n' +
-      '- **Split / Editor / Preview** — Choose your view mode\n\n' +
+      '- **Split / Editor / Preview** — Choose your view mode with draggable resize divider\n' +
+      '- **Formatting Toolbar** — Bold, italic, strikethrough, heading, link, image, code, lists, table, undo/redo\n\n' +
       '---\n\n' +
-      '## 🛡️ Security & Privacy\n\n' +
+      '## 🛡️ Security \\& Privacy\n\n' +
       '- **100% Client-Side** — No server processing, no data collection\n' +
       '- **AES-256-GCM Encryption** — Shared links are end-to-end encrypted\n' +
+      '- **SRI Integrity Hashes** — All third-party scripts verified\n' +
+      '- **XSS Sanitization** — DOMPurify protects against injection attacks\n' +
       '- **Encrypted API Keys** — AI provider keys are encrypted in localStorage\n' +
       '- **No Tracking** — Zero analytics, zero cookies, zero telemetry\n' +
       '- **Open Source** — Fully transparent, inspect every line of code\n'
