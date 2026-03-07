@@ -8,14 +8,14 @@ When committing code changes, **always** include a changelog file that documents
 
 ## Steps
 
-1. Create or update a `CHANGELOG-<topic>.md` file in the repo root that summarizes all changes in plain text:
+1. Create or update a `changelogs/CHANGELOG-<topic>.md` file that summarizes all changes in plain text:
    - What was changed and why
    - Which files were modified/added/deleted
    - Any measurable impact (e.g., bundle size, performance)
 
 2. Stage all modified files **plus** the changelog file:
    ```bash
-   git add <changed-files> CHANGELOG-<topic>.md
+   git add <changed-files> changelogs/CHANGELOG-<topic>.md
    ```
 
 3. Commit with a descriptive message:
@@ -31,7 +31,8 @@ When committing code changes, **always** include a changelog file that documents
 
 ## Rules
 
-- **MANDATORY: Never commit code without an accompanying CHANGELOG-<topic>.md file.** The GitHub Actions workflow `require-changelog.yml` will reject any push that contains code changes without a changelog. There are NO exceptions.
+- **MANDATORY: Never commit code without an accompanying `changelogs/CHANGELOG-<topic>.md` file.** The GitHub Actions workflow `require-changelog.yml` will reject any push that contains code changes without a changelog. There are NO exceptions.
+- **All changelogs MUST be placed in the `changelogs/` directory.** Do not create changelog files in the repo root.
 - **NEVER use `--no-verify` flag.** This bypasses pre-commit hooks and must not be used under any circumstances.
 - **NEVER make empty commits** (e.g., `--allow-empty`). Every commit must contain meaningful changes.
 - The changelog should be human-readable markdown

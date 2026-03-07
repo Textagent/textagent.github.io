@@ -34,8 +34,8 @@ jobs:
             exit 0
           fi
 
-          # Check for CHANGELOG file
-          CHANGELOG=$(echo "$FILES" | grep -E '^CHANGELOG-.*\.md$' || true)
+          # Check for CHANGELOG file in changelogs/ directory
+          CHANGELOG=$(echo "$FILES" | grep -E '^changelogs/CHANGELOG-.*\.md$' || true)
 
           if [ -z "$CHANGELOG" ]; then
             echo ""
