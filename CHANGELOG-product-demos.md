@@ -1,10 +1,17 @@
-# Product Demo Videos
+# README Demo Videos Update
 
 ## What Changed
-- Added `assets/demos/` directory with product demo video recordings
-- `01_privacy_hero.webp` — showcases no-sign-up, 100% client-side editing, live preview, dark mode toggle
-- `02_ai_assistant.webp` — shows AI panel opening, model selection (Gemini 3.1 Flash Lite), action chips, AI chat interaction
-- `03_templates_gallery.webp` — browses 10+ template categories (AI, Coding, PPT, Tables), loads AI Business Proposal template with {{AI:}} tags
+- Added `🎬 Feature Demos` section to `README.md` with 9 collapsible `<details>` blocks
+- Each block includes: feature name (heading), feature description, and full-width animated WebP demo video
+- Section placed between Screenshots and Usage for high visibility
 
-## Why
-Go-to-market product demo videos for the landing page and marketing materials.
+## Features Documented
+1. Privacy-First — No Sign-Up Demo
+2. AI Writing Assistant Demo
+3. Templates Gallery Demo
+4. Code Execution Demo
+5. Presentation Mode Demo
+6. Table Spreadsheet Tools Demo
+7. Writing Modes & Themes Demo
+8. Import & Export Demo
+9. Encrypted Sharing Demo
