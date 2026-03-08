@@ -45,7 +45,6 @@
       case 'quiz': return 'project';
       case 'tables': return 'technical';
       case 'ai': return 'creative';
-      case 'agents': return 'technical';
       default: return 'doc';
     }
   }
@@ -62,7 +61,6 @@
       case 'quiz': return 'bi-patch-question';
       case 'tables': return 'bi-table';
       case 'ai': return 'bi-robot';
-      case 'agents': return 'bi-person-gear';
       default: return 'bi-file-earmark';
     }
   }

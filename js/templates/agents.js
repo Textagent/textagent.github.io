@@ -6,7 +6,7 @@
 window.__MDV_TEMPLATES_AGENTS = [
     {
         name: 'Data Science Pipeline',
-        category: 'agents',
+        category: 'ai',
         icon: 'bi-diagram-3',
         description: 'End-to-end data science workflow — Python code, statistical math, data tables, and pipeline diagrams',
         variables: [
@@ -140,7 +140,7 @@ print(f"Weights: {[round(w, 4) for w in weights]}")
     },
     {
         name: 'SQL Database Workshop',
-        category: 'agents',
+        category: 'ai',
         icon: 'bi-database-gear',
         description: 'Interactive SQL workshop — schema design, queries, ERD diagrams, and sample data tables',
         variables: [
@@ -339,7 +339,7 @@ Provide specific, actionable recommendations with expected performance improveme
     },
     {
         name: 'Full-Stack App Blueprint',
-        category: 'agents',
+        category: 'ai',
         icon: 'bi-layers',
         description: 'Complete app architecture — interactive HTML preview, API design, JS logic, and deployment diagram',
         content: '# 🏗️ Full-Stack App Blueprint — Task Manager\n\n' +
@@ -465,7 +465,7 @@ Provide specific, actionable recommendations with expected performance improveme
     },
     {
         name: 'AI Research Agent',
-        category: 'agents',
+        category: 'ai',
         icon: 'bi-robot',
         description: 'Multi-step AI research workflow — AI/Think reasoning, LaTeX math, chain-of-thought analysis, and citations',
         variables: [
@@ -598,7 +598,7 @@ Use formal academic language and reference the specific metrics from the benchma
     },
     {
         name: 'DevOps Runbook',
-        category: 'agents',
+        category: 'ai',
         icon: 'bi-hdd-rack',
         description: 'Production runbook — bash scripts, monitoring dashboards, incident response tables, and escalation flows',
         variables: [
@@ -712,7 +712,7 @@ Use formal academic language and reference the specific metrics from the benchma
     },
   {
     name: 'Financial Modeling Agent',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-cash-stack',
     description: 'Financial analysis toolkit — compound interest math, Python projections, financial tables, and growth charts',
     variables: [
@@ -801,7 +801,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'ML Model Evaluation',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-graph-up',
     description: 'Machine learning evaluation suite — confusion matrices, Python metrics, ROC analysis, and comparison tables',
     content: '# 🤖 ML Model Evaluation Report\n' +
@@ -878,7 +878,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'API Testing Suite',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-plug',
     description: 'REST API test suite — curl commands, response validation, status code tables, and sequence diagrams',
     variables: [
@@ -981,7 +981,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'HTML Dashboard Builder',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-speedometer2',
     description: 'Interactive analytics dashboard — live HTML charts, KPI cards, and real-time data visualization',
     content: '# 📊 Interactive Dashboard Builder\n' +
@@ -1079,7 +1079,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'Competitive Intel Agent',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-binoculars',
     description: 'Market intelligence report — AI-powered SWOT, competitor tables, positioning diagrams, and strategy',
     variables: [
@@ -1171,7 +1171,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'Algorithm Visualizer',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-cpu',
     description: 'Algorithm analysis — Big-O math, Python implementations, complexity comparison tables, and flowcharts',
     content: '# ⚡ Algorithm Visualizer\n' +
@@ -1283,7 +1283,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'System Design Document',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-diagram-2',
     description: 'Architecture design — mermaid system diagrams, SQL schemas, capacity math, and trade-off tables',
     variables: [
@@ -1416,7 +1416,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'Data Cleaning Toolkit',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-funnel',
     description: 'Data quality pipeline — Python cleaning scripts, validation tables, bash processing, and quality metrics',
     content: '# 🧹 Data Cleaning Toolkit\n' +
@@ -1541,7 +1541,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'Project Retrospective Agent',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-arrow-counterclockwise',
     description: 'Sprint/project retro — AI analysis, metrics tables, timeline diagrams, and interactive HTML survey',
     variables: [
@@ -1692,7 +1692,7 @@ Use formal academic language and reference the specific metrics from the benchma
   },
   {
     name: 'Science Lab Notebook',
-    category: 'agents',
+    category: 'ai',
     icon: 'bi-mortarboard',
     description: 'Scientific experiment notebook — LaTeX equations, Python simulations, data tables, and experiment diagrams',
     content: '# 🔬 Science Lab Notebook\n' +
