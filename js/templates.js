@@ -89,7 +89,7 @@
       </div>
       <div class="template-card-name">${tpl.name}</div>
       <div class="template-card-desc">${tpl.description}</div>
-      <span class="template-card-tag ${tpl.category}">${tpl.category}</span>
+      <span class="template-card-tag ${tpl.category}">${tpl.displayTag || tpl.category}</span>
       <div class="template-card-preview">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
     `;
 
