@@ -32,15 +32,15 @@
 | **Sharing** | AES-256-GCM encrypted sharing via Firebase; read-only shared links, optional passphrase protection — decryption key stays in URL fragment (never sent to server) |
 | **Presentation** | Slide mode using `---` separators, keyboard navigation, multiple layouts & transitions, speaker notes, overview grid, 20+ PPT templates with image backgrounds |
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
-| **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) |
+| **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) · 25+ compiled languages via [Judge0 CE](https://ce.judge0.com): C, C++, Rust, Go, Java, TypeScript, Kotlin, Scala, Ruby, Swift, Haskell, Dart, C#, and more |
 | **Security** | Content Security Policy (CSP), SRI integrity hashes, XSS sanitization (DOMPurify), ReDoS protection, Firestore write-token ownership, API keys via HTTP headers, postMessage origin validation, 8-char passphrase minimum, sandboxed code execution |
 | **AI Document Tags** | `{{AI:}}` text generation, `{{Think:}}` deep reasoning, `{{Image:}}` image generation (Gemini Imagen) — per-card model selector, concurrent block operations |
 | **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE methods, custom headers, JSON body, response stored in `$(api_varName)` variables; inline review panel; toolbar GET/POST buttons |
 | **🔗 Agent Flow** | `{{Agent:}}` multi-step pipeline — define Step 1/2/3, chain outputs, per-card model + search provider selector, live step status indicators (⏳/✅/❌), review combined output |
 | **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free), Brave Search, Serper.dev; search results injected into LLM context; source citations in responses; per-agent-card search provider selector |
-| **🐧 Linux Terminal** | `{{Linux:}}` tag opens a full Debian Linux terminal ([WebVM](https://webvm.io)) in a new window — `Packages:` field for install reminders; package badges; toolbar 🐧 Terminal button; persistent sessions via IndexedDB |
+| **🐧 Linux Terminal** | `{{Linux:}}` tag — two modes: (1) Terminal mode opens full Debian Linux ([WebVM](https://webvm.io)) in new window with `Packages:` field; (2) Compile & Run mode (`Language:` + `Script:`) compiles/executes 25+ languages (C++, Rust, Go, Java, Python, TypeScript, Kotlin, Scala…) via [Judge0 CE](https://ce.judge0.com) with inline output, execution time & memory stats |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 96+ templates (12 categories: AI, Agents, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 108+ templates (12 categories: AI, Agents, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
 
 ## 🤖 AI Assistant
 
@@ -91,7 +91,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 ### AI Writing Assistant — Local & Cloud Models
 ![AI Assistant panel with model selector, action chips, and three-column layout](assets/ai-assistant.png)
 
-### Templates Gallery — 96+ Templates, 12 Categories
+### Templates Gallery — 108+ Templates, 12 Categories
 ![Templates modal with category tabs, search, and template cards](assets/templates-gallery.png)
 
 ### LaTeX Math & Mermaid Diagrams
@@ -260,6 +260,15 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
+<details open>
+<summary><strong>🐧 Compile & Run — 25+ Languages via Judge0 CE</strong></summary>
+
+**Compile and execute code inline.** Write `{{Linux:}}` tags with `Language:` and `Script:` fields to compile and run C++, Rust, Go, Java, Python, TypeScript, Kotlin, Scala, and 25+ more languages. Output (stdout, stderr, compile errors) appears inline with execution time and memory stats.
+
+<img src="public/assets/demos/18_compile_run.webp" alt="Compile & Run — C++ and Rust code executing inline with output and stats" width="100%">
+
+</details>
+
 ## 📝 Usage
 
 | Action | How |
@@ -339,6 +348,7 @@ Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Orde
 | [Pyodide](https://pyodide.org/) | In-browser Python (CPython via WASM) |
 | [sql.js](https://sql.js.org/) | In-browser SQLite (WASM) |
 | [WebVM](https://webvm.io) | Full Debian Linux terminal (CheerpX x86 emulation) |
+| [Judge0 CE](https://ce.judge0.com) | Server-side code execution for 25+ compiled languages |
 
 ## 🤝 Contributing
 
@@ -362,6 +372,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-08** | 🐧 **Compile & Run** — `{{Linux:}}` tag now supports `Language:` + `Script:` fields for compiling and executing 25+ languages (C, C++, Rust, Go, Java, Python, TypeScript, Kotlin, Scala, Ruby, Swift, Haskell, Dart, C#, PHP, Lua…) via [Judge0 CE](https://ce.judge0.com); inline output with stdout, stderr, compile errors, execution time & memory stats; 10 new language-specific coding templates |
 | **2026-03-08** | 🐧 **Linux Terminal** — new `{{Linux:}}` tag opens a full Debian Linux terminal ([WebVM](https://webvm.io)) in a new browser window; `Packages:` field for package reminders with visual badges; persistent sessions via IndexedDB; toolbar 🐧 Terminal button; Linux Terminal coding template; fully independent module (`linux-docgen.js`) |
 | **2026-03-08** | 🔌 **API Component** — new standalone `{{API:}}` tag for REST API calls directly in markdown; supports GET/POST/PUT/DELETE methods, custom headers, JSON body, and `Variable:` to store response in `$(api_varName)`; toolbar GET/POST buttons insert templates; API cards render inline with method badge + URL; execute with ▶ button, review response with Accept/Regenerate/Reject; response variables accessible via ⚡ Vars table; fully independent module (`api-docgen.js`) separated from AI component |
 | **2026-03-08** | 🏷️ **Template display tags** — AI templates now show `AI` flavor tags; agent templates show `AI · Agent` tags on template cards for quick visual identification of template type |

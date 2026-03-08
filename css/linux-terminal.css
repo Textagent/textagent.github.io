@@ -99,3 +99,197 @@
 .fmt-linux-btn:hover {
     background: rgba(34, 197, 94, 0.15) !important;
 }
+
+/* ============================================
+   SCRIPT / COMPILE MODE — new styles
+   ============================================ */
+
+/* --- Language badge --- */
+.linux-lang-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 10px;
+    font-size: 0.72rem;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid;
+    margin-left: 8px;
+    letter-spacing: 0.01em;
+    vertical-align: middle;
+}
+
+/* --- Script code preview area --- */
+.linux-script-area {
+    padding: 0;
+    border-top: 1px solid var(--border-color, rgba(125, 133, 144, 0.2));
+    overflow: hidden;
+}
+
+.linux-script-area pre {
+    margin: 0;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+[data-theme="light"] .linux-script-area pre {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.linux-script-area code {
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 0.78rem;
+    color: #c9d1d9;
+    white-space: pre;
+}
+
+[data-theme="light"] .linux-script-area code {
+    color: #24292f;
+}
+
+/* --- Run Script button --- */
+.linux-run-script {
+    background: rgba(34, 197, 94, 0.12) !important;
+    color: #22c55e !important;
+    border: 1px solid rgba(34, 197, 94, 0.3) !important;
+    font-weight: 600;
+    padding: 3px 14px !important;
+    border-radius: 6px !important;
+    font-size: 0.78rem !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.linux-run-script:hover {
+    background: rgba(34, 197, 94, 0.25) !important;
+    transform: translateY(-1px);
+}
+
+.linux-run-script:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* --- Output area --- */
+.linux-run-output {
+    border-top: 1px solid var(--border-color, rgba(125, 133, 144, 0.2));
+    padding: 0;
+}
+
+.linux-compile-section,
+.linux-run-section {
+    padding: 0;
+}
+
+.linux-output-label {
+    padding: 6px 14px 2px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.linux-output-stdout {
+    margin: 0;
+    padding: 6px 14px 10px;
+    background: transparent;
+    color: #7ee787;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: none;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+[data-theme="light"] .linux-output-stdout {
+    color: #116329;
+}
+
+.linux-output-stderr {
+    margin: 0;
+    padding: 6px 14px 10px;
+    background: transparent;
+    color: #f47067;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+[data-theme="light"] .linux-output-stderr {
+    color: #cf222e;
+}
+
+.linux-output-exit {
+    padding: 4px 14px 8px;
+    font-size: 0.75rem;
+    color: #f47067;
+    font-weight: 600;
+}
+
+.linux-output-muted {
+    padding: 8px 14px;
+    color: #8b949e;
+    font-size: 0.78rem;
+    font-style: italic;
+}
+
+.linux-output-error {
+    padding: 8px 14px;
+    color: #f47067;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.linux-output-loading {
+    padding: 10px 14px;
+    color: #8b949e;
+    font-size: 0.78rem;
+}
+
+.linux-output-loading i {
+    animation: linux-spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+@keyframes linux-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Spin class for loading indicator */
+.spin {
+    animation: linux-spin 1s linear infinite;
+    display: inline-block;
+}
+
+/* --- Execution stats --- */
+.linux-output-stats {
+    padding: 4px 14px 8px;
+    font-size: 0.72rem;
+    color: #8b949e;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    border-top: 1px solid var(--border-color, rgba(125, 133, 144, 0.1));
+    margin-top: 2px;
+}

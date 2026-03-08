@@ -254,8 +254,8 @@
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="linux-tag"]': {
-            name: 'Linux Terminal Tag',
-            desc: 'Insert a {{Linux:}} block that embeds a full Debian Linux terminal (WebVM) in your document. Specify packages to auto-install — e.g. Packages: curl, vim, htop.',
+            name: 'Linux Terminal / Compile & Run',
+            desc: 'Insert a {{Linux:}} block. Two modes: (1) Terminal — specify Packages: to launch a full Debian Linux (WebVM). (2) Compile & Run — add Language: and Script: fields to compile & execute C++, Rust, Go, Java, and 20+ languages via the Piston API, with output inline.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },

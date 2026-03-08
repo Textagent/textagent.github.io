@@ -21,17 +21,17 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
       '| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipelines — chain Step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
-      '| **🐧 Linux Terminal** | `{{Linux:}}` tag opens a full Debian Linux terminal (WebVM) in a new window — `Packages:` field for install reminders · package badges · persistent sessions |\n' +
+      '| **🐧 Linux Terminal** | `{{Linux:}}` tag — Terminal mode (opens full Debian Linux via WebVM) · Compile \\& Run mode (`Language:` + `Script:`) compiles 25+ languages via Judge0 CE with inline output and execution stats |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
       '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
-      '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) |\n' +
+      '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) · 🐧 Compile \\& Run (25+ compiled languages via Judge0 CE) |\n' +
       '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
       '| **Export** | Markdown · HTML · PDF · LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |\n' +
       '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 96+ templates (12 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 108+ templates (12 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -43,6 +43,24 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **HTML** | Sandboxed iframe | ▶ Preview |\n' +
       '| **JavaScript** | Sandboxed iframe | ▶ Run |\n' +
       '| **SQL** | [sql.js](https://sql.js.org/) (SQLite WASM) | ▶ Run |\n\n' +
+      '---\n\n' +
+      '## 🐧 Compile \\& Run — 25+ Languages\n\n' +
+      'Compile and execute programs in **C++, Rust, Go, Java, Python, TypeScript, Kotlin, Scala**, and more — powered by [Judge0 CE](https://ce.judge0.com).\n\n' +
+      '**How it works:**\n' +
+      '1. Write a `{{Linux:}}` tag with `Language:` and `Script: |` fields\n' +
+      '2. Click **▶ Run** — code is compiled and executed server-side\n' +
+      '3. Output (stdout, stderr, compile errors) appears inline with execution time and memory stats\n\n' +
+      '```\n' +
+      '{{Linux:\n' +
+      '  Language: rust\n' +
+      '  Script: |\n' +
+      '    fn main() {\n' +
+      '        println!("Hello from Rust!");\n' +
+      '    }\n' +
+      '}}\n' +
+      '```\n\n' +
+      '> [!TIP]\n' +
+      '> Check out the **Coding** category in Templates for 10 language-specific Compile \\& Run templates!\n\n' +
       '---\n\n' +
       '## 🖥️ Executable Bash Blocks\n\n' +
       'Run bash commands **directly in the preview** — powered by [just-bash](https://justbash.dev/).\n' +
@@ -455,7 +473,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Word wrap toggle\n' +
       '- [x] Emoji shortcodes\n' +
       '- [x] PDF export with smart page breaks\n' +
-      '- [x] 96+ templates (12 categories)\n' +
+      '- [x] 108+ templates (12 categories)\n' +
       '- [x] Table spreadsheet tools (sort, filter, stats, chart)\n' +
       '- [x] Formatting toolbar\n' +
       '- [x] Table of contents\n' +

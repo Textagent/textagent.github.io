@@ -1018,5 +1018,819 @@ echo "Octal 77 = $((8#77))"
       '> [!NOTE]\n' +
       '> Installed packages persist via IndexedDB — they survive page reloads!\n'
   },
+  {
+    name: 'Compile & Run',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Compile & run C++, Rust, Go, and 25+ languages — results appear inline via Judge0 CE',
+    content: '# ⚡ Compile & Run — Multi-Language\n\n' +
+      '> Write programs in **C++, Rust, Go, Java**, and 25+ compiled/interpreted languages.\n' +
+      '> Click **▶ Run** to compile and execute — output appears inline with execution stats.\n' +
+      '> Powered by [Judge0 CE](https://ce.judge0.com) — free, open-source code execution engine.\n\n' +
+      '> [!TIP]\n' +
+      '> Use `Language:` to set the language and `Script: |` for multi-line code.\n\n' +
+      '---\n\n' +
+      '## 🔷 C++ — Sort & Sum\n\n' +
+      '{{Linux:\n' +
+      '  Language: cpp\n' +
+      '  Script: |\n' +
+      '    #include <iostream>\n' +
+      '    #include <vector>\n' +
+      '    #include <algorithm>\n\n' +
+      '    int main() {\n' +
+      '        std::vector<int> nums = {5, 3, 8, 1, 9, 2, 7};\n' +
+      '        std::sort(nums.begin(), nums.end());\n\n' +
+      '        std::cout << "Sorted: ";\n' +
+      '        for (int n : nums) std::cout << n << " ";\n' +
+      '        std::cout << std::endl;\n\n' +
+      '        int sum = 0;\n' +
+      '        for (int n : nums) sum += n;\n' +
+      '        std::cout << "Sum: " << sum << std::endl;\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## 🦀 Rust — Fibonacci\n\n' +
+      '{{Linux:\n' +
+      '  Language: rust\n' +
+      '  Script: |\n' +
+      '    fn fibonacci(n: u32) -> u64 {\n' +
+      '        let (mut a, mut b) = (0u64, 1u64);\n' +
+      '        for _ in 0..n {\n' +
+      '            let temp = b;\n' +
+      '            b = a + b;\n' +
+      '            a = temp;\n' +
+      '        }\n' +
+      '        a\n' +
+      '    }\n\n' +
+      '    fn main() {\n' +
+      '        println!("Fibonacci sequence:");\n' +
+      '        for i in 1..=15 {\n' +
+      '            println!("  fib({:2}) = {}", i, fibonacci(i));\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## 🐹 Go — Prime Finder\n\n' +
+      '{{Linux:\n' +
+      '  Language: go\n' +
+      '  Script: |\n' +
+      '    package main\n\n' +
+      '    import (\n' +
+      '        "fmt"\n' +
+      '        "math"\n' +
+      '    )\n\n' +
+      '    func isPrime(n int) bool {\n' +
+      '        if n < 2 { return false }\n' +
+      '        for i := 2; i <= int(math.Sqrt(float64(n))); i++ {\n' +
+      '            if n%i == 0 { return false }\n' +
+      '        }\n' +
+      '        return true\n' +
+      '    }\n\n' +
+      '    func main() {\n' +
+      '        fmt.Println("Primes up to 50:")\n' +
+      '        for i := 2; i <= 50; i++ {\n' +
+      '            if isPrime(i) {\n' +
+      '                fmt.Printf("%d ", i)\n' +
+      '            }\n' +
+      '        }\n' +
+      '        fmt.Println()\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Supported Languages\n\n' +
+      '| Language | Tag | Language | Tag |\n' +
+      '|----------|-----|----------|-----|\n' +
+      '| C | `c` | Kotlin | `kotlin` |\n' +
+      '| C++ | `cpp` | Swift | `swift` |\n' +
+      '| Rust | `rust` | Haskell | `haskell` |\n' +
+      '| Go | `go` | Ruby | `ruby` |\n' +
+      '| Java | `java` | Perl | `perl` |\n' +
+      '| TypeScript | `ts` | Lua | `lua` |\n' +
+      '| Python | `python` | PHP | `php` |\n' +
+      '| Bash | `bash` | C# | `csharp` |\n' +
+      '| Dart | `dart` | Scala | `scala` |\n' +
+      '| R | `r` | JavaScript | `js` |\n'
+  },
+  // ─── 10 Linux-based language templates ─────────────────────
+  {
+    name: 'C Programming',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Learn C fundamentals — memory, pointers, structs, and I/O with runnable examples',
+    content: '# 🔵 C Programming — Compile & Run\n\n' +
+      '> Classic systems programming language. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Hello World\n\n' +
+      '{{Linux:\n' +
+      '  Language: c\n' +
+      '  Script: |\n' +
+      '    #include <stdio.h>\n\n' +
+      '    int main() {\n' +
+      '        printf("Hello from C!\\n");\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Arrays & Pointers\n\n' +
+      '{{Linux:\n' +
+      '  Language: c\n' +
+      '  Script: |\n' +
+      '    #include <stdio.h>\n\n' +
+      '    void swap(int *a, int *b) {\n' +
+      '        int temp = *a;\n' +
+      '        *a = *b;\n' +
+      '        *b = temp;\n' +
+      '    }\n\n' +
+      '    void bubble_sort(int arr[], int n) {\n' +
+      '        for (int i = 0; i < n-1; i++)\n' +
+      '            for (int j = 0; j < n-i-1; j++)\n' +
+      '                if (arr[j] > arr[j+1])\n' +
+      '                    swap(&arr[j], &arr[j+1]);\n' +
+      '    }\n\n' +
+      '    int main() {\n' +
+      '        int nums[] = {64, 25, 12, 22, 11};\n' +
+      '        int n = sizeof(nums) / sizeof(nums[0]);\n\n' +
+      '        printf("Before: ");\n' +
+      '        for (int i = 0; i < n; i++) printf("%d ", nums[i]);\n\n' +
+      '        bubble_sort(nums, n);\n\n' +
+      '        printf("\\nAfter:  ");\n' +
+      '        for (int i = 0; i < n; i++) printf("%d ", nums[i]);\n' +
+      '        printf("\\n");\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Structs & Functions\n\n' +
+      '{{Linux:\n' +
+      '  Language: c\n' +
+      '  Script: |\n' +
+      '    #include <stdio.h>\n' +
+      '    #include <string.h>\n\n' +
+      '    typedef struct {\n' +
+      '        char name[50];\n' +
+      '        int age;\n' +
+      '        float gpa;\n' +
+      '    } Student;\n\n' +
+      '    void print_student(Student s) {\n' +
+      '        printf("%-10s  Age: %d  GPA: %.1f\\n", s.name, s.age, s.gpa);\n' +
+      '    }\n\n' +
+      '    int main() {\n' +
+      '        Student students[] = {\n' +
+      '            {"Alice", 20, 3.8},\n' +
+      '            {"Bob", 22, 3.5},\n' +
+      '            {"Carol", 21, 3.9},\n' +
+      '        };\n' +
+      '        int n = sizeof(students) / sizeof(students[0]);\n\n' +
+      '        printf("--- Student Records ---\\n");\n' +
+      '        for (int i = 0; i < n; i++)\n' +
+      '            print_student(students[i]);\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'C++ Modern',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Modern C++ with STL containers, lambdas, smart pointers — compile & run inline',
+    content: '# 🔷 C++ Modern — Compile & Run\n\n' +
+      '> Modern C++ features with STL. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## STL Containers & Algorithms\n\n' +
+      '{{Linux:\n' +
+      '  Language: cpp\n' +
+      '  Script: |\n' +
+      '    #include <iostream>\n' +
+      '    #include <vector>\n' +
+      '    #include <algorithm>\n' +
+      '    #include <numeric>\n\n' +
+      '    int main() {\n' +
+      '        std::vector<int> v = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3};\n\n' +
+      '        std::sort(v.begin(), v.end());\n' +
+      '        auto it = std::unique(v.begin(), v.end());\n' +
+      '        v.erase(it, v.end());\n\n' +
+      '        std::cout << "Unique sorted: ";\n' +
+      '        for (int x : v) std::cout << x << " ";\n' +
+      '        std::cout << std::endl;\n\n' +
+      '        int sum = std::accumulate(v.begin(), v.end(), 0);\n' +
+      '        std::cout << "Sum: " << sum << std::endl;\n' +
+      '        std::cout << "Mean: " << (double)sum / v.size() << std::endl;\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Lambdas & Functional\n\n' +
+      '{{Linux:\n' +
+      '  Language: cpp\n' +
+      '  Script: |\n' +
+      '    #include <iostream>\n' +
+      '    #include <vector>\n' +
+      '    #include <algorithm>\n' +
+      '    #include <functional>\n\n' +
+      '    int main() {\n' +
+      '        std::vector<int> nums = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};\n\n' +
+      '        // Filter evens with lambda\n' +
+      '        std::vector<int> evens;\n' +
+      '        std::copy_if(nums.begin(), nums.end(),\n' +
+      '            std::back_inserter(evens), [](int n) { return n % 2 == 0; });\n\n' +
+      '        std::cout << "Evens: ";\n' +
+      '        for (int n : evens) std::cout << n << " ";\n' +
+      '        std::cout << std::endl;\n\n' +
+      '        // Transform with lambda\n' +
+      '        std::vector<int> squares;\n' +
+      '        std::transform(nums.begin(), nums.end(),\n' +
+      '            std::back_inserter(squares), [](int n) { return n * n; });\n\n' +
+      '        std::cout << "Squares: ";\n' +
+      '        for (int n : squares) std::cout << n << " ";\n' +
+      '        std::cout << std::endl;\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Maps & String Processing\n\n' +
+      '{{Linux:\n' +
+      '  Language: cpp\n' +
+      '  Script: |\n' +
+      '    #include <iostream>\n' +
+      '    #include <map>\n' +
+      '    #include <string>\n' +
+      '    #include <sstream>\n\n' +
+      '    int main() {\n' +
+      '        std::string text = "the quick brown fox jumps over the lazy dog the fox";\n' +
+      '        std::map<std::string, int> freq;\n\n' +
+      '        std::istringstream iss(text);\n' +
+      '        std::string word;\n' +
+      '        while (iss >> word) freq[word]++;\n\n' +
+      '        std::cout << "Word frequencies:" << std::endl;\n' +
+      '        for (auto& [w, c] : freq)\n' +
+      '            std::cout << "  " << w << ": " << c << std::endl;\n' +
+      '        return 0;\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'Rust Essentials',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Rust ownership, pattern matching, iterators, and error handling — compile & run',
+    content: '# 🦀 Rust Essentials — Compile & Run\n\n' +
+      '> Memory-safe systems programming. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Ownership & Borrowing\n\n' +
+      '{{Linux:\n' +
+      '  Language: rust\n' +
+      '  Script: |\n' +
+      '    fn main() {\n' +
+      '        let names = vec!["Alice", "Bob", "Carol", "David"];\n\n' +
+      '        // Borrowing (read-only)\n' +
+      '        let greeting = greet(&names);\n' +
+      '        println!("{}", greeting);\n' +
+      '        println!("Names still accessible: {:?}", names);\n' +
+      '    }\n\n' +
+      '    fn greet(names: &[&str]) -> String {\n' +
+      '        names.iter()\n' +
+      '            .map(|n| format!("Hello, {}!", n))\n' +
+      '            .collect::<Vec<_>>()\n' +
+      '            .join("\\n")\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Pattern Matching & Enums\n\n' +
+      '{{Linux:\n' +
+      '  Language: rust\n' +
+      '  Script: |\n' +
+      '    #[derive(Debug)]\n' +
+      '    enum Shape {\n' +
+      '        Circle(f64),\n' +
+      '        Rectangle(f64, f64),\n' +
+      '        Triangle(f64, f64),\n' +
+      '    }\n\n' +
+      '    impl Shape {\n' +
+      '        fn area(&self) -> f64 {\n' +
+      '            match self {\n' +
+      '                Shape::Circle(r) => std::f64::consts::PI * r * r,\n' +
+      '                Shape::Rectangle(w, h) => w * h,\n' +
+      '                Shape::Triangle(b, h) => 0.5 * b * h,\n' +
+      '            }\n' +
+      '        }\n' +
+      '    }\n\n' +
+      '    fn main() {\n' +
+      '        let shapes = vec![\n' +
+      '            Shape::Circle(5.0),\n' +
+      '            Shape::Rectangle(4.0, 6.0),\n' +
+      '            Shape::Triangle(3.0, 8.0),\n' +
+      '        ];\n\n' +
+      '        for s in &shapes {\n' +
+      '            println!("{:?} -> area = {:.2}", s, s.area());\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Iterators & Closures\n\n' +
+      '{{Linux:\n' +
+      '  Language: rust\n' +
+      '  Script: |\n' +
+      '    fn main() {\n' +
+      '        let data = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];\n\n' +
+      '        let sum_of_squares: i32 = data.iter()\n' +
+      '            .filter(|&&x| x % 2 == 0)\n' +
+      '            .map(|&x| x * x)\n' +
+      '            .sum();\n\n' +
+      '        println!("Even numbers: {:?}",\n' +
+      '            data.iter().filter(|&&x| x % 2 == 0).collect::<Vec<_>>());\n' +
+      '        println!("Sum of their squares: {}", sum_of_squares);\n\n' +
+      '        // Fizzbuzz with iterators\n' +
+      '        let fizzbuzz: Vec<String> = (1..=20).map(|n| match (n % 3, n % 5) {\n' +
+      '            (0, 0) => "FizzBuzz".into(),\n' +
+      '            (0, _) => "Fizz".into(),\n' +
+      '            (_, 0) => "Buzz".into(),\n' +
+      '            _ => n.to_string(),\n' +
+      '        }).collect();\n' +
+      '        println!("FizzBuzz: {:?}", fizzbuzz);\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'Go Programming',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Go programming with goroutines, channels, slices, and maps — compile & run',
+    content: '# 🐹 Go Programming — Compile & Run\n\n' +
+      '> Simple, fast, concurrent. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Slices & Maps\n\n' +
+      '{{Linux:\n' +
+      '  Language: go\n' +
+      '  Script: |\n' +
+      '    package main\n\n' +
+      '    import "fmt"\n\n' +
+      '    func main() {\n' +
+      '        // Slice operations\n' +
+      '        fruits := []string{"apple", "banana", "cherry", "date", "elderberry"}\n' +
+      '        fmt.Println("Fruits:", fruits)\n' +
+      '        fmt.Println("First 3:", fruits[:3])\n\n' +
+      '        // Map\n' +
+      '        prices := map[string]float64{\n' +
+      '            "apple": 1.20, "banana": 0.50,\n' +
+      '            "cherry": 2.00, "date": 3.50,\n' +
+      '        }\n\n' +
+      '        total := 0.0\n' +
+      '        for fruit, price := range prices {\n' +
+      '            fmt.Printf("  %-10s $%.2f\\n", fruit, price)\n' +
+      '            total += price\n' +
+      '        }\n' +
+      '        fmt.Printf("Total: $%.2f\\n", total)\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Structs & Methods\n\n' +
+      '{{Linux:\n' +
+      '  Language: go\n' +
+      '  Script: |\n' +
+      '    package main\n\n' +
+      '    import (\n' +
+      '        "fmt"\n' +
+      '        "math"\n' +
+      '    )\n\n' +
+      '    type Point struct {\n' +
+      '        X, Y float64\n' +
+      '    }\n\n' +
+      '    func (p Point) Distance(q Point) float64 {\n' +
+      '        return math.Sqrt(math.Pow(p.X-q.X, 2) + math.Pow(p.Y-q.Y, 2))\n' +
+      '    }\n\n' +
+      '    func (p Point) String() string {\n' +
+      '        return fmt.Sprintf("(%.1f, %.1f)", p.X, p.Y)\n' +
+      '    }\n\n' +
+      '    func main() {\n' +
+      '        points := []Point{{0, 0}, {3, 4}, {6, 8}, {1, 1}}\n\n' +
+      '        for i := 0; i < len(points)-1; i++ {\n' +
+      '            d := points[i].Distance(points[i+1])\n' +
+      '            fmt.Printf("%s -> %s = %.2f\\n", points[i], points[i+1], d)\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Error Handling\n\n' +
+      '{{Linux:\n' +
+      '  Language: go\n' +
+      '  Script: |\n' +
+      '    package main\n\n' +
+      '    import (\n' +
+      '        "errors"\n' +
+      '        "fmt"\n' +
+      '        "math"\n' +
+      '    )\n\n' +
+      '    func sqrt(x float64) (float64, error) {\n' +
+      '        if x < 0 {\n' +
+      '            return 0, errors.New("cannot compute square root of negative number")\n' +
+      '        }\n' +
+      '        return math.Sqrt(x), nil\n' +
+      '    }\n\n' +
+      '    func main() {\n' +
+      '        values := []float64{16, 25, -4, 100, 0}\n' +
+      '        for _, v := range values {\n' +
+      '            result, err := sqrt(v)\n' +
+      '            if err != nil {\n' +
+      '                fmt.Printf("sqrt(%.0f) -> Error: %s\\n", v, err)\n' +
+      '            } else {\n' +
+      '                fmt.Printf("sqrt(%.0f) -> %.2f\\n", v, result)\n' +
+      '            }\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'Java OOP',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Java classes, inheritance, collections, and streams — compile & run inline',
+    content: '# ☕ Java OOP — Compile & Run\n\n' +
+      '> Object-oriented programming in Java. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Classes & Inheritance\n\n' +
+      '{{Linux:\n' +
+      '  Language: java\n' +
+      '  Script: |\n' +
+      '    import java.util.*;\n\n' +
+      '    abstract class Animal {\n' +
+      '        String name;\n' +
+      '        Animal(String name) { this.name = name; }\n' +
+      '        abstract String speak();\n' +
+      '        public String toString() {\n' +
+      '            return name + " says " + speak();\n' +
+      '        }\n' +
+      '    }\n\n' +
+      '    class Dog extends Animal {\n' +
+      '        Dog(String n) { super(n); }\n' +
+      '        String speak() { return "Woof!"; }\n' +
+      '    }\n\n' +
+      '    class Cat extends Animal {\n' +
+      '        Cat(String n) { super(n); }\n' +
+      '        String speak() { return "Meow!"; }\n' +
+      '    }\n\n' +
+      '    public class Main {\n' +
+      '        public static void main(String[] args) {\n' +
+      '            List<Animal> animals = List.of(\n' +
+      '                new Dog("Rex"), new Cat("Whiskers"),\n' +
+      '                new Dog("Buddy"), new Cat("Luna")\n' +
+      '            );\n' +
+      '            animals.forEach(System.out::println);\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Collections & Streams\n\n' +
+      '{{Linux:\n' +
+      '  Language: java\n' +
+      '  Script: |\n' +
+      '    import java.util.*;\n' +
+      '    import java.util.stream.*;\n\n' +
+      '    public class Main {\n' +
+      '        public static void main(String[] args) {\n' +
+      '            List<String> words = List.of(\n' +
+      '                "hello", "world", "java", "streams",\n' +
+      '                "are", "powerful", "and", "elegant"\n' +
+      '            );\n\n' +
+      '            // Filter, transform, collect\n' +
+      '            String result = words.stream()\n' +
+      '                .filter(w -> w.length() > 3)\n' +
+      '                .map(String::toUpperCase)\n' +
+      '                .sorted()\n' +
+      '                .collect(Collectors.joining(", "));\n\n' +
+      '            System.out.println("Long words (uppercase): " + result);\n\n' +
+      '            // Statistics\n' +
+      '            IntSummaryStatistics stats = words.stream()\n' +
+      '                .mapToInt(String::length)\n' +
+      '                .summaryStatistics();\n\n' +
+      '            System.out.printf("Word lengths -> min: %d, max: %d, avg: %.1f%n",\n' +
+      '                stats.getMin(), stats.getMax(), stats.getAverage());\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'Python Algorithms',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Python data structures, algorithms, and comprehensions — compile & run via Judge0',
+    content: '# 🐍 Python Algorithms — Compile & Run\n\n' +
+      '> Python via Judge0 CE (server-side CPython). Click **▶ Run** to execute.\n\n' +
+      '> [!TIP]\n' +
+      '> For in-browser Python (Pyodide WASM), use regular \\`\\`\\`python code fences instead.\n\n' +
+      '---\n\n' +
+      '## Sorting Algorithms\n\n' +
+      '{{Linux:\n' +
+      '  Language: python\n' +
+      '  Script: |\n' +
+      '    import time\n\n' +
+      '    def quicksort(arr):\n' +
+      '        if len(arr) <= 1: return arr\n' +
+      '        pivot = arr[len(arr) // 2]\n' +
+      '        left = [x for x in arr if x < pivot]\n' +
+      '        mid = [x for x in arr if x == pivot]\n' +
+      '        right = [x for x in arr if x > pivot]\n' +
+      '        return quicksort(left) + mid + quicksort(right)\n\n' +
+      '    import random\n' +
+      '    data = random.sample(range(1, 101), 20)\n' +
+      '    print(f"Input:  {data}")\n\n' +
+      '    start = time.perf_counter()\n' +
+      '    sorted_data = quicksort(data)\n' +
+      '    elapsed = time.perf_counter() - start\n\n' +
+      '    print(f"Sorted: {sorted_data}")\n' +
+      '    print(f"Time:   {elapsed*1000:.3f} ms")\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Data Processing\n\n' +
+      '{{Linux:\n' +
+      '  Language: python\n' +
+      '  Script: |\n' +
+      '    from collections import Counter\n\n' +
+      '    text = """To be or not to be that is the question\n' +
+      '    Whether tis nobler in the mind to suffer\n' +
+      '    The slings and arrows of outrageous fortune"""\n\n' +
+      '    words = text.lower().split()\n' +
+      '    freq = Counter(words)\n\n' +
+      '    print("Top 10 words:")\n' +
+      '    for word, count in freq.most_common(10):\n' +
+      '        bar = "█" * count\n' +
+      '        print(f"  {word:12} {count:2} {bar}")\n\n' +
+      '    print(f"\\nTotal words: {len(words)}")\n' +
+      '    print(f"Unique words: {len(freq)}")\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Matrix Operations\n\n' +
+      '{{Linux:\n' +
+      '  Language: python\n' +
+      '  Script: |\n' +
+      '    def matrix_multiply(A, B):\n' +
+      '        rows_A, cols_A = len(A), len(A[0])\n' +
+      '        rows_B, cols_B = len(B), len(B[0])\n' +
+      '        result = [[0] * cols_B for _ in range(rows_A)]\n' +
+      '        for i in range(rows_A):\n' +
+      '            for j in range(cols_B):\n' +
+      '                for k in range(cols_A):\n' +
+      '                    result[i][j] += A[i][k] * B[k][j]\n' +
+      '        return result\n\n' +
+      '    def print_matrix(name, m):\n' +
+      '        print(f"{name}:")\n' +
+      '        for row in m:\n' +
+      '            print("  [" + ", ".join(f"{x:4}" for x in row) + "]")\n\n' +
+      '    A = [[1, 2, 3], [4, 5, 6]]\n' +
+      '    B = [[7, 8], [9, 10], [11, 12]]\n' +
+      '    C = matrix_multiply(A, B)\n\n' +
+      '    print_matrix("A (2x3)", A)\n' +
+      '    print_matrix("B (3x2)", B)\n' +
+      '    print_matrix("A × B (2x2)", C)\n' +
+      '}}\n'
+  },
+  {
+    name: 'TypeScript',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'TypeScript generics, interfaces, and utility types — compile & run inline',
+    content: '# 📘 TypeScript — Compile & Run\n\n' +
+      '> Type-safe JavaScript. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Generics & Interfaces\n\n' +
+      '{{Linux:\n' +
+      '  Language: typescript\n' +
+      '  Script: |\n' +
+      '    interface Comparable<T> {\n' +
+      '      compareTo(other: T): number;\n' +
+      '    }\n\n' +
+      '    class Temperature implements Comparable<Temperature> {\n' +
+      '      constructor(public celsius: number) {}\n' +
+      '      compareTo(other: Temperature): number {\n' +
+      '        return this.celsius - other.celsius;\n' +
+      '      }\n' +
+      '      toString(): string {\n' +
+      '        return `${this.celsius}°C (${(this.celsius * 9/5 + 32).toFixed(1)}°F)`;\n' +
+      '      }\n' +
+      '    }\n\n' +
+      '    function findMinMax<T extends Comparable<T>>(items: T[]): [T, T] {\n' +
+      '      let min = items[0], max = items[0];\n' +
+      '      for (const item of items) {\n' +
+      '        if (item.compareTo(min) < 0) min = item;\n' +
+      '        if (item.compareTo(max) > 0) max = item;\n' +
+      '      }\n' +
+      '      return [min, max];\n' +
+      '    }\n\n' +
+      '    const temps = [22, 35, -5, 18, 40, 0, 15].map(c => new Temperature(c));\n' +
+      '    const [coldest, hottest] = findMinMax(temps);\n' +
+      '    console.log(`Coldest: ${coldest}`);\n' +
+      '    console.log(`Hottest: ${hottest}`);\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Utility Types & Type Guards\n\n' +
+      '{{Linux:\n' +
+      '  Language: typescript\n' +
+      '  Script: |\n' +
+      '    type Result<T> = { ok: true; value: T } | { ok: false; error: string };\n\n' +
+      '    function divide(a: number, b: number): Result<number> {\n' +
+      '      if (b === 0) return { ok: false, error: "Division by zero" };\n' +
+      '      return { ok: true, value: a / b };\n' +
+      '    }\n\n' +
+      '    function safeSqrt(x: number): Result<number> {\n' +
+      '      if (x < 0) return { ok: false, error: "Negative input" };\n' +
+      '      return { ok: true, value: Math.sqrt(x) };\n' +
+      '    }\n\n' +
+      '    const tests: [string, Result<number>][] = [\n' +
+      '      ["10 / 3", divide(10, 3)],\n' +
+      '      ["10 / 0", divide(10, 0)],\n' +
+      '      ["sqrt(16)", safeSqrt(16)],\n' +
+      '      ["sqrt(-4)", safeSqrt(-4)],\n' +
+      '    ];\n\n' +
+      '    for (const [expr, result] of tests) {\n' +
+      '      if (result.ok) {\n' +
+      '        console.log(`${expr} = ${result.value.toFixed(4)}`);\n' +
+      '      } else {\n' +
+      '        console.log(`${expr} -> ERROR: ${result.error}`);\n' +
+      '      }\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'Ruby Scripting',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Ruby blocks, symbols, hashes, and OOP — compile & run inline',
+    content: '# 💎 Ruby Scripting — Compile & Run\n\n' +
+      '> Elegant and expressive. Click **▶ Run** to execute.\n\n' +
+      '---\n\n' +
+      '## Blocks & Enumerable\n\n' +
+      '{{Linux:\n' +
+      '  Language: ruby\n' +
+      '  Script: |\n' +
+      '    numbers = (1..20).to_a\n\n' +
+      '    evens = numbers.select(&:even?)\n' +
+      '    puts "Evens: #{evens.inspect}"\n\n' +
+      '    squares = numbers.map { |n| n ** 2 }\n' +
+      '    puts "Squares: #{squares.inspect}"\n\n' +
+      '    sum = numbers.reduce(:+)\n' +
+      '    puts "Sum 1..20: #{sum}"\n\n' +
+      '    grouped = numbers.group_by { |n| n % 3 }\n' +
+      '    grouped.each do |remainder, nums|\n' +
+      '      puts "  mod 3 = #{remainder}: #{nums.inspect}"\n' +
+      '    end\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Classes & Mixins\n\n' +
+      '{{Linux:\n' +
+      '  Language: ruby\n' +
+      '  Script: |\n' +
+      '    module Printable\n' +
+      '      def display\n' +
+      '        puts to_s\n' +
+      '      end\n' +
+      '    end\n\n' +
+      '    class Product\n' +
+      '      include Printable\n' +
+      '      include Comparable\n\n' +
+      '      attr_reader :name, :price\n\n' +
+      '      def initialize(name, price)\n' +
+      '        @name = name\n' +
+      '        @price = price\n' +
+      '      end\n\n' +
+      '      def <=>(other)\n' +
+      '        price <=> other.price\n' +
+      '      end\n\n' +
+      '      def to_s\n' +
+      '        "#{name}: $#{"%.2f" % price}"\n' +
+      '      end\n' +
+      '    end\n\n' +
+      '    products = [\n' +
+      '      Product.new("Laptop", 999.99),\n' +
+      '      Product.new("Mouse", 29.99),\n' +
+      '      Product.new("Keyboard", 79.99),\n' +
+        '      Product.new("Monitor", 449.99),\n' +
+        '    ]\n\n' +
+        '    puts "Sorted by price:"\n' +
+        '    products.sort.each(&:display)\n' +
+        '    puts "\\nCheapest: #{products.min}"\n' +
+        '    puts "Most expensive: #{products.max}"\n' +
+        '}}\n'
+  },
+  {
+    name: 'Kotlin Playground',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Kotlin data classes, null safety, and functional idioms — compile & run',
+    content: '# 🟣 Kotlin Playground — Compile & Run\n\n' +
+      '> Modern, concise JVM language. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Data Classes & Null Safety\n\n' +
+      '{{Linux:\n' +
+      '  Language: kotlin\n' +
+      '  Script: |\n' +
+      '    data class User(val name: String, val email: String?, val age: Int)\n\n' +
+      '    fun main() {\n' +
+      '        val users = listOf(\n' +
+      '            User("Alice", "alice@example.com", 28),\n' +
+      '            User("Bob", null, 35),\n' +
+      '            User("Carol", "carol@example.com", 22),\n' +
+      '            User("David", null, 40),\n' +
+      '        )\n\n' +
+      '        println("All users:")\n' +
+      '        users.forEach { u ->\n' +
+      '            val email = u.email ?: "(no email)"\n' +
+      '            println("  ${u.name}, age ${u.age} — $email")\n' +
+      '        }\n\n' +
+      '        val avgAge = users.map { it.age }.average()\n' +
+      '        println("\\nAverage age: ${"%.1f".format(avgAge)}")\n\n' +
+      '        val withEmail = users.filter { it.email != null }\n' +
+      '        println("Users with email: ${withEmail.map { it.name }}")\n' +
+      '    }\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## When Expressions & Extension Functions\n\n' +
+      '{{Linux:\n' +
+      '  Language: kotlin\n' +
+      '  Script: |\n' +
+      '    fun Int.toRoman(): String {\n' +
+      '        val romanNumerals = listOf(\n' +
+      '            1000 to "M", 900 to "CM", 500 to "D", 400 to "CD",\n' +
+      '            100 to "C", 90 to "XC", 50 to "L", 40 to "XL",\n' +
+      '            10 to "X", 9 to "IX", 5 to "V", 4 to "IV", 1 to "I"\n' +
+      '        )\n' +
+      '        var remaining = this\n' +
+      '        return buildString {\n' +
+      '            for ((value, symbol) in romanNumerals) {\n' +
+      '                while (remaining >= value) {\n' +
+      '                    append(symbol)\n' +
+      '                    remaining -= value\n' +
+      '                }\n' +
+      '            }\n' +
+      '        }\n' +
+      '    }\n\n' +
+      '    fun main() {\n' +
+      '        val years = listOf(1990, 2000, 2024, 2026, 42, 1776)\n' +
+      '        for (year in years) {\n' +
+      '            println("$year -> ${year.toRoman()}")\n' +
+      '        }\n' +
+      '    }\n' +
+      '}}\n'
+  },
+  {
+    name: 'Scala Functional',
+    category: 'coding',
+    icon: 'bi-cpu',
+    description: 'Scala case classes, pattern matching, and higher-order functions — compile & run',
+    content: '# 🔴 Scala Functional — Compile & Run\n\n' +
+      '> FP + OOP on the JVM. Click **▶ Run** to compile and execute.\n\n' +
+      '---\n\n' +
+      '## Case Classes & Pattern Matching\n\n' +
+      '{{Linux:\n' +
+      '  Language: scala\n' +
+      '  Script: |\n' +
+      '    sealed trait Expr\n' +
+      '    case class Num(n: Double) extends Expr\n' +
+      '    case class Add(a: Expr, b: Expr) extends Expr\n' +
+      '    case class Mul(a: Expr, b: Expr) extends Expr\n\n' +
+      '    def eval(e: Expr): Double = e match {\n' +
+      '      case Num(n) => n\n' +
+      '      case Add(a, b) => eval(a) + eval(b)\n' +
+      '      case Mul(a, b) => eval(a) * eval(b)\n' +
+      '    }\n\n' +
+      '    def show(e: Expr): String = e match {\n' +
+      '      case Num(n) => n.toString\n' +
+      '      case Add(a, b) => s"(${show(a)} + ${show(b)})"\n' +
+      '      case Mul(a, b) => s"(${show(a)} * ${show(b)})"\n' +
+      '    }\n\n' +
+      '    // (2 + 3) * (4 + 5)\n' +
+      '    val expr = Mul(Add(Num(2), Num(3)), Add(Num(4), Num(5)))\n' +
+      '    println(s"${show(expr)} = ${eval(expr)}")\n\n' +
+      '    // 1 + 2 * 3\n' +
+      '    val expr2 = Add(Num(1), Mul(Num(2), Num(3)))\n' +
+      '    println(s"${show(expr2)} = ${eval(expr2)}")\n' +
+      '}}\n\n' +
+      '---\n\n' +
+      '## Higher-Order Functions & Collections\n\n' +
+      '{{Linux:\n' +
+      '  Language: scala\n' +
+      '  Script: |\n' +
+      '    val data = List(3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5)\n\n' +
+      '    val unique = data.distinct.sorted\n' +
+      '    println(s"Unique sorted: $unique")\n\n' +
+      '    val stats = Map(\n' +
+      '      "sum" -> data.sum,\n' +
+      '      "min" -> data.min,\n' +
+      '      "max" -> data.max,\n' +
+      '      "mean" -> data.sum.toDouble / data.length\n' +
+      '    )\n' +
+      '    stats.foreach { case (k, v) => println(s"  $k: $v") }\n\n' +
+      '    // Group and count\n' +
+      '    val freq = data.groupBy(identity).map { case (k, v) => (k, v.length) }\n' +
+      '    println(s"\\nFrequency: $freq")\n\n' +
+      '    // FizzBuzz\n' +
+      '    val fizzbuzz = (1 to 15).map {\n' +
+      '      case n if n % 15 == 0 => "FizzBuzz"\n' +
+      '      case n if n % 3 == 0 => "Fizz"\n' +
+      '      case n if n % 5 == 0 => "Buzz"\n' +
+      '      case n => n.toString\n' +
+      '    }\n' +
+      '    println(s"\\nFizzBuzz: ${fizzbuzz.mkString(", ")}")\n' +
+      '}}\n'
+  },
 ];
 
