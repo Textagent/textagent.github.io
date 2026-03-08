@@ -30,6 +30,7 @@ import '../css/ai-docgen.css';
 import '../css/feature-demos.css';
 import '../css/help-mode.css';
 import '../css/workspace.css';
+import '../css/linux-terminal.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -83,6 +84,9 @@ async function loadModules() {
 
     // Phase 4.6: API Component (independent from AI, depends on M._showToast from ai-docgen)
     await import('../js/api-docgen.js');
+
+    // Phase 4.7: Linux Terminal Component (independent, depends on M._showToast)
+    await import('../js/linux-docgen.js');
 
     // Phase 5: Init wiring (must be last — wires everything together)
     await import('../js/app-init.js');

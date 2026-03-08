@@ -21,6 +21,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
       '| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipelines — chain Step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
+      '| **🐧 Linux Terminal** | `{{Linux:}}` tag opens a full Debian Linux terminal (WebVM) in a new window — `Packages:` field for install reminders · package badges · persistent sessions |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
       '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) |\n' +
@@ -433,6 +434,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] API Calls — REST API integration with variable storage\n' +
       '- [x] Agent Flow — multi-step AI pipelines with chained outputs\n' +
       '- [x] Web Search — DuckDuckGo, Brave, Serper.dev\n' +
+      '- [x] Linux Terminal — full Debian Linux (WebVM) in new window\n' +
       '- [x] Per-card AI model selection\n' +
       '- [x] Template variable engine with auto-detect\n' +
       '- [x] Voice dictation with markdown commands\n' +

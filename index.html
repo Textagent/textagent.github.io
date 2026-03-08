@@ -27,7 +27,7 @@
         font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         worker-src 'self' blob:;
         child-src 'self' blob:;
-        frame-src 'self' blob:;
+        frame-src 'self' blob: https://webvm.io;
         object-src 'none';
         base-uri 'self';
     ">
@@ -619,6 +619,12 @@
                     title="Insert GET API call">GET</button>
                 <button class="fmt-btn fmt-api-post-btn" data-action="api-post-tag"
                     title="Insert POST API call">POST</button>
+            </div>
+            <span class="fmt-separator"></span>
+            <div class="fmt-linux-group" title="Linux Terminal">
+                <span class="fmt-api-group-label" style="color:#22c55e">Linux</span>
+                <button class="fmt-btn fmt-linux-btn" data-action="linux-tag" title="Insert Linux Terminal tag">🐧
+                    Terminal</button>
             </div>
             <span class="fmt-separator"></span>
             <button class="fmt-btn fmt-vars-btn" id="apply-vars-btn"

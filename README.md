@@ -38,6 +38,7 @@
 | **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE methods, custom headers, JSON body, response stored in `$(api_varName)` variables; inline review panel; toolbar GET/POST buttons |
 | **🔗 Agent Flow** | `{{Agent:}}` multi-step pipeline — define Step 1/2/3, chain outputs, per-card model + search provider selector, live step status indicators (⏳/✅/❌), review combined output |
 | **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free), Brave Search, Serper.dev; search results injected into LLM context; source citations in responses; per-agent-card search provider selector |
+| **🐧 Linux Terminal** | `{{Linux:}}` tag opens a full Debian Linux terminal ([WebVM](https://webvm.io)) in a new window — `Packages:` field for install reminders; package badges; toolbar 🐧 Terminal button; persistent sessions via IndexedDB |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
 | **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 96+ templates (12 categories: AI, Agents, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
 
@@ -337,6 +338,7 @@ Headings · **Bold** · *Italic* · ~~Strikethrough~~ · Links · Images · Orde
 | [just-bash](https://justbash.dev/) | In-browser bash execution |
 | [Pyodide](https://pyodide.org/) | In-browser Python (CPython via WASM) |
 | [sql.js](https://sql.js.org/) | In-browser SQLite (WASM) |
+| [WebVM](https://webvm.io) | Full Debian Linux terminal (CheerpX x86 emulation) |
 
 ## 🤝 Contributing
 
@@ -360,6 +362,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Feature / Update |
 |------|-----------------|
+| **2026-03-08** | 🐧 **Linux Terminal** — new `{{Linux:}}` tag opens a full Debian Linux terminal ([WebVM](https://webvm.io)) in a new browser window; `Packages:` field for package reminders with visual badges; persistent sessions via IndexedDB; toolbar 🐧 Terminal button; Linux Terminal coding template; fully independent module (`linux-docgen.js`) |
 | **2026-03-08** | 🔌 **API Component** — new standalone `{{API:}}` tag for REST API calls directly in markdown; supports GET/POST/PUT/DELETE methods, custom headers, JSON body, and `Variable:` to store response in `$(api_varName)`; toolbar GET/POST buttons insert templates; API cards render inline with method badge + URL; execute with ▶ button, review response with Accept/Regenerate/Reject; response variables accessible via ⚡ Vars table; fully independent module (`api-docgen.js`) separated from AI component |
 | **2026-03-08** | 🏷️ **Template display tags** — AI templates now show `AI` flavor tags; agent templates show `AI · Agent` tags on template cards for quick visual identification of template type |
 | **2026-03-08** | 📜 **MIT License** — changed project license from Apache 2.0 to MIT for broader compatibility and simpler terms |

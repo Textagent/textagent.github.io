@@ -982,4 +982,41 @@ echo "Octal 77 = $((8#77))"
       'ORDER BY pct_of_budget DESC\n' +
       '```\n'
   },
+  {
+    name: 'Linux Terminal',
+    category: 'coding',
+    icon: 'bi-terminal-fill',
+    description: 'Full Debian Linux in the browser — install packages, run commands, browse the web with terminal tools',
+    content: '# 🐧 Linux Terminal — WebVM\n\n' +
+      '> A **full Debian Linux environment** running entirely in your browser via [WebVM](https://webvm.io).\n' +
+      '> No backend required — everything runs client-side using WebAssembly.\n\n' +
+      '> [!TIP]\n' +
+      '> Click **▶ Launch** to boot the Linux terminal. First load may take 30-60 seconds.\n\n' +
+      '---\n\n' +
+      '## Basic Terminal\n\n' +
+      'A minimal Linux terminal with no extra packages:\n\n' +
+      '{{Linux:\n}}\n\n' +
+      '---\n\n' +
+      '## Web Browsing Terminal\n\n' +
+      'Terminal with web browsing and API tools pre-installed:\n\n' +
+      '{{Linux:\n  Packages: lynx, curl, wget, jq\n}}\n\n' +
+      '---\n\n' +
+      '## Developer Terminal\n\n' +
+      'Full development environment with common tools:\n\n' +
+      '{{Linux:\n  Packages: vim, htop, git, python3, curl, jq\n}}\n\n' +
+      '---\n\n' +
+      '## What You Can Do\n\n' +
+      '| Action | Example Command |\n' +
+      '|--------|----------------|\n' +
+      '| Browse the web | `lynx https://lite.duckduckgo.com` |\n' +
+      '| Download files | `wget https://example.com/data.csv` |\n' +
+      '| Call APIs | `curl -s https://api.github.com/users/octocat \\| jq .name` |\n' +
+      '| Edit files | `vim hello.py` or `nano hello.py` |\n' +
+      '| Run Python | `python3 -c "print(42 ** 0.5)"` |\n' +
+      '| System info | `uname -a && cat /etc/os-release` |\n' +
+      '| Install more | `apt-get install -y nodejs` |\n\n' +
+      '> [!NOTE]\n' +
+      '> Installed packages persist via IndexedDB — they survive page reloads!\n'
+  },
 ];
+

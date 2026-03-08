@@ -253,6 +253,12 @@
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
+        '[data-action="linux-tag"]': {
+            name: 'Linux Terminal Tag',
+            desc: 'Insert a {{Linux:}} block that embeds a full Debian Linux terminal (WebVM) in your document. Specify packages to auto-install — e.g. Packages: curl, vim, htop.',
+            shortcut: null,
+            demo: 'assets/demos/15_ai_doc_tags.webp'
+        },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
             desc: 'Process all {{AI:}}, {{Think:}}, {{Image:}}, {{Agent:}}, and {{API:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',

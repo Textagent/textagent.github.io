@@ -137,13 +137,17 @@
                 ? M.transformDocgenMarkdown(markdown)
                 : markdown;
             // Chain API tag transform (independent component)
-            const finalMarkdown = M.transformApiMarkdown
+            const apiMarkdown = M.transformApiMarkdown
                 ? M.transformApiMarkdown(markdownForRender)
                 : markdownForRender;
+            // Chain Linux tag transform
+            const finalMarkdown = M.transformLinuxMarkdown
+                ? M.transformLinuxMarkdown(apiMarkdown)
+                : apiMarkdown;
             const html = marked.parse(finalMarkdown);
             const sanitizedHtml = DOMPurify.sanitize(html, {
                 ADD_TAGS: ['mjx-container', 'button', 'select', 'option'],
-                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'value', 'title', 'selected', 'data-model-id']
+                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'value', 'title', 'selected', 'data-model-id']
             });
             M.markdownPreview.innerHTML = sanitizedHtml;
 
@@ -203,6 +207,9 @@
 
             // API: bind API card actions (independent component)
             if (M.bindApiPreviewActions) M.bindApiPreviewActions(M.markdownPreview);
+
+            // Linux: bind Linux terminal card actions
+            if (M.bindLinuxPreviewActions) M.bindLinuxPreviewActions(M.markdownPreview);
 
             if (window.MathJax) {
                 try {
