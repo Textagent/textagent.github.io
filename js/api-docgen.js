@@ -33,6 +33,11 @@
                 open = null;
             }
         }
+        // Inline code spans (`...`)
+        var inlineRe = /`([^`\n]+)`/g;
+        while ((m = inlineRe.exec(md)) !== null) {
+            ranges.push({ start: m.index, end: m.index + m[0].length });
+        }
         return ranges;
     }
 
