@@ -494,14 +494,8 @@
                 <button id="qab-files" class="qab-btn" title="File Tree">
                     <i class="bi bi-folder2-open"></i> Files
                 </button>
-                <button id="qab-toc" class="qab-btn" title="Table of Contents">
-                    <i class="bi bi-list-nested"></i> TOC
-                </button>
                 <button id="qab-share" class="qab-btn" title="Share Markdown">
                     <i class="bi bi-share"></i> Share
-                </button>
-                <button id="qab-copy" class="qab-btn" title="Copy Markdown">
-                    <i class="bi bi-clipboard"></i> Copy
                 </button>
                 <div class="dropdown qab-dropdown">
                     <button class="qab-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
@@ -509,6 +503,13 @@
                         <i class="bi bi-tools"></i> Tools
                     </button>
                     <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" type="button" id="qab-toc"><i
+                                    class="bi bi-list-nested me-2"></i>Table of Contents</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-copy"><i
+                                    class="bi bi-clipboard me-2"></i>Copy Markdown</button></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><button class="dropdown-item" type="button" id="qab-present"><i
                                     class="bi bi-easel me-2"></i>Presentation</button></li>
                         <li><button class="dropdown-item" type="button" id="qab-zen"><i
@@ -550,6 +551,12 @@
                                     data-theme-name="evergreen"><i class="bi bi-check2 me-2 qab-theme-check"></i>🌿
                                     Evergreen</button></li>
                         </div>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="https://github.com/Textagent/textagent.github.io/issues"
+                                target="_blank" rel="noopener noreferrer"><i class="bi bi-bug me-2"></i>Open Issues</a>
+                        </li>
                     </ul>
                 </div>
                 <button id="qab-ai" class="qab-btn" title="AI Assistant">
@@ -564,11 +571,6 @@
                 <button id="qab-help" class="qab-btn" title="Help Mode">
                     <i class="bi bi-question-circle"></i> Help
                 </button>
-                <a href="https://github.com/Textagent/textagent.github.io/issues" class="qab-btn" title="Open Issues"
-                    target="_blank" rel="noopener noreferrer"
-                    style="text-decoration:none;color:inherit;font-size:0.55rem;padding:2px 6px;white-space:normal;text-align:center;line-height:1.1;max-width:3.2rem">
-                    <i class="bi bi-bug"></i> Open Issues
-                </a>
 
             </div>
         </div>
