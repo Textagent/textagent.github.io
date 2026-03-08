@@ -254,8 +254,8 @@
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="linux-tag"]': {
-            name: 'Linux Terminal / Compile & Run',
-            desc: 'Insert a {{Linux:}} block. Two modes: (1) Terminal — specify Packages: to launch a full Debian Linux (WebVM). (2) Compile & Run — add Language: and Script: fields to compile & execute C++, Rust, Go, Java, and 20+ languages via the Piston API, with output inline.',
+            name: 'Linux',
+            desc: 'Insert a {{Linux:}} block. Two modes: (1) Terminal — specify Packages: to launch a full Debian Linux (WebVM). (2) Compile & Run — add Language: and Script: fields to compile & execute C++, Rust, Go, Java, and 25+ languages via Judge0 CE, with output inline.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
