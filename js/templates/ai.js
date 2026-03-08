@@ -5,6 +5,7 @@ window.__MDV_TEMPLATES_AI = [
     {
         name: 'AI Business Proposal',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-briefcase',
         description: 'Generate a persuasive business proposal — fill in client & project details, AI does the rest',
         variables: [
@@ -94,6 +95,7 @@ gantt
     {
         name: 'AI Research Paper',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-mortarboard',
         description: 'Academic research paper — outline your thesis, AI fills abstract, lit review, methodology & analysis',
         content: `# [Research Paper Title]
@@ -177,6 +179,7 @@ Present findings objectively without interpretation.}}
     {
         name: 'AI Product PRD',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-kanban',
         description: 'Product Requirements Document — define vision, AI generates user stories, specs & success metrics',
         content: `# Product Requirements Document (PRD)
@@ -266,6 +269,7 @@ flowchart TD
     {
         name: 'AI Marketing Copy',
         category: 'ai',
+    displayTag: 'AI',
         icon: 'bi-megaphone',
         description: 'Landing pages, ad copy & email campaigns — describe brand/audience, AI writes compelling copy',
         content: `# Marketing Copy — [Product / Campaign Name]
@@ -356,6 +360,7 @@ Vary the angle: one benefit-focused, one problem-focused, one social-proof-focus
     {
         name: 'AI Lesson Plan',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-journal-bookmark',
         description: 'Teaching & training — specify subject/grade level, AI generates objectives, activities & assessments',
         content: `# Lesson Plan — [Topic Title]
@@ -461,6 +466,7 @@ Provide specific, actionable strategies for each group.}}
     {
         name: 'AI Technical RFC',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-gear-wide-connected',
         description: 'Engineering design doc / RFC — describe the problem, AI generates alternatives, architecture & plan',
         content: `# RFC: [Feature / System Name]
@@ -601,6 +607,7 @@ Format as a table with before/after estimates.}}
     {
         name: 'AI Cover Letter',
         category: 'ai',
+    displayTag: 'AI',
         icon: 'bi-envelope-paper-heart',
         description: 'Job applications — paste the job description and your background, AI writes a personalized letter',
         variables: [
@@ -662,6 +669,7 @@ Format as numbered sections.}}
     {
         name: 'AI SWOT Analysis',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-grid-3x3-gap',
         description: 'Strategic planning — describe your company/product, AI generates comprehensive SWOT analysis',
         variables: [
@@ -761,6 +769,7 @@ Organize from highest to lowest priority.}}
     {
         name: 'AI Content Calendar',
         category: 'ai',
+    displayTag: 'AI',
         icon: 'bi-calendar3',
         description: 'Social media & content marketing — describe your brand, AI generates a monthly content calendar',
         content: `# Content Calendar — [Brand / Project Name]
@@ -856,6 +865,7 @@ Format as a table with columns: Date, Event, Content Opportunity, Platform.}}
     {
         name: 'AI Stock Research Report',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-graph-up-arrow',
         description: 'Equity research — enter a company name/ticker, AI generates a full stock analysis report',
         content: `# Stock Research Report — [Company Name] ([TICKER])
@@ -984,6 +994,7 @@ Be balanced and objective.}}
     {
         name: 'AI Financial Statement Analysis',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-file-earmark-spreadsheet',
         description: 'Deep-dive into financials — enter company name, AI analyzes income statement, balance sheet & cash flow',
         content: `# Financial Statement Analysis — [Company Name]
@@ -1105,6 +1116,7 @@ Format as a checklist with status (⚠️ Concern / ✅ Healthy / 🔍 Monitor).
     {
         name: 'AI Investment Thesis',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-piggy-bank',
         description: 'Build a bull/bear case — enter a stock, AI generates a structured investment thesis with catalysts & risks',
         content: `# Investment Thesis — [Company Name] ([TICKER])
@@ -1218,6 +1230,7 @@ Format as a table with columns: KPI, Current, Bull Signal, Bear Signal.}}
     {
         name: 'AI Portfolio Review',
         category: 'ai',
+    displayTag: 'AI · Think',
         icon: 'bi-pie-chart',
         description: 'Portfolio analysis — list your holdings, AI generates allocation analysis, risk assessment & rebalancing plan',
         content: `# Portfolio Review & Analysis
