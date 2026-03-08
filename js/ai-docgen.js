@@ -20,6 +20,7 @@
             M.wrapSelectionWith('{{Agent:\n  Step 1: ', '\n  Step 2: describe the next step\n}}', 'describe this step');
             return;
         }
+
         var placeholder = type === 'Think'
             ? 'describe what to analyze or reason through'
             : type === 'Image'
@@ -73,6 +74,7 @@
                 if (block.type === 'Agent') {
                     block.steps = parseAgentSteps(block.prompt);
                 }
+
                 blocks.push(block);
             }
         }
@@ -105,6 +107,8 @@
         }
         return steps;
     }
+
+
 
     // ==============================================
     // PREVIEW — transform markers into placeholder HTML
@@ -1087,7 +1091,7 @@
         var blocks = parseDocgenBlocks(text);
 
         if (blocks.length === 0) {
-            showToast('No {{AI:}} or {{Think:}} blocks found. Select text and click AI or Think to tag sections.', 'warning');
+            showToast('No {{AI:}}, {{Think:}}, {{Image:}}, or {{Agent:}} blocks found. Tag sections first.', 'warning');
             return;
         }
 
@@ -1283,6 +1287,7 @@
     M.registerFormattingAction('think-tag', function () { insertDocgenTag('Think'); });
     M.registerFormattingAction('image-tag', function () { insertDocgenTag('Image'); });
     M.registerFormattingAction('agent-tag', function () { insertDocgenTag('Agent'); });
+
     M.registerFormattingAction('fill-all', function () { fillAllDocgenBlocks(); });
 
     // Toolbar button for model selection panel
@@ -1293,10 +1298,13 @@
         });
     }
 
+
+
     // ==============================================
     // EXPOSE FOR RENDERER
     // ==============================================
 
+    M._showToast = showToast;
     M.transformDocgenMarkdown = transformDocgenMarkdown;
     M.bindDocgenPreviewActions = bindDocgenPreviewActions;
     M.parseDocgenBlocks = parseDocgenBlocks;

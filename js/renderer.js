@@ -136,10 +136,14 @@
             const markdownForRender = M.transformDocgenMarkdown
                 ? M.transformDocgenMarkdown(markdown)
                 : markdown;
-            const html = marked.parse(markdownForRender);
+            // Chain API tag transform (independent component)
+            const finalMarkdown = M.transformApiMarkdown
+                ? M.transformApiMarkdown(markdownForRender)
+                : markdownForRender;
+            const html = marked.parse(finalMarkdown);
             const sanitizedHtml = DOMPurify.sanitize(html, {
                 ADD_TAGS: ['mjx-container', 'button', 'select', 'option'],
-                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'value', 'title', 'selected', 'data-model-id']
+                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'value', 'title', 'selected', 'data-model-id']
             });
             M.markdownPreview.innerHTML = sanitizedHtml;
 
@@ -196,6 +200,9 @@
 
             // DocGen: bind preview placeholder card actions
             if (M.bindDocgenPreviewActions) M.bindDocgenPreviewActions(M.markdownPreview);
+
+            // API: bind API card actions (independent component)
+            if (M.bindApiPreviewActions) M.bindApiPreviewActions(M.markdownPreview);
 
             if (window.MathJax) {
                 try {

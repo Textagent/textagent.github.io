@@ -241,9 +241,21 @@
             shortcut: null,
             demo: 'assets/demos/17_agent_flow.webp'
         },
+        '[data-action="api-get-tag"]': {
+            name: 'API GET Tag',
+            desc: 'Insert a {{API:}} block for a GET request. Define URL and optional Variable to store the response as $(api_varName).',
+            shortcut: null,
+            demo: 'assets/demos/15_ai_doc_tags.webp'
+        },
+        '[data-action="api-post-tag"]': {
+            name: 'API POST Tag',
+            desc: 'Insert a {{API:}} block for a POST request. Define URL, Headers, Body (JSON), and optional Variable to store the response.',
+            shortcut: null,
+            demo: 'assets/demos/15_ai_doc_tags.webp'
+        },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
-            desc: 'Process all {{AI:}}, {{Think:}}, {{Image:}}, and {{Agent:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
+            desc: 'Process all {{AI:}}, {{Think:}}, {{Image:}}, {{Agent:}}, and {{API:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },

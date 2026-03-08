@@ -259,7 +259,17 @@
       }
 
       // Auto-generate the variable table at the top
-      const autoVars = detected.map(name => ({ name, value: '', desc: '' }));
+      // Pre-fill from API vars if available (truncate for table display, full value used on resolve)
+      const apiVars = window.__API_VARS || {};
+      const autoVars = detected.map(name => {
+        let val = apiVars[name] || '';
+        const desc = val ? '*(API result)*' : '';
+        // Strip newlines and truncate long values for table safety
+        val = val.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+        if (val.length > 80) val = val.substring(0, 80) + '…';
+        val = val.replace(/\|/g, '\\|');
+        return { name, value: val, desc };
+      });
       const block = generateVariableBlock(autoVars);
 
       // Also resolve globals in the content (but keep $(localVars) as-is)
@@ -277,9 +287,12 @@
     }
 
     // Resolve local variables from the table
+    // Fallback to API vars for any empty/missing values
+    const apiVars = window.__API_VARS || {};
     let result = contentWithoutBlock;
     for (const [key, val] of Object.entries(vars)) {
-      result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), val);
+      const resolvedVal = val || apiVars[key] || '';
+      result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), resolvedVal);
     }
 
     // Also resolve global built-ins

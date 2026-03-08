@@ -18,6 +18,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
       '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
       '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation · `{{Agent:}}` multi-step pipeline — per-card model selector · concurrent block operations |\n' +
+      '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
       '| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipelines — chain Step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
@@ -29,7 +30,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 81+ templates (11 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 96+ templates (12 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -155,6 +156,32 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '4. Each card has its own **model selector** — switch models per-block!\n\n' +
       '> [!TIP]\n' +
       '> Check out the **AI** category in Templates for 13 ready-made AI-fillable documents!\n\n' +
+      '---\n\n' +
+      '## 🔌 API Calls\n\n' +
+      'Make **REST API calls directly from your document** using `{{API:}}` tags:\n\n' +
+      '```\n' +
+      '{{API:\n' +
+      '  URL: https://jsonplaceholder.typicode.com/posts/1\n' +
+      '  Method: GET\n' +
+      '  Variable: getResult\n' +
+      '}}\n' +
+      '```\n\n' +
+      '```\n' +
+      '{{API:\n' +
+      '  URL: https://reqres.in/api/users\n' +
+      '  Method: POST\n' +
+      '  Headers: Content-Type: application/json\n' +
+      '  Body: {"name":"TextAgent","job":"editor"}\n' +
+      '  Variable: postResult\n' +
+      '}}\n' +
+      '```\n\n' +
+      '**How it works:**\n' +
+      '1. Use toolbar **GET** / **POST** buttons or type `{{API:}}` manually\n' +
+      '2. Specify URL, Method, Headers, Body, and a Variable name\n' +
+      '3. Click **▶** on the card to execute — review the response\n' +
+      '4. Response stored in `$(api_varName)` — visible in the ⚡ Vars table\n\n' +
+      '> [!TIP]\n' +
+      '> Use `Variable: myData` to store the API response, then reference it anywhere as `$(api_myData)`.\n\n' +
       '---\n\n' +
       '## 🔗 Agent Flow\n\n' +
       'Create **multi-step AI pipelines** directly in your markdown:\n\n' +
@@ -403,6 +430,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] PlantUML diagram rendering\n' +
       '- [x] AI Assistant — 3 local sizes (0.8B / 2B / 4B) + cloud models\n' +
       '- [x] AI Document Tags (AI, Think, Image, Agent)\n' +
+      '- [x] API Calls — REST API integration with variable storage\n' +
       '- [x] Agent Flow — multi-step AI pipelines with chained outputs\n' +
       '- [x] Web Search — DuckDuckGo, Brave, Serper.dev\n' +
       '- [x] Per-card AI model selection\n' +
@@ -425,7 +453,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Word wrap toggle\n' +
       '- [x] Emoji shortcodes\n' +
       '- [x] PDF export with smart page breaks\n' +
-      '- [x] 81+ templates (11 categories)\n' +
+      '- [x] 96+ templates (12 categories)\n' +
       '- [x] Table spreadsheet tools (sort, filter, stats, chart)\n' +
       '- [x] Formatting toolbar\n' +
       '- [x] Table of contents\n' +

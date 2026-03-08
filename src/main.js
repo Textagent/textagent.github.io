@@ -81,6 +81,9 @@ async function loadModules() {
     // Phase 4.5: DocGen (depends on ai-assistant's requestAiTask API)
     await import('../js/ai-docgen.js');
 
+    // Phase 4.6: API Component (independent from AI, depends on M._showToast from ai-docgen)
+    await import('../js/api-docgen.js');
+
     // Phase 5: Init wiring (must be last — wires everything together)
     await import('../js/app-init.js');
 }

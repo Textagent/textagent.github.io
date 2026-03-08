@@ -22,7 +22,7 @@
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://www.gstatic.com;
         style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-        connect-src 'self' https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://huggingface.co;
+        connect-src 'self' https: http: https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://huggingface.co;
         img-src 'self' data: blob: https://www.plantuml.com https://textagent.github.io;
         font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         worker-src 'self' blob:;
@@ -611,6 +611,14 @@
                     title="Tag as Agent Flow Pipeline">Agent</button>
                 <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
                     title="Fill all AI blocks">Fill</button>
+            </div>
+            <span class="fmt-separator"></span>
+            <div class="fmt-api-group" title="API Call Tags">
+                <span class="fmt-api-group-label">API</span>
+                <button class="fmt-btn fmt-api-get-btn" data-action="api-get-tag"
+                    title="Insert GET API call">GET</button>
+                <button class="fmt-btn fmt-api-post-btn" data-action="api-post-tag"
+                    title="Insert POST API call">POST</button>
             </div>
             <span class="fmt-separator"></span>
             <button class="fmt-btn fmt-vars-btn" id="apply-vars-btn"
