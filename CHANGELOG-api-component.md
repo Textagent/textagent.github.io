@@ -12,6 +12,7 @@
 - Fixed: Review panel appearing at bottom — now renders inline after the triggering API card
 - Updated README with API Calls feature row and release note
 - Updated Feature Showcase template with API Calls section and examples
+- Added 4 missing release notes from past commits: MIT license, new icon, Agent auto-download, template display tags
 
 ---
 
