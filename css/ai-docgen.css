@@ -1952,3 +1952,134 @@
     color: #d97706;
     border-color: rgba(217, 119, 6, 0.2);
 }
+
+/* ==============================================
+   MEMORY SELECTOR — dropdown on AI/Think/Agent cards
+   ============================================== */
+
+.ai-memory-select-btn {
+    font-size: 0.85em !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ai-memory-select-btn:hover {
+    background: rgba(245, 158, 11, 0.2) !important;
+    transform: scale(1.05);
+}
+
+.ai-memory-dropdown {
+    position: relative;
+    margin: 0 12px 8px 12px;
+    padding: 8px 0;
+    background: rgba(30, 30, 40, 0.95);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    backdrop-filter: blur(8px);
+}
+
+.ai-memory-dropdown-header {
+    padding: 4px 12px 6px;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #f59e0b;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.ai-memory-source-list {
+    padding: 6px 8px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.ai-memory-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82em;
+    color: #e2e8f0;
+    transition: background 0.15s;
+}
+
+.ai-memory-checkbox-item:hover {
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.ai-memory-checkbox-item input[type="checkbox"] {
+    accent-color: #f59e0b;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.ai-mem-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: 600;
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    margin-left: 4px;
+}
+
+.ai-memory-loading {
+    display: block;
+    text-align: center;
+    padding: 8px;
+    font-size: 0.78em;
+    color: #94a3b8;
+}
+
+.ai-memory-dropdown-attach {
+    display: flex;
+    gap: 6px;
+    padding: 6px 12px 2px;
+    border-top: 1px solid rgba(245, 158, 11, 0.1);
+}
+
+.ai-memory-dropdown-attach .ai-placeholder-btn {
+    flex: 1;
+    font-size: 0.75em !important;
+    padding: 4px 8px !important;
+    text-align: center;
+    border-radius: 6px;
+}
+
+/* Light theme */
+[data-theme="light"] .ai-memory-dropdown {
+    background: rgba(255, 255, 255, 0.97);
+    border-color: rgba(217, 119, 6, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .ai-memory-dropdown-header {
+    color: #d97706;
+    border-bottom-color: rgba(217, 119, 6, 0.15);
+}
+
+[data-theme="light"] .ai-memory-checkbox-item {
+    color: #334155;
+}
+
+[data-theme="light"] .ai-memory-checkbox-item:hover {
+    background: rgba(245, 158, 11, 0.06);
+}
+
+[data-theme="light"] .ai-memory-select-btn {
+    background: rgba(217, 119, 6, 0.08) !important;
+    color: #d97706 !important;
+    border-color: rgba(217, 119, 6, 0.2) !important;
+}

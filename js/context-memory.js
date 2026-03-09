@@ -694,6 +694,30 @@
         return ensureWorkspaceIndex(true);
     };
 
+    /**
+     * Return all available memory source names.
+     * @param {string[]} docMemoryNames — names from {{Memory:}} tags in the document
+     * @returns {Promise<{name:string, origin:string}[]>}
+     */
+    memory.listAllSources = async function (docMemoryNames) {
+        var sources = [{ name: 'workspace', origin: 'built-in' }];
+        // From document {{Memory:}} tags
+        (docMemoryNames || []).forEach(function (n) {
+            if (n && n !== 'workspace') sources.push({ name: n, origin: 'document' });
+        });
+        // From IndexedDB (previously attached external memories)
+        try {
+            var extNames = await memory.listExternalMemories();
+            extNames.forEach(function (n) {
+                // Avoid duplicates
+                if (!sources.some(function (s) { return s.name === n; })) {
+                    sources.push({ name: n, origin: 'stored' });
+                }
+            });
+        } catch (_) { /* ignore */ }
+        return sources;
+    };
+
     // Expose
     M._memory = memory;
 

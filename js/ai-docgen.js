@@ -214,16 +214,30 @@
                     + '<option value="brave">🦁 Brave</option>'
                     + '<option value="serper">🔎 Serper</option>';
 
+                // Use: hint for Agent
+                var agentUseMatch = prompt.match(/^Use:\s*(.+)$/m);
+                var agentUseHint = agentUseMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(agentUseMatch[1]) + '</span>' : '';
+
                 result += '<div class="ai-placeholder-card ai-agent-card" data-ai-type="Agent" data-ai-index="' + blockIndex + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + agentUseHint
                     + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<select class="ai-agent-search-select" data-ai-index="' + blockIndex + '" title="Search provider">' + searchOpts + '</select>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this flow">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run this agent flow">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
+                    + '<div class="ai-memory-dropdown" data-ai-index="' + blockIndex + '" style="display:none">'
+                    + '<div class="ai-memory-dropdown-header">📚 Memory Sources</div>'
+                    + '<div class="ai-memory-source-list" data-ai-index="' + blockIndex + '"><span class="ai-memory-loading">Loading…</span></div>'
+                    + '<div class="ai-memory-dropdown-attach">'
+                    + '<button class="ai-placeholder-btn ai-memory-quick-folder" data-ai-index="' + blockIndex + '" title="Attach folder">📂 Folder</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-quick-files" data-ai-index="' + blockIndex + '" title="Attach files">📄 Files</button>'
+                    + '</div>'
+                    + '</div>'
                     + '<div class="ai-agent-steps">' + stepsHtml + '</div>'
                     + '</div>';
             } else {
@@ -238,10 +252,19 @@
                     + '<span class="ai-placeholder-label">' + label + '</span>'
                     + useHint
                     + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
+                    + '<div class="ai-memory-dropdown" data-ai-index="' + blockIndex + '" style="display:none">'
+                    + '<div class="ai-memory-dropdown-header">📚 Memory Sources</div>'
+                    + '<div class="ai-memory-source-list" data-ai-index="' + blockIndex + '"><span class="ai-memory-loading">Loading…</span></div>'
+                    + '<div class="ai-memory-dropdown-attach">'
+                    + '<button class="ai-placeholder-btn ai-memory-quick-folder" data-ai-index="' + blockIndex + '" title="Attach folder">📂 Folder</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-quick-files" data-ai-index="' + blockIndex + '" title="Attach files">📄 Files</button>'
+                    + '</div>'
+                    + '</div>'
                     + '<div class="ai-placeholder-prompt">' + escapeHtml(displayPrompt) + '</div>'
                     + '</div>';
             }
@@ -360,6 +383,209 @@
                     statsEl.textContent = stats.files + ' files — ' + stats.chunks + ' chunks';
                 }
             }).catch(function () { /* ignore */ });
+        });
+
+        // ==============================================
+        // MEMORY SELECTOR — dropdown on AI/Think/Agent cards
+        // ==============================================
+
+        // Helper: get document {{Memory:}} tag names from editor
+        function getDocMemoryNames() {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var names = [];
+            var re = /\{\{Memory:[^}]*Name:\s*([^\s}]+)/gi;
+            var m;
+            while ((m = re.exec(text)) !== null) {
+                var n = m[1].replace(/[,}]/g, '').trim();
+                if (n && names.indexOf(n) === -1) names.push(n);
+            }
+            return names;
+        }
+
+        // Helper: get current Use: sources for a block
+        function getBlockUseSources(blockIndex) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (blockIndex < blocks.length && blocks[blockIndex].useMemory) {
+                return blocks[blockIndex].useMemory;
+            }
+            return [];
+        }
+
+        // Helper: update the Use: field in the editor for a block
+        function updateBlockUseField(blockIndex, selectedSources) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (blockIndex >= blocks.length) return;
+            var block = blocks[blockIndex];
+
+            // Build the new Use: line
+            var useLine = selectedSources.length > 0 ? 'Use: ' + selectedSources.join(', ') : '';
+
+            // Get the raw tag content
+            var tagContent = text.substring(block.start, block.end);
+            var innerStart = tagContent.indexOf(':') + 1;
+            var innerEnd = tagContent.lastIndexOf('}}');
+            var inner = tagContent.substring(innerStart, innerEnd).trim();
+
+            // Remove existing Use: line
+            inner = inner.replace(/^Use:\s*.+$/m, '').trim();
+
+            // Prepend new Use: line
+            if (useLine) {
+                inner = useLine + '\n' + inner;
+            }
+
+            // Rebuild tag
+            var tagType = block.type;
+            var newTag = '{{' + tagType + ': ' + inner + ' }}';
+
+            M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+
+            // Update the Use: hint badge on the card
+            var card = container.querySelector('.ai-placeholder-card[data-ai-index="' + blockIndex + '"]');
+            if (card) {
+                var hintEl = card.querySelector('.ai-use-hint');
+                if (selectedSources.length > 0) {
+                    if (!hintEl) {
+                        hintEl = document.createElement('span');
+                        hintEl.className = 'ai-use-hint';
+                        var label = card.querySelector('.ai-placeholder-label');
+                        if (label) label.after(hintEl);
+                    }
+                    hintEl.textContent = '📚 ' + selectedSources.join(', ');
+                } else if (hintEl) {
+                    hintEl.remove();
+                }
+            }
+        }
+
+        // Toggle memory selector dropdown
+        container.querySelectorAll('.ai-memory-select-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var dropdown = container.querySelector('.ai-memory-dropdown[data-ai-index="' + idx + '"]');
+                if (!dropdown) return;
+
+                var isOpen = dropdown.style.display !== 'none';
+                // Close all open dropdowns first
+                container.querySelectorAll('.ai-memory-dropdown').forEach(function (d) { d.style.display = 'none'; });
+
+                if (isOpen) return;
+
+                dropdown.style.display = 'block';
+
+                // Populate sources
+                var listEl = dropdown.querySelector('.ai-memory-source-list');
+                if (!listEl) return;
+                listEl.innerHTML = '<span class="ai-memory-loading">Loading…</span>';
+
+                var currentSources = getBlockUseSources(idx);
+                var docNames = getDocMemoryNames();
+
+                if (!M._memory || !M._memory.listAllSources) {
+                    listEl.innerHTML = '<label class="ai-memory-checkbox-item">'
+                        + '<input type="checkbox" value="workspace" ' + (currentSources.indexOf('workspace') !== -1 ? 'checked' : '') + '> workspace</label>';
+                    return;
+                }
+
+                M._memory.listAllSources(docNames).then(function (sources) {
+                    var html = '';
+                    sources.forEach(function (src) {
+                        var checked = currentSources.indexOf(src.name) !== -1 ? ' checked' : '';
+                        var badge = src.origin === 'document' ? ' <small class="ai-mem-badge">doc</small>'
+                            : src.origin === 'stored' ? ' <small class="ai-mem-badge">saved</small>' : '';
+                        html += '<label class="ai-memory-checkbox-item">'
+                            + '<input type="checkbox" value="' + escapeHtml(src.name) + '"' + checked + '> '
+                            + escapeHtml(src.name) + badge + '</label>';
+                    });
+                    listEl.innerHTML = html || '<span class="ai-memory-loading">No sources available</span>';
+
+                    // Bind checkbox changes
+                    listEl.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                        cb.addEventListener('change', function () {
+                            var selected = [];
+                            listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(function (c) {
+                                selected.push(c.value);
+                            });
+                            updateBlockUseField(idx, selected);
+                        });
+                    });
+                });
+            });
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.ai-memory-dropdown') && !e.target.closest('.ai-memory-select-btn')) {
+                container.querySelectorAll('.ai-memory-dropdown').forEach(function (d) { d.style.display = 'none'; });
+            }
+        });
+
+        // Quick-attach Folder from AI/Agent card
+        container.querySelectorAll('.ai-memory-quick-folder').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+
+                // Prompt for name
+                var name = prompt('Memory source name:', 'external-' + Date.now());
+                if (!name) return;
+                name = name.replace(/\s+/g, '-').toLowerCase();
+
+                btn.disabled = true;
+                btn.textContent = '⏳ Scanning...';
+                M._memory.attachFolder(name).then(function (info) {
+                    M.showToast('📚 Indexed ' + info.chunkCount + ' chunks from "' + info.folderName + '"', 'success');
+                    // Add to checked sources
+                    var current = getBlockUseSources(idx);
+                    if (current.indexOf(name) === -1) current.push(name);
+                    updateBlockUseField(idx, current);
+                    // Refresh dropdown
+                    btn.closest('.ai-memory-dropdown').querySelector('.ai-memory-select-btn');
+                    var selBtn = container.querySelector('.ai-memory-select-btn[data-ai-index="' + idx + '"]');
+                    if (selBtn) selBtn.click();
+                }).catch(function (err) {
+                    if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
+                }).finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = '📂 Folder';
+                });
+            });
+        });
+
+        // Quick-attach Files from AI/Agent card
+        container.querySelectorAll('.ai-memory-quick-files').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+
+                var name = prompt('Memory source name:', 'files-' + Date.now());
+                if (!name) return;
+                name = name.replace(/\s+/g, '-').toLowerCase();
+
+                btn.disabled = true;
+                btn.textContent = '⏳ Reading...';
+                M._memory.attachFiles(name).then(function (info) {
+                    M.showToast('📚 Added ' + info.addedChunks + ' chunks', 'success');
+                    var current = getBlockUseSources(idx);
+                    if (current.indexOf(name) === -1) current.push(name);
+                    updateBlockUseField(idx, current);
+                    var selBtn = container.querySelector('.ai-memory-select-btn[data-ai-index="' + idx + '"]');
+                    if (selBtn) selBtn.click();
+                }).catch(function (err) {
+                    if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
+                }).finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = '📄 Files';
+                });
+            });
         });
 
         // API key prompt when selecting a search provider that requires one
