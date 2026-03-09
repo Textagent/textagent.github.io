@@ -119,6 +119,15 @@ test.describe('Disk Workspace — UI Elements', () => {
         await expect(page.locator('#ws-header-refresh')).toBeAttached();
         await expect(page.locator('#ws-header-disconnect')).toBeAttached();
     });
+
+    test('header title is clickable and exists', async ({ page }) => {
+        const title = page.locator('#ws-header-title');
+        await expect(title).toBeAttached();
+        await expect(title).toBeVisible();
+        // Should have pointer cursor
+        const cursor = await title.evaluate(el => getComputedStyle(el).cursor);
+        expect(cursor).toBe('pointer');
+    });
 });
 
 test.describe('Workspace Sidebar — Core Behavior', () => {

@@ -337,9 +337,17 @@
         var openFolderBtn = document.getElementById('ws-open-folder');
         var headerRefresh = document.getElementById('ws-header-refresh');
         var headerDisconnect = document.getElementById('ws-header-disconnect');
+        var headerTitle = document.getElementById('ws-header-title');
 
         if (openFolderBtn) {
             openFolderBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (M.wsConnectFolder) M.wsConnectFolder();
+            });
+        }
+
+        if (headerTitle) {
+            headerTitle.addEventListener('click', function (e) {
                 e.stopPropagation();
                 if (M.wsConnectFolder) M.wsConnectFolder();
             });
