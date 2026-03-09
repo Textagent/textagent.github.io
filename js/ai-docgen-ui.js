@@ -211,7 +211,7 @@
     }
 
     // Expose toast for other modules
-    M._showToast = showToast;
+    M._showToast = function (msg, type) { M.showToast(msg, type); };
     _dg.showToast = showToast;
     _dg.showProgressToast = showProgressToast;
     _dg.hideProgressToast = hideProgressToast;

@@ -31,12 +31,14 @@ import '../css/feature-demos.css';
 import '../css/help-mode.css';
 import '../css/workspace.css';
 import '../css/linux-terminal.css';
+import '../css/toast.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
 async function loadModules() {
     // Phase 1: Core (must load in order — each depends on prior)
     await import('../js/storage-keys.js');
+    await import('../js/toast.js');
     await import('../js/modal-templates.js');
     await import('../js/app-core.js');
     await import('../js/renderer.js');

@@ -497,7 +497,7 @@
     M.startPresentation = function () {
         var md = M.markdownEditor.value;
         slides = parseSlides(md);
-        if (slides.length === 0) { alert('No slides found. Use --- (horizontal rule) to separate slides.'); return; }
+        if (slides.length === 0) { M.showToast('No slides found. Use --- (horizontal rule) to separate slides.', 'warning'); return; }
         currentSlide = 0;
         notesVisible = false;
         slideNotesPanel.style.display = 'none';

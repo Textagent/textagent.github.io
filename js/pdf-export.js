@@ -290,7 +290,7 @@
             M.exportPdf.disabled = false;
         } catch (error) {
             console.error("PDF export failed:", error);
-            alert("PDF export failed: " + error.message);
+            M.showToast('PDF export failed: ' + error.message, 'error');
             M.exportPdf.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Export';
             M.exportPdf.disabled = false;
             if (progressContainer && progressContainer.parentNode) progressContainer.parentNode.removeChild(progressContainer);

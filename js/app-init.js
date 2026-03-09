@@ -14,7 +14,7 @@
                 copyToClipboard(M.markdownEditor.value);
             } catch (e) {
                 console.error('Copy failed:', e);
-                alert('Failed to copy Markdown: ' + e.message);
+                M.showToast('Failed to copy Markdown: ' + e.message, 'error');
             }
         });
     }
@@ -38,7 +38,7 @@
             }
         } catch (err) {
             console.error('Copy failed:', err);
-            alert('Failed to copy Markdown: ' + err.message);
+            M.showToast('Failed to copy Markdown: ' + err.message, 'error');
         }
     }
 

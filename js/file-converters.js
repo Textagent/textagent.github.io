@@ -46,7 +46,7 @@
         var type = SUPPORTED_EXTENSIONS[ext];
 
         if (!type) {
-            alert('Unsupported file format: .' + ext + '\n\nSupported: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF');
+            M.showToast('Unsupported file format: .' + ext + '. Supported: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF', 'error');
             return;
         }
 
@@ -77,7 +77,7 @@
             showConversionToast('\u2713 Converted ' + file.name + ' to Markdown');
         } catch (err) {
             console.error('File conversion failed:', err);
-            alert('Failed to convert ' + file.name + ':\n' + err.message);
+            M.showToast('Failed to convert ' + file.name + ': ' + err.message, 'error');
         } finally {
             hideConversionOverlay();
         }

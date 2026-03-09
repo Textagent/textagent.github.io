@@ -218,7 +218,7 @@
 
     M.shareMarkdown = function () {
         var markdownContent = M.markdownEditor.value;
-        if (!markdownContent.trim()) { alert('Nothing to share — the editor is empty.'); return; }
+        if (!markdownContent.trim()) { M.showToast('Nothing to share — the editor is empty.', 'warning'); return; }
         openShareOptionsModal();
     };
 
