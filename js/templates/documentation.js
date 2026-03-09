@@ -13,13 +13,13 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '## ✨ All Features at a Glance\n\n' +
       '| Category | Features |\n' +
       '|:---------|:---------|\n' +
-      '| **Editor** | Live preview · Split/Editor/Preview modes · Sync scrolling · Formatting toolbar · Find \\& Replace (regex) · Word wrap toggle · Draggable resize divider |\n' +
+      '| **Editor** | Live preview · Split/Editor/Preview modes · Sync scrolling · Formatting toolbar · Find \\& Replace (regex) · Word wrap toggle · Draggable resize divider · Clear All / Clear Selection buttons |\n' +
       '| **Writing Modes** | Zen mode (distraction-free) · Focus mode (dimmed paragraphs) · Dark mode · 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |\n' +
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
       '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
       '| **🏷️ AI Document Tags** | `{{@AI:}}` text generation · `{{Think:}}` deep reasoning · `{{@Image:}}` image generation · `{{@Memory:}}` context attachment (SQLite FTS5 search, `@use:` field) · `{{@Agent:}}` multi-step pipeline — `@` prefix on all tags and metadata fields (`@name`, `@use`, `@think`, `@search`, `@prompt`, `@step`) · per-card model selector · concurrent block operations |\\n' +
       '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
-      '| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipelines — chain Step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
+      '| **🔗 Agent Flow** | `{{@Agent:}}` multi-step pipelines — chain @step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
       '| **🐧 Linux Terminal** | `{{Linux:}}` tag — Terminal mode (opens full Debian Linux via WebVM) · Compile \\& Run mode (`Language:` + `Script:`) compiles 25+ languages via Judge0 CE with inline output and execution stats |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
@@ -27,12 +27,12 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) · 🐧 Compile \\& Run (25+ compiled languages via Judge0 CE) |\n' +
       '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
       '| **Export** | Markdown · Self-contained styled HTML (all CSS inlined, theme preserved) · PDF (smart page-breaks, shared rendering pipeline) · LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |\n' +
-      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links |\n' +
+      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links · ✉️ Email to Self (send share link + .md attachment to inbox) |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + window.MDView.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
-      '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · Playwright smoke tests (import, export, share, view-mode) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + window.MDView.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · 📂 Disk-Backed Workspace (File System Access API, .md read/write, autosave, auto-reconnect) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
+      '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · 151 Playwright tests (smoke, feature, integration, startup, export, persistence) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
