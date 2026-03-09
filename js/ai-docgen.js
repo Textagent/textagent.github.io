@@ -20,6 +20,10 @@
             M.wrapSelectionWith('{{Agent:\n  Step 1: ', '\n  Step 2: describe the next step\n}}', 'describe this step');
             return;
         }
+        if (type === 'Memory') {
+            M.wrapSelectionWith('{{Memory:\n  Name: ', '\n}}', 'my-context');
+            return;
+        }
 
         var placeholder = type === 'Think'
             ? 'describe what to analyze or reason through'
@@ -59,7 +63,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{(AI|Think|Image|Agent):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -73,6 +77,19 @@
                 // Parse Agent steps
                 if (block.type === 'Agent') {
                     block.steps = parseAgentSteps(block.prompt);
+                }
+                // Parse Use: field (for AI, Think, Agent blocks)
+                if (block.type !== 'Image' && block.type !== 'Memory') {
+                    var useMatch = block.prompt.match(/^Use:\s*(.+)$/m);
+                    if (useMatch) {
+                        block.useMemory = useMatch[1].split(',').map(function (s) { return s.trim(); });
+                        block.prompt = block.prompt.replace(useMatch[0], '').trim();
+                    }
+                }
+                // Parse Memory block fields
+                if (block.type === 'Memory') {
+                    var nameMatch = block.prompt.match(/^Name:\s*(.+)$/m);
+                    block.memoryName = nameMatch ? nameMatch[1].trim() : 'default';
                 }
 
                 blocks.push(block);
@@ -121,7 +138,7 @@
 
     function transformDocgenMarkdown(markdown) {
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{(AI|Think|Image|Agent):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -155,11 +172,28 @@
 
             var type = match[1];
             var prompt = match[2].trim();
-            var icon = type === 'Think' ? '🧠' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : '✨';
-            var label = type === 'Think' ? 'Think' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : 'AI Generate';
+            var icon = type === 'Think' ? '🧠' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
+            var label = type === 'Think' ? 'Think' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
             var cardModelOpts = type === 'Image' ? imageModelOptionsHtml : modelOptionsHtml;
 
-            if (type === 'Agent') {
+            if (type === 'Memory') {
+                // Parse Memory fields
+                var nameMatch = prompt.match(/^Name:\s*(.+)$/m);
+                var memoryName = nameMatch ? escapeHtml(nameMatch[1].trim()) : 'default';
+
+                result += '<div class="ai-placeholder-card" data-ai-type="Memory" data-ai-index="' + blockIndex + '" data-memory-name="' + memoryName + '">'
+                    + '<div class="ai-placeholder-header">'
+                    + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                    + '<span class="ai-placeholder-label">Memory: ' + memoryName + '</span>'
+                    + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-memory-attach-folder" data-memory-name="' + memoryName + '" title="Attach folder">📂 Folder</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-attach-files" data-memory-name="' + memoryName + '" title="Attach files">📄 Files</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-rebuild" data-memory-name="' + memoryName + '" title="Rebuild index">🔄</button>'
+                    + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                    + '</div></div>'
+                    + '<div class="ai-memory-stats" data-memory-name="' + memoryName + '">No files attached</div>'
+                    + '</div>';
+            } else if (type === 'Agent') {
                 // Render pipeline card for Agent blocks
                 var steps = parseAgentSteps(prompt);
                 var stepsHtml = '';
@@ -193,16 +227,22 @@
                     + '<div class="ai-agent-steps">' + stepsHtml + '</div>'
                     + '</div>';
             } else {
+                // Extract Use: field for display hint
+                var useMatch = prompt.match(/^Use:\s*(.+)$/m);
+                var useHint = useMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(useMatch[1]) + '</span>' : '';
+                var displayPrompt = useMatch ? prompt.replace(useMatch[0], '').trim() : prompt;
+
                 result += '<div class="ai-placeholder-card" data-ai-type="' + type + '" data-ai-index="' + blockIndex + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + useHint
                     + '<div class="ai-placeholder-actions">'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
-                    + '<div class="ai-placeholder-prompt">' + escapeHtml(prompt) + '</div>'
+                    + '<div class="ai-placeholder-prompt">' + escapeHtml(displayPrompt) + '</div>'
                     + '</div>';
             }
 
@@ -241,6 +281,85 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 removeDocgenTag(idx);
             });
+        });
+
+        // Memory card — Attach Folder
+        container.querySelectorAll('.ai-memory-attach-folder').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var name = this.dataset.memoryName;
+                if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+                btn.disabled = true;
+                btn.textContent = '⏳ Scanning...';
+                M._memory.attachFolder(name).then(function (info) {
+                    M.showToast('📚 Indexed ' + info.chunkCount + ' chunks from "' + info.folderName + '"', 'success');
+                    var statsEl = container.querySelector('.ai-memory-stats[data-memory-name="' + name + '"]');
+                    if (statsEl) statsEl.textContent = '📂 ' + info.folderName + ' — ' + info.chunkCount + ' chunks';
+                }).catch(function (err) {
+                    if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
+                }).finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = '📂 Folder';
+                });
+            });
+        });
+
+        // Memory card — Attach Files
+        container.querySelectorAll('.ai-memory-attach-files').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var name = this.dataset.memoryName;
+                if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+                btn.disabled = true;
+                btn.textContent = '⏳ Reading...';
+                M._memory.attachFiles(name).then(function (info) {
+                    M.showToast('📚 Added ' + info.addedChunks + ' chunks', 'success');
+                    M._memory.getExternalStats(name).then(function (stats) {
+                        var statsEl = container.querySelector('.ai-memory-stats[data-memory-name="' + name + '"]');
+                        if (statsEl) statsEl.textContent = stats.files + ' files — ' + stats.chunks + ' chunks';
+                    });
+                }).catch(function (err) {
+                    if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
+                }).finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = '📄 Files';
+                });
+            });
+        });
+
+        // Memory card — Rebuild
+        container.querySelectorAll('.ai-memory-rebuild').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var name = this.dataset.memoryName;
+                if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+                btn.disabled = true;
+                btn.textContent = '⏳';
+                // Rebuild workspace or external
+                var promise = (name === 'workspace') ? M._memory.rebuildWorkspace() : M._memory.attachFolder(name);
+                promise.then(function () {
+                    M.showToast('🔄 Memory "' + name + '" rebuilt', 'success');
+                }).catch(function (err) {
+                    if (err.name !== 'AbortError') M.showToast('Rebuild failed: ' + err.message, 'error');
+                }).finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = '🔄';
+                });
+            });
+        });
+
+        // Load stats for existing Memory cards
+        container.querySelectorAll('.ai-memory-stats').forEach(function (statsEl) {
+            var name = statsEl.dataset.memoryName;
+            if (!M._memory || !name) return;
+            M._memory.getExternalStats(name).then(function (stats) {
+                if (stats.files > 0) {
+                    statsEl.textContent = stats.files + ' files — ' + stats.chunks + ' chunks';
+                }
+            }).catch(function () { /* ignore */ });
         });
 
         // API key prompt when selecting a search provider that requires one
@@ -333,6 +452,7 @@
     M.registerFormattingAction('think-tag', function () { insertDocgenTag('Think'); });
     M.registerFormattingAction('image-tag', function () { insertDocgenTag('Image'); });
     M.registerFormattingAction('agent-tag', function () { insertDocgenTag('Agent'); });
+    M.registerFormattingAction('memory-tag', function () { insertDocgenTag('Memory'); });
 
     // ==============================================
     // EXPOSE FOR RENDERER

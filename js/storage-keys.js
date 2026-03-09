@@ -54,5 +54,8 @@
 
         // --- Disk Workspace ---
         DISK_MODE: 'textagent-disk-mode',
+
+        // --- Context Memory ---
+        MEMORY_DB: 'textagent-memory-db',
     };
 })();

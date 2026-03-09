@@ -17,7 +17,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Writing Modes** | Zen mode (distraction-free) · Focus mode (dimmed paragraphs) · Dark mode · 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |\n' +
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
       '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
-      '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation · `{{Agent:}}` multi-step pipeline — per-card model selector · concurrent block operations |\n' +
+      '| **🏷️ AI Document Tags** | `{{AI:}}` text generation · `{{Think:}}` deep reasoning · `{{Image:}}` image generation · `{{Memory:}}` context attachment (SQLite FTS5 search, `Use:` field) · `{{Agent:}}` multi-step pipeline — per-card model selector · concurrent block operations |\n' +
       '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
       '| **🔗 Agent Flow** | `{{Agent:}}` multi-step pipelines — chain Step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
@@ -168,7 +168,9 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '|:----|:--------|:--------|\n' +
       '| `{{AI: prompt}}` | Generate text content | Marketing copy, PRD sections, summaries |\n' +
       '| `{{Think: prompt}}` | Deep reasoning / analysis | Comparisons, evaluations, strategic analysis |\n' +
-      '| `{{Image: prompt}}` | Generate images (Gemini Imagen) | Product mockups, illustrations, diagrams |\n\n' +
+      '| `{{Image: prompt}}` | Generate images (Gemini Imagen) | Product mockups, illustrations, diagrams |\n' +
+      '| `{{Memory: Name: id}}` | Attach local context | Workspace files, external folders |\n\n' +
+      '**Use: field** — add `Use: workspace, my-docs` to any `{{AI:}}`, `{{Think:}}`, or `{{Agent:}}` tag to auto-retrieve relevant context from indexed memory sources.\n\n' +
       '**How it works:**\n' +
       '1. Write a tag like `{{AI: Write an executive summary for a SaaS product}}`\n' +
       '2. Click **Generate** on the placeholder card (or **Fill All** for all tags)\n' +
@@ -350,7 +352,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| "italic \\<text\\>" | `*text*` |\n' +
       '| "bullet" | `- ` list item |\n' +
       '| "checkbox" | `- [ ] ` task item |\n' +
-      '| "code" | Inline `` \` `` backtick |\n' +
+      '| "code" | Inline `` ` `` backtick |\n' +
       '| "link \\<url\\>" | `[url](url)` |\n\n' +
       'Supports **multiple languages** — switch via the language picker in the mic menu.\n\n' +
       '> [!TIP]\n' +
@@ -449,7 +451,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Mermaid diagrams with zoom/pan/export toolbar\n' +
       '- [x] PlantUML diagram rendering\n' +
       '- [x] AI Assistant — 3 local sizes (0.8B / 2B / 4B) + cloud models\n' +
-      '- [x] AI Document Tags (AI, Think, Image, Agent)\n' +
+      '- [x] AI Document Tags (AI, Think, Image, Memory, Agent)\n' +
       '- [x] API Calls — REST API integration with variable storage\n' +
       '- [x] Agent Flow — multi-step AI pipelines with chained outputs\n' +
       '- [x] Web Search — DuckDuckGo, Brave, Serper.dev\n' +

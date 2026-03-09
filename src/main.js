@@ -87,6 +87,9 @@ async function loadModules() {
         import('../js/table-analytics.js'),
     ]);
 
+    // 3b-ext: Context Memory (depends on M._exec.getSqlJs from exec-sandbox.js)
+    await import('../js/context-memory.js');
+
     // 3c: Templates (parallel — all independent data modules)
     await Promise.all([
         import('../js/templates/documentation.js'),

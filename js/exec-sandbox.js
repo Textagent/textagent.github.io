@@ -443,4 +443,7 @@
         });
     }
 
+    // Expose getSqlJs for reuse by context-memory.js
+    M._exec.getSqlJs = getSqlJs;
+
 })(window.MDView);

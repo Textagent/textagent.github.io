@@ -1862,3 +1862,93 @@
 [data-theme="light"] .fmt-group-dropdown .fmt-btn:hover {
     background: rgba(0, 0, 0, 0.04);
 }
+
+/* ============================================
+   Memory Card Styles — Amber/Orange accent
+   ============================================ */
+
+/* Memory card — amber accent */
+.ai-placeholder-card[data-ai-type="Memory"] {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.04));
+}
+
+.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-header {
+    border-bottom-color: rgba(245, 158, 11, 0.2);
+}
+
+.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-icon {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-label {
+    color: #f59e0b;
+}
+
+.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-btn {
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-btn:hover {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+/* Memory stats display */
+.ai-memory-stats {
+    padding: 8px 14px;
+    font-size: 0.78em;
+    color: rgba(245, 158, 11, 0.7);
+    border-top: 1px solid rgba(245, 158, 11, 0.1);
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+}
+
+/* Use: hint badge on AI/Think/Agent cards */
+.ai-use-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.72em;
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+/* Memory toolbar button */
+.fmt-memory-btn {
+    color: #f59e0b !important;
+}
+
+.fmt-memory-btn:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .ai-placeholder-card[data-ai-type="Memory"] {
+    border-color: rgba(217, 119, 6, 0.35);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(217, 119, 6, 0.03));
+}
+
+[data-theme="light"] .ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-label {
+    color: #d97706;
+}
+
+[data-theme="light"] .ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-btn {
+    color: #d97706;
+    border-color: rgba(217, 119, 6, 0.3);
+}
+
+[data-theme="light"] .ai-memory-stats {
+    color: rgba(217, 119, 6, 0.7);
+}
+
+[data-theme="light"] .ai-use-hint {
+    background: rgba(217, 119, 6, 0.1);
+    color: #d97706;
+    border-color: rgba(217, 119, 6, 0.2);
+}

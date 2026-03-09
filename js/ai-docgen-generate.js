@@ -11,13 +11,20 @@
     // PROMPT BUILDING
     // ==============================================
 
-    function buildPrompt(block, prevSections) {
+    function buildPrompt(block, prevSections, memoryContext) {
         var base = block.type === 'Think'
             ? 'You are a thoughtful writer. Think carefully about the topic, then produce polished markdown content.\n\n'
             + 'IMPORTANT: Output ONLY the final polished markdown content. Do NOT include your thinking process, '
             + 'reasoning steps, analysis, or any text like "Thinking Process:" or "Drafting:". '
             + 'Just write the final, high-quality markdown article directly.\n\n'
             : 'You are an expert writer. Write well-formatted, high-quality markdown content for this section.\n\n';
+
+        var retrieval = '';
+        if (memoryContext) {
+            retrieval = '### RELEVANT CONTEXT FROM ATTACHED DOCUMENTS ###\n'
+                + memoryContext + '\n---\n\n'
+                + 'Use the above context to inform your response. Cite file names when relevant.\n\n';
+        }
 
         var instructions = 'Topic/Instructions:\n' + block.prompt + '\n\n';
 
@@ -27,7 +34,7 @@
                 + prevSections.substring(0, 3000) + '\n\n---\n\n';
         }
 
-        return base + instructions + context
+        return base + retrieval + instructions + context
             + 'Write ONLY the markdown content. Do not include any meta-commentary, explanations, '
             + 'thinking process, or notes about what you wrote. Start directly with the content.';
     }
@@ -439,10 +446,21 @@
                 if (block.type === 'Image') {
                     result = await generateImageForBlock(block, perCardModel);
                 } else {
+                    // Retrieve memory context if Use: field is present
+                    var memoryContext = '';
+                    if (block.useMemory && block.useMemory.length > 0 && M._memory) {
+                        try {
+                            var chunks = await M._memory.search(block.useMemory, block.prompt, 5);
+                            memoryContext = M._memory.formatForContext(chunks);
+                        } catch (memErr) {
+                            console.warn('Memory search failed:', memErr);
+                        }
+                    }
+
                     result = await M.requestAiTask({
                         taskType: 'generate',
                         context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                        userPrompt: buildPrompt(block, prevContent),
+                        userPrompt: buildPrompt(block, prevContent, memoryContext),
                         enableThinking: block.type === 'Think',
                         silent: true
                     });
@@ -550,6 +568,18 @@
             }
 
             stepPrompt += 'Task: ' + steps[i].description + '\n\n';
+
+            // Retrieve memory context for this step
+            if (block.useMemory && block.useMemory.length > 0 && M._memory) {
+                try {
+                    var memChunks = await M._memory.search(block.useMemory, steps[i].description, 3);
+                    var memCtx = M._memory.formatForContext(memChunks);
+                    if (memCtx) {
+                        stepPrompt += '### RELEVANT CONTEXT FROM ATTACHED DOCUMENTS ###\n' + memCtx + '\n---\n\n';
+                    }
+                } catch (_) { /* memory search failed, proceed without */ }
+            }
+
             if (accumulatedContext) {
                 stepPrompt += 'Previous steps produced:\n' + accumulatedContext.substring(0, 3000) + '\n\n';
             }
