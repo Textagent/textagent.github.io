@@ -7,10 +7,14 @@
 - Reuses existing `sql.js` WASM from `exec-sandbox.js` — no new bundle size increase
 - `{{Memory: Name: my-docs}}` tag for defining external context sources
 - `Use: workspace, my-docs` field in AI/Think/Agent tags for multi-source context retrieval
+- **Auto-discovery**: AI/Think/Agent tags automatically detect `{{Memory:}}` tags in the same document — no `Use:` field required
+- **`Use: none` opt-out**: explicitly disables memory for a specific AI/Agent block even when Memory tags exist
+- 📚 Memory toolbar button in AI Tags overflow dropdown (`index.html`)
 - Memory card renders with amber/orange accent: 📂 Folder, 📄 Files, 🔄 Rebuild buttons + stats display
 - Use: hint badge on AI/Think/Agent cards shows active memory sources
 - Context injection: memory search results injected into `buildPrompt()`, `generateAndReview()`, and `generateAgentFlow()` per-step
-- 30 Playwright tests covering module API, tag parsing, card rendering, DOMPurify allowlist
+- `discoverMemorySources()` helper scans editor for `{{Memory:}}` tags at generation time
+- 30 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, DOMPurify allowlist
 
 ---
 
