@@ -110,6 +110,18 @@
                     <small class="share-link-note"><i class="bi bi-exclamation-triangle me-1"></i>Send the passphrase
                         separately from the link for maximum security.</small>
                 </div>
+                <!-- Email to Self section -->
+                <div id="share-email-section">
+                    <div class="share-email-header"><i class="bi bi-envelope me-1"></i> Email to Self</div>
+                    <div class="share-email-row">
+                        <input type="email" id="share-email-input" placeholder="your@email.com" autocomplete="email" />
+                        <button class="share-btn-primary" id="share-email-send" title="Email link & download file">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                    <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>Opens your email client with the
+                        link. The .md file will download so you can attach it.</small>
+                </div>
             </div>
         </div>
     </div>

@@ -48,5 +48,8 @@
         // --- Web Search ---
         SEARCH_ENABLED: 'md-viewer-search-enabled',
         SEARCH_PROVIDER: 'md-viewer-search-provider',
+
+        // --- Email to Self ---
+        EMAIL_SELF: 'textagent-email-self',
     };
 })();

@@ -530,6 +530,64 @@
         URL.revokeObjectURL(a.href);
     });
 
+    // --- Email to Self ---
+    var emailInput = document.getElementById('share-email-input');
+    var emailSendBtn = document.getElementById('share-email-send');
+
+    // Restore last-used email
+    var savedEmail = localStorage.getItem(M.KEYS ? M.KEYS.EMAIL_SELF : 'textagent-email-self');
+    if (savedEmail && emailInput) emailInput.value = savedEmail;
+
+    if (emailSendBtn) emailSendBtn.addEventListener('click', function () {
+        var email = emailInput.value.trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            emailInput.classList.add('shake');
+            emailInput.focus();
+            setTimeout(function () { emailInput.classList.remove('shake'); }, 500);
+            return;
+        }
+
+        // Persist email for next time
+        try { localStorage.setItem(M.KEYS ? M.KEYS.EMAIL_SELF : 'textagent-email-self', email); } catch (e) { /* ignore */ }
+
+        var shareUrl = document.getElementById('share-link-input').value;
+        var content = M.markdownEditor.value;
+
+        // Extract heading for subject
+        var heading = 'Untitled Document';
+        var headingMatch = content.match(/^#+\s+(.+)/m);
+        if (headingMatch) heading = headingMatch[1].trim();
+
+        // Build mailto URL
+        var subject = 'TextAgent: ' + heading;
+        var body = 'Here is your TextAgent document "' + heading + '".\n\n'
+            + '🔗 Open in TextAgent:\n' + shareUrl + '\n\n'
+            + '---\n'
+            + 'Tip: Attach the .md file that was just downloaded to keep a local copy.\n';
+
+        var mailtoUrl = 'mailto:' + encodeURIComponent(email)
+            + '?subject=' + encodeURIComponent(subject)
+            + '&body=' + encodeURIComponent(body);
+
+        // Download the .md file
+        var safeName = heading.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50);
+        var mdBlob = new Blob([content], { type: 'text/markdown' });
+        var dlLink = document.createElement('a');
+        dlLink.href = URL.createObjectURL(mdBlob);
+        dlLink.download = (safeName || 'document') + '.md';
+        dlLink.click();
+        URL.revokeObjectURL(dlLink.href);
+
+        // Open email client
+        window.location.href = mailtoUrl;
+
+        // Visual feedback
+        var btn = emailSendBtn;
+        var origHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+        setTimeout(function () { btn.innerHTML = origHTML; }, 2000);
+    });
+
     // --- Passphrase Prompt Modal ---
     var passphrasePromptModal = document.getElementById('passphrase-prompt-modal');
     var passphraseUnlockInput = document.getElementById('passphrase-unlock-input');

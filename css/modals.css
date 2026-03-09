@@ -334,6 +334,74 @@
   margin-top: 8px;
 }
 
+/* --- Email to Self --- */
+#share-email-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.share-email-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.share-email-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.share-email-row input[type="email"] {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--editor-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s ease;
+}
+
+.share-email-row input[type="email"]:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.share-email-row input[type="email"].shake {
+  animation: emailShake 0.4s ease;
+  border-color: #f85149;
+}
+
+@keyframes emailShake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-6px);
+  }
+
+  50% {
+    transform: translateX(6px);
+  }
+
+  75% {
+    transform: translateX(-4px);
+  }
+}
+
+#share-email-section .share-link-note {
+  margin-top: 0;
+}
+
 /* ========================================
    PASSPHRASE PROMPT MODAL
    ======================================== */
@@ -1509,5 +1577,3 @@
     display: none;
   }
 }
-
-
