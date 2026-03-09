@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    const M = window.MDView = {};
+    const M = window.MDView = window.MDView || {};
 
     // --- Timing / Render State ---
     M.markdownRenderTimeout = null;
