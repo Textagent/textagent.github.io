@@ -311,11 +311,16 @@
         var openFolderBtn = document.getElementById('ws-open-folder');
         var diskControls = document.getElementById('ws-disk-controls');
         var diskLabel = document.getElementById('ws-disk-label');
+        // Header buttons
+        var headerRefresh = document.getElementById('ws-header-refresh');
+        var headerDisconnect = document.getElementById('ws-header-disconnect');
 
         if (!supported) {
             // Hide everything disk-related in unsupported browsers
             if (openFolderBtn) openFolderBtn.style.display = 'none';
             if (diskControls) diskControls.style.display = 'none';
+            if (headerRefresh) headerRefresh.style.display = 'none';
+            if (headerDisconnect) headerDisconnect.style.display = 'none';
             return;
         }
 
@@ -324,10 +329,16 @@
             if (openFolderBtn) openFolderBtn.style.display = 'none';
             if (diskControls) diskControls.style.display = 'flex';
             if (diskLabel) diskLabel.textContent = dirHandle.name;
+            // Show header buttons
+            if (headerRefresh) headerRefresh.style.display = '';
+            if (headerDisconnect) headerDisconnect.style.display = '';
         } else {
             // Disconnected state — show Open Folder button
             if (openFolderBtn) openFolderBtn.style.display = '';
             if (diskControls) diskControls.style.display = 'none';
+            // Hide header buttons
+            if (headerRefresh) headerRefresh.style.display = 'none';
+            if (headerDisconnect) headerDisconnect.style.display = 'none';
         }
     };
 
@@ -337,6 +348,9 @@
         var disconnectBtn = document.getElementById('ws-disk-disconnect');
         var refreshBtn = document.getElementById('ws-disk-refresh');
         var reconnectBtn = document.getElementById('ws-disk-reconnect');
+        // Header buttons
+        var headerRefresh = document.getElementById('ws-header-refresh');
+        var headerDisconnect = document.getElementById('ws-header-disconnect');
 
         if (openFolderBtn) {
             openFolderBtn.addEventListener('click', function (e) {
@@ -345,19 +359,21 @@
             });
         }
 
-        if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                if (M.wsDisconnectFolder) M.wsDisconnectFolder();
-            });
+        // Wire both footer and header disconnect
+        function handleDisconnect(e) {
+            e.stopPropagation();
+            if (M.wsDisconnectFolder) M.wsDisconnectFolder();
         }
+        if (disconnectBtn) disconnectBtn.addEventListener('click', handleDisconnect);
+        if (headerDisconnect) headerDisconnect.addEventListener('click', handleDisconnect);
 
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                if (M.wsRefreshFromDisk) M.wsRefreshFromDisk();
-            });
+        // Wire both footer and header refresh
+        function handleRefresh(e) {
+            e.stopPropagation();
+            if (M.wsRefreshFromDisk) M.wsRefreshFromDisk();
         }
+        if (refreshBtn) refreshBtn.addEventListener('click', handleRefresh);
+        if (headerRefresh) headerRefresh.addEventListener('click', handleRefresh);
 
         if (reconnectBtn) {
             reconnectBtn.addEventListener('click', async function (e) {

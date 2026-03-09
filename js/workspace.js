@@ -562,15 +562,25 @@
         var oldName = file.name;
         newName = newName.trim();
         if (!newName.endsWith('.md')) newName += '.md';
-        file.name = newName;
+        // Preserve directory prefix for path-based names
+        var dirPrefix = oldName.lastIndexOf('/') >= 0
+            ? oldName.substring(0, oldName.lastIndexOf('/') + 1) : '';
+        var newFullName = dirPrefix + newName;
+        file.name = newFullName;
         saveWorkspace();
         renderFileList();
         if (id === workspace.activeFileId) updatePageTitle(newName);
-        // Rename on disk
-        if (diskMode && M._disk && M._disk.isConnected() && oldName !== newName) {
-            M._disk.renameFile(oldName, newName).catch(function (e) {
+        // Rename on disk using path-based API, then reload tree
+        if (diskMode && M._disk && M._disk.isConnected() && oldName !== newFullName) {
+            M._disk.renameFileInPath(oldName, newFullName).then(function () {
+                loadDiskTree();
+            }).catch(function (e) {
                 console.warn('Disk rename failed:', e);
+                M.showToast('Rename failed on disk: ' + e.message, 'error');
+                loadDiskTree();
             });
+        } else if (diskMode) {
+            loadDiskTree();
         }
     };
 
@@ -586,12 +596,15 @@
             }
             return;
         }
-        if (!confirm('Delete "' + (findFileById(id) || {}).name + '"? This cannot be undone.')) return;
+        var fileToDelete = findFileById(id);
+        if (!fileToDelete) return;
+        if (!confirm('Delete "' + fileToDelete.name + '"? This cannot be undone.')) return;
         var idx = -1;
         for (var i = 0; i < workspace.files.length; i++) {
             if (workspace.files[i].id === id) { idx = i; break; }
         }
         if (idx < 0) return;
+        var deletedName = workspace.files[idx].name;
         workspace.files.splice(idx, 1);
         removeFileContent(id);
         // Switch to nearest neighbor if deleting active file
@@ -607,8 +620,18 @@
         }
         saveWorkspace();
         renderFileList();
-        // Reload tree so deleted file disappears immediately
-        if (diskMode) loadDiskTree();
+        // Delete from disk, then reload tree
+        if (diskMode && M._disk && M._disk.isConnected()) {
+            M._disk.deleteFileFromPath(deletedName).then(function () {
+                loadDiskTree();
+            }).catch(function (e) {
+                console.warn('Disk delete failed:', e);
+                M.showToast('Delete failed on disk: ' + e.message, 'error');
+                loadDiskTree();
+            });
+        } else if (diskMode) {
+            loadDiskTree();
+        }
     };
 
     M.wsSaveCurrent = function () {
