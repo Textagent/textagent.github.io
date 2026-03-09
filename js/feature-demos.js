@@ -11,7 +11,7 @@
     const DEMO_MAP = [
         { keywords: ['security', 'privacy'], video: 'assets/demos/01_privacy_hero.webp', title: 'Privacy-First — No Sign-Up, 100% Client-Side' },
         { keywords: ['ai assistant'], video: 'assets/demos/02_ai_assistant.webp', title: 'AI Writing Assistant — Local & Cloud Models' },
-        { keywords: ['task lists', 'checklists'], video: 'assets/demos/03_templates_gallery.webp', title: 'Templates Gallery — 81+ Templates, 11 Categories' },
+        { keywords: ['task lists', 'checklists'], video: 'assets/demos/03_templates_gallery.webp', title: 'Templates Gallery — ' + M.PRODUCT.TEMPLATE_COUNT + '+ Templates, ' + M.PRODUCT.CATEGORY_COUNT + ' Categories' },
         {
             keywords: ['executable languages', 'executable bash', 'python sandbox', 'javascript sandbox', 'sql sandbox', 'html sandbox'],
             video: 'assets/demos/04_code_execution.webp', title: 'Code Execution — Run Python, JS & SQL In-Browser'

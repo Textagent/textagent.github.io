@@ -40,7 +40,7 @@
 | **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free), Brave Search, Serper.dev; search results injected into LLM context; source citations in responses; per-agent-card search provider selector |
 | **🐧 Linux Terminal** | `{{Linux:}}` tag — two modes: (1) Terminal mode opens full Debian Linux ([WebVM](https://webvm.io)) in new window with `Packages:` field; (2) Compile & Run mode (`Language:` + `Script:`) compiles/executes 25+ languages (C++, Rust, Go, Java, Python, TypeScript, Kotlin, Scala…) via [Judge0 CE](https://ce.judge0.com) with inline output, execution time & memory stats |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 108+ templates (12 categories: AI, Agents, Coding, Maths, PPT, Quiz, Tables, Documentation, Project, Technical, Creative, Financial), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 103+ templates (11 categories: AI, Agents, Coding, Creative, Documentation, Maths, PPT, Project, Quiz, Tables, Technical), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
 | **Dev Tooling** | ESLint + Prettier (lint, format:check), Playwright smoke tests (import, export, share, view-mode switching), pre-commit changelog enforcement, GitHub Actions CI |
 
 ## 🤖 AI Assistant
@@ -92,7 +92,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 ### AI Writing Assistant — Local & Cloud Models
 ![AI Assistant panel with model selector, action chips, and three-column layout](assets/ai-assistant.png)
 
-### Templates Gallery — 108+ Templates, 12 Categories
+### Templates Gallery — 103+ Templates, 11 Categories
 ![Templates modal with category tabs, search, and template cards](assets/templates-gallery.png)
 
 ### LaTeX Math & Mermaid Diagrams
@@ -127,9 +127,9 @@ Import files directly — they're auto-converted to Markdown client-side:
 </details>
 
 <details open>
-<summary><strong>📄 Templates Gallery — 81+ Templates, 11 Categories</strong></summary>
+<summary><strong>📄 Templates Gallery — 103+ Templates, 11 Categories</strong></summary>
 
-**Start any document in seconds.** Browse 96+ professionally designed templates across 12 categories: AI, Agents, Documentation, Project, Technical, Creative, Coding, Maths, PPT, Quiz, Tables, and Financial. AI-powered templates include `{{AI:}}` tags for one-click document generation.
+**Start any document in seconds.** Browse 103+ professionally designed templates across 11 categories: AI, Agents, Coding, Creative, Documentation, Maths, PPT, Project, Quiz, Tables, and Technical. AI-powered templates include `{{AI:}}` tags for one-click document generation.
 
 <img src="public/assets/demos/03_templates_gallery.webp" alt="Templates Gallery — browsing categories and loading AI Business Proposal template" width="100%">
 

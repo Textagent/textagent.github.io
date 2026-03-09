@@ -38,6 +38,7 @@ import '../css/toast.css';
 async function loadModules() {
     // Phase 1: Core (must load in order — each depends on prior)
     await import('../js/storage-keys.js');
+    await import('../js/product-metadata.js');
     await import('../js/toast.js');
     await import('../js/modal-templates.js');
     await import('../js/app-core.js');

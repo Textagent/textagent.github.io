@@ -17,7 +17,7 @@
         },
         '#template-btn, #qab-template, #mobile-template-btn': {
             name: 'Templates',
-            desc: 'Browse 81+ professionally designed templates across 11 categories — AI, Documentation, Coding, Maths, PPT, Quiz, Tables, and more.',
+            desc: 'Browse ' + M.PRODUCT.summary() + ' — ' + M.PRODUCT.categoryList() + '.',
             shortcut: null,
             demo: 'assets/demos/03_templates_gallery.webp'
         },

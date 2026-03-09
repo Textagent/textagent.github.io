@@ -31,7 +31,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 108+ templates (12 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + M.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
       '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · Playwright smoke tests (import, export, share, view-mode) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
@@ -474,7 +474,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Word wrap toggle\n' +
       '- [x] Emoji shortcodes\n' +
       '- [x] PDF export with smart page breaks\n' +
-      '- [x] 108+ templates (12 categories)\n' +
+      '- [x] ' + M.PRODUCT.summaryParen() + '\n' +
       '- [x] Table spreadsheet tools (sort, filter, stats, chart)\n' +
       '- [x] Formatting toolbar\n' +
       '- [x] Table of contents\n' +
