@@ -44,6 +44,7 @@ async function loadModules() {
     await import('../js/app-core.js');
     await import('../js/renderer.js');
     await import('../js/workspace.js');
+    await import('../js/disk-workspace.js');
 
     // Phase 2: Critical UI — loaded immediately so buttons work on first paint.
     // These provide setViewMode, importFile, shareMarkdown, editor wiring, etc.

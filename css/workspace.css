@@ -237,3 +237,71 @@
 #workspace-toggle.active {
     background: var(--button-active);
 }
+
+/* --- Disk Workspace Controls (footer) --- */
+.ws-disk-controls {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-color);
+    background: var(--header-bg);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ws-disk-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-color);
+    opacity: 0.8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.ws-disk-status i {
+    font-size: 12px;
+    color: #22c55e;
+    flex-shrink: 0;
+}
+
+.ws-disk-actions {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.ws-disk-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.ws-disk-btn:hover {
+    background: var(--button-hover);
+}
+
+.ws-disk-btn.ws-disk-disconnect {
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+.ws-disk-btn.ws-disk-disconnect:hover {
+    background: rgba(231, 76, 60, 0.12);
+    border-color: #e74c3c;
+}

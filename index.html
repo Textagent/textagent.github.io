@@ -728,6 +728,10 @@
                 <div class="ws-header">
                     <span class="ws-header-title"><i class="bi bi-folder2-open"></i> Files</span>
                     <div class="ws-header-actions">
+                        <button class="ws-new-btn" id="ws-open-folder" title="Open folder from disk"
+                            style="display:none">
+                            <i class="bi bi-folder-symlink"></i>
+                        </button>
                         <button class="ws-new-btn" id="workspace-new-file" title="New file">
                             <i class="bi bi-plus"></i>
                         </button>
@@ -737,6 +741,25 @@
                     </div>
                 </div>
                 <ul class="ws-file-list" id="workspace-file-list"></ul>
+                <!-- Disk Workspace Controls (footer) -->
+                <div class="ws-disk-controls" id="ws-disk-controls" style="display:none">
+                    <div class="ws-disk-status" id="ws-disk-status">
+                        <i class="bi bi-hdd"></i> <span id="ws-disk-label">Connected</span>
+                    </div>
+                    <div class="ws-disk-actions">
+                        <button class="ws-disk-btn" id="ws-disk-refresh" title="Refresh from disk">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="ws-disk-btn" id="ws-disk-reconnect" title="Reconnect to folder"
+                            style="display:none">
+                            <i class="bi bi-plug"></i>
+                        </button>
+                        <button class="ws-disk-btn ws-disk-disconnect" id="ws-disk-disconnect"
+                            title="Disconnect folder">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
                 <!-- Context menu -->
                 <div class="ws-context-menu" id="workspace-context-menu">
                     <button class="ws-ctx-item" id="ws-ctx-rename"><i class="bi bi-pencil"></i> Rename</button>

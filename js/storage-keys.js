@@ -51,5 +51,8 @@
 
         // --- Email to Self ---
         EMAIL_SELF: 'textagent-email-self',
+
+        // --- Disk Workspace ---
+        DISK_MODE: 'textagent-disk-mode',
     };
 })();

@@ -110,11 +110,26 @@
                 localStorage.setItem(AUTOSAVE_KEY, M.markdownEditor.value);
             }
             localStorage.setItem(AUTOSAVE_TIME_KEY, Date.now().toString());
+
+            // Also write to disk when in folder-backed mode
+            if (M.wsDiskMode && M._disk && M._disk.isConnected() && M.wsActiveFileId) {
+                var file = M._wsFindFileById ? M._wsFindFileById(M.wsActiveFileId) : null;
+                if (file) {
+                    M._disk.writeFile(file.name, M.markdownEditor.value).then(function () {
+                        showAutosaveIndicator('💾 Saved to disk');
+                    }).catch(function (e) {
+                        console.warn('Disk autosave failed:', e);
+                        showAutosaveIndicator();
+                    });
+                    return; // indicator shown in .then()
+                }
+            }
+
             showAutosaveIndicator();
         } catch (e) { console.warn('Auto-save failed:', e); }
     }
-    function showAutosaveIndicator() {
-        if (autosaveIndicator) { autosaveIndicator.style.display = 'flex'; autosaveText.textContent = 'Saved'; }
+    function showAutosaveIndicator(msg) {
+        if (autosaveIndicator) { autosaveIndicator.style.display = 'flex'; autosaveText.textContent = msg || 'Saved'; }
     }
     function restoreFromLocalStorage() {
         var hash = window.location.hash;

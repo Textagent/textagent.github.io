@@ -1,5 +1,5 @@
 // ============================================
-// workspace.js — Multi-File Workspace Manager (localStorage-backed)
+// workspace.js — Multi-File Workspace Manager (localStorage + disk-backed)
 // ============================================
 (function (M) {
     'use strict';
@@ -12,6 +12,7 @@
     // --- Workspace State ---
     var workspace = null;  // { files: [...], activeFileId: string }
     var sidebarOpen = false;
+    var diskMode = false;  // true when connected to a disk folder
 
     // --- DOM refs ---
     var sidebar = document.getElementById('workspace-sidebar');
@@ -29,6 +30,12 @@
         try {
             localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
         } catch (e) { console.warn('Workspace save failed:', e); }
+        // Also persist to disk manifest when in disk mode
+        if (diskMode && M._disk && M._disk.isConnected()) {
+            M._disk.saveManifest(workspace).catch(function (e) {
+                console.warn('Disk manifest save failed:', e);
+            });
+        }
     }
 
     function loadWorkspace() {
@@ -47,14 +54,40 @@
         return localStorage.getItem(FILE_PREFIX + id) || '';
     }
 
+    // Async version for disk mode
+    function getFileContentAsync(id) {
+        if (diskMode && M._disk && M._disk.isConnected()) {
+            var file = findFileById(id);
+            if (file) return M._disk.readFile(file.name);
+        }
+        return Promise.resolve(getFileContent(id));
+    }
+
     function setFileContent(id, content) {
         try {
             localStorage.setItem(FILE_PREFIX + id, content);
         } catch (e) { console.warn('File save failed:', e); }
+        // Also write to disk when in disk mode
+        if (diskMode && M._disk && M._disk.isConnected()) {
+            var file = findFileById(id);
+            if (file) {
+                M._disk.writeFile(file.name, content).catch(function (e) {
+                    console.warn('Disk file write failed:', e);
+                });
+            }
+        }
     }
 
     function removeFileContent(id) {
         localStorage.removeItem(FILE_PREFIX + id);
+        if (diskMode && M._disk && M._disk.isConnected()) {
+            var file = findFileById(id);
+            if (file) {
+                M._disk.deleteFile(file.name).catch(function (e) {
+                    console.warn('Disk file delete failed:', e);
+                });
+            }
+        }
     }
 
     function findFileById(id) {
@@ -258,6 +291,7 @@
     // --- Public API ---
 
     M.wsActiveFileId = null;
+    M.wsDiskMode = false;
 
     M.wsCreateFile = function (name) {
         // Save current document first
@@ -301,25 +335,33 @@
         workspace.activeFileId = id;
         M.wsActiveFileId = id;
         saveWorkspace();
-        // Load content
-        var content = getFileContent(id);
-        M.markdownEditor.value = content;
-        M.renderMarkdown();
-        if (M.updateDocumentStats) M.updateDocumentStats();
-        renderFileList();
-        updatePageTitle(file.name);
+        // Load content (async for disk mode)
+        getFileContentAsync(id).then(function (content) {
+            M.markdownEditor.value = content;
+            M.renderMarkdown();
+            if (M.updateDocumentStats) M.updateDocumentStats();
+            renderFileList();
+            updatePageTitle(file.name);
+        });
     };
 
     M.wsRenameFile = function (id, newName) {
         var file = findFileById(id);
         if (!file) return;
         if (!newName || !newName.trim()) return;
+        var oldName = file.name;
         newName = newName.trim();
         if (!newName.endsWith('.md')) newName += '.md';
         file.name = newName;
         saveWorkspace();
         renderFileList();
         if (id === workspace.activeFileId) updatePageTitle(newName);
+        // Rename on disk
+        if (diskMode && M._disk && M._disk.isConnected() && oldName !== newName) {
+            M._disk.renameFile(oldName, newName).catch(function (e) {
+                console.warn('Disk rename failed:', e);
+            });
+        }
     };
 
     M.wsDeleteFile = function (id) {
@@ -364,6 +406,175 @@
 
     M.wsGetFiles = function () {
         return workspace ? workspace.files.slice() : [];
+    };
+
+    // --- Disk Workspace Integration ---
+
+    M.wsConnectFolder = async function () {
+        if (!M._disk || !M._disk.isSupported()) {
+            M.showToast('Folder access is not supported in this browser.', 'warning');
+            return;
+        }
+        try {
+            // Save current workspace to localStorage before switching
+            M.wsSaveCurrent();
+            await M._disk.pickFolder();
+            diskMode = true;
+            M.wsDiskMode = true;
+
+            // Try to load existing manifest
+            var manifest = await M._disk.loadManifest();
+            if (manifest && manifest.files && manifest.files.length > 0) {
+                workspace = manifest;
+            } else {
+                // Scan folder for .md files
+                var mdFiles = await M._disk.scanForMdFiles();
+                if (mdFiles.length > 0) {
+                    workspace = { files: [], activeFileId: null };
+                    for (var i = 0; i < mdFiles.length; i++) {
+                        var id = generateId();
+                        workspace.files.push({ id: id, name: mdFiles[i], createdAt: Date.now() });
+                    }
+                    workspace.activeFileId = workspace.files[0].id;
+                } else {
+                    // Empty folder — create default file
+                    var id = generateId();
+                    workspace = {
+                        files: [{ id: id, name: 'Untitled.md', createdAt: Date.now() }],
+                        activeFileId: id
+                    };
+                    await M._disk.writeFile('Untitled.md', '');
+                }
+                await M._disk.saveManifest(workspace);
+            }
+
+            // Also save to localStorage as cache
+            saveWorkspace();
+            M.wsActiveFileId = workspace.activeFileId;
+
+            // Load active file content
+            var activeFile = findFileById(workspace.activeFileId);
+            if (activeFile) {
+                var content = await M._disk.readFile(activeFile.name);
+                M.markdownEditor.value = content;
+                // Cache in localStorage
+                localStorage.setItem(FILE_PREFIX + workspace.activeFileId, content);
+                M.renderMarkdown();
+                if (M.updateDocumentStats) M.updateDocumentStats();
+                updatePageTitle(activeFile.name);
+            }
+
+            renderFileList();
+            M._disk.updateUI();
+
+            if (!sidebarOpen) M.wsToggleSidebar();
+            M.showToast('📂 Connected to folder: ' + M._disk.getFolderName(), 'success');
+        } catch (e) {
+            if (e.name === 'AbortError') return; // User cancelled the picker
+            console.error('Connect folder failed:', e);
+            M.showToast('Failed to connect folder: ' + e.message, 'error');
+        }
+    };
+
+    M.wsDisconnectFolder = async function () {
+        if (!M._disk) return;
+        // Save current to localStorage before disconnecting
+        M.wsSaveCurrent();
+        await M._disk.disconnect();
+        diskMode = false;
+        M.wsDiskMode = false;
+        M._disk.updateUI();
+        M.showToast('Disconnected from folder. Using browser storage.', 'info');
+    };
+
+    M.wsRefreshFromDisk = async function () {
+        if (!diskMode || !M._disk || !M._disk.isConnected()) return;
+        try {
+            // Re-scan folder for .md files
+            var mdFiles = await M._disk.scanForMdFiles();
+            var existingNames = {};
+            workspace.files.forEach(function (f) { existingNames[f.name] = f.id; });
+
+            // Add any new files found on disk
+            var added = 0;
+            for (var i = 0; i < mdFiles.length; i++) {
+                if (!existingNames[mdFiles[i]]) {
+                    var id = generateId();
+                    workspace.files.push({ id: id, name: mdFiles[i], createdAt: Date.now() });
+                    added++;
+                }
+            }
+
+            // Remove files that no longer exist on disk
+            var diskSet = {};
+            mdFiles.forEach(function (n) { diskSet[n] = true; });
+            workspace.files = workspace.files.filter(function (f) { return diskSet[f.name]; });
+
+            // Ensure activeFileId is still valid
+            if (!findFileById(workspace.activeFileId) && workspace.files.length > 0) {
+                workspace.activeFileId = workspace.files[0].id;
+                M.wsActiveFileId = workspace.activeFileId;
+            }
+
+            saveWorkspace();
+            await M._disk.saveManifest(workspace);
+
+            // Reload active file content from disk
+            var activeFile = findFileById(workspace.activeFileId);
+            if (activeFile) {
+                var content = await M._disk.readFile(activeFile.name);
+                M.markdownEditor.value = content;
+                localStorage.setItem(FILE_PREFIX + workspace.activeFileId, content);
+                M.renderMarkdown();
+                if (M.updateDocumentStats) M.updateDocumentStats();
+                updatePageTitle(activeFile.name);
+            }
+
+            renderFileList();
+            M.showToast('🔄 Refreshed from disk' + (added > 0 ? ' (' + added + ' new file' + (added > 1 ? 's' : '') + ')' : ''), 'success');
+        } catch (e) {
+            console.error('Refresh from disk failed:', e);
+            M.showToast('Refresh failed: ' + e.message, 'error');
+        }
+    };
+
+    M.wsReconnectFolder = async function () {
+        if (!M._disk || !M._disk.isConnected()) return;
+        diskMode = true;
+        M.wsDiskMode = true;
+
+        // Load workspace from disk manifest
+        var manifest = await M._disk.loadManifest();
+        if (manifest && manifest.files && manifest.files.length > 0) {
+            workspace = manifest;
+        } else {
+            var mdFiles = await M._disk.scanForMdFiles();
+            if (mdFiles.length > 0) {
+                workspace = { files: [], activeFileId: null };
+                for (var i = 0; i < mdFiles.length; i++) {
+                    var id = generateId();
+                    workspace.files.push({ id: id, name: mdFiles[i], createdAt: Date.now() });
+                }
+                workspace.activeFileId = workspace.files[0].id;
+            }
+        }
+
+        if (workspace && workspace.activeFileId) {
+            M.wsActiveFileId = workspace.activeFileId;
+            saveWorkspace();
+            var activeFile = findFileById(workspace.activeFileId);
+            if (activeFile) {
+                var content = await M._disk.readFile(activeFile.name);
+                M.markdownEditor.value = content;
+                localStorage.setItem(FILE_PREFIX + workspace.activeFileId, content);
+                M.renderMarkdown();
+                if (M.updateDocumentStats) M.updateDocumentStats();
+                updatePageTitle(activeFile.name);
+            }
+            renderFileList();
+        }
+
+        M._disk.updateUI();
     };
 
     M.wsToggleSidebar = function () {
@@ -429,5 +640,7 @@
     // Expose for autosave integration (cloud-share.js)
     M._wsGetFileContent = getFileContent;
     M._wsSetFileContent = setFileContent;
+    M._wsRenderFileList = renderFileList;
+    M._wsFindFileById = findFileById;
 
 })(window.MDView);
