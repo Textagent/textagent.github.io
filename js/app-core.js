@@ -68,7 +68,7 @@
     M.mobileThemeToggle = document.getElementById("mobile-theme-toggle");
 
     // --- Theme Initialization ---
-    const savedTheme = localStorage.getItem('markdown-viewer-theme');
+    const savedTheme = localStorage.getItem(M.KEYS.THEME);
     const prefersDarkMode =
         window.matchMedia &&
         window.matchMedia("(prefers-color-scheme: dark)").matches;

@@ -182,7 +182,7 @@
             }
 
             document.getElementById('ai-dl-yes').addEventListener('click', function () {
-                localStorage.setItem('md-viewer-ai-consented', 'true');
+                localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
                 if (M.initLocalAiWorker) M.initLocalAiWorker();
                 finish(true);
             });

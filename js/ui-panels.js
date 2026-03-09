@@ -595,7 +595,7 @@
     // ========================================
     // CUSTOM PREVIEW THEMES
     // ========================================
-    var savedPreviewTheme = localStorage.getItem('md-viewer-preview-theme') || 'github';
+    var savedPreviewTheme = localStorage.getItem(M.KEYS.PREVIEW_THEME) || 'github';
     document.documentElement.setAttribute('data-preview-theme', savedPreviewTheme);
     function updateThemeDropdown(themeName) {
         document.querySelectorAll('.theme-option').forEach(function (opt) {
@@ -607,7 +607,7 @@
         opt.addEventListener('click', function () {
             var themeName = this.getAttribute('data-theme-name');
             document.documentElement.setAttribute('data-preview-theme', themeName);
-            localStorage.setItem('md-viewer-preview-theme', themeName);
+            localStorage.setItem(M.KEYS.PREVIEW_THEME, themeName);
             updateThemeDropdown(themeName);
             M.renderMarkdown();
         });

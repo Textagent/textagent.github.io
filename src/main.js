@@ -36,6 +36,7 @@ import '../css/linux-terminal.css';
 //    execute AFTER vendor-globals has set window.*
 async function loadModules() {
     // Phase 1: Core (must load in order — each depends on prior)
+    await import('../js/storage-keys.js');
     await import('../js/modal-templates.js');
     await import('../js/app-core.js');
     await import('../js/renderer.js');

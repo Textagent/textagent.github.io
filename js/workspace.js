@@ -4,10 +4,10 @@
 (function (M) {
     'use strict';
 
-    var WORKSPACE_KEY = 'mdview-workspace';
-    var FILE_PREFIX = 'mdview-file-';
-    var OLD_AUTOSAVE_KEY = 'md-viewer-autosave';
-    var OLD_AUTOSAVE_TIME_KEY = 'md-viewer-autosave-time';
+    var WORKSPACE_KEY = M.KEYS.WORKSPACE;
+    var FILE_PREFIX = M.KEYS.FILE_PREFIX;
+    var OLD_AUTOSAVE_KEY = M.KEYS.AUTOSAVE;
+    var OLD_AUTOSAVE_TIME_KEY = M.KEYS.AUTOSAVE_TIME;
 
     // --- Workspace State ---
     var workspace = null;  // { files: [...], activeFileId: string }
@@ -374,7 +374,7 @@
         }
         if (toggleBtn) toggleBtn.classList.toggle('active', sidebarOpen);
         // Save preference
-        localStorage.setItem('mdview-sidebar-open', sidebarOpen ? 'true' : 'false');
+        localStorage.setItem(M.KEYS.SIDEBAR_OPEN, sidebarOpen ? 'true' : 'false');
     };
 
     M.wsCloseSidebar = function () {
@@ -412,7 +412,7 @@
     M.wsActiveFileId = workspace.activeFileId;
 
     // Restore sidebar visibility preference
-    if (localStorage.getItem('mdview-sidebar-open') === 'true') {
+    if (localStorage.getItem(M.KEYS.SIDEBAR_OPEN) === 'true') {
         sidebarOpen = true;
         if (sidebar) sidebar.classList.add('open');
         document.body.classList.add('workspace-sidebar-open');

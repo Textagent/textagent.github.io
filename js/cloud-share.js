@@ -94,8 +94,8 @@
     // ========================================
     // AUTO-SAVE TO LOCALSTORAGE
     // ========================================
-    var AUTOSAVE_KEY = 'md-viewer-autosave';
-    var AUTOSAVE_TIME_KEY = 'md-viewer-autosave-time';
+    var AUTOSAVE_KEY = M.KEYS.AUTOSAVE;
+    var AUTOSAVE_TIME_KEY = M.KEYS.AUTOSAVE_TIME;
     var AUTOSAVE_DELAY = 1000;
     var autosaveTimeout = null;
     var autosaveIndicator = document.getElementById('autosave-indicator');
@@ -105,7 +105,7 @@
         try {
             // Per-file save: use workspace active file ID if available
             if (M.wsActiveFileId) {
-                localStorage.setItem('mdview-file-' + M.wsActiveFileId, M.markdownEditor.value);
+                localStorage.setItem(M.KEYS.FILE_PREFIX + M.wsActiveFileId, M.markdownEditor.value);
             } else {
                 localStorage.setItem(AUTOSAVE_KEY, M.markdownEditor.value);
             }
@@ -122,7 +122,7 @@
         // Per-file restore: use workspace active file ID if available
         var saved;
         if (M.wsActiveFileId) {
-            saved = localStorage.getItem('mdview-file-' + M.wsActiveFileId);
+            saved = localStorage.getItem(M.KEYS.FILE_PREFIX + M.wsActiveFileId);
         } else {
             saved = localStorage.getItem(AUTOSAVE_KEY);
         }
@@ -146,9 +146,9 @@
     // CLOUD AUTO-SAVE TO FIREBASE
     // ========================================
     var CLOUD_SAVE_INTERVAL = 60000;
-    var CLOUD_DOC_KEY = 'md-viewer-cloud-doc-id';
-    var CLOUD_KEY_KEY = 'md-viewer-cloud-enc-key';
-    var CLOUD_WT_KEY = 'md-viewer-cloud-write-token';
+    var CLOUD_DOC_KEY = M.KEYS.CLOUD_DOC_ID;
+    var CLOUD_KEY_KEY = M.KEYS.CLOUD_ENC_KEY;
+    var CLOUD_WT_KEY = M.KEYS.CLOUD_WRITE_TOKEN;
     var cloudSaveTimer = null;
     var cloudSaveDirty = false;
     var lastCloudContent = '';

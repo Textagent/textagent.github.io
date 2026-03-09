@@ -61,7 +61,7 @@
   let aiIsGenerating = false;
   let aiMessageIdCounter = 0;
   let aiPanelOpen = false;
-  let currentAiModel = localStorage.getItem('md-viewer-ai-model') || 'qwen-local';
+  let currentAiModel = localStorage.getItem(M.KEYS.AI_MODEL) || 'qwen-local';
   let streamingMessageId = null;
   let pendingProviderForKey = null; // Which provider the API key modal is open for
   let pendingAiMessage = null; // Queued message to send after model loads
@@ -184,7 +184,7 @@
 
   function switchToModel(modelId) {
     currentAiModel = modelId;
-    localStorage.setItem('md-viewer-ai-model', modelId);
+    localStorage.setItem(M.KEYS.AI_MODEL, modelId);
     updateModelUI(modelId);
 
     // Update active option
@@ -196,7 +196,7 @@
 
     if (isLocalModel(modelId)) {
       const ls = getLocalState(modelId);
-      const consentKey = 'md-viewer-ai-consented-' + modelId;
+      const consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
       if (!ls.loaded && !ls.worker) {
         if (localStorage.getItem(consentKey)) {
           initAiWorker(modelId);
@@ -323,7 +323,7 @@
     // Then handle model loading in the background
     if (isLocalModel(currentAiModel)) {
       const ls = getLocalState(currentAiModel);
-      const consentKey = 'md-viewer-ai-consented-' + currentAiModel;
+      const consentKey = M.KEYS.AI_CONSENTED_PREFIX + currentAiModel;
       if (!ls.loaded && !ls.worker) {
         if (localStorage.getItem(consentKey)) {
           // Model was previously downloaded — auto-load from cache
@@ -375,7 +375,7 @@
   const aiResizeDivider = document.getElementById('ai-resize-divider');
 
   // Restore saved width
-  const savedAiWidth = localStorage.getItem('md-viewer-ai-panel-width');
+  const savedAiWidth = localStorage.getItem(M.KEYS.AI_PANEL_WIDTH);
   if (savedAiWidth) {
     const w = parseInt(savedAiWidth, 10);
     if (w >= 250 && w <= window.innerWidth * 0.6) {
@@ -424,7 +424,7 @@
       document.removeEventListener('touchend', stopAiResize);
       // Persist width
       const currentWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ai-panel-width'));
-      if (currentWidth) localStorage.setItem('md-viewer-ai-panel-width', currentWidth);
+      if (currentWidth) localStorage.setItem(M.KEYS.AI_PANEL_WIDTH, currentWidth);
     }
 
     aiResizeDivider.addEventListener('mousedown', startAiResize);
@@ -564,9 +564,9 @@
         case 'loaded':
           ls.loaded = true;
           // Remember consent so we skip the dialog next time
-          localStorage.setItem('md-viewer-ai-consented-' + modelId, 'true');
+          localStorage.setItem(M.KEYS.AI_CONSENTED_PREFIX + modelId, 'true');
           // Backward compat: also set the old key for qwen-local
-          if (modelId === 'qwen-local') localStorage.setItem('md-viewer-ai-consented', 'true');
+          if (modelId === 'qwen-local') localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
           hideAiConsentDialog();
           // Open the panel if not already open
           if (!aiPanelOpen) {
@@ -595,8 +595,8 @@
         case 'error':
           if (!ls.loaded) {
             // Clear consent so user gets the dialog again
-            localStorage.removeItem('md-viewer-ai-consented-' + modelId);
-            if (modelId === 'qwen-local') localStorage.removeItem('md-viewer-ai-consented');
+            localStorage.removeItem(M.KEYS.AI_CONSENTED_PREFIX + modelId);
+            if (modelId === 'qwen-local') localStorage.removeItem(M.KEYS.AI_CONSENTED);
             // Model failed to load — show error in consent dialog and allow retry
             if (aiConsentModal.style.display === 'flex') {
               aiProgressStatus.textContent = '❌ ' + msg.message;
@@ -731,27 +731,27 @@
     // Remove existing status bar
     const existing = aiPanel.querySelector('.ai-status-bar');
     if (existing) existing.remove();
-  
+
     const bar = document.createElement('div');
     bar.className = 'ai-status-bar';
     bar.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
-  
+
     // Insert after header
     const header = aiPanel.querySelector('.ai-panel-header');
     header.insertAdjacentElement('afterend', bar);
   }
-  
+
   // Show inline consent bar for Qwen download (not a popup)
   function showInlineDownloadConsent(modelId) {
     modelId = modelId || currentAiModel;
     const cfg = _models[modelId];
     const modelName = (cfg && cfg.dropdownName) || 'Qwen 3.5';
     const dlSize = (cfg && cfg.downloadSize) || '~500 MB';
-  
+
     // Remove any existing status bar
     const existing = aiPanel.querySelector('.ai-status-bar');
     if (existing) existing.remove();
-  
+
     const bar = document.createElement('div');
     bar.className = 'ai-status-bar ai-consent-inline';
     bar.innerHTML = `
@@ -764,22 +764,22 @@
           "><i class="bi bi-check-lg me-1"></i>Agree &amp; Download</button>
         </div>
       `;
-  
+
     const header = aiPanel.querySelector('.ai-panel-header');
     header.insertAdjacentElement('afterend', bar);
-  
+
     // Wire up the agree button
     const agreeBtn = document.getElementById('ai-inline-agree-btn');
     if (agreeBtn) {
       agreeBtn.addEventListener('click', () => {
-        localStorage.setItem('md-viewer-ai-consented-' + modelId, 'true');
-        if (modelId === 'qwen-local') localStorage.setItem('md-viewer-ai-consented', 'true');
+        localStorage.setItem(M.KEYS.AI_CONSENTED_PREFIX + modelId, 'true');
+        if (modelId === 'qwen-local') localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
         initAiWorker(modelId);
         addAiStatusBar('loading', `Downloading ${modelName} — your message will be sent automatically...`);
       });
     }
   }
-  
+
   // Show or update an inline download progress bar in the AI panel
   function updateAiInlineProgress(percent, statusText, detailText) {
     let bar = aiPanel.querySelector('.ai-status-bar.downloading');
@@ -787,7 +787,7 @@
       // Remove any existing non-download status bar
       const existing = aiPanel.querySelector('.ai-status-bar');
       if (existing) existing.remove();
-  
+
       bar = document.createElement('div');
       bar.className = 'ai-status-bar downloading';
       bar.innerHTML = `
@@ -810,14 +810,14 @@
       if (detailEl) detailEl.textContent = detailText;
     }
   }
-  
+
   function sendToAi(taskType, context, userPrompt) {
     // If a local model is selected but not loaded yet, show inline consent before downloading
     if (isLocalModel(currentAiModel)) {
       const ls = getLocalState(currentAiModel);
-      const consentKey = 'md-viewer-ai-consented-' + currentAiModel;
-      const hasConsent = localStorage.getItem(consentKey) || (currentAiModel === 'qwen-local' && localStorage.getItem('md-viewer-ai-consented'));
-  
+      const consentKey = M.KEYS.AI_CONSENTED_PREFIX + currentAiModel;
+      const hasConsent = localStorage.getItem(consentKey) || (currentAiModel === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
+
       if (!ls.loaded && !ls.worker) {
         pendingAiMessage = { taskType, context, userPrompt };
         if (hasConsent) {
@@ -835,14 +835,14 @@
         }
         return;
       }
-  
+
       if (!ls.loaded && ls.worker) {
         pendingAiMessage = { taskType, context, userPrompt };
         addAiStatusBar('loading', 'Model still loading — your message will be sent automatically...');
         return;
       }
     }
-  
+
     const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
     if (cloudProvider && !cloudProvider.isLoaded()) {
       pendingAiMessage = { taskType, context, userPrompt };
@@ -856,24 +856,24 @@
       addAiStatusBar('loading', 'Connecting to cloud model — your message will be sent automatically...');
       return;
     }
-  
+
     const activeWorker = getActiveWorker();
     const isReady = isCurrentModelReady();
-  
+
     if (!isReady || !activeWorker) {
       addAiStatusBar('error', 'Model not ready. Please select a model or check your API key.');
       return;
     }
     if (aiIsGenerating) return;
-  
+
     aiIsGenerating = true;
     aiSendBtn.disabled = true;
     const messageId = ++aiMessageIdCounter;
     streamingMessageId = messageId;
-  
+
     const thinkingToggle = document.getElementById('ai-thinking-toggle');
     const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
-  
+
     // Show user message in chat (if not already shown)
     const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
     if (!document.querySelector('.ai-message-user:last-child') ||
@@ -881,7 +881,7 @@
       M._ai.addUserMessage(displayText);
     }
     M._ai.addTypingIndicator();
-  
+
     activeWorker.postMessage({
       type: 'generate',
       taskType,
@@ -891,7 +891,7 @@
       enableThinking
     });
   }
-  
+
   // =============================================
   // M._ai — Internal namespace for cross-module access
   // Used by ai-chat.js, ai-actions.js, ai-image.js
@@ -937,7 +937,7 @@
   M._ai.showApiKeyModal = showApiKeyModal;
   M._ai.hideApiKeyModal = hideApiKeyModal;
   M._ai.sendToAi = sendToAi;
-  
+
   // --- Expose for other modules ---
   M.aiPanelOpen = false;
   Object.defineProperty(M, "aiPanelOpen", {
@@ -948,7 +948,7 @@
   M.closeAiPanel = closeAiPanel;
   M.hideAiConsentDialog = typeof hideAiConsentDialog !== "undefined" ? hideAiConsentDialog : function () { };
   M.hideApiKeyModal = typeof hideApiKeyModal !== "undefined" ? hideApiKeyModal : function () { };
-  
+
   // ===========================================================
   // Public AI Request API — for non-chat modules (e.g. ai-docgen)
   // ===========================================================
@@ -958,25 +958,25 @@
       if (aiIsGenerating) {
         return reject(new Error('Another AI generation is already in progress.'));
       }
-  
+
       var activeWorker = getActiveWorker();
       var isReady = isCurrentModelReady();
-  
+
       if (!isReady || !activeWorker) {
         return reject(new Error('AI model not ready. Please select a model or check your API key.'));
       }
-  
+
       aiIsGenerating = true;
       if (aiSendBtn) aiSendBtn.disabled = true;
-  
+
       var messageId = ++aiMessageIdCounter;
       var accumulated = '';
       var finished = false;
-  
+
       function onWorkerMessage(e) {
         var msg = e.data;
         if (msg.messageId !== messageId) return; // not ours
-  
+
         switch (msg.type) {
           case 'token':
             accumulated += msg.token;
@@ -984,19 +984,19 @@
               try { onToken(msg.token, accumulated); } catch (_) { /* ignore callback errors */ }
             }
             break;
-  
+
           case 'complete':
             cleanup();
             resolve(msg.text || accumulated);
             break;
-  
+
           case 'error':
             cleanup();
             reject(new Error(msg.message || 'AI generation failed.'));
             break;
         }
       }
-  
+
       function cleanup() {
         if (finished) return;
         finished = true;
@@ -1004,9 +1004,9 @@
         if (aiSendBtn) aiSendBtn.disabled = false;
         activeWorker.removeEventListener('message', onWorkerMessage);
       }
-  
+
       activeWorker.addEventListener('message', onWorkerMessage);
-  
+
       activeWorker.postMessage({
         type: 'generate',
         taskType: taskType || 'generate',
@@ -1017,9 +1017,9 @@
       });
     });
   };
-  
+
   M.isAiGenerating = function () { return aiIsGenerating; };
-  
+
   // Expose model management for docgen setup flow
   M.showApiKeyModal = showApiKeyModal;
   M.switchToModel = switchToModel;
@@ -1028,5 +1028,5 @@
   M.isCurrentModelReady = isCurrentModelReady;
   M.initLocalAiWorker = function (modelId) { initAiWorker(modelId || currentAiModel); };
   M.initCloudWorker = initCloudWorker;
-  
-}) (window.MDView);
+
+})(window.MDView);

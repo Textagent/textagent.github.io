@@ -23,7 +23,7 @@
     let lastResultTime = Date.now();
     let pauseTimer = null;
     const PAUSE_THRESHOLD = 3000; // ms — auto paragraph after 3s silence
-    const STORAGE_LANG_KEY = 'mdview-speech-lang';
+    const STORAGE_LANG_KEY = M.KEYS.SPEECH_LANG;
 
     // ── Supported Languages ────────────────────────
     const LANGUAGES = [

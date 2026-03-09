@@ -20,7 +20,7 @@
             desc: 'Free tier · 2,000/month',
             icon: 'bi bi-shield-check',
             requiresKey: true,
-            keyStorageKey: 'md-viewer-brave-api-key',
+            keyStorageKey: M.KEYS.API_KEY_BRAVE,
             dialogTitle: 'Connect to Brave Search',
             dialogDesc: 'Enter your free Brave Search API key for web search.',
             dialogPlaceholder: 'BSA...',
@@ -33,7 +33,7 @@
             desc: 'Free tier · 2,500 queries',
             icon: 'bi bi-globe2',
             requiresKey: true,
-            keyStorageKey: 'md-viewer-serper-api-key',
+            keyStorageKey: M.KEYS.API_KEY_SERPER,
             dialogTitle: 'Connect to Serper.dev',
             dialogDesc: 'Enter your free Serper.dev API key for Google search results.',
             dialogPlaceholder: 'Your Serper API key...',
@@ -43,8 +43,8 @@
     };
 
     // --- State ---
-    let searchEnabled = localStorage.getItem('md-viewer-search-enabled') === 'true';
-    let activeProvider = localStorage.getItem('md-viewer-search-provider') || 'duckduckgo';
+    let searchEnabled = localStorage.getItem(M.KEYS.SEARCH_ENABLED) === 'true';
+    let activeProvider = localStorage.getItem(M.KEYS.SEARCH_PROVIDER) || 'duckduckgo';
 
     // --- Public API ---
 
@@ -60,7 +60,7 @@
      */
     function setSearchEnabled(enabled) {
         searchEnabled = !!enabled;
-        localStorage.setItem('md-viewer-search-enabled', searchEnabled ? 'true' : 'false');
+        localStorage.setItem(M.KEYS.SEARCH_ENABLED, searchEnabled ? 'true' : 'false');
     }
 
     /**
@@ -76,7 +76,7 @@
     function setActiveProvider(providerId) {
         if (PROVIDERS[providerId]) {
             activeProvider = providerId;
-            localStorage.setItem('md-viewer-search-provider', providerId);
+            localStorage.setItem(M.KEYS.SEARCH_PROVIDER, providerId);
         }
     }
 

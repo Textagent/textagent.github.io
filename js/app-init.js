@@ -297,7 +297,7 @@
             // Update this dropdown icon + label
             if (qabThemeIcon) qabThemeIcon.className = newTheme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon me-2';
             if (qabThemeLabel) qabThemeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
-            localStorage.setItem('markdown-viewer-theme', newTheme);
+            localStorage.setItem(M.KEYS.THEME, newTheme);
             M.isDarkMode = newTheme === 'dark';
             M.initMermaid();
             M.renderMarkdown();
@@ -325,7 +325,7 @@
             });
         }
         // Sync checkmarks on init
-        syncQabThemeChecks(localStorage.getItem('md-viewer-preview-theme') || 'github');
+        syncQabThemeChecks(localStorage.getItem(M.KEYS.PREVIEW_THEME) || 'github');
         qabThemeOptions.forEach(function (qOpt) {
             qOpt.addEventListener('click', function () {
                 var themeName = this.getAttribute('data-theme-name');
@@ -430,7 +430,7 @@
             var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
             this.querySelector('i').className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-            localStorage.setItem('markdown-viewer-theme', newTheme);
+            localStorage.setItem(M.KEYS.THEME, newTheme);
             M.isDarkMode = newTheme === 'dark';
             M.initMermaid();
             M.renderMarkdown();
@@ -545,14 +545,14 @@
     var statsPill = document.getElementById('stats-container');
     if (statsToggle && statsPill) {
         // restore saved state
-        if (localStorage.getItem('mdview-stats-open') === 'true') {
+        if (localStorage.getItem(M.KEYS.STATS_OPEN) === 'true') {
             statsPill.classList.add('expanded');
             statsToggle.classList.add('active');
         }
         statsToggle.addEventListener('click', function () {
             var open = statsPill.classList.toggle('expanded');
             statsToggle.classList.toggle('active', open);
-            localStorage.setItem('mdview-stats-open', open);
+            localStorage.setItem(M.KEYS.STATS_OPEN, open);
         });
     }
 

@@ -502,7 +502,7 @@
     // WORD WRAP TOGGLE
     // ========================================
     var wordWrapBtn = document.getElementById('word-wrap-toggle');
-    var wordWrapEnabled = localStorage.getItem('md-viewer-word-wrap') !== 'false';
+    var wordWrapEnabled = localStorage.getItem(M.KEYS.WORD_WRAP) !== 'false';
 
     function applyWordWrap() {
         if (wordWrapEnabled) {
@@ -518,7 +518,7 @@
     applyWordWrap();
     wordWrapBtn.addEventListener('click', function () {
         wordWrapEnabled = !wordWrapEnabled;
-        localStorage.setItem('md-viewer-word-wrap', wordWrapEnabled.toString());
+        localStorage.setItem(M.KEYS.WORD_WRAP, wordWrapEnabled.toString());
         applyWordWrap();
     });
 
