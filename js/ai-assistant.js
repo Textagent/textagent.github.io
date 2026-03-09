@@ -1,5 +1,6 @@
 // ============================================
-// ai-assistant.js — AI Panel, Multi-model Support, Chat
+// ai-assistant.js — AI Panel Core, Model Management, Worker Lifecycle
+// Chat UI → ai-chat.js | Actions → ai-actions.js | Image → ai-image.js
 // ============================================
 (function (M) {
   'use strict';
@@ -584,11 +585,11 @@
           }
           aiInput.focus();
           // Replay any queued message that was waiting for the model to load
-          replayPendingMessage();
+          M._ai.replayPendingMessage();
           break;
 
         case 'complete':
-          handleAiResponse(msg.text, msg.messageId);
+          M._ai.handleAiResponse(msg.text, msg.messageId);
           break;
 
         case 'error':
@@ -605,12 +606,12 @@
               aiConsentDownload.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Retry Download';
             } else {
               // Was auto-loading from cache — show error in panel
-              addAiStatusBar('error', msg.message);
+              M._ai.addAiStatusBar('error', msg.message);
             }
             // Reset worker so user can retry
             if (ls.worker) { ls.worker.terminate(); ls.worker = null; }
           } else {
-            handleAiError(msg.message, msg.messageId);
+            M._ai.handleAiError(msg.message, msg.messageId);
           }
           break;
       }
@@ -671,23 +672,23 @@
           }
           if (onSuccess) { onSuccess(); onSuccess = null; }
           // Replay any queued message that was waiting for this cloud model
-          replayPendingMessage();
+          M._ai.replayPendingMessage();
           break;
 
         case 'token':
-          handleStreamingToken(msg.token, msg.messageId);
+          M._ai.handleStreamingToken(msg.token, msg.messageId);
           break;
 
         case 'complete':
-          handleGroqComplete(msg.text, msg.messageId);
+          M._ai.handleGroqComplete(msg.text, msg.messageId);
           break;
 
         case 'image-complete':
-          handleImageComplete(msg.imageBase64, msg.mimeType, msg.prompt, msg.messageId);
+          M._ai.handleImageComplete(msg.imageBase64, msg.mimeType, msg.prompt, msg.messageId);
           break;
 
         case 'image-error':
-          handleAiError(msg.message, msg.messageId);
+          M._ai.handleAiError(msg.message, msg.messageId);
           break;
 
         case 'error':
@@ -700,7 +701,7 @@
               localStorage.removeItem(provider.keyStorageKey);
             }
           } else {
-            handleAiError(msg.message, msg.messageId);
+            M._ai.handleAiError(msg.message, msg.messageId);
           }
           break;
       }
@@ -723,129 +724,50 @@
     worker.postMessage({ type: 'load' });
   }
 
-  // --- Streaming Token Handling ---
-  function handleStreamingToken(token, messageId) {
-    // Find or create the streaming bubble
-    let bubble = document.getElementById('ai-streaming-bubble-' + messageId);
-
-    if (!bubble) {
-      // First token — replace typing indicator with an empty AI bubble
-      removeTypingIndicator();
-
-      // Remove welcome message
-      const welcome = aiChatArea.querySelector('.ai-welcome-message');
-      if (welcome) welcome.remove();
-
-      const msg = document.createElement('div');
-      msg.className = 'ai-message ai-message-ai';
-      msg.id = 'ai-streaming-msg-' + messageId;
-      msg.innerHTML = `
-      <span class="ai-msg-label">AI</span>
-      <div class="ai-msg-bubble" id="ai-streaming-bubble-${messageId}"></div>
-    `;
-      aiChatArea.appendChild(msg);
-      bubble = document.getElementById('ai-streaming-bubble-' + messageId);
-    }
-
-    // Append token text (accumulate raw text, then format)
-    if (!bubble._rawText) bubble._rawText = '';
-    bubble._rawText += token;
-    bubble.innerHTML = formatAiResponse(bubble._rawText);
-
-    // Auto-scroll
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
-
-  function handleGroqComplete(text, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    streamingMessageId = null;
-
-    // Find the streaming message and add action buttons
-    const msgEl = document.getElementById('ai-streaming-msg-' + messageId);
-    if (msgEl) {
-      // Remove the streaming IDs (no longer needed)
-      const bubble = document.getElementById('ai-streaming-bubble-' + messageId);
-      if (bubble) {
-        bubble.removeAttribute('id');
-        bubble.innerHTML = formatAiResponse(text);
-      }
-      msgEl.removeAttribute('id');
-
-      // Add action buttons
-      const actions = document.createElement('div');
-      actions.className = 'ai-msg-actions';
-      actions.innerHTML = `
-      <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
-        <i class="bi bi-box-arrow-in-down"></i> Insert
-      </button>
-      <button class="ai-msg-action-btn" data-action="copy" data-text="${encodeURIComponent(text)}" title="Copy to clipboard">
-        <i class="bi bi-clipboard"></i> Copy
-      </button>
-      <button class="ai-msg-action-btn" data-action="replace" data-text="${encodeURIComponent(text)}" title="Replace selected text">
-        <i class="bi bi-arrow-left-right"></i> Replace
-      </button>
-    `;
-      msgEl.appendChild(actions);
-
-      // Wire up action buttons
-      actions.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-          const action = this.dataset.action;
-          const rawText = decodeURIComponent(this.dataset.text);
-          handleAiAction(action, rawText, this);
-        });
-      });
-    } else {
-      // Fallback if no streaming element found
-      removeTypingIndicator();
-      addAiMessage(text, messageId);
-    }
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
+  // --- Send to AI (routes to active model's worker) ---
 
   // --- Status Bar ---
   function addAiStatusBar(status, text) {
     // Remove existing status bar
     const existing = aiPanel.querySelector('.ai-status-bar');
     if (existing) existing.remove();
-
+  
     const bar = document.createElement('div');
     bar.className = 'ai-status-bar';
     bar.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
-
+  
     // Insert after header
     const header = aiPanel.querySelector('.ai-panel-header');
     header.insertAdjacentElement('afterend', bar);
   }
-
+  
   // Show inline consent bar for Qwen download (not a popup)
   function showInlineDownloadConsent(modelId) {
     modelId = modelId || currentAiModel;
     const cfg = _models[modelId];
     const modelName = (cfg && cfg.dropdownName) || 'Qwen 3.5';
     const dlSize = (cfg && cfg.downloadSize) || '~500 MB';
-
+  
     // Remove any existing status bar
     const existing = aiPanel.querySelector('.ai-status-bar');
     if (existing) existing.remove();
-
+  
     const bar = document.createElement('div');
     bar.className = 'ai-status-bar ai-consent-inline';
     bar.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
-        <span style="font-size:0.82rem"><i class="bi bi-download me-1"></i> ${modelName} requires a one-time <strong>${dlSize}</strong> download (runs locally, 100% private)</span>
-        <button id="ai-inline-agree-btn" style="
-          background:var(--color-accent-emphasis,#2f81f7);color:#fff;border:none;
-          border-radius:6px;padding:4px 14px;font-size:0.8rem;cursor:pointer;
-          white-space:nowrap;font-weight:500
-        "><i class="bi bi-check-lg me-1"></i>Agree &amp; Download</button>
-      </div>
-    `;
-
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
+          <span style="font-size:0.82rem"><i class="bi bi-download me-1"></i> ${modelName} requires a one-time <strong>${dlSize}</strong> download (runs locally, 100% private)</span>
+          <button id="ai-inline-agree-btn" style="
+            background:var(--color-accent-emphasis,#2f81f7);color:#fff;border:none;
+            border-radius:6px;padding:4px 14px;font-size:0.8rem;cursor:pointer;
+            white-space:nowrap;font-weight:500
+          "><i class="bi bi-check-lg me-1"></i>Agree &amp; Download</button>
+        </div>
+      `;
+  
     const header = aiPanel.querySelector('.ai-panel-header');
     header.insertAdjacentElement('afterend', bar);
-
+  
     // Wire up the agree button
     const agreeBtn = document.getElementById('ai-inline-agree-btn');
     if (agreeBtn) {
@@ -857,7 +779,7 @@
       });
     }
   }
-
+  
   // Show or update an inline download progress bar in the AI panel
   function updateAiInlineProgress(percent, statusText, detailText) {
     let bar = aiPanel.querySelector('.ai-status-bar.downloading');
@@ -865,18 +787,18 @@
       // Remove any existing non-download status bar
       const existing = aiPanel.querySelector('.ai-status-bar');
       if (existing) existing.remove();
-
+  
       bar = document.createElement('div');
       bar.className = 'ai-status-bar downloading';
       bar.innerHTML = `
-      <div class="ai-status-text">
-        <span class="ai-download-status"><span class="ai-status-spinner"></span> ${statusText}</span>
-        <span class="ai-download-detail">${detailText}</span>
-      </div>
-      <div class="ai-inline-progress">
-        <div class="ai-inline-progress-fill" style="width: ${percent}%"></div>
-      </div>
-    `;
+        <div class="ai-status-text">
+          <span class="ai-download-status"><span class="ai-status-spinner"></span> ${statusText}</span>
+          <span class="ai-download-detail">${detailText}</span>
+        </div>
+        <div class="ai-inline-progress">
+          <div class="ai-inline-progress-fill" style="width: ${percent}%"></div>
+        </div>
+      `;
       const header = aiPanel.querySelector('.ai-panel-header');
       header.insertAdjacentElement('afterend', bar);
     } else {
@@ -888,256 +810,41 @@
       if (detailEl) detailEl.textContent = detailText;
     }
   }
-
-  // --- Chat Messages ---
-  function addUserMessage(text) {
-    // Remove welcome message
-    const welcome = aiChatArea.querySelector('.ai-welcome-message');
-    if (welcome) welcome.remove();
-
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-user';
-    msg.innerHTML = `
-    <span class="ai-msg-label">You</span>
-    <div class="ai-msg-bubble">${escapeHtml(text)}</div>
-  `;
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
-
-  function addTypingIndicator() {
-    const indicator = document.createElement('div');
-    indicator.className = 'ai-message ai-message-ai';
-    indicator.id = 'ai-typing';
-    indicator.innerHTML = `
-    <span class="ai-msg-label">AI</span>
-    <div class="ai-typing-indicator">
-      <span class="ai-typing-dot"></span>
-      <span class="ai-typing-dot"></span>
-      <span class="ai-typing-dot"></span>
-    </div>
-  `;
-    aiChatArea.appendChild(indicator);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
-
-  function removeTypingIndicator() {
-    const indicator = document.getElementById('ai-typing');
-    if (indicator) indicator.remove();
-  }
-
-  // Track last search results for citation rendering
-  var _lastSearchResults = null;
-
-  function addAiMessage(text, messageId) {
-    removeTypingIndicator();
-
-    // Remove search indicator if present
-    const searchInd = aiChatArea.querySelector('.ai-search-indicator');
-    if (searchInd) searchInd.remove();
-
-    // Remove welcome message
-    const welcome = aiChatArea.querySelector('.ai-welcome-message');
-    if (welcome) welcome.remove();
-
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-ai';
-
-    // Simple markdown-to-html for AI response (basic formatting)
-    const formattedText = formatAiResponse(text);
-
-    // Build source citations if we have search results
-    let citationsHtml = '';
-    if (_lastSearchResults && _lastSearchResults.length > 0) {
-      citationsHtml = '<div class="ai-source-citations">';
-      const seen = new Set();
-      _lastSearchResults.forEach(r => {
-        try {
-          const domain = new URL(r.url).hostname.replace('www.', '');
-          if (!seen.has(domain)) {
-            seen.add(domain);
-            citationsHtml += `<a class="ai-source-link" href="${r.url}" target="_blank" rel="noopener">`
-              + `<i class="bi bi-link-45deg"></i>${domain}</a>`;
-          }
-        } catch (_) { /* invalid url */ }
-      });
-      citationsHtml += '</div>';
-      _lastSearchResults = null;
-    }
-
-    msg.innerHTML = `
-    <span class="ai-msg-label">AI</span>
-    <div class="ai-msg-bubble">${formattedText}</div>
-    ${citationsHtml}
-    <div class="ai-msg-actions">
-      <button class="ai-msg-action-btn" data-action="insert" data-text="${encodeURIComponent(text)}" title="Insert into editor">
-        <i class="bi bi-box-arrow-in-down"></i> Insert
-      </button>
-      <button class="ai-msg-action-btn" data-action="copy" data-text="${encodeURIComponent(text)}" title="Copy to clipboard">
-        <i class="bi bi-clipboard"></i> Copy
-      </button>
-      <button class="ai-msg-action-btn" data-action="replace" data-text="${encodeURIComponent(text)}" title="Replace selected text">
-        <i class="bi bi-arrow-left-right"></i> Replace
-      </button>
-    </div>
-  `;
-
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-
-    // Wire up action buttons
-    msg.querySelectorAll('.ai-msg-action-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const action = this.dataset.action;
-        const rawText = decodeURIComponent(this.dataset.text);
-        handleAiAction(action, rawText, this);
-      });
-    });
-  }
-
-  function handleAiAction(action, text, btn) {
-    switch (action) {
-      case 'insert': {
-        const pos = markdownEditor.selectionStart;
-        const before = markdownEditor.value.substring(0, pos);
-        const after = markdownEditor.value.substring(pos);
-        markdownEditor.value = before + '\n' + text + '\n' + after;
-        markdownEditor.dispatchEvent(new Event('input'));
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Inserted';
-        setTimeout(() => { btn.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Insert'; }, 1500);
-        break;
-      }
-      case 'copy': {
-        navigator.clipboard.writeText(text).then(() => {
-          btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
-          setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 1500);
-        });
-        break;
-      }
-      case 'replace': {
-        const start = markdownEditor.selectionStart;
-        const end = markdownEditor.selectionEnd;
-        if (start === end) {
-          // No selection, insert instead
-          handleAiAction('insert', text, btn);
-          return;
-        }
-        markdownEditor.value = markdownEditor.value.substring(0, start) + text + markdownEditor.value.substring(end);
-        markdownEditor.dispatchEvent(new Event('input'));
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Replaced';
-        setTimeout(() => { btn.innerHTML = '<i class="bi bi-arrow-left-right"></i> Replace'; }, 1500);
-        break;
-      }
-    }
-  }
-
-  function handleAiResponse(text, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    addAiMessage(text, messageId);
-  }
-
-  function handleAiError(message, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    removeTypingIndicator();
-
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-ai';
-    msg.innerHTML = `
-    <span class="ai-msg-label">AI</span>
-    <div class="ai-msg-bubble" style="border-color: var(--color-danger-fg); color: var(--color-danger-fg);">
-      <i class="bi bi-exclamation-triangle"></i> ${escapeHtml(message)}
-    </div>
-  `;
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-  }
-
-  function formatAiResponse(text) {
-    // Basic markdown formatting for AI responses
-    let html = escapeHtml(text);
-
-    // Code blocks
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-
-    // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Bold
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // Italic
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
-
-    // Sanitize the final output to prevent any XSS
-    return DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ['pre', 'code', 'strong', 'em', 'br'],
-      ALLOWED_ATTR: []
-    });
-  }
-
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // --- Replay a queued message after model finishes loading ---
-  function replayPendingMessage() {
-    if (!pendingAiMessage) return;
-    const { taskType, context, userPrompt } = pendingAiMessage;
-    pendingAiMessage = null;
-    sendToAi(taskType, context, userPrompt);
-  }
-
-  // --- Send to AI (routes to active model's worker) ---
+  
   function sendToAi(taskType, context, userPrompt) {
     // If a local model is selected but not loaded yet, show inline consent before downloading
     if (isLocalModel(currentAiModel)) {
       const ls = getLocalState(currentAiModel);
       const consentKey = 'md-viewer-ai-consented-' + currentAiModel;
-      // Backward compat for old key
       const hasConsent = localStorage.getItem(consentKey) || (currentAiModel === 'qwen-local' && localStorage.getItem('md-viewer-ai-consented'));
-
+  
       if (!ls.loaded && !ls.worker) {
-        // Queue the message so it auto-sends once the model is loaded
         pendingAiMessage = { taskType, context, userPrompt };
-
-        // If already consented (model cached from before), auto-load from cache
         if (hasConsent) {
           initAiWorker(currentAiModel);
           addAiStatusBar('loading', 'Loading cached model — your message will be sent automatically...');
         } else {
-          // For high-end models, show warning first
           const cfg = _models[currentAiModel];
           if (cfg && cfg.requiresHighEnd) {
             showHighEndWarning(currentAiModel, () => {
               showInlineDownloadConsent(currentAiModel);
             });
           } else {
-            // Show inline consent bar (not a popup) — user must agree before download
             showInlineDownloadConsent(currentAiModel);
           }
         }
         return;
       }
-
-      // If local model is loading (worker exists but model not ready yet), queue the message
+  
       if (!ls.loaded && ls.worker) {
         pendingAiMessage = { taskType, context, userPrompt };
         addAiStatusBar('loading', 'Model still loading — your message will be sent automatically...');
         return;
       }
     }
-
-    // If a cloud model is selected but not ready, prompt for API key or init
+  
     const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
     if (cloudProvider && !cloudProvider.isLoaded()) {
-      // Queue the message so it auto-sends once the cloud worker is ready
       pendingAiMessage = { taskType, context, userPrompt };
       if (!cloudProvider.getWorker()) {
         if (!cloudProvider.getKey()) {
@@ -1149,34 +856,32 @@
       addAiStatusBar('loading', 'Connecting to cloud model — your message will be sent automatically...');
       return;
     }
-
+  
     const activeWorker = getActiveWorker();
     const isReady = isCurrentModelReady();
-
+  
     if (!isReady || !activeWorker) {
       addAiStatusBar('error', 'Model not ready. Please select a model or check your API key.');
       return;
     }
     if (aiIsGenerating) return;
-
+  
     aiIsGenerating = true;
     aiSendBtn.disabled = true;
     const messageId = ++aiMessageIdCounter;
     streamingMessageId = messageId;
-
-    // Check thinking mode toggle
+  
     const thinkingToggle = document.getElementById('ai-thinking-toggle');
     const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
-
-    // Show user message in chat (if not already shown by sendChatMessage)
+  
+    // Show user message in chat (if not already shown)
     const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
-    // Only add user message if it wasn't already added by the chat input handler
     if (!document.querySelector('.ai-message-user:last-child') ||
       aiChatArea.lastElementChild?.querySelector('.ai-msg-bubble')?.textContent !== displayText) {
-      addUserMessage(displayText);
+      M._ai.addUserMessage(displayText);
     }
-    addTypingIndicator();
-
+    M._ai.addTypingIndicator();
+  
     activeWorker.postMessage({
       type: 'generate',
       taskType,
@@ -1186,752 +891,54 @@
       enableThinking
     });
   }
-
-  // --- Chat Input ---
-  aiInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendChatMessage();
+  
+  // =============================================
+  // M._ai — Internal namespace for cross-module access
+  // Used by ai-chat.js, ai-actions.js, ai-image.js
+  // =============================================
+  M._ai = {};
+  Object.defineProperties(M._ai, {
+    isGenerating: {
+      get: function () { return aiIsGenerating; },
+      set: function (v) { aiIsGenerating = v; }
+    },
+    messageIdCounter: {
+      get: function () { return aiMessageIdCounter; },
+      set: function (v) { aiMessageIdCounter = v; }
+    },
+    streamingMessageId: {
+      get: function () { return streamingMessageId; },
+      set: function (v) { streamingMessageId = v; }
+    },
+    pendingMessage: {
+      get: function () { return pendingAiMessage; },
+      set: function (v) { pendingAiMessage = v; }
+    },
+    currentModel: {
+      get: function () { return currentAiModel; }
+    },
+    panelOpen: {
+      get: function () { return aiPanelOpen; },
+      set: function (v) { aiPanelOpen = v; }
     }
   });
-
-  // Auto-resize textarea
-  aiInput.addEventListener('input', () => {
-    aiInput.style.height = 'auto';
-    aiInput.style.height = Math.min(aiInput.scrollHeight, 120) + 'px';
-  });
-
-  aiSendBtn.addEventListener('click', sendChatMessage);
-
-  function sendChatMessage() {
-    const text = aiInput.value.trim();
-    if (!text || aiIsGenerating) return;
-
-    // Clear input now — the message will be queued if model isn't ready
-    aiInput.value = '';
-    aiInput.style.height = 'auto';
-
-    // Show the user's message immediately in chat for feedback
-    addUserMessage(text);
-
-    // If current model is an image model, route to image generation
-    const currentModelCfg = _models[currentAiModel];
-    if (currentModelCfg && currentModelCfg.isImageModel) {
-      generateImage(text, selectedAspectRatio);
-      return;
-    }
-
-    // Detect if it's a Q&A about the document or a generation request
-    const editorContent = markdownEditor.value;
-    const isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
-
-    // Web search integration — if search is enabled, search first then augment context
-    if (M.webSearch && M.webSearch.isSearchEnabled()) {
-      // Show search indicator
-      const searchIndicator = document.createElement('div');
-      searchIndicator.className = 'ai-search-indicator';
-      searchIndicator.innerHTML = '<i class="bi bi-globe-americas"></i> Searching the web...';
-      aiChatArea.appendChild(searchIndicator);
-      aiChatArea.scrollTop = aiChatArea.scrollHeight;
-
-      M.webSearch.performSearch(text).then(results => {
-        const searchContext = M.webSearch.formatResultsForLLM(results);
-        _lastSearchResults = results;
-
-        // Remove search indicator (addAiMessage will also remove it, but just in case)
-        const ind = aiChatArea.querySelector('.ai-search-indicator');
-        if (ind) ind.remove();
-
-        // Combine search results with document context
-        let context = searchContext;
-        if (isQuestion && editorContent.trim()) {
-          context = searchContext + '\n\n[Document Content]\n' + editorContent;
-        }
-
-        sendToAi(isQuestion && editorContent.trim() ? 'qa' : 'generate', context || null, text);
-      }).catch(() => {
-        // Search failed — proceed without search
-        const ind = aiChatArea.querySelector('.ai-search-indicator');
-        if (ind) ind.remove();
-        if (isQuestion && editorContent.trim()) {
-          sendToAi('qa', editorContent, text);
-        } else {
-          sendToAi('generate', null, text);
-        }
-      });
-      return;
-    }
-
-    if (isQuestion && editorContent.trim()) {
-      sendToAi('qa', editorContent, text);
-    } else {
-      sendToAi('generate', null, text);
-    }
-  }
-
-  // --- Track editor selection so it persists when focus moves to AI panel ---
-  let savedSelection = { start: 0, end: 0 };
-  markdownEditor.addEventListener('select', () => {
-    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
-  });
-  markdownEditor.addEventListener('click', () => {
-    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
-  });
-  markdownEditor.addEventListener('keyup', () => {
-    savedSelection = { start: markdownEditor.selectionStart, end: markdownEditor.selectionEnd };
-  });
-
-  /**
-   * Get a smart text chunk around cursor when no text is selected.
-   * Takes ~1500 chars around the cursor position to avoid overloading the model.
-   */
-  function getSmartChunk(fullText, cursorPos) {
-    if (!fullText.trim()) return '';
-    const CHUNK_SIZE = 1500;
-    if (fullText.length <= CHUNK_SIZE) return fullText;
-    let start = Math.max(0, cursorPos - Math.floor(CHUNK_SIZE / 2));
-    let end = Math.min(fullText.length, start + CHUNK_SIZE);
-    // Snap start to a paragraph boundary (double newline) if possible
-    if (start > 0) {
-      const paraBreak = fullText.lastIndexOf('\n\n', start + 100);
-      if (paraBreak > start - 200 && paraBreak > 0) start = paraBreak + 2;
-    }
-    // Snap end to a paragraph boundary if possible
-    if (end < fullText.length) {
-      const paraBreak = fullText.indexOf('\n\n', end - 100);
-      if (paraBreak > 0 && paraBreak < end + 200) end = paraBreak;
-    }
-    return fullText.substring(start, end);
-  }
-
-  /**
-   * Split text into chunks of ~CHUNK_SIZE characters, breaking at newlines when possible.
-   */
-  function splitIntoChunks(text, chunkSize = 1500) {
-    if (text.length <= chunkSize) return [text];
-    const chunks = [];
-    let start = 0;
-    while (start < text.length) {
-      let end = Math.min(start + chunkSize, text.length);
-      // Try to break at a newline
-      if (end < text.length) {
-        const lastNewline = text.lastIndexOf('\n', end);
-        if (lastNewline > start + chunkSize * 0.5) end = lastNewline + 1;
-      }
-      chunks.push(text.substring(start, end));
-      start = end;
-    }
-    return chunks;
-  }
-
-  /**
-   * Process document in chunks like an agent — step by step, with progress.
-   * Returns a promise that resolves when done.
-   */
-  function processDocumentInChunks(action, fullText) {
-    const chunks = splitIntoChunks(fullText);
-    const totalChunks = chunks.length;
-
-    addAiMessage(`📄 Processing entire document (${fullText.length} chars) in ${totalChunks} chunk${totalChunks > 1 ? 's' : ''}...`, 'user');
-
-    let chunkIndex = 0;
-    const chunkResults = [];
-
-    function processNextChunk() {
-      if (chunkIndex >= totalChunks) {
-        // All chunks processed — combine results
-        if (action === 'summarize' && totalChunks > 1) {
-          // Final summary pass: combine chunk summaries
-          addAiMessage(`🔗 Combining ${totalChunks} chunk summaries into final summary...`);
-          const combined = chunkResults.map((r, i) => `### Part ${i + 1}\n${r}`).join('\n\n');
-          sendToAi('summarize', combined, 'Combine these section summaries into one concise final summary.');
-        } else if (totalChunks > 1) {
-          // For other actions, show combined results
-          const combined = chunkResults.join('\n\n---\n\n');
-          removeTypingIndicator();
-          addAiMessage(combined);
-          aiIsGenerating = false;
-          aiSendBtn.disabled = false;
-        }
-        return;
-      }
-
-      const chunkNum = chunkIndex + 1;
-      addAiMessage(`⏳ Processing chunk ${chunkNum}/${totalChunks}...`);
-
-      aiIsGenerating = true;
-      aiSendBtn.disabled = true;
-      const messageId = ++aiMessageIdCounter;
-
-      // Check thinking toggle
-      const thinkingToggle = document.getElementById('ai-thinking-toggle');
-      const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
-
-      // Route to correct worker
-      const activeWorker = getActiveWorker();
-
-      // Set up one-time listener for this chunk's response
-      const chunkHandler = (e) => {
-        const msg = e.data;
-        if (msg.messageId !== messageId) return;
-
-        if (msg.type === 'complete') {
-          activeWorker.removeEventListener('message', chunkHandler);
-          chunkResults.push(msg.text);
-          removeTypingIndicator();
-          // Show intermediate result
-          addAiMessage(`✅ Chunk ${chunkNum}/${totalChunks}: ${msg.text.substring(0, 100)}...`);
-          addTypingIndicator();
-          chunkIndex++;
-          aiIsGenerating = false;
-          // Process next chunk after a small delay
-          setTimeout(processNextChunk, 100);
-        } else if (msg.type === 'error') {
-          activeWorker.removeEventListener('message', chunkHandler);
-          removeTypingIndicator();
-          addAiMessage(`❌ Error on chunk ${chunkNum}: ${msg.message}`);
-          aiIsGenerating = false;
-          aiSendBtn.disabled = false;
-        }
-      };
-      activeWorker.addEventListener('message', chunkHandler);
-      addTypingIndicator();
-
-      activeWorker.postMessage({
-        type: 'generate',
-        taskType: action,
-        context: chunks[chunkIndex],
-        userPrompt: null,
-        messageId,
-        enableThinking
-      });
-    }
-
-    processNextChunk();
-  }
-
-  // --- Quick Action Chips ---
-  document.querySelectorAll('.ai-action-chip').forEach(chip => {
-    chip.addEventListener('click', function () {
-      const action = this.dataset.action;
-      // Check editor selection first, then preview selection
-      let selectedText = markdownEditor.value.substring(savedSelection.start, savedSelection.end);
-      if (!selectedText) {
-        const sel = window.getSelection();
-        selectedText = sel ? sel.toString().trim() : '';
-      }
-      const editorContent = markdownEditor.value;
-
-      const isCurrentModelReady2 = isCurrentModelReady();
-      if (!isCurrentModelReady2) {
-        openAiPanel();
-        return;
-      }
-
-      // Ensure panel is open
-      if (!aiPanelOpen) openAiPanel();
-
-      switch (action) {
-        case 'summarize':
-        case 'expand':
-        case 'rephrase':
-        case 'grammar':
-        case 'polish':
-        case 'formalize':
-        case 'elaborate':
-        case 'shorten': {
-          if (!editorContent.trim() && !selectedText.trim()) {
-            addAiMessage('Please add some text in the editor first.');
-            return;
-          }
-          if (selectedText) {
-            // Selected text — process directly
-            addAiMessage(`Using selected text (${selectedText.length} chars)`, 'user');
-            sendToAi(action, selectedText, null);
-          } else if (editorContent.length > 1500) {
-            // Large document — agent-style chunked processing
-            processDocumentInChunks(action, editorContent);
-          } else {
-            // Small document — process all at once
-            addAiMessage(`Using entire document (${editorContent.length} chars)`, 'user');
-            sendToAi(action, editorContent, null);
-          }
-          break;
-        }
-        case 'explain':
-        case 'simplify':
-          if (!selectedText) {
-            addAiMessage('Please select some text in the editor to explain or simplify.');
-            return;
-          }
-          sendToAi(action, selectedText, `Please ${action} this text.`);
-          break;
-        case 'autocomplete': {
-          const textBeforeCursor = editorContent.substring(0, savedSelection.start);
-          if (!textBeforeCursor.trim()) {
-            addAiMessage('Place your cursor after some text in the editor to auto-complete.');
-            return;
-          }
-          sendToAi('autocomplete', textBeforeCursor, null);
-          break;
-        }
-        case 'markdown':
-          // Focus the input for user to type their request
-          aiInput.placeholder = 'Describe what markdown to generate...';
-          aiInput.focus();
-          break;
-      }
-    });
-  });
-
-  // --- Ctrl+Space for Auto-Complete ---
-  markdownEditor.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === ' ') {
-      e.preventDefault();
-      const isCurrentReady = isCurrentModelReady();
-      if (!isCurrentReady) {
-        openAiPanel();
-        return;
-      }
-      if (!aiPanelOpen) openAiPanel();
-
-      const textBeforeCursor = markdownEditor.value.substring(0, markdownEditor.selectionStart);
-      if (textBeforeCursor.trim()) {
-        sendToAi('autocomplete', textBeforeCursor, null);
-      }
-    }
-  });
-
-  // --- Context Menu (on text selection in editor OR preview) ---
-  let contextMenuTimeout = null;
-  let savedContextText = ''; // Stores selected text from either pane
-
-  // Editor text selection
-  markdownEditor.addEventListener('mouseup', (e) => {
-    clearTimeout(contextMenuTimeout);
-    contextMenuTimeout = setTimeout(() => {
-      const selectedText = markdownEditor.value.substring(
-        markdownEditor.selectionStart,
-        markdownEditor.selectionEnd
-      );
-
-      const isEditorCtxReady = isCurrentModelReady();
-      if (selectedText && selectedText.length > 2 && isEditorCtxReady) {
-        savedContextText = selectedText;
-        aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-        aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
-        aiContextMenu.style.display = 'flex';
-      } else {
-        aiContextMenu.style.display = 'none';
-      }
-    }, 300);
-  });
-
-  // Preview pane text selection
-  if (previewPane) {
-    previewPane.addEventListener('mouseup', (e) => {
-      clearTimeout(contextMenuTimeout);
-      contextMenuTimeout = setTimeout(() => {
-        const selection = window.getSelection();
-        const selectedText = selection ? selection.toString().trim() : '';
-
-        const isCurrentReady3 = isCurrentModelReady();
-        if (selectedText && selectedText.length > 2 && isCurrentReady3) {
-          savedContextText = selectedText;
-          aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-          aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
-          aiContextMenu.style.display = 'flex';
-        } else {
-          aiContextMenu.style.display = 'none';
-        }
-      }, 300);
-    });
-  }
-
-  // Hide context menu on click elsewhere
-  document.addEventListener('mousedown', (e) => {
-    if (aiContextMenu && aiContextMenu.style.display !== 'none' && !aiContextMenu.contains(e.target)) {
-      aiContextMenu.style.display = 'none';
-    }
-  });
-
-  // Context menu actions — attach directly to each button
-  function handleContextAction(action) {
-    clearTimeout(contextMenuTimeout);
-    aiContextMenu.style.display = 'none';
-
-    if (!savedContextText) return;
-
-    // Open panel if needed
-    if (!aiPanelOpen) {
-      aiPanel.style.display = 'flex';
-      aiPanelOverlay.classList.add('active');
-      void aiPanel.offsetWidth;
-      aiPanel.classList.add('ai-panel-open');
-      aiToggleBtn.classList.add('ai-active');
-      aiPanelOpen = true;
-      document.body.classList.add('ai-panel-active');
-    }
-
-    if (['summarize', 'expand', 'rephrase', 'grammar', 'explain', 'simplify', 'polish', 'formalize', 'elaborate', 'shorten'].includes(action)) {
-      sendToAi(action, savedContextText, null);
-    } else {
-      sendToAi(action, savedContextText, `Please ${action} this text.`);
-    }
-  }
-
-  const ctxBtns = aiContextMenu.querySelectorAll('.ai-ctx-btn');
-  ctxBtns.forEach(btn => {
-    btn.addEventListener('mousedown', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const action = this.dataset.action;
-      if (action) {
-        // Use setTimeout(0) to let event finish before triggering AI
-        setTimeout(() => handleContextAction(action), 0);
-      }
-    });
-  });
-
-  // ===========================================================
-  // --- AI Image Generation (Imagen 4 Ultra) ---
-  // ===========================================================
-  const aiImageModal = document.getElementById('ai-image-modal');
-  const aiImagePromptInput = document.getElementById('ai-image-prompt');
-  const aiImageGenerateBtn = document.getElementById('ai-image-generate');
-  const aiImageCancelBtn = document.getElementById('ai-image-cancel');
-  let selectedAspectRatio = '1:1';
-  let imagenWorker = null;
-  let imagenWorkerReady = false;
-
-  // Aspect ratio pill selection
-  if (aiImageModal) {
-    aiImageModal.querySelectorAll('.ai-aspect-pill').forEach(pill => {
-      pill.addEventListener('click', function () {
-        aiImageModal.querySelectorAll('.ai-aspect-pill').forEach(p => p.classList.remove('active'));
-        this.classList.add('active');
-        selectedAspectRatio = this.dataset.ratio;
-      });
-    });
-  }
-
-  function showImageModal() {
-    if (!aiImageModal) return;
-    aiImageModal.style.display = 'flex';
-    if (aiImagePromptInput) {
-      aiImagePromptInput.value = '';
-      aiImagePromptInput.focus();
-    }
-    if (aiImageGenerateBtn) {
-      aiImageGenerateBtn.disabled = false;
-      aiImageGenerateBtn.innerHTML = '<i class="bi bi-stars me-1"></i> Generate';
-    }
-  }
-
-  function hideImageModal() {
-    if (aiImageModal) aiImageModal.style.display = 'none';
-  }
-
-  if (aiImageCancelBtn) aiImageCancelBtn.addEventListener('click', hideImageModal);
-  if (aiImageModal) {
-    aiImageModal.addEventListener('click', (e) => {
-      if (e.target === aiImageModal) hideImageModal();
-    });
-  }
-
-  // Initialize or get the Imagen worker (reuses Gemini API key)
-  function getImagenWorker() {
-    if (imagenWorker && imagenWorkerReady) return imagenWorker;
-
-    const imagenConfig = window.AI_MODELS?.['imagen-ultra'];
-    if (!imagenConfig) return null;
-
-    const geminiKey = localStorage.getItem(imagenConfig.keyStorageKey);
-    if (!geminiKey) return null;
-
-    if (imagenWorker) { imagenWorker.terminate(); }
-    imagenWorker = new Worker(imagenConfig.workerFile);
-    imagenWorkerReady = false;
-
-    imagenWorker.addEventListener('message', (e) => {
-      const msg = e.data;
-      switch (msg.type) {
-        case 'loaded':
-          imagenWorkerReady = true;
-          break;
-        case 'image-complete':
-          handleImageComplete(msg.imageBase64, msg.mimeType, msg.prompt, msg.messageId);
-          break;
-        case 'image-error':
-          handleAiError(msg.message, msg.messageId);
-          aiIsGenerating = false;
-          aiSendBtn.disabled = false;
-          break;
-        case 'error':
-          handleAiError(msg.message, msg.messageId);
-          break;
-      }
-    });
-
-    imagenWorker.postMessage({ type: 'setApiKey', apiKey: geminiKey });
-    imagenWorker.postMessage({ type: 'load' });
-    return imagenWorker;
-  }
-
-  // Handle completed image from worker
-  function handleImageComplete(imageBase64, mimeType, prompt, messageId) {
-    aiIsGenerating = false;
-    aiSendBtn.disabled = false;
-    removeTypingIndicator();
-
-    const welcome = aiChatArea.querySelector('.ai-welcome-message');
-    if (welcome) welcome.remove();
-
-    const dataUri = `data:${mimeType || 'image/png'};base64,${imageBase64}`;
-    const mdText = `![${prompt}](${dataUri})`;
-
-    const msg = document.createElement('div');
-    msg.className = 'ai-message ai-message-ai';
-    msg.innerHTML = `
-      <span class="ai-msg-label">AI</span>
-      <div class="ai-msg-bubble ai-image-bubble">
-        <div class="ai-image-prompt-label"><i class="bi bi-image me-1"></i> ${escapeHtml(prompt)}</div>
-        <img src="${dataUri}" alt="${escapeHtml(prompt)}" class="ai-generated-image" />
-      </div>
-      <div class="ai-msg-actions">
-        <button class="ai-msg-action-btn ai-img-insert-btn" title="Insert image into editor">
-          <i class="bi bi-box-arrow-in-down"></i> Insert
-        </button>
-        <button class="ai-msg-action-btn ai-img-copy-btn" title="Copy markdown">
-          <i class="bi bi-clipboard"></i> Copy MD
-        </button>
-      </div>
-    `;
-    aiChatArea.appendChild(msg);
-    aiChatArea.scrollTop = aiChatArea.scrollHeight;
-
-    // Wire up Insert button
-    msg.querySelector('.ai-img-insert-btn').addEventListener('click', function () {
-      const pos = markdownEditor.selectionStart;
-      const before = markdownEditor.value.substring(0, pos);
-      const after = markdownEditor.value.substring(pos);
-      markdownEditor.value = before + '\n' + mdText + '\n' + after;
-      markdownEditor.dispatchEvent(new Event('input'));
-      this.innerHTML = '<i class="bi bi-check-lg"></i> Inserted';
-      setTimeout(() => { this.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Insert'; }, 1500);
-    });
-
-    // Wire up Copy button
-    msg.querySelector('.ai-img-copy-btn').addEventListener('click', function () {
-      navigator.clipboard.writeText(mdText).then(() => {
-        this.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
-        setTimeout(() => { this.innerHTML = '<i class="bi bi-clipboard"></i> Copy MD'; }, 1500);
-      });
-    });
-  }
-
-  // Generate image from prompt — uses the current image model or defaults to imagen-ultra
-  function generateImage(prompt, aspectRatio) {
-    // Determine which image model to use
-    const currentModelCfg = _models[currentAiModel];
-    const imageModelId = (currentModelCfg && currentModelCfg.isImageModel) ? currentAiModel : 'imagen-ultra';
-    const provider = CLOUD_PROVIDERS[imageModelId];
-
-    if (!provider) {
-      addAiStatusBar('error', 'Image model not configured.');
-      return;
-    }
-
-    if (!provider.getKey()) {
-      showApiKeyModal(imageModelId);
-      return;
-    }
-
-    // Ensure panel is open
-    if (!aiPanelOpen) openAiPanel();
-
-    // Init worker if needed
-    if (!provider.getWorker() || !provider.isLoaded()) {
-      initCloudWorker(imageModelId, () => {
-        _doImageGenerate(provider, prompt, aspectRatio);
-      });
-      return;
-    }
-
-    _doImageGenerate(provider, prompt, aspectRatio);
-  }
-
-  function _doImageGenerate(provider, prompt, aspectRatio) {
-    aiIsGenerating = true;
-    aiSendBtn.disabled = true;
-    const messageId = ++aiMessageIdCounter;
-
-    // Only add user message if not already shown (sendChatMessage adds it)
-    const lastMsg = aiChatArea.querySelector('.ai-message:last-child .ai-msg-bubble');
-    const alreadyShown = lastMsg && lastMsg.textContent.includes(prompt);
-    if (!alreadyShown) {
-      addUserMessage(`🖼️ Generate: ${prompt}`);
-    }
-    addTypingIndicator();
-
-    provider.getWorker().postMessage({
-      type: 'generate-image',
-      prompt,
-      aspectRatio: aspectRatio || '1:1',
-      messageId,
-    });
-  }
-
-  // Generate button click
-  if (aiImageGenerateBtn) {
-    aiImageGenerateBtn.addEventListener('click', () => {
-      const prompt = aiImagePromptInput ? aiImagePromptInput.value.trim() : '';
-      if (!prompt) {
-        if (aiImagePromptInput) aiImagePromptInput.focus();
-        return;
-      }
-      hideImageModal();
-      generateImage(prompt, selectedAspectRatio);
-    });
-  }
-
-  // Enter key in image prompt
-  if (aiImagePromptInput) {
-    aiImagePromptInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (aiImageGenerateBtn) aiImageGenerateBtn.click();
-      }
-    });
-  }
-
-  // Handle the generate-image action chip
-  const imageChip = document.getElementById('ai-image-chip');
-  if (imageChip) {
-    imageChip.addEventListener('click', () => {
-      const imagenConfig = window.AI_MODELS?.['imagen-ultra'];
-      if (!imagenConfig) return;
-
-      const geminiKey = localStorage.getItem(imagenConfig.keyStorageKey);
-      if (!geminiKey) {
-        // Need API key first — open panel and show key dialog
-        if (!aiPanelOpen) openAiPanel();
-        showApiKeyModal('imagen-ultra');
-        return;
-      }
-      showImageModal();
-    });
-  }
-
-  // Expose for external use
-  M.generateImage = generateImage;
-
-  // --- Clear Chat ---
-  if (aiClearChatBtn) {
-    aiClearChatBtn.addEventListener('click', () => {
-      aiChatArea.innerHTML = `
-      <div class="ai-welcome-message">
-        <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>
-        <h5>AI Assistant</h5>
-        <p>Switch models below · Local or Cloud</p>
-        <div class="ai-welcome-tips">
-          <div class="ai-tip"><i class="bi bi-cursor-text"></i> Select text + use quick actions</div>
-          <div class="ai-tip"><i class="bi bi-chat-dots"></i> Ask questions about your document</div>
-          <div class="ai-tip"><i class="bi bi-keyboard"></i> <kbd>Ctrl</kbd>+<kbd>Space</kbd> for auto-complete</div>
-        </div>
-      </div>
-    `;
-    });
-  }
-
-  // --- Web Search Toggle & Provider Selector ---
-  (function initSearchUI() {
-    const searchToggle = document.getElementById('ai-search-toggle');
-    const providerBar = document.getElementById('ai-search-provider-bar');
-    const providerSelect = document.getElementById('ai-search-provider-select');
-    const keyBtn = document.getElementById('ai-search-key-btn');
-    if (!searchToggle || !M.webSearch) return;
-
-    // Restore saved state
-    searchToggle.checked = M.webSearch.isSearchEnabled();
-    if (searchToggle.checked && providerBar) providerBar.style.display = '';
-    if (providerSelect) providerSelect.value = M.webSearch.getActiveProvider();
-    updateKeyBtnVisibility();
-
-    // Toggle search on/off
-    searchToggle.addEventListener('change', () => {
-      M.webSearch.setSearchEnabled(searchToggle.checked);
-      if (providerBar) providerBar.style.display = searchToggle.checked ? '' : 'none';
-    });
-
-    // Switch provider
-    if (providerSelect) {
-      providerSelect.addEventListener('change', () => {
-        M.webSearch.setActiveProvider(providerSelect.value);
-        updateKeyBtnVisibility();
-      });
-    }
-
-    // Show/hide API key button based on whether provider needs a key
-    function updateKeyBtnVisibility() {
-      if (!keyBtn) return;
-      const p = M.webSearch.PROVIDERS[M.webSearch.getActiveProvider()];
-      keyBtn.style.display = (p && p.requiresKey) ? '' : 'none';
-    }
-
-    // API key button → show a mini prompt
-    if (keyBtn) {
-      keyBtn.addEventListener('click', () => {
-        const providerId = M.webSearch.getActiveProvider();
-        const p = M.webSearch.PROVIDERS[providerId];
-        if (!p || !p.requiresKey) return;
-
-        // Reuse the existing AI API key modal by adapting its fields
-        const modal = document.getElementById('ai-apikey-modal');
-        const titleEl = document.getElementById('ai-apikey-title');
-        const descEl = document.getElementById('ai-apikey-desc');
-        const inputEl = document.getElementById('ai-groq-key-input');
-        const linkEl = document.getElementById('ai-apikey-link');
-        const iconEl = document.getElementById('ai-apikey-icon');
-        const errorEl = document.getElementById('ai-apikey-error');
-
-        if (modal && titleEl && inputEl) {
-          titleEl.textContent = p.dialogTitle || 'API Key';
-          if (descEl) descEl.textContent = p.dialogDesc || 'Enter your API key';
-          if (iconEl) iconEl.className = p.icon || 'bi bi-key';
-          if (linkEl) {
-            linkEl.href = p.dialogLink || '#';
-            linkEl.textContent = p.dialogLinkText || 'Get API key';
-          }
-          inputEl.value = M.webSearch.getProviderKey(providerId);
-          inputEl.placeholder = p.dialogPlaceholder || 'API key...';
-          if (errorEl) errorEl.style.display = 'none';
-          modal.style.display = 'flex';
-
-          // Override save handler for search provider key
-          const saveBtn = document.getElementById('ai-apikey-save');
-          const cancelBtn = document.getElementById('ai-apikey-cancel');
-          const onSave = () => {
-            M.webSearch.setProviderKey(providerId, inputEl.value.trim());
-            modal.style.display = 'none';
-            cleanup();
-          };
-          const onCancel = () => {
-            modal.style.display = 'none';
-            cleanup();
-          };
-          function cleanup() {
-            saveBtn.removeEventListener('click', onSave);
-            cancelBtn.removeEventListener('click', onCancel);
-          }
-          saveBtn.addEventListener('click', onSave, { once: true });
-          cancelBtn.addEventListener('click', onCancel, { once: true });
-        }
-      });
-    }
-  })();
-
-  // Expose for other modules
+  M._ai.CLOUD_PROVIDERS = CLOUD_PROVIDERS;
+  M._ai.models = _models;
+  M._ai.isLocalModel = isLocalModel;
+  M._ai.getLocalState = getLocalState;
+  M._ai.getActiveWorker = getActiveWorker;
+  M._ai.isCurrentModelReady = isCurrentModelReady;
+  M._ai.addAiStatusBar = addAiStatusBar;
+  M._ai.showInlineDownloadConsent = showInlineDownloadConsent;
+  M._ai.updateAiInlineProgress = updateAiInlineProgress;
+  M._ai.showHighEndWarning = showHighEndWarning;
+  M._ai.initAiWorker = initAiWorker;
+  M._ai.initCloudWorker = initCloudWorker;
+  M._ai.showApiKeyModal = showApiKeyModal;
+  M._ai.hideApiKeyModal = hideApiKeyModal;
+  M._ai.sendToAi = sendToAi;
+  
+  // --- Expose for other modules ---
   M.aiPanelOpen = false;
   Object.defineProperty(M, "aiPanelOpen", {
     get: function () { return aiPanelOpen; },
@@ -1941,7 +948,7 @@
   M.closeAiPanel = closeAiPanel;
   M.hideAiConsentDialog = typeof hideAiConsentDialog !== "undefined" ? hideAiConsentDialog : function () { };
   M.hideApiKeyModal = typeof hideApiKeyModal !== "undefined" ? hideApiKeyModal : function () { };
-
+  
   // ===========================================================
   // Public AI Request API — for non-chat modules (e.g. ai-docgen)
   // ===========================================================
@@ -1951,25 +958,25 @@
       if (aiIsGenerating) {
         return reject(new Error('Another AI generation is already in progress.'));
       }
-
+  
       var activeWorker = getActiveWorker();
       var isReady = isCurrentModelReady();
-
+  
       if (!isReady || !activeWorker) {
         return reject(new Error('AI model not ready. Please select a model or check your API key.'));
       }
-
+  
       aiIsGenerating = true;
       if (aiSendBtn) aiSendBtn.disabled = true;
-
+  
       var messageId = ++aiMessageIdCounter;
       var accumulated = '';
       var finished = false;
-
+  
       function onWorkerMessage(e) {
         var msg = e.data;
         if (msg.messageId !== messageId) return; // not ours
-
+  
         switch (msg.type) {
           case 'token':
             accumulated += msg.token;
@@ -1977,19 +984,19 @@
               try { onToken(msg.token, accumulated); } catch (_) { /* ignore callback errors */ }
             }
             break;
-
+  
           case 'complete':
             cleanup();
             resolve(msg.text || accumulated);
             break;
-
+  
           case 'error':
             cleanup();
             reject(new Error(msg.message || 'AI generation failed.'));
             break;
         }
       }
-
+  
       function cleanup() {
         if (finished) return;
         finished = true;
@@ -1997,9 +1004,9 @@
         if (aiSendBtn) aiSendBtn.disabled = false;
         activeWorker.removeEventListener('message', onWorkerMessage);
       }
-
+  
       activeWorker.addEventListener('message', onWorkerMessage);
-
+  
       activeWorker.postMessage({
         type: 'generate',
         taskType: taskType || 'generate',
@@ -2010,9 +1017,9 @@
       });
     });
   };
-
+  
   M.isAiGenerating = function () { return aiIsGenerating; };
-
+  
   // Expose model management for docgen setup flow
   M.showApiKeyModal = showApiKeyModal;
   M.switchToModel = switchToModel;
@@ -2021,5 +1028,5 @@
   M.isCurrentModelReady = isCurrentModelReady;
   M.initLocalAiWorker = function (modelId) { initAiWorker(modelId || currentAiModel); };
   M.initCloudWorker = initCloudWorker;
-
-})(window.MDView);
+  
+}) (window.MDView);

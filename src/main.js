@@ -62,6 +62,15 @@ async function loadModules() {
             import('../js/help-mode.js'),
         ]);
 
+        // Phase 2.5: Sub-modules that depend on Phase 2 namespaces (M._exec, M._table)
+        await Promise.all([
+            import('../js/exec-math.js'),
+            import('../js/exec-python.js'),
+            import('../js/exec-sandbox.js'),
+            import('../js/table-sort-filter.js'),
+            import('../js/table-analytics.js'),
+        ]);
+
         // Phase 3: Templates (parallel — all independent data modules)
         await Promise.all([
             import('../js/templates/documentation.js'),
@@ -81,9 +90,14 @@ async function loadModules() {
         // Phase 4: AI (depends on ai-models from phase 2)
         await import('../js/ai-web-search.js');
         await import('../js/ai-assistant.js');
+        await import('../js/ai-chat.js');
+        await import('../js/ai-actions.js');
+        await import('../js/ai-image.js');
 
         // Phase 4.5: DocGen (depends on ai-assistant's requestAiTask API)
         await import('../js/ai-docgen.js');
+        await import('../js/ai-docgen-generate.js');
+        await import('../js/ai-docgen-ui.js');
 
         // Phase 4.6: API Component (independent from AI, depends on M._showToast from ai-docgen)
         await import('../js/api-docgen.js');
