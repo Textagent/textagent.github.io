@@ -21,7 +21,19 @@
             return;
         }
         if (type === 'Memory') {
-            M.wrapSelectionWith('{{Memory:\n  Name: ', '\n}}', 'my-context');
+            // Auto-generate unique Memory ID, avoiding duplicates in the document
+            var editorText = M.markdownEditor ? M.markdownEditor.value : '';
+            var existingNames = [];
+            var nameRe = /\{\{Memory:[^}]*Name:\s*([^\s}]+)/gi;
+            var nm;
+            while ((nm = nameRe.exec(editorText)) !== null) {
+                existingNames.push(nm[1].replace(/[,}]/g, '').trim().toLowerCase());
+            }
+            var memId;
+            do {
+                memId = 'mem-' + Math.random().toString(36).substring(2, 7);
+            } while (existingNames.indexOf(memId) !== -1);
+            M.wrapSelectionWith('{{Memory:\n  Name: ', '\n}}', memId);
             return;
         }
 
@@ -486,8 +498,26 @@
                 var docNames = getDocMemoryNames();
 
                 if (!M._memory || !M._memory.listAllSources) {
-                    listEl.innerHTML = '<label class="ai-memory-checkbox-item">'
+                    // Fallback: show workspace + doc Memory tags even without M._memory
+                    var fallbackHtml = '<label class="ai-memory-checkbox-item">'
                         + '<input type="checkbox" value="workspace" ' + (currentSources.indexOf('workspace') !== -1 ? 'checked' : '') + '> workspace</label>';
+                    docNames.forEach(function (dn) {
+                        var ck = currentSources.indexOf(dn) !== -1 ? ' checked' : '';
+                        fallbackHtml += '<label class="ai-memory-checkbox-item">'
+                            + '<input type="checkbox" value="' + escapeHtml(dn) + '"' + ck + '> '
+                            + escapeHtml(dn) + ' <small class="ai-mem-badge">doc</small></label>';
+                    });
+                    listEl.innerHTML = fallbackHtml;
+                    // Bind checkbox changes for fallback
+                    listEl.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                        cb.addEventListener('change', function () {
+                            var selected = [];
+                            listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(function (c) {
+                                selected.push(c.value);
+                            });
+                            updateBlockUseField(idx, selected);
+                        });
+                    });
                     return;
                 }
 

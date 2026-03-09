@@ -20,6 +20,8 @@
 - Quick-attach 📂 Folder / 📄 Files directly from card (auto-names, no prompt dialog)
 - Origin badges: `doc` for document tags, `saved` for IndexedDB sources
 - 135 lines of dropdown CSS with dark/light theme support
+- **Auto-generated Memory IDs** (`mem-xxxxx`): prevents duplicate names when inserting from toolbar
+- **Dropdown fallback**: document `{{Memory:}}` tags now appear even when `M._memory` module isn't loaded
 - 30 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, DOMPurify allowlist
 
 ---
