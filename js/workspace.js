@@ -427,9 +427,12 @@
             inputValue: displayName,
             selectName: true,
             onConfirm: function (inputVal) {
-                if (inputVal && inputVal.trim()) {
-                    M.wsRenameFile(targetId, inputVal.trim());
+                if (!inputVal || !inputVal.trim()) return;
+                if (inputVal.trim() === displayName) {
+                    M.showToast('Name unchanged.', 'info');
+                    return;
                 }
+                M.wsRenameFile(targetId, inputVal.trim());
             }
         });
     });
