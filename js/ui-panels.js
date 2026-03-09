@@ -238,9 +238,13 @@
     function toggleTOC() {
         var isVisible = tocPanelEl.style.display !== 'none';
         tocPanelEl.style.display = isVisible ? 'none' : 'block';
+        if (tocToggleBtn) tocToggleBtn.classList.toggle('active', !isVisible);
         if (!isVisible) M.buildTOC();
     }
-    M.closeTOC = function () { tocPanelEl.style.display = 'none'; };
+    M.closeTOC = function () {
+        tocPanelEl.style.display = 'none';
+        if (tocToggleBtn) tocToggleBtn.classList.remove('active');
+    };
     if (tocToggleBtn) tocToggleBtn.addEventListener('click', toggleTOC);
     if (tocCloseBtn) tocCloseBtn.addEventListener('click', M.closeTOC);
 

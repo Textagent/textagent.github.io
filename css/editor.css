@@ -4,6 +4,8 @@
 .editor-pane,
 .preview-pane {
   flex: 1;
+  min-width: 0;
+  /* allow flex children to shrink below content width */
   padding: 20px;
   overflow-y: auto;
   position: relative;
@@ -20,6 +22,7 @@
 .preview-pane {
   background-color: var(--preview-bg);
   /* Using the new variable for preview background */
+  overflow-x: hidden;
 }
 
 /* Custom scrollbar — rounded and subtle */
@@ -75,6 +78,9 @@
 .markdown-body {
   padding: 20px;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
   background-color: var(--preview-bg);
   /* Ensuring the markdown content matches preview background */
   color: var(--preview-text-color);

@@ -34,14 +34,17 @@
 | **Desktop** | Native app via Neutralino.js with system tray and offline support |
 | **Code Execution** | 6 languages in-browser: Bash ([just-bash](https://justbash.dev/)), Math (Nerdamer), Python ([Pyodide](https://pyodide.org/)), HTML (sandboxed iframe, `html-autorun` for widgets/quizzes), JavaScript (sandboxed iframe), SQL ([sql.js](https://sql.js.org/) SQLite) · 25+ compiled languages via [Judge0 CE](https://ce.judge0.com): C, C++, Rust, Go, Java, TypeScript, Kotlin, Scala, Ruby, Swift, Haskell, Dart, C#, and more |
 | **Security** | Content Security Policy (CSP), SRI integrity hashes, XSS sanitization (DOMPurify), ReDoS protection, Firestore write-token ownership, API keys via HTTP headers, postMessage origin validation, 8-char passphrase minimum, sandboxed code execution |
-| **AI Document Tags** | `{{AI:}}` text generation, `{{Think:}}` deep reasoning, `{{Image:}}` image generation (Gemini Imagen), `{{Memory:}}` context attachment (workspace files + external folders via SQLite FTS5, `Use:` field for multi-source retrieval) — per-card model selector, concurrent block operations |
+| **AI Document Tags** | `{{@AI:}}` text generation, `{{@Think:}}` deep reasoning, `{{@Image:}}` image generation (Gemini Imagen) — `@` prefix syntax on all tag types + metadata fields (`@name`, `@use`, `@think`, `@search`, `@prompt`, `@step`); per-card model selector, concurrent block operations |
 | **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE methods, custom headers, JSON body, response stored in `$(api_varName)` variables; inline review panel; toolbar GET/POST buttons |
 | **🔗 Agent Flow** | `{{Agent:}}` multi-step pipeline — define Step 1/2/3, chain outputs, per-card model + search provider selector, live step status indicators (⏳/✅/❌), review combined output |
 | **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free), Brave Search, Serper.dev; search results injected into LLM context; source citations in responses; per-agent-card search provider selector |
 | **🐧 Linux Terminal** | `{{Linux:}}` tag — two modes: (1) Terminal mode opens full Debian Linux ([WebVM](https://webvm.io)) in new window with `Packages:` field; (2) Compile & Run mode (`Language:` + `Script:`) compiles/executes 25+ languages (C++, Rust, Go, Java, Python, TypeScript, Kotlin, Scala…) via [Judge0 CE](https://ce.judge0.com) with inline output, execution time & memory stats |
 | **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons, click any button for description + keyboard shortcut + animated demo video; 50% screen demo panel with fullscreen expand; 16 dedicated demo videos mapped to every toolbar button |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 103+ templates (11 categories: AI, Agents, Coding, Creative, Documentation, Maths, PPT, Project, Quiz, Tables, Technical), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, disk-backed folder workspace (File System Access API — open folder, save `.md` files to disk, refresh from disk, auto-reconnect), compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme) |
-| **Dev Tooling** | ESLint + Prettier (lint, format:check), Playwright test suite — 141 tests across smoke, feature, integration, dev, performance, and QA categories (import, export, share, view-mode, editor, email-to-self, secure share, startup timing, export integrity, persistence, module loading, disk workspace, context memory, build validation, load-time, accessibility), pre-commit changelog enforcement, GitHub Actions CI |
+| **🧠 Context Memory** | `{{@Memory:}}` tag for workspace intelligence — SQLite FTS5 full-text search with heading-aware chunking (~1500 chars/chunk); three storage modes: browser-only (IndexedDB), disk workspace (`.textagent/memory.db`), external folders (IndexedDB); `@use: workspace, my-docs` in AI/Think/Agent tags for multi-source context retrieval; Memory Selector dropdown on AI/Think/Agent cards; amber-accented Memory card with Folder/Files/Rebuild buttons + stats; auto-discovery of workspace files; `Use: none` opt-out; reuses existing sql.js WASM (zero bundle increase) |
+| **✉️ Email to Self** | Send documents directly to your inbox from the share modal — email address input with `.md` file attached + share link; powered by Google Apps Script (free, 100 emails/day); loading state + success/error feedback; email persisted in localStorage; zero third-party dependencies |
+| **💾 Disk Workspace** | Folder-backed storage via File System Access API — "Open Folder" in sidebar header; `.md` files read/written directly to disk; `.textagent/workspace.json` manifest; debounced autosave ("💾 Saved to disk" indicator); refresh from disk for external edits; disconnect to revert to localStorage; auto-reconnect on reload via IndexedDB handles; unified action modal for rename/duplicate/delete with confirmation; Chromium-only (hidden in unsupported browsers) |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 103+ templates (11 categories: AI, Agents, Coding, Creative, Documentation, Maths, PPT, Project, Quiz, Tables, Technical), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme), Clear All / Clear Selection buttons (undoable via Ctrl+Z) |
+| **Dev Tooling** | ESLint + Prettier (lint, format:check), Playwright test suite — 151 tests across smoke, feature, integration, dev, performance, and QA categories (import, export, share, view-mode, editor, email-to-self, secure share, startup timing, export integrity, persistence, module loading, disk workspace, context memory, build validation, load-time, accessibility), pre-commit changelog enforcement, GitHub Actions CI |
 
 ## 🤖 AI Assistant
 
@@ -103,6 +106,18 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 ### Presentation Mode — Markdown to Slides
 ![Slide presentation mode with dark theme and navigation controls](assets/presentation-mode.png)
+
+### Context Memory — Workspace Intelligence
+![Context Memory with Memory card, AI Generate card showing project-docs pill, and Agent Flow](assets/context-memory.png)
+
+### Help Mode — Interactive Learning
+![Help Mode with Bold popover, keyboard shortcut, and Watch Demo video panel](assets/help-mode.png)
+
+### API Calls & Linux Compile — REST + Code Execution
+![API CALL card with GET badge and Linux Compile & Run card with Python fibonacci script](assets/api-linux-tags.png)
+
+### Email to Self — Share to Inbox
+![Link Generated modal with encrypted URL and Email to Self section with email input](assets/email-to-self.png)
 
 ## 🎬 Feature Demos
 
@@ -270,6 +285,60 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
+<details open>
+<summary><strong>📂 Workspace Sidebar — Multi-File Management</strong></summary>
+
+**Manage multiple files in one workspace.** Toggle the sidebar with the File Tree button to see all your files. Create, rename, duplicate, and delete files via right-click context menu. Each file has independent localStorage persistence. Active file highlighting and smooth switching.
+
+<img src="public/assets/demos/19_workspace_sidebar.webp" alt="Workspace Sidebar — file tree, new file creation, right-click context menu with rename/duplicate/delete" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🧠 Context Memory — Workspace Intelligence</strong></summary>
+
+**Give AI access to your workspace.** Use `{{Memory:}}` tags to index workspace files and external folders with SQLite FTS5 full-text search. Add `Use: workspace` to any AI/Think/Agent tag to auto-retrieve relevant context. Memory Selector dropdown on each card lets you toggle sources. Amber-accented Memory cards show attached files with Folder/Files/Rebuild controls.
+
+<img src="public/assets/demos/20_context_memory.webp" alt="Context Memory — Memory tag indexing, AI card with project-docs context, Agent Flow pipeline" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>❓ Help Mode — Interactive Learning</strong></summary>
+
+**Learn every feature instantly.** Click the ❓ Help button to activate learning mode — all buttons get teal ring highlights. Click any button for a popover with feature name, description, keyboard shortcut, and ▶ Watch Demo button. Demo videos play in a 50% screen panel with fullscreen expand. 16 dedicated demo videos mapped to every toolbar button.
+
+<img src="public/assets/demos/21_help_mode.webp" alt="Help Mode — teal button highlights, Bold popover with Ctrl+B shortcut, integrated demo video panel" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>✉️ Email to Self — Share to Inbox</strong></summary>
+
+**Send documents directly to your inbox.** After generating a share link, enter your email in the "Email to Self" section — the document is sent with the share link and `.md` file attached. Powered by Google Apps Script (free, 100 emails/day). Email is persisted in localStorage for convenience.
+
+<img src="public/assets/demos/22_email_to_self.webp" alt="Email to Self — share modal with encrypted link and email input for sending document to inbox" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>💾 Disk-Backed Workspace — Save to Folder</strong></summary>
+
+**Work directly with files on disk.** Click "Open Folder" to connect a local folder via File System Access API. Files are read/written directly to disk with debounced autosave. Refresh from disk for external changes, disconnect to revert to localStorage, and auto-reconnect on reload. Unified action modal for rename, duplicate, and delete with confirmation.
+
+<img src="public/assets/demos/23_disk_workspace.webp" alt="Disk Workspace — folder tree with refresh/disconnect controls, file switching, and duplicate confirmation modal" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🔌 API Calls & Linux Tags — REST + Compile</strong></summary>
+
+**Call APIs and compile code from Markdown.** Use `{{API:}}` tags for REST API calls (GET/POST/PUT/DELETE) with response stored in variables. Use `{{Linux:}}` tags with `Language:` and `Script:` fields to compile 25+ languages. Toolbar sections provide quick-insert buttons for API (GET/POST) and Linux (🐧 Linux, 🔷 C++) with overflow dropdowns for more languages.
+
+<img src="public/assets/demos/24_api_linux_tags.png" alt="API CALL card with GET badge and Linux Compile & Run card with Python code, toolbar overflow dropdowns" width="100%">
+
+</details>
+
 ## 📝 Usage
 
 | Action | How |
@@ -373,6 +442,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Commits | Feature / Update |
 |------|---------|-----------------|
+| **2026-03-10** | — | 📸 **Help Mode & Feature Demos** — 6 new demo recordings (Workspace Sidebar, Context Memory, Help Mode, Email to Self, Disk Workspace, API & Linux Tags); 4 new README screenshots; 12 new Help Mode button entries (Memory Tag, File Tree, C++/Rust/Go/Java compile, 6 coding block languages); 4 updated help entries with more specific demos; Feature Demos DEMO_MAP expanded 9 → 24 entries; README now has 10 screenshots and 24 feature demos |
 | **2026-03-10** | `b40eb1f`…`413a9d9` | 📚 **Context Memory** — `{{@Memory:}}` tag and `@use:` field for workspace intelligence; `js/context-memory.js` module with SQLite FTS5 full-text search (heading-aware chunking, ~1500 chars/chunk); three storage modes: browser-only (IndexedDB blob), disk workspace (`.textagent/memory.db`), external memory (IndexedDB blob); `@use: workspace, my-docs` in AI/Think/Agent tags auto-retrieves relevant context; `@` prefix on all tag types (`{{@AI:}}`, `{{@Agent:}}`, `{{@Memory:}}`, `{{@Image:}}`) and metadata fields (`@name`, `@use`, `@think`, `@search`, `@prompt`, `@step`); re-render on page refresh; backward-compatible with old format; amber-accented Memory card with Folder/Files/Rebuild buttons + stats display; reuses existing sql.js WASM (zero bundle size increase); 40 new Playwright tests (151 total) |
 | **2026-03-10** | `33d3e10`…`8d386d5` | 🗂️ **Action Modal & Disk UI Polish** — replaced native `confirm()` and inline rename with unified `showActionModal()` for rename (input field, auto-selects filename), duplicate (blue confirmation), and delete (red destructive); header-only disk controls (refresh ↻, disconnect ✕) replacing footer bar; clickable folder name opens folder picker; same-name rename guard with toast feedback; duplicate tree auto-refresh after disk write; merged CI changelog check into deploy workflow (3→2 workflow runs per push); 10 new Playwright tests (112 total) |
 | **2026-03-10** | `f572795`…`eb7f4dd` | 📂 **Disk-Backed Workspace** — new folder storage mode via File System Access API; "Open Folder" button in sidebar header; `.md` files read/written directly to disk; `.textagent/workspace.json` manifest; debounced autosave to disk ("💾 Saved to disk" indicator); refresh from disk for external changes; disconnect to revert to localStorage; auto-reconnect on reload via IndexedDB-stored handles; Chromium-only (hidden in unsupported browsers); 22 new Playwright tests |

@@ -21,6 +21,21 @@
         { keywords: ['editor customization', 'writing modes'], video: 'assets/demos/07_writing_modes.webp', title: 'Writing Modes & Themes — Zen, Dark & 6 Themes' },
         { keywords: ['file import', 'smart file'], video: 'assets/demos/08_import_export.webp', title: 'Import & Export — 8 Formats In, PDF/HTML Out' },
         { keywords: ['cloud save', 'encrypted sharing'], video: 'assets/demos/09_encrypted_sharing.webp', title: 'Encrypted Sharing — Zero-Knowledge Security' },
+        { keywords: ['formatting toolbar', 'formatting tools'], video: 'assets/demos/10_formatting_toolbar.webp', title: 'Formatting Toolbar — Bold, Lists, Tables & More' },
+        { keywords: ['ai model', 'model selector'], video: 'assets/demos/11_ai_model_selector.webp', title: 'AI Model Selector — Choose Your Engine' },
+        { keywords: ['sync scrolling', 'scroll sync'], video: 'assets/demos/12_sync_scrolling.webp', title: 'Sync Scrolling — Editor & Preview in Lockstep' },
+        { keywords: ['table of contents'], video: 'assets/demos/13_table_of_contents.webp', title: 'Table of Contents — Auto-Generated Navigation' },
+        { keywords: ['voice dictation', 'speech'], video: 'assets/demos/14_voice_dictation.webp', title: 'Voice Dictation — Speak Your Markdown' },
+        { keywords: ['ai document tags', 'docgen', 'ai tags'], video: 'assets/demos/15_ai_doc_tags.webp', title: 'AI Document Tags — Generate Entire Sections' },
+        { keywords: ['template variables', 'variable substitution'], video: 'assets/demos/16_template_variables.webp', title: 'Template Variables — Dynamic Reusable Documents' },
+        { keywords: ['agent flow', 'multi-step'], video: 'assets/demos/17_agent_flow.webp', title: 'Agent Flow — Multi-Step AI Pipeline' },
+        { keywords: ['compile', 'linux terminal'], video: 'assets/demos/18_compile_run.webp', title: 'Compile & Run — 25+ Languages via Judge0 CE' },
+        { keywords: ['workspace', 'file tree', 'sidebar'], video: 'assets/demos/19_workspace_sidebar.webp', title: 'Workspace Sidebar — Multi-File Management' },
+        { keywords: ['context memory', 'memory'], video: 'assets/demos/20_context_memory.webp', title: 'Context Memory — Workspace Intelligence' },
+        { keywords: ['help mode', 'interactive help'], video: 'assets/demos/21_help_mode.webp', title: 'Help Mode — Interactive Learning' },
+        { keywords: ['email to self', 'email'], video: 'assets/demos/22_email_to_self.webp', title: 'Email to Self — Share to Inbox' },
+        { keywords: ['disk', 'folder', 'file system'], video: 'assets/demos/23_disk_workspace.webp', title: 'Disk-Backed Workspace — Save to Folder' },
+        { keywords: ['api call', 'rest api'], video: 'assets/demos/24_api_linux_tags.png', title: 'API Calls & Linux Tags — REST + Compile' },
     ];
 
     // ── Modal element (lazily created) ──

@@ -53,9 +53,9 @@
         },
         '#share-button, #qab-share, #mobile-share-button': {
             name: 'Encrypted Share',
-            desc: 'Share your document via an encrypted link. Content is compressed and encrypted client-side with AES-256-GCM. Optional passphrase protection.',
+            desc: 'Share your document via an encrypted link. Content is compressed and encrypted client-side with AES-256-GCM. Optional passphrase protection. Email to Self sends the share link and .md file to your inbox.',
             shortcut: null,
-            demo: 'assets/demos/09_encrypted_sharing.webp'
+            demo: 'assets/demos/22_email_to_self.webp'
         },
         '#ai-toggle-button, #qab-ai, #mobile-ai-button': {
             name: 'AI Assistant',
@@ -257,19 +257,86 @@
             name: 'API GET Tag',
             desc: 'Insert a {{API:}} block for a GET request. Define URL and optional Variable to store the response as $(api_varName).',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/24_api_linux_tags.png'
         },
         '[data-action="api-post-tag"]': {
             name: 'API POST Tag',
             desc: 'Insert a {{API:}} block for a POST request. Define URL, Headers, Body (JSON), and optional Variable to store the response.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/24_api_linux_tags.png'
+        },
+        '[data-action="memory-tag"]': {
+            name: 'Memory Tag',
+            desc: 'Insert a {{Memory:}} block to index workspace files and external folders with SQLite FTS5 full-text search. Use the @use: field in AI/Think/Agent tags to auto-retrieve relevant context from your memory sources.',
+            shortcut: null,
+            demo: 'assets/demos/20_context_memory.webp'
         },
         '[data-action="linux-tag"]': {
-            name: 'Linux',
+            name: 'Linux Terminal',
             desc: 'Insert a {{Linux:}} block. Two modes: (1) Terminal — specify Packages: to launch a full Debian Linux (WebVM). (2) Compile & Run — add Language: and Script: fields to compile & execute C++, Rust, Go, Java, and 25+ languages via Judge0 CE, with output inline.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/24_api_linux_tags.png'
+        },
+        '[data-action="linux-cpp-tag"]': {
+            name: 'C++ Compile & Run',
+            desc: 'Insert a {{Linux:}} block pre-configured for C++ compilation. Compiles and runs via Judge0 CE with inline output, execution time, and memory stats.',
+            shortcut: null,
+            demo: 'assets/demos/18_compile_run.webp'
+        },
+        '[data-action="linux-rust-tag"]': {
+            name: 'Rust Compile & Run',
+            desc: 'Insert a {{Linux:}} block pre-configured for Rust. Compiles and runs via Judge0 CE with inline output.',
+            shortcut: null,
+            demo: 'assets/demos/18_compile_run.webp'
+        },
+        '[data-action="linux-go-tag"]': {
+            name: 'Go Compile & Run',
+            desc: 'Insert a {{Linux:}} block pre-configured for Go. Compiles and runs via Judge0 CE with inline output.',
+            shortcut: null,
+            demo: 'assets/demos/18_compile_run.webp'
+        },
+        '[data-action="linux-java-tag"]': {
+            name: 'Java Compile & Run',
+            desc: 'Insert a {{Linux:}} block pre-configured for Java. Compiles and runs via Judge0 CE with inline output.',
+            shortcut: null,
+            demo: 'assets/demos/18_compile_run.webp'
+        },
+        // ─── Coding Blocks ───
+        '[data-action="coding-bash"]': {
+            name: 'Bash Code Block',
+            desc: 'Insert an executable Bash code block. Runs in-browser via just-bash — no server required.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
+        },
+        '[data-action="coding-math"]': {
+            name: 'Math Code Block',
+            desc: 'Insert an executable Math block. Evaluates expressions with Nerdamer — algebra, calculus, trigonometry.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
+        },
+        '[data-action="coding-python"]': {
+            name: 'Python Code Block',
+            desc: 'Insert an executable Python code block. Runs via Pyodide (CPython compiled to WASM) with stdout/stderr capture and matplotlib support.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
+        },
+        '[data-action="coding-html"]': {
+            name: 'HTML Code Block',
+            desc: 'Insert a live HTML/CSS/JS preview block. Renders in a sandboxed iframe with auto-resize. Use html-autorun to hide source and show output directly.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
+        },
+        '[data-action="coding-js"]': {
+            name: 'JavaScript Code Block',
+            desc: 'Insert an executable JavaScript code block. Runs in a sandboxed iframe with console.log/warn/error capture and inline output.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
+        },
+        '[data-action="coding-sql"]': {
+            name: 'SQL Code Block',
+            desc: 'Insert an executable SQL block. Queries run on an in-memory SQLite database (sql.js WASM) with formatted table output. Tables persist across blocks.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
         },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
@@ -282,6 +349,14 @@
             desc: 'Apply $(varName) variable substitutions. If no variable block exists, auto-detects variables in your text and creates a table for you to fill in.',
             shortcut: null,
             demo: 'assets/demos/16_template_variables.webp'
+        },
+
+        // ─── Workspace ───
+        '#qab-files': {
+            name: 'File Tree',
+            desc: 'Toggle the workspace sidebar showing all your files. Create, rename, duplicate, and delete files. Supports localStorage and disk-backed (File System Access API) workspaces.',
+            shortcut: 'Ctrl+B',
+            demo: 'assets/demos/19_workspace_sidebar.webp'
         },
 
         // ─── View Mode Buttons ───

@@ -238,6 +238,10 @@
     background: var(--button-active);
 }
 
+#toc-toggle.active {
+    background: var(--button-active);
+}
+
 /* --- Disk Workspace Controls (footer) --- */
 .ws-disk-controls {
     display: none;
