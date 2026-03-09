@@ -39,6 +39,25 @@
             + 'thinking process, or notes about what you wrote. Start directly with the content.';
     }
 
+    // ==============================================
+    // AUTO-DISCOVER MEMORY SOURCES FROM DOCUMENT
+    // ==============================================
+
+    /**
+     * Scans the document for {{Memory:}} tags and returns their names.
+     * Used as fallback when an AI/Think/Agent tag has no explicit Use: field.
+     */
+    function discoverMemorySources(editorText) {
+        var sources = [];
+        var memRegex = /\{\{Memory:[^}]*Name:\s*([^\s}]+)/gi;
+        var match;
+        while ((match = memRegex.exec(editorText)) !== null) {
+            var name = match[1].replace(/[,}]/g, '').trim();
+            if (name && sources.indexOf(name) === -1) sources.push(name);
+        }
+        return sources;
+    }
+
     // Strip thinking/reasoning artifacts from generated output
     function cleanGeneratedOutput(text) {
         if (!text) return text;
@@ -446,14 +465,21 @@
                 if (block.type === 'Image') {
                     result = await generateImageForBlock(block, perCardModel);
                 } else {
-                    // Retrieve memory context if Use: field is present
+                    // Retrieve memory context: explicit Use: field or auto-discover from document
+                    // Use: none explicitly disables all memory for this block
                     var memoryContext = '';
-                    if (block.useMemory && block.useMemory.length > 0 && M._memory) {
-                        try {
-                            var chunks = await M._memory.search(block.useMemory, block.prompt, 5);
-                            memoryContext = M._memory.formatForContext(chunks);
-                        } catch (memErr) {
-                            console.warn('Memory search failed:', memErr);
+                    var hasOptOut = block.useMemory && block.useMemory.indexOf('none') !== -1;
+                    if (!hasOptOut) {
+                        var memorySources = (block.useMemory && block.useMemory.length > 0)
+                            ? block.useMemory
+                            : discoverMemorySources(text);
+                        if (memorySources.length > 0 && M._memory) {
+                            try {
+                                var chunks = await M._memory.search(memorySources, block.prompt, 5);
+                                memoryContext = M._memory.formatForContext(chunks);
+                            } catch (memErr) {
+                                console.warn('Memory search failed:', memErr);
+                            }
                         }
                     }
 
@@ -569,15 +595,22 @@
 
             stepPrompt += 'Task: ' + steps[i].description + '\n\n';
 
-            // Retrieve memory context for this step
-            if (block.useMemory && block.useMemory.length > 0 && M._memory) {
-                try {
-                    var memChunks = await M._memory.search(block.useMemory, steps[i].description, 3);
-                    var memCtx = M._memory.formatForContext(memChunks);
-                    if (memCtx) {
-                        stepPrompt += '### RELEVANT CONTEXT FROM ATTACHED DOCUMENTS ###\n' + memCtx + '\n---\n\n';
-                    }
-                } catch (_) { /* memory search failed, proceed without */ }
+            // Retrieve memory context: explicit Use: field or auto-discover from document
+            // Use: none explicitly disables all memory for this block
+            var agentHasOptOut = block.useMemory && block.useMemory.indexOf('none') !== -1;
+            if (!agentHasOptOut) {
+                var agentMemorySources = (block.useMemory && block.useMemory.length > 0)
+                    ? block.useMemory
+                    : discoverMemorySources(text);
+                if (agentMemorySources.length > 0 && M._memory) {
+                    try {
+                        var memChunks = await M._memory.search(agentMemorySources, steps[i].description, 3);
+                        var memCtx = M._memory.formatForContext(memChunks);
+                        if (memCtx) {
+                            stepPrompt += '### RELEVANT CONTEXT FROM ATTACHED DOCUMENTS ###\n' + memCtx + '\n---\n\n';
+                        }
+                    } catch (_) { /* memory search failed, proceed without */ }
+                }
             }
 
             if (accumulatedContext) {
