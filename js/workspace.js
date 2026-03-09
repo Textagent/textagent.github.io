@@ -13,6 +13,9 @@
     var workspace = null;  // { files: [...], activeFileId: string }
     var sidebarOpen = false;
     var diskMode = false;  // true when connected to a disk folder
+    var diskTreeData = null; // cached directory tree for disk mode
+    var expandedFolders = new Set(); // track which folders are expanded
+    var activeFilePath = null; // relative path of active file in disk mode
 
     // --- DOM refs ---
     var sidebar = document.getElementById('workspace-sidebar');
@@ -148,6 +151,24 @@
     // --- Render sidebar file list ---
     function renderFileList() {
         if (!fileList) return;
+
+        // Update header label
+        var folderLabel = document.getElementById('ws-folder-label');
+        if (folderLabel) {
+            if (diskMode && M._disk && M._disk.isConnected()) {
+                folderLabel.textContent = M._disk.getFolderName();
+            } else {
+                folderLabel.textContent = 'Files';
+            }
+        }
+
+        // If in disk mode with tree data, render tree view
+        if (diskMode && diskTreeData) {
+            renderDiskTreeView();
+            return;
+        }
+
+        // Default flat rendering
         fileList.innerHTML = '';
         workspace.files.forEach(function (file) {
             var li = document.createElement('li');
@@ -179,6 +200,167 @@
 
             fileList.appendChild(li);
         });
+    }
+
+    // --- Disk Tree View Rendering ---
+    function renderDiskTreeView() {
+        if (!fileList) return;
+        fileList.innerHTML = '';
+        renderTreeNodes(diskTreeData, fileList, 0);
+    }
+
+    function renderTreeNodes(entries, parentEl, depth) {
+        entries.forEach(function (entry) {
+            if (entry.kind === 'directory') {
+                renderFolderNode(entry, parentEl, depth);
+            } else {
+                renderFileNode(entry, parentEl, depth);
+            }
+        });
+    }
+
+    function renderFolderNode(entry, parentEl, depth) {
+        var li = document.createElement('li');
+        li.className = 'ws-tree-folder';
+
+        var row = document.createElement('div');
+        row.className = 'ws-tree-row';
+        row.style.paddingLeft = (8 + depth * 16) + 'px';
+
+        var isExpanded = expandedFolders.has(entry.path);
+
+        var chevron = document.createElement('i');
+        chevron.className = 'bi ws-tree-chevron ' + (isExpanded ? 'bi-chevron-down' : 'bi-chevron-right');
+
+        var folderIcon = document.createElement('i');
+        folderIcon.className = 'bi ' + (isExpanded ? 'bi-folder2-open' : 'bi-folder2') + ' ws-tree-icon';
+
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'ws-tree-name ws-tree-folder-name';
+        nameSpan.textContent = entry.name;
+
+        row.appendChild(chevron);
+        row.appendChild(folderIcon);
+        row.appendChild(nameSpan);
+
+        // Click to expand/collapse
+        row.addEventListener('click', function () {
+            if (expandedFolders.has(entry.path)) {
+                expandedFolders.delete(entry.path);
+            } else {
+                expandedFolders.add(entry.path);
+            }
+            renderDiskTreeView();
+        });
+
+        li.appendChild(row);
+
+        // Children container
+        if (isExpanded && entry.children && entry.children.length > 0) {
+            var childUl = document.createElement('ul');
+            childUl.className = 'ws-tree-children';
+            renderTreeNodes(entry.children, childUl, depth + 1);
+            li.appendChild(childUl);
+        }
+
+        parentEl.appendChild(li);
+    }
+
+    function renderFileNode(entry, parentEl, depth) {
+        var li = document.createElement('li');
+        var isActive = (activeFilePath === entry.path);
+        li.className = 'ws-tree-file' + (isActive ? ' active' : '');
+        li.title = entry.path;
+        li.setAttribute('data-path', entry.path);
+
+        var row = document.createElement('div');
+        row.className = 'ws-tree-row';
+        // Extra indent for files to align with folder names (chevron space)
+        row.style.paddingLeft = (8 + depth * 16 + 18) + 'px';
+
+        var fileIcon = document.createElement('i');
+        var ext = entry.name.split('.').pop().toLowerCase();
+        var iconClass = 'bi-file-earmark-text';
+        if (ext === 'md') iconClass = 'bi-markdown';
+        else if (ext === 'json') iconClass = 'bi-filetype-json';
+        else if (ext === 'js') iconClass = 'bi-filetype-js';
+        else if (ext === 'css') iconClass = 'bi-filetype-css';
+        else if (ext === 'html') iconClass = 'bi-filetype-html';
+        else if (ext === 'py') iconClass = 'bi-filetype-py';
+        else if (ext === 'yml' || ext === 'yaml') iconClass = 'bi-filetype-yml';
+        else if (ext === 'xml') iconClass = 'bi-filetype-xml';
+        else if (ext === 'csv') iconClass = 'bi-filetype-csv';
+        else if (ext === 'txt') iconClass = 'bi-file-earmark-text';
+        else if (ext === 'png' || ext === 'jpg' || ext === 'gif' || ext === 'svg' || ext === 'webp') iconClass = 'bi-file-earmark-image';
+        fileIcon.className = 'bi ' + iconClass + ' ws-tree-icon';
+
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'ws-tree-name';
+        nameSpan.textContent = entry.name;
+
+        row.appendChild(fileIcon);
+        row.appendChild(nameSpan);
+
+        // Click to open file
+        row.addEventListener('click', function () {
+            openDiskFile(entry);
+        });
+
+        // Right-click context menu — find matching workspace file by path/name
+        row.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            var wsFile = findFileByName(entry.path) || findFileByName(entry.name);
+            if (wsFile) showContextMenu(e, wsFile.id);
+        });
+
+        li.appendChild(row);
+        parentEl.appendChild(li);
+    }
+
+    function findFileByName(name) {
+        if (!workspace) return null;
+        for (var i = 0; i < workspace.files.length; i++) {
+            if (workspace.files[i].name === name) return workspace.files[i];
+        }
+        return null;
+    }
+
+    function openDiskFile(entry) {
+        if (!M._disk || !M._disk.isConnected()) return;
+
+        // Save current file
+        M.wsSaveCurrent();
+
+        // Check if this file is already in the workspace manifest
+        var wsFile = findFileByName(entry.path) || findFileByName(entry.name);
+        if (!wsFile) {
+            // Add it to the workspace on-the-fly
+            var id = generateId();
+            wsFile = { id: id, name: entry.path, createdAt: Date.now() };
+            workspace.files.push(wsFile);
+        }
+
+        workspace.activeFileId = wsFile.id;
+        M.wsActiveFileId = wsFile.id;
+        activeFilePath = entry.path;
+        saveWorkspace();
+
+        // Read from disk using path
+        M._disk.readFileFromPath(entry.path).then(function (content) {
+            M.markdownEditor.value = content;
+            localStorage.setItem(FILE_PREFIX + wsFile.id, content);
+            M.renderMarkdown();
+            if (M.updateDocumentStats) M.updateDocumentStats();
+            renderDiskTreeView();
+            updatePageTitle(entry.name);
+        });
+    }
+
+    // Load disk tree and render
+    async function loadDiskTree() {
+        if (!M._disk || !M._disk.isConnected()) return;
+        diskTreeData = await M._disk.scanDirectory();
+        renderFileList();
     }
 
     // --- Context menu ---
@@ -224,26 +406,29 @@
 
     if (ctxRename) ctxRename.addEventListener('click', function (e) {
         e.stopPropagation();
+        var targetId = contextMenuTargetId;
         hideContextMenu();
-        if (!contextMenuTargetId) return;
-        var file = findFileById(contextMenuTargetId);
+        if (!targetId) return;
+        var file = findFileById(targetId);
         if (!file) return;
-        startInlineRename(contextMenuTargetId);
+        startInlineRename(targetId);
     });
 
     if (ctxDelete) ctxDelete.addEventListener('click', function (e) {
         e.stopPropagation();
+        var targetId = contextMenuTargetId;
         hideContextMenu();
-        if (contextMenuTargetId) M.wsDeleteFile(contextMenuTargetId);
+        if (targetId) M.wsDeleteFile(targetId);
     });
 
     if (ctxDuplicate) ctxDuplicate.addEventListener('click', function (e) {
         e.stopPropagation();
+        var targetId = contextMenuTargetId;
         hideContextMenu();
-        if (!contextMenuTargetId) return;
-        var srcFile = findFileById(contextMenuTargetId);
+        if (!targetId) return;
+        var srcFile = findFileById(targetId);
         if (!srcFile) return;
-        var content = getFileContent(contextMenuTargetId);
+        var content = getFileContent(targetId);
         var id = generateId();
         var name = srcFile.name.replace(/\.md$/i, '') + ' (copy).md';
         workspace.files.push({ id: id, name: name, createdAt: Date.now() });
@@ -466,6 +651,8 @@
 
             renderFileList();
             M._disk.updateUI();
+            // Load full tree for disk mode
+            await loadDiskTree();
 
             if (!sidebarOpen) M.wsToggleSidebar();
             M.showToast('📂 Connected to folder: ' + M._disk.getFolderName(), 'success');
@@ -483,7 +670,10 @@
         await M._disk.disconnect();
         diskMode = false;
         M.wsDiskMode = false;
+        diskTreeData = null;
+        activeFilePath = null;
         M._disk.updateUI();
+        renderFileList();
         M.showToast('Disconnected from folder. Using browser storage.', 'info');
     };
 
@@ -531,6 +721,8 @@
             }
 
             renderFileList();
+            // Reload tree view
+            await loadDiskTree();
             M.showToast('🔄 Refreshed from disk' + (added > 0 ? ' (' + added + ' new file' + (added > 1 ? 's' : '') + ')' : ''), 'success');
         } catch (e) {
             console.error('Refresh from disk failed:', e);
@@ -572,6 +764,8 @@
                 updatePageTitle(activeFile.name);
             }
             renderFileList();
+            // Load full tree for disk mode
+            await loadDiskTree();
         }
 
         M._disk.updateUI();

@@ -202,7 +202,7 @@
         }
     };
 
-    // Scan the root folder for .md files
+    // Scan the root folder for .md files (flat — backwards compat)
     disk.scanForMdFiles = async function () {
         if (!dirHandle) return [];
         var files = [];
@@ -213,6 +213,96 @@
         }
         files.sort(function (a, b) { return a.localeCompare(b); });
         return files;
+    };
+
+    // --- Recursive directory scan (tree view) ---
+    // Returns: [{ name, kind: 'file'|'directory', path, children: [] }]
+    // Sorted: folders first (alphabetic), then files (alphabetic)
+    disk.scanDirectory = async function (handle, parentPath, maxDepth) {
+        if (!handle) handle = dirHandle;
+        if (!handle) return [];
+        if (parentPath === undefined) parentPath = '';
+        if (maxDepth === undefined) maxDepth = 5;
+        if (maxDepth <= 0) return [];
+
+        var folders = [];
+        var files = [];
+
+        for await (var entry of handle.values()) {
+            var entryPath = parentPath ? parentPath + '/' + entry.name : entry.name;
+            if (entry.kind === 'directory') {
+                // Skip hidden/system directories
+                if (entry.name.startsWith('.')) continue;
+                var children = await disk.scanDirectory(entry, entryPath, maxDepth - 1);
+                folders.push({ name: entry.name, kind: 'directory', path: entryPath, children: children });
+            } else if (entry.kind === 'file') {
+                files.push({ name: entry.name, kind: 'file', path: entryPath, children: [] });
+            }
+        }
+
+        folders.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        files.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        return folders.concat(files);
+    };
+
+    // --- Path-based file I/O (for files in subdirectories) ---
+    // Resolve a relative path like "notes/ideas" into a directory handle
+    async function getSubdirHandle(relativePath, create) {
+        if (!dirHandle) return null;
+        var parts = relativePath.split('/').filter(function (p) { return p; });
+        var current = dirHandle;
+        for (var i = 0; i < parts.length; i++) {
+            current = await current.getDirectoryHandle(parts[i], { create: !!create });
+        }
+        return current;
+    }
+
+    disk.readFileFromPath = async function (relativePath) {
+        if (!dirHandle) return '';
+        try {
+            var parts = relativePath.split('/');
+            var fileName = parts.pop();
+            var parentDir = parts.length > 0 ? await getSubdirHandle(parts.join('/')) : dirHandle;
+            var fileHandle = await parentDir.getFileHandle(fileName);
+            var file = await fileHandle.getFile();
+            return await file.text();
+        } catch (e) {
+            return '';
+        }
+    };
+
+    disk.writeFileToPath = async function (relativePath, content) {
+        if (!dirHandle) return;
+        var parts = relativePath.split('/');
+        var fileName = parts.pop();
+        var parentDir = parts.length > 0 ? await getSubdirHandle(parts.join('/'), true) : dirHandle;
+        var fileHandle = await parentDir.getFileHandle(fileName, { create: true });
+        var writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+    };
+
+    disk.deleteFileFromPath = async function (relativePath) {
+        if (!dirHandle) return;
+        try {
+            var parts = relativePath.split('/');
+            var fileName = parts.pop();
+            var parentDir = parts.length > 0 ? await getSubdirHandle(parts.join('/')) : dirHandle;
+            await parentDir.removeEntry(fileName);
+        } catch (e) {
+            console.warn('Failed to delete:', relativePath, e);
+        }
+    };
+
+    disk.renameFileInPath = async function (oldPath, newPath) {
+        if (!dirHandle) return;
+        try {
+            var content = await disk.readFileFromPath(oldPath);
+            await disk.writeFileToPath(newPath, content);
+            await disk.deleteFileFromPath(oldPath);
+        } catch (e) {
+            console.warn('Failed to rename:', oldPath, '→', newPath, e);
+        }
     };
 
     // --- UI Controls ---

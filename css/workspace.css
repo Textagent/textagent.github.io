@@ -305,3 +305,84 @@
     background: rgba(231, 76, 60, 0.12);
     border-color: #e74c3c;
 }
+
+/* --- Tree View (VS Code-style folder browser) --- */
+.ws-tree-folder,
+.ws-tree-file {
+    list-style: none;
+}
+
+.ws-tree-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-color);
+    transition: background 0.1s ease;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    border-left: 3px solid transparent;
+}
+
+.ws-tree-row:hover {
+    background: var(--button-hover);
+}
+
+.ws-tree-file.active>.ws-tree-row {
+    background: var(--button-active);
+    border-left-color: var(--accent-color);
+}
+
+.ws-tree-chevron {
+    font-size: 10px;
+    opacity: 0.5;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+    transition: transform 0.15s ease;
+}
+
+.ws-tree-icon {
+    font-size: 14px;
+    opacity: 0.65;
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+
+.ws-tree-file.active .ws-tree-icon {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+.ws-tree-folder .ws-tree-icon {
+    color: #e8a317;
+}
+
+.ws-tree-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.ws-tree-folder-name {
+    font-weight: 500;
+}
+
+.ws-tree-children {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Folder label in header */
+#ws-folder-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
+}
