@@ -154,8 +154,8 @@
     function applyPaneWidths() {
         if (M.currentViewMode !== 'split') return;
         var previewPercent = 100 - M.editorWidthPercent;
-        M.editorPaneElement.style.flex = '0 0 calc(' + M.editorWidthPercent + '% - 4px)';
-        M.previewPaneElement.style.flex = '0 0 calc(' + previewPercent + '% - 4px)';
+        M.editorPaneElement.style.flex = '1 1 calc(' + M.editorWidthPercent + '% - 4px)';
+        M.previewPaneElement.style.flex = '1 1 calc(' + previewPercent + '% - 4px)';
     }
     function resetPaneWidths() {
         M.editorPaneElement.style.flex = '';

@@ -234,12 +234,11 @@
 }
 
 /* --- Active toolbar button --- */
-#workspace-toggle.active {
-    background: var(--button-active);
-}
-
+#workspace-toggle.active,
 #toc-toggle.active {
-    background: var(--button-active);
+    background-color: var(--accent-color) !important;
+    color: #fff !important;
+    border-color: var(--accent-color) !important;
 }
 
 /* --- Disk Workspace Controls (footer) --- */

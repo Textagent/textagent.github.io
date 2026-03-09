@@ -77,9 +77,7 @@
 
 .markdown-body {
   padding: 20px;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
   box-sizing: border-box;
   background-color: var(--preview-bg);
   /* Ensuring the markdown content matches preview background */
