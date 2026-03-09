@@ -1,0 +1,8 @@
+node_modules
+dist
+public
+package-lock.json
+changelogs
+desktop-app
+*.min.js
+*.min.css

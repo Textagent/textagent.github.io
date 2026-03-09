@@ -203,16 +203,8 @@
             progressContainer.appendChild(statusText);
             document.body.appendChild(progressContainer);
 
-            var markdown = M.markdownEditor.value;
-            var html = marked.parse(markdown);
-            var sanitizedHtml = DOMPurify.sanitize(html, {
-                ADD_TAGS: ['mjx-container', 'svg', 'path', 'g', 'marker', 'defs', 'pattern', 'clipPath'],
-                ADD_ATTR: ['id', 'class', 'style', 'viewBox', 'd', 'fill', 'stroke', 'transform', 'marker-end', 'marker-start']
-            });
-
             tempElement = document.createElement("div");
             tempElement.className = "markdown-body pdf-export";
-            tempElement.innerHTML = sanitizedHtml;
             tempElement.style.padding = "20px";
             tempElement.style.width = "210mm";
             tempElement.style.margin = "0 auto";
@@ -226,6 +218,9 @@
             tempElement.style.color = currentTheme === "dark" ? "#c9d1d9" : "#24292e";
 
             document.body.appendChild(tempElement);
+
+            // Reuse the shared rendering pipeline so the PDF matches the preview
+            M.renderMarkdownToContainer(tempElement);
 
             await new Promise(function (resolve) { setTimeout(resolve, 200); });
 

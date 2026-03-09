@@ -31,7 +31,7 @@ Renamed all user-facing product branding from **MDview** to **TextAgent** across
 - `CHANGELOG-help-mode.md` — branding reference → TextAgent
 
 ### Firestore Rules
-- `firestore.rules` + `public/firestore.rules` — comments → TextAgent
+- `firestore.rules` — comments → TextAgent
 
 ### Desktop App
 - `desktop-app/package.json` — description → TextAgent

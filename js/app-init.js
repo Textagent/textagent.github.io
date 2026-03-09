@@ -7,7 +7,7 @@
     // ========================================
     // COPY MARKDOWN BUTTON
     // ========================================
-    var copyMarkdownButton = document.getElementById('copy-md-button');
+    var copyMarkdownButton = document.getElementById('copy-markdown-button');
     if (copyMarkdownButton) {
         copyMarkdownButton.addEventListener('click', function () {
             try {
@@ -325,7 +325,7 @@
             });
         }
         // Sync checkmarks on init
-        syncQabThemeChecks(localStorage.getItem('mdview-preview-theme') || 'github');
+        syncQabThemeChecks(localStorage.getItem('md-viewer-preview-theme') || 'github');
         qabThemeOptions.forEach(function (qOpt) {
             qOpt.addEventListener('click', function () {
                 var themeName = this.getAttribute('data-theme-name');
@@ -454,7 +454,45 @@
     });
     M.exportHtml.addEventListener('click', async function () {
         var saveAs = await window.getSaveAs();
-        var htmlContent = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Markdown Export</title></head><body>' + M.markdownPreview.innerHTML + '</body></html>';
+
+        // Collect all inline CSS from the running page so the export is self-contained
+        var cssText = '';
+        try {
+            for (var i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    var rules = document.styleSheets[i].cssRules || document.styleSheets[i].rules;
+                    if (rules) {
+                        for (var j = 0; j < rules.length; j++) {
+                            cssText += rules[j].cssText + '\n';
+                        }
+                    }
+                } catch (cssErr) {
+                    // Cross-origin stylesheet — skip (CDN fonts, etc.)
+                    console.warn('Could not read stylesheet:', cssErr.message);
+                }
+            }
+        } catch (e) {
+            console.warn('CSS collection failed:', e);
+        }
+
+        // Preserve current theme attributes so theme CSS applies
+        var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        var previewTheme = document.documentElement.getAttribute('data-preview-theme') || '';
+        var previewThemeAttr = previewTheme ? ' data-preview-theme="' + previewTheme + '"' : '';
+
+        var htmlContent = '<!DOCTYPE html>\n'
+            + '<html lang="en" data-theme="' + currentTheme + '"' + previewThemeAttr + '>\n'
+            + '<head>\n'
+            + '  <meta charset="utf-8">\n'
+            + '  <title>Markdown Export</title>\n'
+            + '  <style>\n' + cssText + '  </style>\n'
+            + '</head>\n'
+            + '<body style="max-width:980px;margin:0 auto;padding:32px 16px;">\n'
+            + '  <div class="markdown-body">\n'
+            + M.markdownPreview.innerHTML + '\n'
+            + '  </div>\n'
+            + '</body>\n'
+            + '</html>';
         var blob = new Blob([htmlContent], { type: 'text/html' });
         saveAs(blob, 'document.html');
     });

@@ -26,12 +26,13 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) · 🐧 Compile \\& Run (25+ compiled languages via Judge0 CE) |\n' +
       '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
-      '| **Export** | Markdown · HTML · PDF · LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |\n' +
+      '| **Export** | Markdown · Self-contained styled HTML (all CSS inlined, theme preserved) · PDF (smart page-breaks, shared rendering pipeline) · LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |\n' +
       '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 108+ templates (12 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · 108+ templates (12 categories) · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
+      '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · Playwright smoke tests (import, export, share, view-mode) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +

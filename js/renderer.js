@@ -128,42 +128,51 @@
         });
     };
 
-    // --- Render Markdown ---
+    // --- Shared Rendering Pipeline ---
+    // Renders the current markdown into a given container element.
+    // Performs all transforms, parsing, sanitization, and DOM post-processing
+    // so that exports produce the same HTML as the live preview.
+    M.renderMarkdownToContainer = function (container) {
+        var markdown = M.markdownEditor.value;
+        // DocGen: preprocess markers into placeholder HTML before rendering
+        var markdownForRender = M.transformDocgenMarkdown
+            ? M.transformDocgenMarkdown(markdown)
+            : markdown;
+        // Chain API tag transform (independent component)
+        var apiMarkdown = M.transformApiMarkdown
+            ? M.transformApiMarkdown(markdownForRender)
+            : markdownForRender;
+        // Chain Linux tag transform
+        var finalMarkdown = M.transformLinuxMarkdown
+            ? M.transformLinuxMarkdown(apiMarkdown)
+            : apiMarkdown;
+        var html = marked.parse(finalMarkdown);
+        var sanitizedHtml = DOMPurify.sanitize(html, {
+            ADD_TAGS: ['mjx-container', 'button', 'select', 'option'],
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id']
+        });
+        container.innerHTML = sanitizedHtml;
+
+        // Note: hljs.highlight() is already called in renderer.code() during
+        // marked.parse(). No need for a second hljs.highlightElement() pass.
+
+        M.processEmojis(container);
+
+        // Feature 15: Add anchor links to headings
+        if (M.addHeadingAnchors) M.addHeadingAnchors(container);
+
+        // Feature 14: Process callouts/admonitions
+        if (M.processCallouts) M.processCallouts(container);
+
+        // Feature 13: Process footnotes
+        if (M.processFootnotes) M.processFootnotes(container, markdown);
+    };
+
+    // --- Render Markdown (live preview) ---
     M.renderMarkdown = function () {
         try {
-            const markdown = M.markdownEditor.value;
-            // DocGen: preprocess markers into placeholder HTML before rendering
-            const markdownForRender = M.transformDocgenMarkdown
-                ? M.transformDocgenMarkdown(markdown)
-                : markdown;
-            // Chain API tag transform (independent component)
-            const apiMarkdown = M.transformApiMarkdown
-                ? M.transformApiMarkdown(markdownForRender)
-                : markdownForRender;
-            // Chain Linux tag transform
-            const finalMarkdown = M.transformLinuxMarkdown
-                ? M.transformLinuxMarkdown(apiMarkdown)
-                : apiMarkdown;
-            const html = marked.parse(finalMarkdown);
-            const sanitizedHtml = DOMPurify.sanitize(html, {
-                ADD_TAGS: ['mjx-container', 'button', 'select', 'option'],
-                ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id']
-            });
-            M.markdownPreview.innerHTML = sanitizedHtml;
-
-            // Note: hljs.highlight() is already called in renderer.code() during
-            // marked.parse(). No need for a second hljs.highlightElement() pass.
-
-            M.processEmojis(M.markdownPreview);
-
-            // Feature 15: Add anchor links to headings
-            if (M.addHeadingAnchors) M.addHeadingAnchors(M.markdownPreview);
-
-            // Feature 14: Process callouts/admonitions
-            if (M.processCallouts) M.processCallouts(M.markdownPreview);
-
-            // Feature 13: Process footnotes
-            if (M.processFootnotes) M.processFootnotes(M.markdownPreview, markdown);
+            // Core rendering shared with exports
+            M.renderMarkdownToContainer(M.markdownPreview);
 
             // Feature 4: Rebuild TOC
             const _tocPanel = document.getElementById('toc-panel');
