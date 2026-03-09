@@ -265,6 +265,58 @@
         _undoDebounceTimer = setTimeout(pushUndoState, 500);
     });
 
+    // --- Custom confirmation modal for clear actions ---
+    function showClearConfirm(title, message, onConfirm) {
+        // Remove any existing modal
+        var old = document.getElementById('clear-confirm-modal');
+        if (old) old.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'clear-confirm-modal';
+        overlay.className = 'clear-confirm-overlay';
+        overlay.innerHTML =
+            '<div class="clear-confirm-card">' +
+            '<div class="clear-confirm-header">' +
+            '<i class="bi bi-exclamation-triangle-fill"></i> ' + title +
+            '</div>' +
+            '<div class="clear-confirm-body">' +
+            '<p>' + message + '</p>' +
+            '<p class="clear-confirm-hint"><i class="bi bi-arrow-counterclockwise"></i> You can Undo with <kbd>Ctrl+Z</kbd></p>' +
+            '</div>' +
+            '<div class="clear-confirm-actions">' +
+            '<button class="clear-confirm-cancel">Cancel</button>' +
+            '<button class="clear-confirm-ok"><i class="bi bi-eraser"></i> Clear</button>' +
+            '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+        // Animate in
+        requestAnimationFrame(function () { overlay.classList.add('active'); });
+
+        function close() {
+            overlay.classList.remove('active');
+            setTimeout(function () { overlay.remove(); }, 200);
+            document.removeEventListener('keydown', escHandler);
+        }
+
+        function escHandler(e) {
+            if (e.key === 'Escape') { e.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', escHandler, true);
+
+        // Overlay click closes
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+        // Cancel button
+        overlay.querySelector('.clear-confirm-cancel').addEventListener('click', close);
+        // OK button
+        overlay.querySelector('.clear-confirm-ok').addEventListener('click', function () {
+            close();
+            onConfirm();
+        });
+        // Focus the cancel button so Enter doesn't accidentally clear
+        overlay.querySelector('.clear-confirm-cancel').focus();
+    }
+
     // --- Formatting toolbar action handler ---
     var FORMATTING_ACTIONS = {
         bold: function () { wrapSelection('**', '**', 'bold text'); },
@@ -282,7 +334,47 @@
         hr: function () { insertAtCursor('\n---\n'); },
         table: function () { insertAtCursor('\n| Header 1 | Header 2 | Header 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |\n'); },
         undo: function () { M.markdownEditor.focus(); performUndo(); },
-        redo: function () { M.markdownEditor.focus(); performRedo(); }
+        redo: function () { M.markdownEditor.focus(); performRedo(); },
+        'clear-all': function () {
+            if (!M.markdownEditor.value.trim()) {
+                if (M.showToast) M.showToast('Editor is already empty.', 'info');
+                return;
+            }
+            showClearConfirm(
+                'Clear All Text',
+                'This will erase everything in the editor.',
+                function () {
+                    pushUndoState();
+                    M.markdownEditor.value = '';
+                    M.markdownEditor.dispatchEvent(new Event('input'));
+                    M.markdownEditor.focus();
+                    if (M.showToast) M.showToast('Editor cleared.', 'success');
+                }
+            );
+        },
+        'clear-selection': function () {
+            var start = M.markdownEditor.selectionStart;
+            var end = M.markdownEditor.selectionEnd;
+            if (start === end) {
+                if (M.showToast) M.showToast('No text selected. Select text first, then click Clear Selection.', 'warning');
+                return;
+            }
+            var selected = M.markdownEditor.value.substring(start, end);
+            var preview = selected.length > 80 ? selected.substring(0, 80) + '…' : selected;
+            showClearConfirm(
+                'Clear Selected Text',
+                '"' + preview + '"',
+                function () {
+                    pushUndoState();
+                    var text = M.markdownEditor.value;
+                    M.markdownEditor.value = text.substring(0, start) + text.substring(end);
+                    M.markdownEditor.selectionStart = M.markdownEditor.selectionEnd = start;
+                    M.markdownEditor.dispatchEvent(new Event('input'));
+                    M.markdownEditor.focus();
+                    if (M.showToast) M.showToast('Selected text cleared.', 'success');
+                }
+            );
+        }
     };
 
     // Expose formatting registry for other modules (e.g. ai-docgen.js)

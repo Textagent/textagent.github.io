@@ -215,6 +215,18 @@
             shortcut: null,
             demo: 'assets/demos/06_table_tools.webp'
         },
+        '[data-action="clear-all"]': {
+            name: 'Clear All Text',
+            desc: 'Erase the entire editor content after a confirmation prompt. The action is undoable with Ctrl+Z.',
+            shortcut: null,
+            demo: 'assets/demos/10_formatting_toolbar.webp'
+        },
+        '[data-action="clear-selection"]': {
+            name: 'Clear Selected Text',
+            desc: 'Delete only the currently selected text after a confirmation prompt showing a preview of the selection. Undoable with Ctrl+Z.',
+            shortcut: null,
+            demo: 'assets/demos/10_formatting_toolbar.webp'
+        },
 
         // ─── AI Tags ───
         '[data-action="ai-tag"]': {
