@@ -32,3 +32,10 @@ Upgraded "Email to Self" from `mailto:` links to actual email delivery via Googl
 #### `README.md`
 - Updated Email to Self release note to reflect direct send via Apps Script
 
+### CORS Fix
+
+#### `js/cloud-share.js`
+- Google Apps Script responds with a 302 redirect that lacks `Access-Control-Allow-Origin`
+- Fixed by using `mode: 'no-cors'` in the `fetch()` call
+- The opaque response means we cannot read the server reply, but the email sends server-side regardless
+- Client assumes success if `fetch()` completes without throwing
