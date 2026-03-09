@@ -322,12 +322,12 @@
         recognition.onerror = (event) => {
             console.warn('🎤 Speech recognition error:', event.error);
             if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                showToast('Microphone access denied. Please allow microphone permissions.', 'error');
+                M.showToast('Microphone access denied. Please allow microphone permissions.', 'error');
                 stopListening();
             } else if (event.error === 'no-speech') {
                 // Ignore — just means silence
             } else if (event.error === 'network') {
-                showToast('Speech recognition requires an internet connection (Chrome).', 'error');
+                M.showToast('Speech recognition requires an internet connection (Chrome).', 'error');
                 stopListening();
             } else if (event.error === 'aborted') {
                 // Normal stop, ignore
@@ -382,7 +382,7 @@
             // Recreate and retry
             createRecognition();
             try { recognition.start(); } catch (e2) {
-                showToast('Could not start voice dictation.', 'error');
+                M.showToast('Could not start voice dictation.', 'error');
             }
         }
     }
@@ -439,23 +439,6 @@
         if (active) {
             showCheatSheet();
         }
-    }
-
-    // ── Toast Helper ──────────────────────────────
-    function showToast(message, type) {
-        // Use existing toast if available, otherwise create a simple one
-        const existing = document.querySelector('.speech-toast');
-        if (existing) existing.remove();
-
-        const toast = document.createElement('div');
-        toast.className = `speech-toast speech-toast-${type || 'info'}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('speech-toast-show'));
-        setTimeout(() => {
-            toast.classList.remove('speech-toast-show');
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
     }
 
     // ── Event Listeners ───────────────────────────

@@ -29,14 +29,6 @@
         conversionOverlay.style.display = 'none';
     }
 
-    function showConversionToast(message) {
-        var toast = document.createElement('div');
-        toast.className = 'conversion-toast';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(function () { toast.remove(); }, 3000);
-    }
-
     function getFileExtension(filename) {
         return (filename.split('.').pop() || '').toLowerCase();
     }
@@ -74,7 +66,7 @@
             M.markdownEditor.value = markdown;
             M.renderMarkdown();
             M.dropzone.style.display = 'none';
-            showConversionToast('\u2713 Converted ' + file.name + ' to Markdown');
+            M.showToast('\u2713 Converted ' + file.name + ' to Markdown', 'success');
         } catch (err) {
             console.error('File conversion failed:', err);
             M.showToast('Failed to convert ' + file.name + ': ' + err.message, 'error');
