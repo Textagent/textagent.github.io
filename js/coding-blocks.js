@@ -47,16 +47,11 @@
         }
     });
 
-    // Wire up data-action buttons inside dropdowns (they're outside the
-    // original .fmt-btn[data-action] querySelectorAll scope from editor-features.js)
+    // Close dropdown after any dropdown button is clicked.
+    // NOTE: The formatting action itself is already fired by editor-features.js
+    // which binds ALL .fmt-btn[data-action] elements. We only handle closing here.
     document.querySelectorAll('.fmt-group-dropdown .fmt-btn[data-action]').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            var action = btn.getAttribute('data-action');
-            if (M.formattingActions && M.formattingActions[action]) {
-                M.formattingActions[action]();
-            }
-            // Close the dropdown after action
+        btn.addEventListener('click', function () {
             var overflow = btn.closest('.fmt-group-overflow');
             if (overflow) overflow.classList.remove('open');
         });
