@@ -386,3 +386,87 @@
     white-space: nowrap;
     max-width: 100px;
 }
+
+/* --- Delete Confirmation Modal --- */
+.ws-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.ws-confirm-dialog {
+    background: var(--header-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px 24px;
+    min-width: 280px;
+    max-width: 360px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.ws-confirm-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e74c3c;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ws-confirm-title i {
+    font-size: 18px;
+}
+
+.ws-confirm-msg {
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.85;
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+
+.ws-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.ws-confirm-btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+.ws-confirm-cancel {
+    background: none;
+    color: var(--text-color);
+}
+
+.ws-confirm-cancel:hover {
+    background: var(--button-hover);
+}
+
+.ws-confirm-ok {
+    background: #e74c3c;
+    color: #fff;
+    border-color: #e74c3c;
+}
+
+.ws-confirm-ok:hover {
+    background: #c0392b;
+    border-color: #c0392b;
+}

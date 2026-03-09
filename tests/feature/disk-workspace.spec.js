@@ -106,22 +106,18 @@ test.describe('Disk Workspace — UI Elements', () => {
         }
     });
 
-    test('disk controls footer is hidden when disconnected', async ({ page }) => {
-        const controls = page.locator('#ws-disk-controls');
-        await expect(controls).toBeAttached();
-        await expect(controls).toBeHidden();
+    test('header disk controls are hidden when disconnected', async ({ page }) => {
+        const refreshBtn = page.locator('#ws-header-refresh');
+        const disconnectBtn = page.locator('#ws-header-disconnect');
+        await expect(refreshBtn).toBeAttached();
+        await expect(refreshBtn).toBeHidden();
+        await expect(disconnectBtn).toBeAttached();
+        await expect(disconnectBtn).toBeHidden();
     });
 
-    test('disk control buttons exist in the DOM', async ({ page }) => {
-        await expect(page.locator('#ws-disk-refresh')).toBeAttached();
-        await expect(page.locator('#ws-disk-disconnect')).toBeAttached();
-        await expect(page.locator('#ws-disk-reconnect')).toBeAttached();
-        await expect(page.locator('#ws-disk-label')).toBeAttached();
-    });
-
-    test('reconnect button is hidden by default', async ({ page }) => {
-        const reconnectBtn = page.locator('#ws-disk-reconnect');
-        await expect(reconnectBtn).toBeHidden();
+    test('header disk control buttons exist in the DOM', async ({ page }) => {
+        await expect(page.locator('#ws-header-refresh')).toBeAttached();
+        await expect(page.locator('#ws-header-disconnect')).toBeAttached();
     });
 });
 

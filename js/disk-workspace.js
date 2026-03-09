@@ -309,34 +309,24 @@
     // Show/hide disk-specific UI elements based on support & connection state
     disk.updateUI = function () {
         var openFolderBtn = document.getElementById('ws-open-folder');
-        var diskControls = document.getElementById('ws-disk-controls');
-        var diskLabel = document.getElementById('ws-disk-label');
-        // Header buttons
         var headerRefresh = document.getElementById('ws-header-refresh');
         var headerDisconnect = document.getElementById('ws-header-disconnect');
 
         if (!supported) {
-            // Hide everything disk-related in unsupported browsers
             if (openFolderBtn) openFolderBtn.style.display = 'none';
-            if (diskControls) diskControls.style.display = 'none';
             if (headerRefresh) headerRefresh.style.display = 'none';
             if (headerDisconnect) headerDisconnect.style.display = 'none';
             return;
         }
 
         if (dirHandle) {
-            // Connected state
+            // Connected state — hide open folder, show header controls
             if (openFolderBtn) openFolderBtn.style.display = 'none';
-            if (diskControls) diskControls.style.display = 'flex';
-            if (diskLabel) diskLabel.textContent = dirHandle.name;
-            // Show header buttons
             if (headerRefresh) headerRefresh.style.display = '';
             if (headerDisconnect) headerDisconnect.style.display = '';
         } else {
-            // Disconnected state — show Open Folder button
+            // Disconnected state — show open folder, hide header controls
             if (openFolderBtn) openFolderBtn.style.display = '';
-            if (diskControls) diskControls.style.display = 'none';
-            // Hide header buttons
             if (headerRefresh) headerRefresh.style.display = 'none';
             if (headerDisconnect) headerDisconnect.style.display = 'none';
         }
@@ -345,10 +335,6 @@
     // Wire button event listeners
     disk.wireUI = function () {
         var openFolderBtn = document.getElementById('ws-open-folder');
-        var disconnectBtn = document.getElementById('ws-disk-disconnect');
-        var refreshBtn = document.getElementById('ws-disk-refresh');
-        var reconnectBtn = document.getElementById('ws-disk-reconnect');
-        // Header buttons
         var headerRefresh = document.getElementById('ws-header-refresh');
         var headerDisconnect = document.getElementById('ws-header-disconnect');
 
@@ -359,31 +345,17 @@
             });
         }
 
-        // Wire both footer and header disconnect
-        function handleDisconnect(e) {
-            e.stopPropagation();
-            if (M.wsDisconnectFolder) M.wsDisconnectFolder();
-        }
-        if (disconnectBtn) disconnectBtn.addEventListener('click', handleDisconnect);
-        if (headerDisconnect) headerDisconnect.addEventListener('click', handleDisconnect);
-
-        // Wire both footer and header refresh
-        function handleRefresh(e) {
-            e.stopPropagation();
-            if (M.wsRefreshFromDisk) M.wsRefreshFromDisk();
-        }
-        if (refreshBtn) refreshBtn.addEventListener('click', handleRefresh);
-        if (headerRefresh) headerRefresh.addEventListener('click', handleRefresh);
-
-        if (reconnectBtn) {
-            reconnectBtn.addEventListener('click', async function (e) {
+        if (headerDisconnect) {
+            headerDisconnect.addEventListener('click', function (e) {
                 e.stopPropagation();
-                var granted = await disk.requestPermission();
-                if (granted && M.wsReconnectFolder) {
-                    M.wsReconnectFolder();
-                } else if (!granted) {
-                    M.showToast('Folder access denied. Please try again.', 'warning');
-                }
+                if (M.wsDisconnectFolder) M.wsDisconnectFolder();
+            });
+        }
+
+        if (headerRefresh) {
+            headerRefresh.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (M.wsRefreshFromDisk) M.wsRefreshFromDisk();
             });
         }
     };
@@ -399,14 +371,7 @@
                 // Successfully reconnected — load workspace from disk
                 if (M.wsReconnectFolder) M.wsReconnectFolder();
             } else if (result === 'needs-permission') {
-                // Show reconnect prompt
-                var reconnectBtn = document.getElementById('ws-disk-reconnect');
-                var diskControls = document.getElementById('ws-disk-controls');
-                if (reconnectBtn) reconnectBtn.style.display = '';
-                if (diskControls) diskControls.style.display = 'flex';
-                // Hide the connected label, show reconnect prompt
-                var diskLabel = document.getElementById('ws-disk-label');
-                if (diskLabel) diskLabel.textContent = 'Reconnect needed';
+                M.showToast('Folder reconnection needs permission. Use the folder button to reconnect.', 'info');
             }
         });
     }

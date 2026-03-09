@@ -750,31 +750,23 @@
                     </div>
                 </div>
                 <ul class="ws-file-list" id="workspace-file-list"></ul>
-                <!-- Disk Workspace Controls (footer) -->
-                <div class="ws-disk-controls" id="ws-disk-controls" style="display:none">
-                    <div class="ws-disk-status" id="ws-disk-status">
-                        <i class="bi bi-hdd"></i> <span id="ws-disk-label">Connected</span>
-                    </div>
-                    <div class="ws-disk-actions">
-                        <button class="ws-disk-btn" id="ws-disk-refresh" title="Refresh from disk">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-                        <button class="ws-disk-btn" id="ws-disk-reconnect" title="Reconnect to folder"
-                            style="display:none">
-                            <i class="bi bi-plug"></i>
-                        </button>
-                        <button class="ws-disk-btn ws-disk-disconnect" id="ws-disk-disconnect"
-                            title="Disconnect folder">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
-                </div>
                 <!-- Context menu -->
                 <div class="ws-context-menu" id="workspace-context-menu">
                     <button class="ws-ctx-item" id="ws-ctx-rename"><i class="bi bi-pencil"></i> Rename</button>
                     <button class="ws-ctx-item" id="ws-ctx-duplicate"><i class="bi bi-copy"></i> Duplicate</button>
                     <div class="ws-ctx-divider"></div>
                     <button class="ws-ctx-item danger" id="ws-ctx-delete"><i class="bi bi-trash"></i> Delete</button>
+                </div>
+                <!-- Delete Confirmation Modal -->
+                <div class="ws-confirm-overlay" id="ws-confirm-delete" style="display:none">
+                    <div class="ws-confirm-dialog">
+                        <div class="ws-confirm-title"><i class="bi bi-exclamation-triangle"></i> Delete File</div>
+                        <div class="ws-confirm-msg" id="ws-confirm-msg">Are you sure?</div>
+                        <div class="ws-confirm-actions">
+                            <button class="ws-confirm-btn ws-confirm-cancel" id="ws-confirm-cancel">Cancel</button>
+                            <button class="ws-confirm-btn ws-confirm-ok" id="ws-confirm-ok">Delete</button>
+                        </div>
+                    </div>
                 </div>
             </aside>
 

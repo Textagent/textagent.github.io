@@ -584,21 +584,37 @@
         }
     };
 
-    M.wsDeleteFile = function (id) {
-        if (workspace.files.length <= 1) {
-            // Don't delete the last file — just clear it
-            var file = findFileById(id);
-            if (file) {
-                M.markdownEditor.value = '';
-                setFileContent(id, '');
-                M.renderMarkdown();
-                if (M.updateDocumentStats) M.updateDocumentStats();
-            }
-            return;
-        }
-        var fileToDelete = findFileById(id);
-        if (!fileToDelete) return;
-        if (!confirm('Delete "' + fileToDelete.name + '"? This cannot be undone.')) return;
+    // Custom confirm modal for delete
+    var confirmOverlay = document.getElementById('ws-confirm-delete');
+    var confirmMsg = document.getElementById('ws-confirm-msg');
+    var confirmOk = document.getElementById('ws-confirm-ok');
+    var confirmCancel = document.getElementById('ws-confirm-cancel');
+    var pendingDeleteId = null;
+
+    function showDeleteConfirm(fileName, fileId) {
+        pendingDeleteId = fileId;
+        if (confirmMsg) confirmMsg.textContent = 'Delete "' + fileName + '"? This cannot be undone.';
+        if (confirmOverlay) confirmOverlay.style.display = 'flex';
+    }
+
+    function hideDeleteConfirm() {
+        pendingDeleteId = null;
+        if (confirmOverlay) confirmOverlay.style.display = 'none';
+    }
+
+    if (confirmCancel) confirmCancel.addEventListener('click', function () { hideDeleteConfirm(); });
+    if (confirmOverlay) confirmOverlay.addEventListener('click', function (e) {
+        if (e.target === confirmOverlay) hideDeleteConfirm();
+    });
+
+    if (confirmOk) confirmOk.addEventListener('click', function () {
+        var id = pendingDeleteId;
+        hideDeleteConfirm();
+        if (!id) return;
+        performDelete(id);
+    });
+
+    function performDelete(id) {
         var idx = -1;
         for (var i = 0; i < workspace.files.length; i++) {
             if (workspace.files[i].id === id) { idx = i; break; }
@@ -632,6 +648,23 @@
         } else if (diskMode) {
             loadDiskTree();
         }
+    }
+
+    M.wsDeleteFile = function (id) {
+        if (workspace.files.length <= 1) {
+            // Don't delete the last file — just clear it
+            var file = findFileById(id);
+            if (file) {
+                M.markdownEditor.value = '';
+                setFileContent(id, '');
+                M.renderMarkdown();
+                if (M.updateDocumentStats) M.updateDocumentStats();
+            }
+            return;
+        }
+        var fileToDelete = findFileById(id);
+        if (!fileToDelete) return;
+        showDeleteConfirm(fileToDelete.name.split('/').pop(), id);
     };
 
     M.wsSaveCurrent = function () {
