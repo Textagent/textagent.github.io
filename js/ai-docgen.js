@@ -42,7 +42,11 @@
             : type === 'Image'
                 ? 'describe the image to generate'
                 : 'describe what to generate';
-        M.wrapSelectionWith('{{' + type + ': ', '}}', placeholder);
+        if (type === 'AI' || type === 'Think') {
+            M.wrapSelectionWith('{{' + type + ':\n  Prompt: ', '\n}}', placeholder);
+        } else {
+            M.wrapSelectionWith('{{' + type + ': ', '}}', placeholder);
+        }
     }
 
     // ==============================================
@@ -96,6 +100,11 @@
                     if (useMatch) {
                         block.useMemory = useMatch[1].split(',').map(function (s) { return s.trim(); });
                         block.prompt = block.prompt.replace(useMatch[0], '').trim();
+                    }
+                    // Strip Prompt: prefix if present (backward-compat: works without it too)
+                    var promptMatch = block.prompt.match(/^Prompt:\s*/m);
+                    if (promptMatch) {
+                        block.prompt = block.prompt.replace(promptMatch[0], '').trim();
                     }
                 }
                 // Parse Memory block fields
@@ -519,14 +528,21 @@
             // Remove existing Use: line
             inner = inner.replace(/^Use:\s*.+$/m, '').trim();
 
-            // Prepend new Use: line
-            if (useLine) {
-                inner = useLine + '\n' + inner;
-            }
+            // Check if Prompt: keyword is present
+            var hasPromptKey = /^Prompt:\s*/m.test(inner);
 
-            // Rebuild tag
+            // Rebuild tag with proper structure
             var tagType = block.type;
-            var newTag = '{{' + tagType + ': ' + inner + ' }}';
+            var newTag;
+            if (useLine && hasPromptKey) {
+                // Multi-line: Use + Prompt
+                newTag = '{{' + tagType + ':\n  ' + useLine + '\n  ' + inner + '\n}}';
+            } else if (useLine) {
+                // Use + bare prompt
+                newTag = '{{' + tagType + ': ' + useLine + '\n' + inner + ' }}';
+            } else {
+                newTag = '{{' + tagType + ': ' + inner + ' }}';
+            }
 
             M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
 
