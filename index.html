@@ -757,14 +757,15 @@
                     <div class="ws-ctx-divider"></div>
                     <button class="ws-ctx-item danger" id="ws-ctx-delete"><i class="bi bi-trash"></i> Delete</button>
                 </div>
-                <!-- Delete Confirmation Modal -->
-                <div class="ws-confirm-overlay" id="ws-confirm-delete" style="display:none">
+                <!-- Workspace Action Modal (rename / duplicate / delete) -->
+                <div class="ws-confirm-overlay" id="ws-action-modal" style="display:none">
                     <div class="ws-confirm-dialog">
-                        <div class="ws-confirm-title"><i class="bi bi-exclamation-triangle"></i> Delete File</div>
-                        <div class="ws-confirm-msg" id="ws-confirm-msg">Are you sure?</div>
+                        <div class="ws-confirm-title" id="ws-modal-title"><i class="bi bi-pencil"></i> Action</div>
+                        <div class="ws-confirm-msg" id="ws-modal-msg">Are you sure?</div>
+                        <input type="text" class="ws-modal-input" id="ws-modal-input" style="display:none" />
                         <div class="ws-confirm-actions">
-                            <button class="ws-confirm-btn ws-confirm-cancel" id="ws-confirm-cancel">Cancel</button>
-                            <button class="ws-confirm-btn ws-confirm-ok" id="ws-confirm-ok">Delete</button>
+                            <button class="ws-confirm-btn ws-confirm-cancel" id="ws-modal-cancel">Cancel</button>
+                            <button class="ws-confirm-btn ws-confirm-ok" id="ws-modal-ok">OK</button>
                         </div>
                     </div>
                 </div>

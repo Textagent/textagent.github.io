@@ -470,3 +470,34 @@
     background: #c0392b;
     border-color: #c0392b;
 }
+
+.ws-confirm-ok.action-rename,
+.ws-confirm-ok.action-duplicate {
+    background: #3498db;
+    border-color: #3498db;
+}
+
+.ws-confirm-ok.action-rename:hover,
+.ws-confirm-ok.action-duplicate:hover {
+    background: #2980b9;
+    border-color: #2980b9;
+}
+
+.ws-modal-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--editor-bg);
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: inherit;
+    margin-bottom: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.ws-modal-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}

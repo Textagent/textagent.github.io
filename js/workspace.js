@@ -418,7 +418,20 @@
         if (!targetId) return;
         var file = findFileById(targetId);
         if (!file) return;
-        startInlineRename(targetId);
+        var displayName = file.name.split('/').pop();
+        showActionModal({
+            title: '<i class="bi bi-pencil"></i> Rename File',
+            msg: 'Enter a new name for "' + displayName + '":',
+            okText: 'Rename',
+            okClass: 'action-rename',
+            inputValue: displayName,
+            selectName: true,
+            onConfirm: function (inputVal) {
+                if (inputVal && inputVal.trim()) {
+                    M.wsRenameFile(targetId, inputVal.trim());
+                }
+            }
+        });
     });
 
     if (ctxDelete) ctxDelete.addEventListener('click', function (e) {
@@ -435,15 +448,23 @@
         if (!targetId) return;
         var srcFile = findFileById(targetId);
         if (!srcFile) return;
-        var content = getFileContent(targetId);
-        var id = generateId();
-        var name = srcFile.name.replace(/\.md$/i, '') + ' (copy).md';
-        workspace.files.push({ id: id, name: name, createdAt: Date.now() });
-        setFileContent(id, content);
-        saveWorkspace();
-        M.wsOpenFile(id);
-        // Reload tree so new file shows immediately
-        if (diskMode) loadDiskTree();
+        var displayName = srcFile.name.split('/').pop();
+        showActionModal({
+            title: '<i class="bi bi-copy"></i> Duplicate File',
+            msg: 'Create a copy of "' + displayName + '"?',
+            okText: 'Duplicate',
+            okClass: 'action-duplicate',
+            onConfirm: function () {
+                var content = getFileContent(targetId);
+                var id = generateId();
+                var name = srcFile.name.replace(/\.md$/i, '') + ' (copy).md';
+                workspace.files.push({ id: id, name: name, createdAt: Date.now() });
+                setFileContent(id, content);
+                saveWorkspace();
+                M.wsOpenFile(id);
+                if (diskMode) loadDiskTree();
+            }
+        });
     });
 
     // --- Inline rename ---
@@ -584,34 +605,73 @@
         }
     };
 
-    // Custom confirm modal for delete
-    var confirmOverlay = document.getElementById('ws-confirm-delete');
-    var confirmMsg = document.getElementById('ws-confirm-msg');
-    var confirmOk = document.getElementById('ws-confirm-ok');
-    var confirmCancel = document.getElementById('ws-confirm-cancel');
-    var pendingDeleteId = null;
+    // --- Reusable action modal ---
+    var modalOverlay = document.getElementById('ws-action-modal');
+    var modalTitle = document.getElementById('ws-modal-title');
+    var modalMsg = document.getElementById('ws-modal-msg');
+    var modalInput = document.getElementById('ws-modal-input');
+    var modalOk = document.getElementById('ws-modal-ok');
+    var modalCancel = document.getElementById('ws-modal-cancel');
+    var currentModalCallback = null;
 
-    function showDeleteConfirm(fileName, fileId) {
-        pendingDeleteId = fileId;
-        if (confirmMsg) confirmMsg.textContent = 'Delete "' + fileName + '"? This cannot be undone.';
-        if (confirmOverlay) confirmOverlay.style.display = 'flex';
+    // opts: { title, msg, okText, okClass, inputValue?, selectName?, onConfirm }
+    function showActionModal(opts) {
+        if (modalTitle) modalTitle.innerHTML = opts.title || 'Confirm';
+        if (modalMsg) modalMsg.textContent = opts.msg || 'Are you sure?';
+        if (modalOk) {
+            modalOk.textContent = opts.okText || 'OK';
+            modalOk.className = 'ws-confirm-btn ws-confirm-ok' + (opts.okClass ? ' ' + opts.okClass : '');
+        }
+        if (modalInput) {
+            if (opts.inputValue !== undefined) {
+                modalInput.style.display = '';
+                modalInput.value = opts.inputValue;
+                // Auto-select filename without extension
+                setTimeout(function () {
+                    modalInput.focus();
+                    if (opts.selectName) {
+                        var dot = modalInput.value.lastIndexOf('.');
+                        if (dot > 0) modalInput.setSelectionRange(0, dot);
+                        else modalInput.select();
+                    } else {
+                        modalInput.select();
+                    }
+                }, 50);
+            } else {
+                modalInput.style.display = 'none';
+                modalInput.value = '';
+            }
+        }
+        currentModalCallback = opts.onConfirm || null;
+        if (modalOverlay) modalOverlay.style.display = 'flex';
     }
 
-    function hideDeleteConfirm() {
-        pendingDeleteId = null;
-        if (confirmOverlay) confirmOverlay.style.display = 'none';
+    function hideActionModal() {
+        currentModalCallback = null;
+        if (modalOverlay) modalOverlay.style.display = 'none';
+        if (modalInput) { modalInput.style.display = 'none'; modalInput.value = ''; }
     }
 
-    if (confirmCancel) confirmCancel.addEventListener('click', function () { hideDeleteConfirm(); });
-    if (confirmOverlay) confirmOverlay.addEventListener('click', function (e) {
-        if (e.target === confirmOverlay) hideDeleteConfirm();
+    if (modalCancel) modalCancel.addEventListener('click', function () { hideActionModal(); });
+    if (modalOverlay) modalOverlay.addEventListener('click', function (e) {
+        if (e.target === modalOverlay) hideActionModal();
     });
-
-    if (confirmOk) confirmOk.addEventListener('click', function () {
-        var id = pendingDeleteId;
-        hideDeleteConfirm();
-        if (!id) return;
-        performDelete(id);
+    if (modalOk) modalOk.addEventListener('click', function () {
+        var cb = currentModalCallback;
+        var val = modalInput ? modalInput.value : '';
+        hideActionModal();
+        if (cb) cb(val);
+    });
+    if (modalInput) modalInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            var cb = currentModalCallback;
+            var val = modalInput.value;
+            hideActionModal();
+            if (cb) cb(val);
+        } else if (e.key === 'Escape') {
+            hideActionModal();
+        }
     });
 
     function performDelete(id) {
@@ -664,7 +724,14 @@
         }
         var fileToDelete = findFileById(id);
         if (!fileToDelete) return;
-        showDeleteConfirm(fileToDelete.name.split('/').pop(), id);
+        var displayName = fileToDelete.name.split('/').pop();
+        showActionModal({
+            title: '<i class="bi bi-exclamation-triangle"></i> Delete File',
+            msg: 'Delete "' + displayName + '"? This cannot be undone.',
+            okText: 'Delete',
+            okClass: '',
+            onConfirm: function () { performDelete(id); }
+        });
     };
 
     M.wsSaveCurrent = function () {
