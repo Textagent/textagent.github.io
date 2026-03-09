@@ -260,3 +260,116 @@ test.describe('Workspace Sidebar — Core Behavior', () => {
         expect(storedAfter).toBe('false');
     });
 });
+
+test.describe('Workspace — Action Modal & Context Menu', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/');
+        await page.waitForSelector('#markdown-editor', { state: 'visible' });
+        await page.waitForFunction(() => window.MDView && window.MDView.currentViewMode === 'split');
+        await page.waitForFunction(() => window.MDView._disk, { timeout: 10000 });
+    });
+
+    test('action modal exists in the DOM and is hidden by default', async ({ page }) => {
+        const modal = page.locator('#ws-action-modal');
+        await expect(modal).toBeAttached();
+        await expect(modal).toBeHidden();
+    });
+
+    test('action modal has all required child elements', async ({ page }) => {
+        await expect(page.locator('#ws-modal-title')).toBeAttached();
+        await expect(page.locator('#ws-modal-msg')).toBeAttached();
+        await expect(page.locator('#ws-modal-input')).toBeAttached();
+        await expect(page.locator('#ws-modal-ok')).toBeAttached();
+        await expect(page.locator('#ws-modal-cancel')).toBeAttached();
+    });
+
+    test('modal input field is hidden by default', async ({ page }) => {
+        await expect(page.locator('#ws-modal-input')).toBeHidden();
+    });
+
+    test('context menu exists and is hidden by default', async ({ page }) => {
+        const menu = page.locator('#workspace-context-menu');
+        await expect(menu).toBeAttached();
+        // Context menu starts with display:none or visibility:hidden
+        const display = await menu.evaluate(el => getComputedStyle(el).display);
+        expect(display).toBe('none');
+    });
+
+    test('context menu has rename, duplicate, and delete buttons', async ({ page }) => {
+        await expect(page.locator('#ws-ctx-rename')).toBeAttached();
+        await expect(page.locator('#ws-ctx-duplicate')).toBeAttached();
+        await expect(page.locator('#ws-ctx-delete')).toBeAttached();
+    });
+
+    test('wsDeleteFile shows modal instead of native confirm for multi-file workspace', async ({ page }) => {
+        // Create a second file so delete doesn't just clear
+        await page.evaluate(() => window.MDView.wsCreateFile('ToDelete.md'));
+        const files = await page.evaluate(() => window.MDView.wsGetFiles());
+        const toDelete = files.find(f => f.name === 'ToDelete.md');
+
+        // Call wsDeleteFile — should show modal, not native confirm
+        await page.evaluate(id => window.MDView.wsDeleteFile(id), toDelete.id);
+
+        // Modal should now be visible
+        const modal = page.locator('#ws-action-modal');
+        await expect(modal).toBeVisible();
+
+        // OK button should say "Delete"
+        const okText = await page.locator('#ws-modal-ok').textContent();
+        expect(okText).toBe('Delete');
+
+        // Title should contain "Delete"
+        const title = await page.locator('#ws-modal-title').textContent();
+        expect(title).toContain('Delete');
+    });
+
+    test('modal cancel button hides the modal', async ({ page }) => {
+        await page.evaluate(() => window.MDView.wsCreateFile('CancelTest.md'));
+        const files = await page.evaluate(() => window.MDView.wsGetFiles());
+        const target = files.find(f => f.name === 'CancelTest.md');
+
+        await page.evaluate(id => window.MDView.wsDeleteFile(id), target.id);
+        await expect(page.locator('#ws-action-modal')).toBeVisible();
+
+        // Click Cancel
+        await page.locator('#ws-modal-cancel').click();
+        await expect(page.locator('#ws-action-modal')).toBeHidden();
+
+        // File should NOT be deleted
+        const afterFiles = await page.evaluate(() => window.MDView.wsGetFiles());
+        expect(afterFiles.some(f => f.name === 'CancelTest.md')).toBe(true);
+    });
+
+    test('modal OK button on delete removes the file', async ({ page }) => {
+        await page.evaluate(() => window.MDView.wsCreateFile('OkDelete.md'));
+        const files = await page.evaluate(() => window.MDView.wsGetFiles());
+        const target = files.find(f => f.name === 'OkDelete.md');
+
+        await page.evaluate(id => window.MDView.wsDeleteFile(id), target.id);
+        await expect(page.locator('#ws-action-modal')).toBeVisible();
+
+        // Click Delete (OK button)
+        await page.locator('#ws-modal-ok').click();
+        await expect(page.locator('#ws-action-modal')).toBeHidden();
+
+        // File should be deleted
+        const afterFiles = await page.evaluate(() => window.MDView.wsGetFiles());
+        expect(afterFiles.some(f => f.name === 'OkDelete.md')).toBe(false);
+    });
+
+    test('rename same-name guard prevents unchanged name', async ({ page }) => {
+        const files = await page.evaluate(() => window.MDView.wsGetFiles());
+        const firstFile = files[0];
+        const originalName = firstFile.name;
+
+        // Rename to exact same name — should result in no change
+        await page.evaluate(({ id, name }) => window.MDView.wsRenameFile(id, name), {
+            id: firstFile.id,
+            name: originalName
+        });
+
+        const afterFiles = await page.evaluate(() => window.MDView.wsGetFiles());
+        const file = afterFiles.find(f => f.id === firstFile.id);
+        expect(file.name).toBe(originalName);
+    });
+});

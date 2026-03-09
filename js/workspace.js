@@ -465,7 +465,16 @@
                 setFileContent(id, content);
                 saveWorkspace();
                 M.wsOpenFile(id);
-                if (diskMode) loadDiskTree();
+                // Reload tree after disk write completes
+                if (diskMode && M._disk && M._disk.isConnected()) {
+                    M._disk.writeFileToPath(name, content).then(function () {
+                        loadDiskTree();
+                    }).catch(function () {
+                        loadDiskTree();
+                    });
+                } else if (diskMode) {
+                    loadDiskTree();
+                }
             }
         });
     });
