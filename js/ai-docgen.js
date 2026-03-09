@@ -99,13 +99,13 @@
                 }
                 // Parse @use, @think, @search, @prompt fields
                 if (block.type !== 'Image' && block.type !== 'Memory') {
-                    var useMatch = block.prompt.match(/^@use:\s*(.+)$/m);
+                    var useMatch = block.prompt.match(/^(?:@use|Use):\s*(.+)$/m);
                     if (useMatch) {
                         block.useMemory = useMatch[1].split(',').map(function (s) { return s.trim(); });
                         block.prompt = block.prompt.replace(useMatch[0], '').trim();
                     }
                     // Parse @think: yes/no field
-                    var thinkMatch = block.prompt.match(/^@think:\s*(yes|no)$/mi);
+                    var thinkMatch = block.prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
                     if (thinkMatch) {
                         block.think = thinkMatch[1].toLowerCase() === 'yes';
                         block.prompt = block.prompt.replace(thinkMatch[0], '').trim();
@@ -113,20 +113,20 @@
                         block.think = false;
                     }
                     // Parse @search: field
-                    var searchMatch = block.prompt.match(/^@search:\s*(\S+)$/mi);
+                    var searchMatch = block.prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
                     if (searchMatch) {
                         block.search = searchMatch[1].toLowerCase();
                         block.prompt = block.prompt.replace(searchMatch[0], '').trim();
                     }
                     // Strip @prompt: prefix if present (backward-compat: works without it too)
-                    var promptMatch = block.prompt.match(/^@prompt:\s*/m);
+                    var promptMatch = block.prompt.match(/^(?:@prompt|Prompt):\s*/m);
                     if (promptMatch) {
                         block.prompt = block.prompt.replace(promptMatch[0], '').trim();
                     }
                 }
                 // Parse Memory block fields
                 if (block.type === 'Memory') {
-                    var nameMatch = block.prompt.match(/^@name:\s*(.+)$/m);
+                    var nameMatch = block.prompt.match(/^(?:@name|Name):\s*(.+)$/m);
                     block.memoryName = nameMatch ? nameMatch[1].trim() : 'default';
                 }
 
@@ -142,7 +142,7 @@
         var lines = prompt.split('\n');
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i].trim();
-            var stepMatch = line.match(/^@step\s*(\d+)\s*:\s*(.+)/i);
+            var stepMatch = line.match(/^(?:@step|Step)\s*(\d+)\s*:\s*(.+)/i);
             if (stepMatch) {
                 steps.push({
                     number: parseInt(stepMatch[1], 10),
@@ -179,7 +179,7 @@
         if (_dedupInProgress) return markdown;
         var fenced = getFencedRanges(markdown);
         var tagRe = /\{\{Memory:\s*([\s\S]*?)\}\}/g;
-        var nameRe = /^@name:\s*(.+)$/m;
+        var nameRe = /^(?:@name|Name):\s*(.+)$/m;
         var seen = {};
         var replacements = []; // { start, end, oldName, newName }
         var m;
@@ -534,7 +534,7 @@
         function getDocMemoryNames() {
             var text = M.markdownEditor ? M.markdownEditor.value : '';
             var names = [];
-            var re = /\{\{Memory:[^}]*@name:\s*([^\s}]+)/gi;
+            var re = /\{\{Memory:[^}]*(?:@name|Name):\s*([^\s}]+)/gi;
             var m;
             while ((m = re.exec(text)) !== null) {
                 var n = m[1].replace(/[,}]/g, '').trim();
@@ -907,5 +907,12 @@
     M.transformDocgenMarkdown = transformDocgenMarkdown;
     M.bindDocgenPreviewActions = bindDocgenPreviewActions;
     M.parseDocgenBlocks = parseDocgenBlocks;
+
+    // Trigger re-render now that docgen is loaded.
+    // The initial render (phase 2) happens before this module loads (phase 3e),
+    // so tags display as raw text until we re-render here.
+    if (M.markdownEditor) {
+        M.markdownEditor.dispatchEvent(new Event('input'));
+    }
 
 })(window.MDView);
