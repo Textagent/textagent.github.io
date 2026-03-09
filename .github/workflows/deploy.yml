@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for CHANGELOG file in commit
+        run: |
+          # Get files changed in this push/PR
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD)
+          else
+            FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          echo "Changed files:"
+          echo "$FILES"
+
+          # Check if any code files changed (ignore docs-only)
+          CODE_FILES=$(echo "$FILES" | grep -vE '\.(md|txt|json)$' | grep -vE '^\.(agent|github)/' || true)
+
+          if [ -z "$CODE_FILES" ]; then
+            echo "✅ Docs-only commit — changelog not required."
+            exit 0
+          fi
+
+          # Reject changelogs placed in repo root instead of changelogs/
+          ROOT_CHANGELOG=$(echo "$FILES" | grep -E '^CHANGELOG-.*\.md$' || true)
+          if [ -n "$ROOT_CHANGELOG" ]; then
+            echo ""
+            echo "❌ FAILED: Changelog found in repo root — must be in changelogs/ directory."
+            echo "   Found: $ROOT_CHANGELOG"
+            echo "   Move it: git mv $ROOT_CHANGELOG changelogs/"
+            echo ""
+            exit 1
+          fi
+
+          # Check for CHANGELOG file in changelogs/ directory
+          CHANGELOG=$(echo "$FILES" | grep -E '^changelogs/CHANGELOG-.*\.md$' || true)
+
+          if [ -z "$CHANGELOG" ]; then
+            echo ""
+            echo "❌ FAILED: No changelog found in changelogs/ directory."
+            echo ""
+            echo "Every commit with code changes must include a changelogs/CHANGELOG-<topic>.md file."
+            echo "Example: changelogs/CHANGELOG-my-feature.md"
+            echo ""
+            exit 1
+          fi
+
+          echo "✅ Found changelog: $CHANGELOG"
+
   build:
+    needs: check-changelog
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
