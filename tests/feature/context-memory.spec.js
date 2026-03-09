@@ -127,18 +127,18 @@ test.describe('Memory Tag — Toolbar Insertion', () => {
         await page.waitForTimeout(200);
     }
 
-    test('Memory tag inserts {{Memory: @name: ...}} once via toolbar', async ({ page }) => {
+    test('Memory tag inserts {{@Memory: @name: ...}} once via toolbar', async ({ page }) => {
         await clickAction(page, 'memory-tag');
         const val = await editorValue(page);
-        expect(val).toContain('{{Memory:');
+        expect(val).toContain('{{@Memory:');
         expect(val).toContain('@name:');
         expect(val).toContain('}}');
-        const count = (val.match(/\{\{Memory:/g) || []).length;
+        const count = (val.match(/\{\{@Memory:/g) || []).length;
         expect(count).toBe(1);
     });
 
     test('Memory tag can be typed into editor and parsed', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: test-docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: test-docs }}');
         await page.waitForTimeout(500);
 
         const blocks = await page.evaluate(() => {
@@ -295,7 +295,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card renders in preview with amber accent', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: project-docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: project-docs }}');
         await page.waitForTimeout(500);
 
         const card = page.locator('.ai-placeholder-card[data-ai-type="Memory"]');
@@ -304,7 +304,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card has Folder, Files, and Rebuild buttons', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: my-docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: my-docs }}');
         await page.waitForTimeout(500);
 
         await expect(page.locator('.ai-memory-attach-folder')).toBeVisible();
@@ -313,7 +313,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card shows stats area', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: docs }}');
         await page.waitForTimeout(500);
 
         const stats = page.locator('.ai-memory-stats[data-memory-name="docs"]');
@@ -322,7 +322,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card label includes the memory name', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: project-files }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: project-files }}');
         await page.waitForTimeout(500);
 
         const label = page.locator('.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-label');
@@ -330,7 +330,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card has 📚 icon', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: docs }}');
         await page.waitForTimeout(500);
 
         const icon = page.locator('.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-icon');
@@ -338,7 +338,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('AI card with @use: shows hint badge', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI:\n  @use: workspace\n  @prompt: Summarize the project\n}}');
+        await page.locator('#markdown-editor').fill('{{@AI:\n  @use: workspace\n  @prompt: Summarize the project\n}}');
         await page.waitForTimeout(500);
 
         const useHint = page.locator('.ai-use-hint');
@@ -347,7 +347,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('AI card without @use: does not show hint badge', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI:\n  @prompt: Write a poem\n}}');
+        await page.locator('#markdown-editor').fill('{{@AI:\n  @prompt: Write a poem\n}}');
         await page.waitForTimeout(500);
 
         const useHint = page.locator('.ai-use-hint');
@@ -355,7 +355,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('AI card strips @prompt: and @use: from displayed prompt', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI:\n  @use: workspace\n  @prompt: Summarize the project\n}}');
+        await page.locator('#markdown-editor').fill('{{@AI:\n  @use: workspace\n  @prompt: Summarize the project\n}}');
         await page.waitForTimeout(500);
 
         const promptDisplay = page.locator('.ai-placeholder-prompt');
@@ -366,7 +366,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('AI card with @think: Yes shows active brain toggle', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI:\n  @think: Yes\n  @prompt: analyze this\n}}');
+        await page.locator('#markdown-editor').fill('{{@AI:\n  @think: Yes\n  @prompt: analyze this\n}}');
         await page.waitForTimeout(500);
 
         const thinkBtn = page.locator('.ai-think-toggle');
@@ -375,7 +375,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('AI card with @search: duckduckgo pre-selects dropdown', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI:\n  @search: duckduckgo\n  @prompt: search for info\n}}');
+        await page.locator('#markdown-editor').fill('{{@AI:\n  @search: duckduckgo\n  @prompt: search for info\n}}');
         await page.waitForTimeout(500);
 
         const searchSelect = page.locator('.ai-agent-search-select');
@@ -385,7 +385,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card remove button updates editor text', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: docs }}');
         await page.waitForTimeout(500);
 
         const card = page.locator('.ai-placeholder-card[data-ai-type="Memory"]');
@@ -407,12 +407,12 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
         await page.waitForTimeout(500);
 
         const val = await page.locator('#markdown-editor').inputValue();
-        expect(val).not.toContain('{{Memory:');
+        expect(val).not.toContain('{{@Memory:');
         expect(val).not.toContain('}}');
     });
 
     test('✕ close button on AI card calls M._docgen.removeDocgenTag', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI: Write a poem }}');
+        await page.locator('#markdown-editor').fill('{{@AI: Write a poem }}');
         await page.waitForTimeout(500);
 
         const removeBtn = page.locator('.ai-remove-tag').first();
@@ -429,7 +429,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('▶ play button on AI card does not throw ReferenceError', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI: Write a poem }}');
+        await page.locator('#markdown-editor').fill('{{@AI: Write a poem }}');
         await page.waitForTimeout(500);
 
         const playBtn = page.locator('.ai-fill-one').first();
@@ -447,7 +447,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('▶ play button on Agent card does not throw ReferenceError', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Agent:\\n@step 1: analyze\\n@step 2: write }}');
+        await page.locator('#markdown-editor').fill('{{@Agent:\\n@step 1: analyze\\n@step 2: write }}');
         await page.waitForTimeout(500);
 
         const playBtn = page.locator('.ai-fill-one').first();
@@ -473,7 +473,7 @@ test.describe('Memory — DOMPurify Allowlist', () => {
     });
 
     test('data-memory-name attribute survives DOMPurify sanitization', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: @name: test-docs }}');
+        await page.locator('#markdown-editor').fill('{{@Memory: @name: test-docs }}');
         await page.waitForTimeout(500);
 
         const attr = await page.locator('.ai-placeholder-card[data-ai-type="Memory"]')
@@ -482,7 +482,7 @@ test.describe('Memory — DOMPurify Allowlist', () => {
     });
 
     test('data-step attribute on agent steps survives sanitization', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Agent:\n@step 1: analyze\n@step 2: write }}');
+        await page.locator('#markdown-editor').fill('{{@Agent:\n@step 1: analyze\n@step 2: write }}');
         await page.waitForTimeout(500);
 
         const steps = page.locator('.ai-agent-step[data-step]');

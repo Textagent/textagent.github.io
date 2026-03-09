@@ -17,7 +17,7 @@
     // ==============================================
     function insertDocgenTag(type) {
         if (type === 'Agent') {
-            M.wrapSelectionWith('{{Agent:\n  @step 1: ', '\n  @step 2: describe the next step\n}}', 'describe this step');
+            M.wrapSelectionWith('{{@Agent:\n  @step 1: ', '\n  @step 2: describe the next step\n}}', 'describe this step');
             return;
         }
         if (type === 'Memory') {
@@ -33,7 +33,7 @@
             do {
                 memId = 'mem-' + Math.random().toString(36).substring(2, 7);
             } while (existingNames.indexOf(memId) !== -1);
-            M.wrapSelectionWith('{{Memory:\n  @name: ', '\n}}', memId);
+            M.wrapSelectionWith('{{@Memory:\n  @name: ', '\n}}', memId);
             return;
         }
 
@@ -41,9 +41,11 @@
             ? 'describe the image to generate'
             : 'describe what to generate';
         if (type === 'AI') {
-            M.wrapSelectionWith('{{AI:\n  @prompt: ', '\n}}', placeholder);
+            M.wrapSelectionWith('{{@AI:\n  @prompt: ', '\n}}', placeholder);
+        } else if (type === 'Image') {
+            M.wrapSelectionWith('{{@Image: ', '}}', placeholder);
         } else {
-            M.wrapSelectionWith('{{' + type + ': ', '}}', placeholder);
+            M.wrapSelectionWith('{{@' + type + ': ', '}}', placeholder);
         }
     }
 
@@ -77,7 +79,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -178,7 +180,7 @@
     function deduplicateMemoryNames(markdown) {
         if (_dedupInProgress) return markdown;
         var fenced = getFencedRanges(markdown);
-        var tagRe = /\{\{Memory:\s*([\s\S]*?)\}\}/g;
+        var tagRe = /\{\{@?Memory:\s*([\s\S]*?)\}\}/g;
         var nameRe = /^(?:@name|Name):\s*(.+)$/m;
         var seen = {};
         var replacements = []; // { start, end, oldName, newName }
@@ -234,7 +236,7 @@
         // Auto-rename duplicate Memory names in editor + input
         markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -271,7 +273,7 @@
             var prompt = match[2].trim();
             // Backward compat: treat Think as AI with @think: yes
             if (type === 'Think') type = 'AI';
-            var thinkFieldMatch = prompt.match(/^@think:\s*(yes|no)$/mi);
+            var thinkFieldMatch = prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : (match[1] === 'Think');
             var icon = type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
@@ -333,11 +335,11 @@
                     + '<option value="serper">🔎 Serper</option>';
 
                 // @use: hint for Agent
-                var agentUseMatch = prompt.match(/^@use:\s*(.+)$/m);
+                var agentUseMatch = prompt.match(/^(?:@use|Use):\s*(.+)$/m);
                 var agentUseHint = agentUseMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(agentUseMatch[1]) + '</span>' : '';
 
                 // Parse @search field for Agent
-                var agentSearchMatch = prompt.match(/^@search:\s*(\S+)$/mi);
+                var agentSearchMatch = prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
                 var agentSearchVal = agentSearchMatch ? agentSearchMatch[1].toLowerCase() : 'off';
                 var searchOpts = '<option value="off"' + (agentSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
                     + '<option value="duckduckgo"' + (agentSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
@@ -369,16 +371,16 @@
                     + '</div>';
             } else {
                 // Extract @use and strip @ fields from display
-                var useMatch = prompt.match(/^@use:\s*(.+)$/m);
+                var useMatch = prompt.match(/^(?:@use|Use):\s*(.+)$/m);
                 var useHint = useMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(useMatch[1]) + '</span>' : '';
                 var displayPrompt = useMatch ? prompt.replace(useMatch[0], '').trim() : prompt;
                 // Strip @think, @search, @prompt from display
-                displayPrompt = displayPrompt.replace(/^@think:\s*(yes|no)$/mi, '').trim();
-                displayPrompt = displayPrompt.replace(/^@search:\s*\S+$/mi, '').trim();
-                displayPrompt = displayPrompt.replace(/^@prompt:\s*/m, '').trim();
+                displayPrompt = displayPrompt.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
+                displayPrompt = displayPrompt.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
+                displayPrompt = displayPrompt.replace(/^(?:@prompt|Prompt):\s*/m, '').trim();
 
                 // Parse @search field for AI card
-                var searchFieldMatch = prompt.match(/^@search:\s*(\S+)$/mi);
+                var searchFieldMatch = prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
                 var cardSearchVal = searchFieldMatch ? searchFieldMatch[1].toLowerCase() : 'off';
                 var aiSearchOpts = '<option value="off"' + (cardSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
                     + '<option value="duckduckgo"' + (cardSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
@@ -534,7 +536,7 @@
         function getDocMemoryNames() {
             var text = M.markdownEditor ? M.markdownEditor.value : '';
             var names = [];
-            var re = /\{\{Memory:[^}]*(?:@name|Name):\s*([^\s}]+)/gi;
+            var re = /\{\{@?Memory:[^}]*(?:@name|Name):\s*([^\s}]+)/gi;
             var m;
             while ((m = re.exec(text)) !== null) {
                 var n = m[1].replace(/[,}]/g, '').trim();
@@ -568,7 +570,7 @@
             }
 
             var tagType = block.type;
-            var newTag = '{{' + tagType + ':\n  ' + inner.trim() + '\n}}';
+            var newTag = '{{@' + tagType + ':\n  ' + inner.trim() + '\n}}';
             M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
             if (M.markdownEditor) M.markdownEditor.dispatchEvent(new Event('input'));
         }
@@ -630,12 +632,12 @@
             var newTag;
             if (useLine && hasPromptKey) {
                 // Multi-line: @use + @prompt
-                newTag = '{{' + tagType + ':\n  ' + useLine + '\n  ' + inner + '\n}}';
+                newTag = '{{@' + tagType + ':\n  ' + useLine + '\n  ' + inner + '\n}}';
             } else if (useLine) {
                 // @use + bare prompt
-                newTag = '{{' + tagType + ': ' + useLine + '\n' + inner + ' }}';
+                newTag = '{{@' + tagType + ': ' + useLine + '\n' + inner + ' }}';
             } else {
-                newTag = '{{' + tagType + ': ' + inner + ' }}';
+                newTag = '{{@' + tagType + ': ' + inner + ' }}';
             }
 
             M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
