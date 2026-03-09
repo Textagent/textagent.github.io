@@ -14,6 +14,12 @@
 - Use: hint badge on AI/Think/Agent cards shows active memory sources
 - Context injection: memory search results injected into `buildPrompt()`, `generateAndReview()`, and `generateAgentFlow()` per-step
 - `discoverMemorySources()` helper scans editor for `{{Memory:}}` tags at generation time
+- **📚 Memory Selector dropdown** on every AI/Think/Agent card for visual multi-select
+- `listAllSources(docNames)` API: combines workspace + document tags + IndexedDB externals
+- Checkbox selection auto-syncs to editor `Use:` field + hint badge
+- Quick-attach 📂 Folder / 📄 Files directly from card (auto-names, no prompt dialog)
+- Origin badges: `doc` for document tags, `saved` for IndexedDB sources
+- 135 lines of dropdown CSS with dark/light theme support
 - 30 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, DOMPurify allowlist
 
 ---

@@ -517,14 +517,16 @@
             });
         });
 
-        // Close dropdown on outside click
+        // Close dropdown on outside click (skip during attach operations)
+        var _memoryAttaching = false;
         document.addEventListener('click', function (e) {
+            if (_memoryAttaching) return;
             if (!e.target.closest('.ai-memory-dropdown') && !e.target.closest('.ai-memory-select-btn')) {
                 container.querySelectorAll('.ai-memory-dropdown').forEach(function (d) { d.style.display = 'none'; });
             }
         });
 
-        // Quick-attach Folder from AI/Agent card
+        // Quick-attach Folder from AI/Agent card — auto-names from folder
         container.querySelectorAll('.ai-memory-quick-folder').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -532,33 +534,36 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
 
-                // Prompt for name
-                var name = prompt('Memory source name:', 'external-' + Date.now());
-                if (!name) return;
-                name = name.replace(/\s+/g, '-').toLowerCase();
+                // Use a temp name — will be replaced with actual folder name
+                var tempName = 'folder-' + Date.now();
 
                 btn.disabled = true;
                 btn.textContent = '⏳ Scanning...';
-                M._memory.attachFolder(name).then(function (info) {
+                _memoryAttaching = true;
+                M._memory.attachFolder(tempName).then(function (info) {
+                    // Rename to actual folder name (sanitized)
+                    var name = info.folderName.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9\-_]/g, '');
+                    if (!name) name = tempName;
+
                     M.showToast('📚 Indexed ' + info.chunkCount + ' chunks from "' + info.folderName + '"', 'success');
                     // Add to checked sources
                     var current = getBlockUseSources(idx);
                     if (current.indexOf(name) === -1) current.push(name);
                     updateBlockUseField(idx, current);
                     // Refresh dropdown
-                    btn.closest('.ai-memory-dropdown').querySelector('.ai-memory-select-btn');
                     var selBtn = container.querySelector('.ai-memory-select-btn[data-ai-index="' + idx + '"]');
                     if (selBtn) selBtn.click();
                 }).catch(function (err) {
                     if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
                 }).finally(function () {
+                    _memoryAttaching = false;
                     btn.disabled = false;
                     btn.textContent = '📂 Folder';
                 });
             });
         });
 
-        // Quick-attach Files from AI/Agent card
+        // Quick-attach Files from AI/Agent card — auto-names
         container.querySelectorAll('.ai-memory-quick-files').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -566,12 +571,11 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
 
-                var name = prompt('Memory source name:', 'files-' + Date.now());
-                if (!name) return;
-                name = name.replace(/\s+/g, '-').toLowerCase();
+                var name = 'files-' + Math.random().toString(36).substring(2, 7);
 
                 btn.disabled = true;
                 btn.textContent = '⏳ Reading...';
+                _memoryAttaching = true;
                 M._memory.attachFiles(name).then(function (info) {
                     M.showToast('📚 Added ' + info.addedChunks + ' chunks', 'success');
                     var current = getBlockUseSources(idx);
@@ -582,6 +586,7 @@
                 }).catch(function (err) {
                     if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
                 }).finally(function () {
+                    _memoryAttaching = false;
                     btn.disabled = false;
                     btn.textContent = '📄 Files';
                 });
