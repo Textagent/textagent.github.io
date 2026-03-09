@@ -531,7 +531,7 @@
     });
 
     // --- Email to Self ---
-    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec'; // TODO: replace with your deployed Apps Script URL
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-xyiD2820PQ36aaH4ucp3Yh67PwOC7icTHCtW6Hr6yOEgFntOkzfHrNTs7sXasWL74g/exec';
     var emailInput = document.getElementById('share-email-input');
     var emailSendBtn = document.getElementById('share-email-send');
     var emailStatus = document.getElementById('share-email-status');
