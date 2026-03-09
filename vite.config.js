@@ -10,15 +10,6 @@ export default defineConfig({
         emptyOutDir: true,
         rollupOptions: {
             input: resolve(__dirname, 'index.html'),
-            output: {
-                manualChunks: {
-                    core: ['marked', 'dompurify', 'highlight.js', 'bootstrap', 'pako', 'emoji-toolkit'],
-                    mermaid: ['mermaid'],
-                    math: ['mathjs'],
-                    export: ['html2pdf.js', 'jspdf', 'html2canvas', 'file-saver'],
-                    converters: ['mammoth', 'turndown', 'xlsx'],
-                },
-            },
         },
     },
 

@@ -81,11 +81,12 @@
         : '<i class="bi bi-moon"></i>';
 
     // --- Mermaid Initialization ---
-    M.initMermaid = function () {
+    M.initMermaid = async function () {
+        const mermaidLib = await window.getMermaid();
         const currentTheme = document.documentElement.getAttribute("data-theme");
         const mermaidTheme = currentTheme === "dark" ? "dark" : "default";
 
-        window.mermaid.initialize({
+        mermaidLib.initialize({
             startOnLoad: false,
             theme: mermaidTheme,
             securityLevel: 'strict',
@@ -94,11 +95,7 @@
         });
     };
 
-    try {
-        M.initMermaid();
-    } catch (e) {
-        console.warn("Mermaid initialization failed:", e);
-    }
+    // Mermaid is lazy-loaded on first use; no eager initialization needed.
 
     // --- Marked Options ---
     M.markedOptions = {

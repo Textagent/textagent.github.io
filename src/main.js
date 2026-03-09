@@ -41,55 +41,67 @@ async function loadModules() {
     await import('../js/renderer.js');
     await import('../js/workspace.js');
 
-    // Phase 2: Independent features (parallel — no inter-dependencies)
-    await Promise.all([
-        import('../js/file-converters.js'),
-        import('../js/pdf-export.js'),
-        import('../js/mermaid-toolbar.js'),
-        import('../js/executable-blocks.js'),
-        import('../js/editor-features.js'),
-        import('../js/ui-panels.js'),
-        import('../js/toolbar-overflow.js'),
-        import('../js/cloud-share.js'),
-        import('../js/ai-models.js'),
-        import('../js/llm-memory.js'),
-        import('../js/speechToText.js'),
-        import('../js/table-tools.js'),
-        import('../js/feature-demos.js'),
-        import('../js/help-mode.js'),
-    ]);
+    // Phase 2–5: Deferred features — load after initial paint
+    // so they don't block the critical rendering path.
+    const loadDeferred = async () => {
+        // Phase 2: Independent features (parallel — no inter-dependencies)
+        await Promise.all([
+            import('../js/file-converters.js'),
+            import('../js/pdf-export.js'),
+            import('../js/mermaid-toolbar.js'),
+            import('../js/executable-blocks.js'),
+            import('../js/editor-features.js'),
+            import('../js/ui-panels.js'),
+            import('../js/toolbar-overflow.js'),
+            import('../js/cloud-share.js'),
+            import('../js/ai-models.js'),
+            import('../js/llm-memory.js'),
+            import('../js/speechToText.js'),
+            import('../js/table-tools.js'),
+            import('../js/feature-demos.js'),
+            import('../js/help-mode.js'),
+        ]);
 
-    // Phase 3: Templates (parallel — all independent data modules)
-    await Promise.all([
-        import('../js/templates/documentation.js'),
-        import('../js/templates/project.js'),
-        import('../js/templates/technical.js'),
-        import('../js/templates/creative.js'),
-        import('../js/templates/coding.js'),
-        import('../js/templates/maths.js'),
-        import('../js/templates/ppt.js'),
-        import('../js/templates/quiz.js'),
-        import('../js/templates/tables.js'),
-        import('../js/templates/ai.js'),
-        import('../js/templates/agents.js'),
-    ]);
-    await import('../js/templates.js');
+        // Phase 3: Templates (parallel — all independent data modules)
+        await Promise.all([
+            import('../js/templates/documentation.js'),
+            import('../js/templates/project.js'),
+            import('../js/templates/technical.js'),
+            import('../js/templates/creative.js'),
+            import('../js/templates/coding.js'),
+            import('../js/templates/maths.js'),
+            import('../js/templates/ppt.js'),
+            import('../js/templates/quiz.js'),
+            import('../js/templates/tables.js'),
+            import('../js/templates/ai.js'),
+            import('../js/templates/agents.js'),
+        ]);
+        await import('../js/templates.js');
 
-    // Phase 4: AI (depends on ai-models from phase 2)
-    await import('../js/ai-web-search.js');
-    await import('../js/ai-assistant.js');
+        // Phase 4: AI (depends on ai-models from phase 2)
+        await import('../js/ai-web-search.js');
+        await import('../js/ai-assistant.js');
 
-    // Phase 4.5: DocGen (depends on ai-assistant's requestAiTask API)
-    await import('../js/ai-docgen.js');
+        // Phase 4.5: DocGen (depends on ai-assistant's requestAiTask API)
+        await import('../js/ai-docgen.js');
 
-    // Phase 4.6: API Component (independent from AI, depends on M._showToast from ai-docgen)
-    await import('../js/api-docgen.js');
+        // Phase 4.6: API Component (independent from AI, depends on M._showToast from ai-docgen)
+        await import('../js/api-docgen.js');
 
-    // Phase 4.7: Linux Terminal Component (independent, depends on M._showToast)
-    await import('../js/linux-docgen.js');
+        // Phase 4.7: Linux Terminal Component (independent, depends on M._showToast)
+        await import('../js/linux-docgen.js');
 
-    // Phase 5: Init wiring (must be last — wires everything together)
-    await import('../js/app-init.js');
+        // Phase 5: Init wiring (must be last — wires everything together)
+        await import('../js/app-init.js');
+    };
+
+    // Use requestIdleCallback to defer non-critical modules,
+    // with a setTimeout fallback for browsers that don't support it.
+    if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(() => loadDeferred());
+    } else {
+        setTimeout(() => loadDeferred(), 50);
+    }
 }
 
 loadModules();

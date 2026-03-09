@@ -20,7 +20,6 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import pako from 'pako';
-import mermaid from 'mermaid';
 import * as bootstrap from 'bootstrap';
 import joypixels from 'emoji-toolkit';
 
@@ -28,9 +27,20 @@ window.marked = marked;
 window.hljs = hljs;
 window.DOMPurify = DOMPurify;
 window.pako = pako;
-window.mermaid = mermaid;
 window.bootstrap = bootstrap;
 window.joypixels = joypixels;
+
+// --- Mermaid (only when doc has ```mermaid blocks) ---
+let _mermaid;
+
+window.getMermaid = async function () {
+    if (!_mermaid) {
+        const mod = await import('mermaid');
+        _mermaid = mod.default;
+        window.mermaid = _mermaid;
+    }
+    return _mermaid;
+};
 
 // === LAZY (loaded on first use) ===
 // Each lazy lib is loaded via a getter that caches the module.

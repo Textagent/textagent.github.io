@@ -169,7 +169,7 @@
     };
 
     // --- Render Markdown (live preview) ---
-    M.renderMarkdown = function () {
+    M.renderMarkdown = async function () {
         try {
             // Core rendering shared with exports
             M.renderMarkdownToContainer(M.markdownPreview);
@@ -183,7 +183,9 @@
             try {
                 const mermaidNodes = M.markdownPreview.querySelectorAll('.mermaid');
                 if (mermaidNodes.length > 0) {
-                    mermaid.run({ nodes: mermaidNodes, suppressErrors: true })
+                    const mermaidLib = await window.getMermaid();
+                    await M.initMermaid();
+                    mermaidLib.run({ nodes: mermaidNodes, suppressErrors: true })
                         .then(function () { if (M.addMermaidToolbars) M.addMermaidToolbars(); })
                         .catch(function (e) {
                             console.warn("Mermaid rendering failed:", e);
