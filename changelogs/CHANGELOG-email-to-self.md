@@ -31,3 +31,4 @@ Upgraded "Email to Self" from `mailto:` links to actual email delivery via Googl
 
 #### `README.md`
 - Updated Email to Self release note to reflect direct send via Apps Script
+
