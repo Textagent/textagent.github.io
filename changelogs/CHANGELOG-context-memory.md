@@ -5,29 +5,31 @@
 - Three storage modes: browser-only (IndexedDB blob), disk workspace (`.textagent/memory.db`), external memory (IndexedDB blob keyed by name)
 - Incremental indexing: tracks file modification times, re-indexes only changed files
 - Reuses existing `sql.js` WASM from `exec-sandbox.js` — no new bundle size increase
-- `{{Memory: Name: my-docs}}` tag for defining external context sources
-- `Use: workspace, my-docs` field in AI/Think/Agent tags for multi-source context retrieval
+- `{{@Memory: @name: my-docs}}` tag for defining external context sources
+- `@use: workspace, my-docs` field in AI/Think/Agent tags for multi-source context retrieval
 - **Auto-discovery**: AI/Think/Agent tags automatically detect `{{Memory:}}` tags in the same document — no `Use:` field required
-- **`Use: none` opt-out**: explicitly disables memory for a specific AI/Agent block even when Memory tags exist
+- **`@use: none` opt-out**: explicitly disables memory for a specific AI/Agent block even when Memory tags exist
 - 📚 Memory toolbar button in AI Tags overflow dropdown (`index.html`)
 - Memory card renders with amber/orange accent: 📂 Folder, 📄 Files, 🔄 Rebuild buttons + stats display
-- Use: hint badge on AI/Think/Agent cards shows active memory sources
+- `@use:` hint badge on AI/Think/Agent cards shows active memory sources
 - Context injection: memory search results injected into `buildPrompt()`, `generateAndReview()`, and `generateAgentFlow()` per-step
-- `discoverMemorySources()` helper scans editor for `{{Memory:}}` tags at generation time
+- `discoverMemorySources()` helper scans editor for `{{@Memory:}}` tags at generation time
 - **📚 Memory Selector dropdown** on every AI/Think/Agent card for visual multi-select
 - `listAllSources(docNames)` API: combines workspace + document tags + IndexedDB externals
-- Checkbox selection auto-syncs to editor `Use:` field + hint badge
+- Checkbox selection auto-syncs to editor `@use:` field + hint badge
 - Quick-attach 📂 Folder / 📄 Files directly from card (auto-names, no prompt dialog)
 - Origin badges: `doc` for document tags, `saved` for IndexedDB sources
 - 135 lines of dropdown CSS with dark/light theme support
 - **Auto-generated Memory IDs** (`mem-xxxxx`): prevents duplicate names when inserting from toolbar
-- **Dropdown fallback**: document `{{Memory:}}` tags now appear even when `M._memory` module isn't loaded
+- **Dropdown fallback**: document `{{@Memory:}}` tags now appear even when `M._memory` module isn't loaded
 - **Editor-level dedup**: duplicate Memory names auto-renamed (suffixed -2, -3…) directly in editor text, not just preview
 - **`@` prefix for metadata fields**: All tag metadata now uses `@` prefix: `@name`, `@use`, `@think`, `@search`, `@prompt`, `@step` (backward-compatible with old format)
 - **🧠 Think toggle**: Think is a toggle on AI/Agent cards (adds `@think: Yes/No`), removed separate Think toolbar button
 - **🔍 Search selector**: Search provider dropdown on both AI and Agent cards syncs `@search:` field to editor text
 - **Button handler fix**: ▶ Play and ✕ Close buttons now use `M._docgen.` prefix after module split
-- 33 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, button code-flow, DOMPurify allowlist
+- **`@` prefix for tag types**: Tag types now use `@` prefix: `{{@AI:}}`, `{{@Agent:}}`, `{{@Memory:}}`, `{{@Image:}}` (backward-compatible with `{{AI:}}` format)
+- **Re-render on page refresh**: Tags render as cards immediately after docgen loads instead of showing raw text
+- 40 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, button code-flow, DOMPurify allowlist
 
 ---
 
