@@ -115,12 +115,13 @@
                     <div class="share-email-header"><i class="bi bi-envelope me-1"></i> Email to Self</div>
                     <div class="share-email-row">
                         <input type="email" id="share-email-input" placeholder="your@email.com" autocomplete="email" />
-                        <button class="share-btn-primary" id="share-email-send" title="Email link & download file">
+                        <button class="share-btn-primary" id="share-email-send" title="Send link & file to your email">
                             <i class="bi bi-send"></i>
                         </button>
                     </div>
-                    <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>Opens your email client with the
-                        link. The .md file will download so you can attach it.</small>
+                    <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>Sends the share link
+                        and .md file directly to your inbox.</small>
+                    <div id="share-email-status" class="share-email-status"></div>
                 </div>
             </div>
         </div>

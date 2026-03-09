@@ -402,6 +402,29 @@
   margin-top: 0;
 }
 
+.share-email-status {
+  font-size: 13px;
+  margin-top: 8px;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.share-email-status:empty {
+  display: none;
+}
+
+.share-email-success {
+  color: #2ea043;
+}
+
+[data-theme="dark"] .share-email-success {
+  color: #3fb950;
+}
+
+.share-email-error {
+  color: #f85149;
+}
+
 /* ========================================
    PASSPHRASE PROMPT MODAL
    ======================================== */

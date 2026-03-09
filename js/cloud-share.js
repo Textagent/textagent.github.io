@@ -531,14 +531,16 @@
     });
 
     // --- Email to Self ---
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec'; // TODO: replace with your deployed Apps Script URL
     var emailInput = document.getElementById('share-email-input');
     var emailSendBtn = document.getElementById('share-email-send');
+    var emailStatus = document.getElementById('share-email-status');
 
     // Restore last-used email
-    var savedEmail = localStorage.getItem(M.KEYS ? M.KEYS.EMAIL_SELF : 'textagent-email-self');
+    var savedEmail = localStorage.getItem(M.KEYS.EMAIL_SELF);
     if (savedEmail && emailInput) emailInput.value = savedEmail;
 
-    if (emailSendBtn) emailSendBtn.addEventListener('click', function () {
+    if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {
         var email = emailInput.value.trim();
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             emailInput.classList.add('shake');
@@ -548,7 +550,7 @@
         }
 
         // Persist email for next time
-        try { localStorage.setItem(M.KEYS ? M.KEYS.EMAIL_SELF : 'textagent-email-self', email); } catch (e) { /* ignore */ }
+        try { localStorage.setItem(M.KEYS.EMAIL_SELF, email); } catch (e) { /* ignore */ }
 
         var shareUrl = document.getElementById('share-link-input').value;
         var content = M.markdownEditor.value;
@@ -558,34 +560,44 @@
         var headingMatch = content.match(/^#+\s+(.+)/m);
         if (headingMatch) heading = headingMatch[1].trim();
 
-        // Build mailto URL
-        var subject = 'TextAgent: ' + heading;
-        var body = 'Here is your TextAgent document "' + heading + '".\n\n'
-            + '🔗 Open in TextAgent:\n' + shareUrl + '\n\n'
-            + '---\n'
-            + 'Tip: Attach the .md file that was just downloaded to keep a local copy.\n';
-
-        var mailtoUrl = 'mailto:' + encodeURIComponent(email)
-            + '?subject=' + encodeURIComponent(subject)
-            + '&body=' + encodeURIComponent(body);
-
-        // Download the .md file
-        var safeName = heading.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50);
-        var mdBlob = new Blob([content], { type: 'text/markdown' });
-        var dlLink = document.createElement('a');
-        dlLink.href = URL.createObjectURL(mdBlob);
-        dlLink.download = (safeName || 'document') + '.md';
-        dlLink.click();
-        URL.revokeObjectURL(dlLink.href);
-
-        // Open email client
-        window.location.href = mailtoUrl;
-
-        // Visual feedback
+        // Show loading state
         var btn = emailSendBtn;
         var origHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-        setTimeout(function () { btn.innerHTML = origHTML; }, 2000);
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        if (emailStatus) { emailStatus.textContent = ''; emailStatus.className = 'share-email-status'; }
+
+        try {
+            var response = await fetch(EMAIL_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' }, // Apps Script requires text/plain for CORS
+                body: JSON.stringify({
+                    email: email,
+                    title: heading,
+                    content: content,
+                    shareLink: shareUrl
+                })
+            });
+            var result = await response.json();
+            if (result.success) {
+                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+                if (emailStatus) {
+                    emailStatus.textContent = '✅ Email sent! Check your inbox.';
+                    emailStatus.className = 'share-email-status share-email-success';
+                }
+                setTimeout(function () { btn.innerHTML = origHTML; btn.disabled = false; }, 3000);
+            } else {
+                throw new Error(result.error || 'Failed to send email');
+            }
+        } catch (error) {
+            console.error('Email send failed:', error);
+            btn.innerHTML = '<i class="bi bi-x-lg"></i>';
+            if (emailStatus) {
+                emailStatus.textContent = '❌ ' + (error.message || 'Failed to send. Try again.');
+                emailStatus.className = 'share-email-status share-email-error';
+            }
+            setTimeout(function () { btn.innerHTML = origHTML; btn.disabled = false; }, 3000);
+        }
     });
 
     // --- Passphrase Prompt Modal ---

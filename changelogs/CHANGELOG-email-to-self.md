@@ -1,28 +1,33 @@
-# CHANGELOG — Email to Self
+# CHANGELOG — Email to Self (Direct Send)
 
 ## Date: 2026-03-09
 
 ### Summary
-Added an "Email to Self" section to the share result modal, allowing users to email themselves the share link and download the raw `.md` file — with zero backend required.
+Upgraded "Email to Self" from `mailto:` links to actual email delivery via Google Apps Script. Users enter their email, click Send, and receive the share link + `.md` file as an attachment directly in their inbox.
 
 ### Changes
 
-#### `js/storage-keys.js`
-- Added `EMAIL_SELF: 'textagent-email-self'` constant
-
-#### `js/modal-templates.js`
-- Added email input field + send button HTML inside the share result modal (after download credentials section)
+#### `scripts/email-apps-script.js` [NEW]
+- Google Apps Script for deployment at script.google.com
+- `doPost()` receives JSON `{email, title, content, shareLink}`
+- Sends HTML email with styled template + plain text fallback
+- Attaches full `.md` file as email attachment
+- Returns JSON `{success: true/false}`
 
 #### `js/cloud-share.js`
-- Email validation with regex and shake animation on invalid input
-- `mailto:` URL composition with document heading as subject and share link in body
-- Auto-downloads raw `.md` file for manual attachment
-- Persists last-used email in localStorage via `M.KEYS.EMAIL_SELF`
-- Visual feedback (checkmark) after successful send
+- Replaced `mailto:` + `.md` download with `fetch()` POST to Apps Script endpoint
+- Added loading state (hourglass icon + disabled button)
+- Added success feedback (`✅ Email sent!`) and error feedback (`❌ message`)
+- Async handler with try/catch error handling
+
+#### `js/modal-templates.js`
+- Updated helper text: "Sends the share link and .md file directly to your inbox"
+- Added `#share-email-status` div for success/error messages
 
 #### `css/modals.css`
-- Styled `#share-email-section` with separator, header, and input row
-- Added `.shake` animation keyframes for validation error feedback
+- Added `.share-email-status` styling with `:empty` hide
+- Added `.share-email-success` (green) and `.share-email-error` (red) variants
+- Dark mode support for success color
 
 #### `README.md`
-- Added Email to Self entry to Release Notes table
+- Updated Email to Self release note to reflect direct send via Apps Script
