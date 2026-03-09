@@ -147,8 +147,66 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+    // Deduplicate Memory tag names in-place in the editor text
+    var _dedupInProgress = false;
+    function deduplicateMemoryNames(markdown) {
+        if (_dedupInProgress) return markdown;
+        var fenced = getFencedRanges(markdown);
+        var tagRe = /\{\{Memory:\s*([\s\S]*?)\}\}/g;
+        var nameRe = /^Name:\s*(.+)$/m;
+        var seen = {};
+        var replacements = []; // { start, end, oldName, newName }
+        var m;
+
+        while ((m = tagRe.exec(markdown)) !== null) {
+            if (isInsideFence(m.index, fenced)) continue;
+            var body = m[1];
+            var nm = body.match(nameRe);
+            if (!nm) continue;
+            var rawName = nm[1].trim();
+            var lc = rawName.toLowerCase();
+
+            if (seen[lc]) {
+                seen[lc]++;
+                var newName = rawName + '-' + seen[lc];
+                // Calculate position of name within the full match
+                var nameStart = m.index + m[0].indexOf(nm[0]) + nm[0].indexOf(nm[1]);
+                replacements.push({
+                    start: nameStart,
+                    end: nameStart + nm[1].length,
+                    oldName: nm[1],
+                    newName: newName
+                });
+            } else {
+                seen[lc] = 1;
+            }
+        }
+
+        if (replacements.length === 0) return markdown;
+
+        // Apply replacements in reverse order to preserve positions
+        var updated = markdown;
+        for (var i = replacements.length - 1; i >= 0; i--) {
+            var r = replacements[i];
+            updated = updated.substring(0, r.start) + r.newName + updated.substring(r.end);
+        }
+
+        // Update editor text (debounced to avoid re-trigger)
+        if (M.markdownEditor && M.markdownEditor.value === markdown) {
+            _dedupInProgress = true;
+            var sel = { start: M.markdownEditor.selectionStart, end: M.markdownEditor.selectionEnd };
+            M.markdownEditor.value = updated;
+            M.markdownEditor.selectionStart = sel.start;
+            M.markdownEditor.selectionEnd = sel.end;
+            setTimeout(function () { _dedupInProgress = false; }, 100);
+        }
+
+        return updated;
+    }
 
     function transformDocgenMarkdown(markdown) {
+        // Auto-rename duplicate Memory names in editor + input
+        markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
         var re = /\{\{(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
         var result = '';
@@ -176,6 +234,7 @@
             }
         });
         var modelOptionsHtml = textModelOptionsHtml;
+        var seenMemoryNames = {}; // Track used Memory names for dedup
 
         while ((match = re.exec(markdown)) !== null) {
             if (isInsideFence(match.index, fencedRanges)) continue;
@@ -191,19 +250,36 @@
             if (type === 'Memory') {
                 // Parse Memory fields
                 var nameMatch = prompt.match(/^Name:\s*(.+)$/m);
-                var memoryName = nameMatch ? escapeHtml(nameMatch[1].trim()) : 'default';
+                var rawName = nameMatch ? nameMatch[1].trim() : '';
+                // Auto-generate ID if no name provided
+                if (!rawName) rawName = 'mem-' + Math.random().toString(36).substring(2, 7);
+                var memoryName = rawName;
+                var isDuplicate = false;
 
-                result += '<div class="ai-placeholder-card" data-ai-type="Memory" data-ai-index="' + blockIndex + '" data-memory-name="' + memoryName + '">'
+                // Deduplicate: if name already used, auto-suffix
+                if (seenMemoryNames[memoryName.toLowerCase()]) {
+                    var count = seenMemoryNames[memoryName.toLowerCase()] + 1;
+                    seenMemoryNames[memoryName.toLowerCase()] = count;
+                    memoryName = rawName + '-' + count;
+                    isDuplicate = true;
+                } else {
+                    seenMemoryNames[memoryName.toLowerCase()] = 1;
+                }
+
+                var escapedName = escapeHtml(memoryName);
+                var dupWarning = isDuplicate ? ' <small style="color:#ef4444">⚠ renamed</small>' : '';
+
+                result += '<div class="ai-placeholder-card" data-ai-type="Memory" data-ai-index="' + blockIndex + '" data-memory-name="' + escapedName + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
-                    + '<span class="ai-placeholder-label">Memory: ' + memoryName + '</span>'
+                    + '<span class="ai-placeholder-label">Memory: ' + escapedName + dupWarning + '</span>'
                     + '<div class="ai-placeholder-actions">'
-                    + '<button class="ai-placeholder-btn ai-memory-attach-folder" data-memory-name="' + memoryName + '" title="Attach folder">📂 Folder</button>'
-                    + '<button class="ai-placeholder-btn ai-memory-attach-files" data-memory-name="' + memoryName + '" title="Attach files">📄 Files</button>'
-                    + '<button class="ai-placeholder-btn ai-memory-rebuild" data-memory-name="' + memoryName + '" title="Rebuild index">🔄</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-attach-folder" data-memory-name="' + escapedName + '" title="Attach folder">📂 Folder</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-attach-files" data-memory-name="' + escapedName + '" title="Attach files">📄 Files</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-rebuild" data-memory-name="' + escapedName + '" title="Rebuild index">🔄</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
-                    + '<div class="ai-memory-stats" data-memory-name="' + memoryName + '">No files attached</div>'
+                    + '<div class="ai-memory-stats" data-memory-name="' + escapedName + '">No files attached</div>'
                     + '</div>';
             } else if (type === 'Agent') {
                 // Render pipeline card for Agent blocks

@@ -22,6 +22,7 @@
 - 135 lines of dropdown CSS with dark/light theme support
 - **Auto-generated Memory IDs** (`mem-xxxxx`): prevents duplicate names when inserting from toolbar
 - **Dropdown fallback**: document `{{Memory:}}` tags now appear even when `M._memory` module isn't loaded
+- **Editor-level dedup**: duplicate Memory names auto-renamed (suffixed -2, -3…) directly in editor text, not just preview
 - 30 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, DOMPurify allowlist
 
 ---
