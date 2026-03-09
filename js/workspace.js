@@ -306,11 +306,18 @@
             openDiskFile(entry);
         });
 
-        // Right-click context menu — find matching workspace file by path/name
+        // Right-click context menu — find or create workspace entry for this file
         row.addEventListener('contextmenu', function (e) {
             e.preventDefault();
             var wsFile = findFileByName(entry.path) || findFileByName(entry.name);
-            if (wsFile) showContextMenu(e, wsFile.id);
+            // Auto-add to workspace if not found (disk file not yet tracked)
+            if (!wsFile) {
+                var id = generateId();
+                wsFile = { id: id, name: entry.path || entry.name, createdAt: Date.now() };
+                workspace.files.push(wsFile);
+                saveWorkspace();
+            }
+            showContextMenu(e, wsFile.id);
         });
 
         li.appendChild(row);
@@ -435,41 +442,57 @@
         setFileContent(id, content);
         saveWorkspace();
         M.wsOpenFile(id);
+        // Reload tree so new file shows immediately
+        if (diskMode) loadDiskTree();
     });
 
     // --- Inline rename ---
     function startInlineRename(fileId) {
-        var li = fileList.querySelector('[data-file-id="' + fileId + '"]');
-        if (!li) return;
-        var nameSpan = li.querySelector('.ws-file-name');
-        if (!nameSpan) return;
+        var li, nameSpan;
+        // In tree mode, find by data-path; in flat mode, find by data-file-id
+        if (diskMode && diskTreeData) {
+            var file = findFileById(fileId);
+            if (!file) return;
+            li = fileList.querySelector('[data-path="' + file.name + '"]');
+            if (li) nameSpan = li.querySelector('.ws-tree-name');
+        } else {
+            li = fileList.querySelector('[data-file-id="' + fileId + '"]');
+            if (li) nameSpan = li.querySelector('.ws-file-name');
+        }
+        if (!li || !nameSpan) return;
         var file = findFileById(fileId);
         if (!file) return;
 
         var input = document.createElement('input');
         input.type = 'text';
         input.className = 'ws-rename-input';
-        input.value = file.name;
+        // Show just the filename for display (not full path)
+        var displayName = file.name.split('/').pop();
+        input.value = displayName;
         nameSpan.replaceWith(input);
         input.focus();
         // Select name without extension
-        var dotIdx = file.name.lastIndexOf('.');
+        var dotIdx = displayName.lastIndexOf('.');
         if (dotIdx > 0) input.setSelectionRange(0, dotIdx);
         else input.select();
 
         function commitRename() {
             var newName = input.value.trim();
-            if (!newName) newName = file.name;
+            if (!newName) newName = displayName;
             if (!newName.endsWith('.md')) newName += '.md';
-            file.name = newName;
+            // Preserve directory prefix for path-based names
+            var dirPrefix = file.name.lastIndexOf('/') >= 0
+                ? file.name.substring(0, file.name.lastIndexOf('/') + 1) : '';
+            file.name = dirPrefix + newName;
             saveWorkspace();
             renderFileList();
+            if (diskMode) loadDiskTree();
         }
 
         input.addEventListener('blur', commitRename);
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-            if (e.key === 'Escape') { input.value = file.name; input.blur(); }
+            if (e.key === 'Escape') { input.value = displayName; input.blur(); }
         });
     }
 
@@ -507,6 +530,8 @@
         if (!sidebarOpen) M.wsToggleSidebar();
         // Update page title
         updatePageTitle(fileName);
+        // Reload tree so new file shows immediately
+        if (diskMode) loadDiskTree();
         return id;
     };
 
@@ -582,6 +607,8 @@
         }
         saveWorkspace();
         renderFileList();
+        // Reload tree so deleted file disappears immediately
+        if (diskMode) loadDiskTree();
     };
 
     M.wsSaveCurrent = function () {
