@@ -15,6 +15,7 @@ function doPost(e) {
         var data = JSON.parse(e.postData.contents);
         var recipientEmail = data.email;
         var docTitle = data.title || 'Untitled Document';
+        var emailSubject = data.subject || ('TextAgent: ' + docTitle);
         var markdownContent = data.content || '';
         var shareLink = data.shareLink || '';
 
@@ -56,7 +57,7 @@ function doPost(e) {
         // Send email
         MailApp.sendEmail({
             to: recipientEmail,
-            subject: 'TextAgent: ' + docTitle,
+            subject: emailSubject,
             body: plainBody,
             htmlBody: htmlBody,
             attachments: [mdBlob],

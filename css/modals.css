@@ -356,24 +356,26 @@
   margin-bottom: 8px;
 }
 
-.share-email-row input[type="email"] {
-  flex: 1;
+.share-email-field {
+  width: 100%;
   padding: 8px 12px;
   font-size: 14px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   background-color: var(--editor-bg);
   color: var(--text-color);
+  margin-bottom: 8px;
+  box-sizing: border-box;
   transition: border-color 0.2s ease;
 }
 
-.share-email-row input[type="email"]:focus {
+.share-email-field:focus {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
-.share-email-row input[type="email"].shake {
+.share-email-field.shake {
   animation: emailShake 0.4s ease;
   border-color: #f85149;
 }

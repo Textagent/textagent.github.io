@@ -533,6 +533,7 @@
     // --- Email to Self ---
     var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-xyiD2820PQ36aaH4ucp3Yh67PwOC7icTHCtW6Hr6yOEgFntOkzfHrNTs7sXasWL74g/exec';
     var emailInput = document.getElementById('share-email-input');
+    var emailSubjectInput = document.getElementById('share-email-subject');
     var emailSendBtn = document.getElementById('share-email-send');
     var emailStatus = document.getElementById('share-email-status');
 
@@ -555,16 +556,20 @@
         var shareUrl = document.getElementById('share-link-input').value;
         var content = M.markdownEditor.value;
 
-        // Extract heading for subject
+        // Extract heading for fallback subject
         var heading = 'Untitled Document';
         var headingMatch = content.match(/^#+\s+(.+)/m);
         if (headingMatch) heading = headingMatch[1].trim();
+
+        // Use custom subject if provided, otherwise auto-generate
+        var customSubject = emailSubjectInput ? emailSubjectInput.value.trim() : '';
+        var subject = customSubject || ('TextAgent: ' + heading);
 
         // Show loading state
         var btn = emailSendBtn;
         var origHTML = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending...';
         if (emailStatus) { emailStatus.textContent = ''; emailStatus.className = 'share-email-status'; }
 
         try {
@@ -576,6 +581,7 @@
                 mode: 'no-cors',
                 body: JSON.stringify({
                     email: email,
+                    subject: subject,
                     title: heading,
                     content: content,
                     shareLink: shareUrl
