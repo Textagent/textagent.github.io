@@ -1954,7 +1954,42 @@
 }
 
 /* ==============================================
-   MEMORY SELECTOR — dropdown on AI/Think/Agent cards
+   THINK TOGGLE — 🧠 button on AI/Agent cards
+   ============================================== */
+
+.ai-think-toggle {
+    font-size: 0.85em !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    background: rgba(100, 100, 120, 0.15) !important;
+    color: #888 !important;
+    border: 1px solid rgba(100, 100, 120, 0.25) !important;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.ai-think-toggle:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.ai-think-toggle.active {
+    background: rgba(139, 92, 246, 0.2) !important;
+    color: #a78bfa !important;
+    border-color: rgba(139, 92, 246, 0.4) !important;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+}
+
+[data-theme="light"] .ai-think-toggle.active {
+    background: rgba(139, 92, 246, 0.15) !important;
+    color: #7c3aed !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* ==============================================
+   MEMORY SELECTOR — dropdown on AI/Agent cards
    ============================================== */
 
 .ai-memory-select-btn {

@@ -23,8 +23,11 @@
 - **Auto-generated Memory IDs** (`mem-xxxxx`): prevents duplicate names when inserting from toolbar
 - **Dropdown fallback**: document `{{Memory:}}` tags now appear even when `M._memory` module isn't loaded
 - **Editor-level dedup**: duplicate Memory names auto-renamed (suffixed -2, -3…) directly in editor text, not just preview
-- **`Prompt:` keyword**: AI/Think tags now use explicit `Prompt:` prefix for structured format (backward-compatible)
-- 30 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, DOMPurify allowlist
+- **`@` prefix for metadata fields**: All tag metadata now uses `@` prefix: `@name`, `@use`, `@think`, `@search`, `@prompt`, `@step` (backward-compatible with old format)
+- **🧠 Think toggle**: Think is a toggle on AI/Agent cards (adds `@think: Yes/No`), removed separate Think toolbar button
+- **🔍 Search selector**: Search provider dropdown on both AI and Agent cards syncs `@search:` field to editor text
+- **Button handler fix**: ▶ Play and ✕ Close buttons now use `M._docgen.` prefix after module split
+- 33 Playwright tests covering module API, tag parsing, card rendering, toolbar insertion, button code-flow, DOMPurify allowlist
 
 ---
 

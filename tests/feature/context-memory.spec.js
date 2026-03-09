@@ -127,18 +127,18 @@ test.describe('Memory Tag — Toolbar Insertion', () => {
         await page.waitForTimeout(200);
     }
 
-    test('Memory tag inserts {{Memory: Name: ...}} once via toolbar', async ({ page }) => {
+    test('Memory tag inserts {{Memory: @name: ...}} once via toolbar', async ({ page }) => {
         await clickAction(page, 'memory-tag');
         const val = await editorValue(page);
         expect(val).toContain('{{Memory:');
-        expect(val).toContain('Name:');
+        expect(val).toContain('@name:');
         expect(val).toContain('}}');
         const count = (val.match(/\{\{Memory:/g) || []).length;
         expect(count).toBe(1);
     });
 
     test('Memory tag can be typed into editor and parsed', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: test-docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: test-docs }}');
         await page.waitForTimeout(500);
 
         const blocks = await page.evaluate(() => {
@@ -160,45 +160,45 @@ test.describe('Memory Tag — Parsing', () => {
 
     test('parseDocgenBlocks recognizes {{Memory:}} tags', async ({ page }) => {
         const blocks = await page.evaluate(() => {
-            return window.MDView.parseDocgenBlocks('{{Memory: Name: my-docs }}');
+            return window.MDView.parseDocgenBlocks('{{Memory: @name: my-docs }}');
         });
         expect(blocks.length).toBe(1);
         expect(blocks[0].type).toBe('Memory');
         expect(blocks[0].memoryName).toBe('my-docs');
     });
 
-    test('parseDocgenBlocks parses Use: field from AI blocks', async ({ page }) => {
+    test('parseDocgenBlocks parses @use: field from AI blocks', async ({ page }) => {
         const blocks = await page.evaluate(() => {
-            return window.MDView.parseDocgenBlocks('{{AI: Use: workspace\nWrite a summary }}');
+            return window.MDView.parseDocgenBlocks('{{AI: @use: workspace\nWrite a summary }}');
         });
         expect(blocks.length).toBe(1);
         expect(blocks[0].type).toBe('AI');
         expect(blocks[0].useMemory).toEqual(['workspace']);
         expect(blocks[0].prompt).toContain('Write a summary');
-        // Use: field should be stripped from prompt
-        expect(blocks[0].prompt).not.toContain('Use:');
+        // @use: field should be stripped from prompt
+        expect(blocks[0].prompt).not.toContain('@use:');
     });
 
-    test('parseDocgenBlocks parses multi-source Use: field', async ({ page }) => {
+    test('parseDocgenBlocks parses multi-source @use: field', async ({ page }) => {
         const blocks = await page.evaluate(() => {
-            return window.MDView.parseDocgenBlocks('{{Think: Use: workspace, client-docs\nAnalyze the architecture }}');
+            return window.MDView.parseDocgenBlocks('{{Think: @use: workspace, client-docs\nAnalyze the architecture }}');
         });
         expect(blocks.length).toBe(1);
         expect(blocks[0].useMemory).toEqual(['workspace', 'client-docs']);
     });
 
-    test('parseDocgenBlocks does not add Use: to Image blocks', async ({ page }) => {
+    test('parseDocgenBlocks does not add @use: to Image blocks', async ({ page }) => {
         const blocks = await page.evaluate(() => {
-            return window.MDView.parseDocgenBlocks('{{Image: Use: workspace\nA sunset over mountains }}');
+            return window.MDView.parseDocgenBlocks('{{Image: @use: workspace\nA sunset over mountains }}');
         });
         expect(blocks.length).toBe(1);
         expect(blocks[0].type).toBe('Image');
         expect(blocks[0].useMemory).toBeUndefined();
     });
 
-    test('parseDocgenBlocks handles Agent with Use: field', async ({ page }) => {
+    test('parseDocgenBlocks handles Agent with @use: field', async ({ page }) => {
         const blocks = await page.evaluate(() => {
-            return window.MDView.parseDocgenBlocks('{{Agent: Use: workspace\nStep 1: Analyze\nStep 2: Summarize }}');
+            return window.MDView.parseDocgenBlocks('{{Agent: @use: workspace\n@step 1: Analyze\n@step 2: Summarize }}');
         });
         expect(blocks.length).toBe(1);
         expect(blocks[0].type).toBe('Agent');
@@ -206,7 +206,7 @@ test.describe('Memory Tag — Parsing', () => {
         expect(blocks[0].steps.length).toBe(2);
     });
 
-    test('parseDocgenBlocks without Use: field leaves useMemory undefined', async ({ page }) => {
+    test('parseDocgenBlocks without @use: field leaves useMemory undefined', async ({ page }) => {
         const blocks = await page.evaluate(() => {
             return window.MDView.parseDocgenBlocks('{{AI: Write something interesting }}');
         });
@@ -214,21 +214,70 @@ test.describe('Memory Tag — Parsing', () => {
         expect(blocks[0].useMemory).toBeUndefined();
     });
 
+    test('parseDocgenBlocks strips @prompt: prefix from prompt text', async ({ page }) => {
+        const blocks = await page.evaluate(() => {
+            return window.MDView.parseDocgenBlocks('{{AI:\n  @prompt: Write a detailed summary\n}}');
+        });
+        expect(blocks.length).toBe(1);
+        expect(blocks[0].prompt).toBe('Write a detailed summary');
+        expect(blocks[0].prompt).not.toContain('@prompt:');
+    });
+
+    test('parseDocgenBlocks parses @think: yes field', async ({ page }) => {
+        const blocks = await page.evaluate(() => {
+            return window.MDView.parseDocgenBlocks('{{AI:\n  @think: Yes\n  @prompt: analyze this\n}}');
+        });
+        expect(blocks.length).toBe(1);
+        expect(blocks[0].think).toBe(true);
+        expect(blocks[0].prompt).not.toContain('@think');
+    });
+
+    test('parseDocgenBlocks parses @think: no field', async ({ page }) => {
+        const blocks = await page.evaluate(() => {
+            return window.MDView.parseDocgenBlocks('{{AI:\n  @think: No\n  @prompt: generate text\n}}');
+        });
+        expect(blocks.length).toBe(1);
+        expect(blocks[0].think).toBe(false);
+    });
+
+    test('parseDocgenBlocks parses @search: field', async ({ page }) => {
+        const blocks = await page.evaluate(() => {
+            return window.MDView.parseDocgenBlocks('{{AI:\n  @search: duckduckgo\n  @prompt: find info\n}}');
+        });
+        expect(blocks.length).toBe(1);
+        expect(blocks[0].search).toBe('duckduckgo');
+        expect(blocks[0].prompt).not.toContain('@search');
+    });
+
+    test('parseDocgenBlocks parses full structured AI tag with all @ fields', async ({ page }) => {
+        const blocks = await page.evaluate(() => {
+            return window.MDView.parseDocgenBlocks(
+                '{{AI:\n  @use: my-context, my-context-2\n  @think: Yes\n  @search: duckduckgo\n  @prompt: describe what to generate\n}}'
+            );
+        });
+        expect(blocks.length).toBe(1);
+        expect(blocks[0].type).toBe('AI');
+        expect(blocks[0].useMemory).toEqual(['my-context', 'my-context-2']);
+        expect(blocks[0].think).toBe(true);
+        expect(blocks[0].search).toBe('duckduckgo');
+        expect(blocks[0].prompt).toBe('describe what to generate');
+    });
+
     test('multiple tags including Memory are parsed correctly', async ({ page }) => {
         const blocks = await page.evaluate(() => {
             return window.MDView.parseDocgenBlocks(
-                '{{Memory: Name: docs }}\n\n{{AI: Use: docs\nSummarize the docs }}\n\n{{Think: Analyze this }}'
+                '{{Memory: @name: docs }}\n\n{{AI: @use: docs\n@prompt: Summarize the docs }}\n\n{{Think: Analyze this }}'
             );
         });
         expect(blocks.length).toBe(3);
         expect(blocks[0].type).toBe('Memory');
         expect(blocks[1].type).toBe('AI');
         expect(blocks[1].useMemory).toEqual(['docs']);
-        expect(blocks[2].type).toBe('Think');
-        expect(blocks[2].useMemory).toBeUndefined();
+        expect(blocks[2].type).toBe('AI'); // Think tags are now converted to AI with think: true
+        expect(blocks[2].think).toBe(true);
     });
 
-    test('Memory tag defaults to "default" name if Name: is missing', async ({ page }) => {
+    test('Memory tag defaults to "default" name if @name: is missing', async ({ page }) => {
         const blocks = await page.evaluate(() => {
             return window.MDView.parseDocgenBlocks('{{Memory: some content }}');
         });
@@ -246,7 +295,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card renders in preview with amber accent', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: project-docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: project-docs }}');
         await page.waitForTimeout(500);
 
         const card = page.locator('.ai-placeholder-card[data-ai-type="Memory"]');
@@ -255,7 +304,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card has Folder, Files, and Rebuild buttons', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: my-docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: my-docs }}');
         await page.waitForTimeout(500);
 
         await expect(page.locator('.ai-memory-attach-folder')).toBeVisible();
@@ -264,7 +313,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card shows stats area', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: docs }}');
         await page.waitForTimeout(500);
 
         const stats = page.locator('.ai-memory-stats[data-memory-name="docs"]');
@@ -273,7 +322,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card label includes the memory name', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: project-files }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: project-files }}');
         await page.waitForTimeout(500);
 
         const label = page.locator('.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-label');
@@ -281,15 +330,15 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
     });
 
     test('Memory card has 📚 icon', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: docs }}');
         await page.waitForTimeout(500);
 
         const icon = page.locator('.ai-placeholder-card[data-ai-type="Memory"] .ai-placeholder-icon');
         await expect(icon).toContainText('📚');
     });
 
-    test('AI card with Use: shows hint badge', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI: Use: workspace\nSummarize the project }}');
+    test('AI card with @use: shows hint badge', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI:\n  @use: workspace\n  @prompt: Summarize the project\n}}');
         await page.waitForTimeout(500);
 
         const useHint = page.locator('.ai-use-hint');
@@ -297,27 +346,46 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
         await expect(useHint).toContainText('workspace');
     });
 
-    test('AI card without Use: does not show hint badge', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI: Write a poem }}');
+    test('AI card without @use: does not show hint badge', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI:\n  @prompt: Write a poem\n}}');
         await page.waitForTimeout(500);
 
         const useHint = page.locator('.ai-use-hint');
         await expect(useHint).toHaveCount(0);
     });
 
-    test('AI card with Use: strips Use: from displayed prompt', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{AI: Use: workspace\nSummarize the project }}');
+    test('AI card strips @prompt: and @use: from displayed prompt', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI:\n  @use: workspace\n  @prompt: Summarize the project\n}}');
         await page.waitForTimeout(500);
 
         const promptDisplay = page.locator('.ai-placeholder-prompt');
         await expect(promptDisplay).toContainText('Summarize the project');
-        // Should NOT display the raw "Use: workspace" text in prompt area
         const promptText = await promptDisplay.textContent();
-        expect(promptText).not.toContain('Use:');
+        expect(promptText).not.toContain('@use:');
+        expect(promptText).not.toContain('@prompt:');
+    });
+
+    test('AI card with @think: Yes shows active brain toggle', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI:\n  @think: Yes\n  @prompt: analyze this\n}}');
+        await page.waitForTimeout(500);
+
+        const thinkBtn = page.locator('.ai-think-toggle');
+        await expect(thinkBtn).toBeVisible();
+        await expect(thinkBtn).toHaveClass(/active/);
+    });
+
+    test('AI card with @search: duckduckgo pre-selects dropdown', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI:\n  @search: duckduckgo\n  @prompt: search for info\n}}');
+        await page.waitForTimeout(500);
+
+        const searchSelect = page.locator('.ai-agent-search-select');
+        await expect(searchSelect).toBeVisible();
+        const val = await searchSelect.inputValue();
+        expect(val).toBe('duckduckgo');
     });
 
     test('Memory card remove button updates editor text', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: docs }}');
         await page.waitForTimeout(500);
 
         const card = page.locator('.ai-placeholder-card[data-ai-type="Memory"]');
@@ -338,10 +406,61 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
         });
         await page.waitForTimeout(500);
 
-        // Editor text should no longer contain the Memory tag wrapper
         const val = await page.locator('#markdown-editor').inputValue();
         expect(val).not.toContain('{{Memory:');
         expect(val).not.toContain('}}');
+    });
+
+    test('✕ close button on AI card calls M._docgen.removeDocgenTag', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI: Write a poem }}');
+        await page.waitForTimeout(500);
+
+        const removeBtn = page.locator('.ai-remove-tag').first();
+        await expect(removeBtn).toBeVisible();
+
+        const errors = [];
+        page.on('pageerror', err => errors.push(err.message));
+
+        await removeBtn.click();
+        await page.waitForTimeout(500);
+
+        const refErrors = errors.filter(e => e.includes('ReferenceError'));
+        expect(refErrors.length).toBe(0);
+    });
+
+    test('▶ play button on AI card does not throw ReferenceError', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{AI: Write a poem }}');
+        await page.waitForTimeout(500);
+
+        const playBtn = page.locator('.ai-fill-one').first();
+        await expect(playBtn).toBeVisible();
+
+        const errors = [];
+        page.on('pageerror', err => errors.push(err.message));
+
+        await playBtn.click();
+        await page.waitForTimeout(1000);
+
+        // May get API key error but should NOT get ReferenceError
+        const refErrors = errors.filter(e => e.includes('ReferenceError'));
+        expect(refErrors.length).toBe(0);
+    });
+
+    test('▶ play button on Agent card does not throw ReferenceError', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{Agent:\\n@step 1: analyze\\n@step 2: write }}');
+        await page.waitForTimeout(500);
+
+        const playBtn = page.locator('.ai-fill-one').first();
+        await expect(playBtn).toBeVisible();
+
+        const errors = [];
+        page.on('pageerror', err => errors.push(err.message));
+
+        await playBtn.click();
+        await page.waitForTimeout(1000);
+
+        const refErrors = errors.filter(e => e.includes('ReferenceError'));
+        expect(refErrors.length).toBe(0);
     });
 });
 
@@ -354,7 +473,7 @@ test.describe('Memory — DOMPurify Allowlist', () => {
     });
 
     test('data-memory-name attribute survives DOMPurify sanitization', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Memory: Name: test-docs }}');
+        await page.locator('#markdown-editor').fill('{{Memory: @name: test-docs }}');
         await page.waitForTimeout(500);
 
         const attr = await page.locator('.ai-placeholder-card[data-ai-type="Memory"]')
@@ -363,7 +482,7 @@ test.describe('Memory — DOMPurify Allowlist', () => {
     });
 
     test('data-step attribute on agent steps survives sanitization', async ({ page }) => {
-        await page.locator('#markdown-editor').fill('{{Agent:\nStep 1: analyze\nStep 2: write }}');
+        await page.locator('#markdown-editor').fill('{{Agent:\n@step 1: analyze\n@step 2: write }}');
         await page.waitForTimeout(500);
 
         const steps = page.locator('.ai-agent-step[data-step]');
