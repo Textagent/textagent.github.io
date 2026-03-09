@@ -89,6 +89,24 @@
     transform: translateY(-1px);
 }
 
+/* --- Toolbar group container --- */
+.fmt-linux-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    border-radius: 8px;
+    padding: 2px 4px;
+    background: rgba(34, 197, 94, 0.05);
+    position: relative;
+    margin-left: 2px;
+}
+
+[data-theme="light"] .fmt-linux-group {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.04);
+}
+
 /* --- Toolbar button --- */
 .fmt-linux-btn {
     color: #22c55e !important;

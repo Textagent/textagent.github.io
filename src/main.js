@@ -81,6 +81,7 @@ async function loadModules() {
         import('../js/exec-math.js'),
         import('../js/exec-python.js'),
         import('../js/exec-sandbox.js'),
+        import('../js/coding-blocks.js'),
         import('../js/table-sort-filter.js'),
         import('../js/table-analytics.js'),
     ]);

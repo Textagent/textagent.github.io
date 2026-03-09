@@ -1021,7 +1021,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Compile & Run',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-play-circle',
     description: 'Compile & run C++, Rust, Go, and 25+ languages — results appear inline via Judge0 CE',
     content: '# ⚡ Compile & Run — Multi-Language\n\n' +
       '> Write programs in **C++, Rust, Go, Java**, and 25+ compiled/interpreted languages.\n' +
@@ -1116,7 +1116,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'C Programming',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-braces',
     description: 'Learn C fundamentals — memory, pointers, structs, and I/O with runnable examples',
     content: '# 🔵 C Programming — Compile & Run\n\n' +
       '> Classic systems programming language. Click **▶ Run** to compile and execute.\n\n' +
@@ -1192,7 +1192,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'C++ Modern',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-braces-asterisk',
     description: 'Modern C++ with STL containers, lambdas, smart pointers — compile & run inline',
     content: '# 🔷 C++ Modern — Compile & Run\n\n' +
       '> Modern C++ features with STL. Click **▶ Run** to compile and execute.\n\n' +
@@ -1272,7 +1272,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Rust Essentials',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-gear-wide-connected',
     description: 'Rust ownership, pattern matching, iterators, and error handling — compile & run',
     content: '# 🦀 Rust Essentials — Compile & Run\n\n' +
       '> Memory-safe systems programming. Click **▶ Run** to compile and execute.\n\n' +
@@ -1354,7 +1354,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Go Programming',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-arrow-right-circle',
     description: 'Go programming with goroutines, channels, slices, and maps — compile & run',
     content: '# 🐹 Go Programming — Compile & Run\n\n' +
       '> Simple, fast, concurrent. Click **▶ Run** to compile and execute.\n\n' +
@@ -1443,7 +1443,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Java OOP',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-cup-hot',
     description: 'Java classes, inheritance, collections, and streams — compile & run inline',
     content: '# ☕ Java OOP — Compile & Run\n\n' +
       '> Object-oriented programming in Java. Click **▶ Run** to compile and execute.\n\n' +
@@ -1512,7 +1512,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Python Algorithms',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-graph-up',
     description: 'Python data structures, algorithms, and comprehensions — compile & run via Judge0',
     content: '# 🐍 Python Algorithms — Compile & Run\n\n' +
       '> Python via Judge0 CE (server-side CPython). Click **▶ Run** to execute.\n\n' +
@@ -1587,7 +1587,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'TypeScript',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-filetype-tsx',
     description: 'TypeScript generics, interfaces, and utility types — compile & run inline',
     content: '# 📘 TypeScript — Compile & Run\n\n' +
       '> Type-safe JavaScript. Click **▶ Run** to compile and execute.\n\n' +
@@ -1653,7 +1653,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Ruby Scripting',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-gem',
     description: 'Ruby blocks, symbols, hashes, and OOP — compile & run inline',
     content: '# 💎 Ruby Scripting — Compile & Run\n\n' +
       '> Elegant and expressive. Click **▶ Run** to execute.\n\n' +
@@ -1703,18 +1703,18 @@ echo "Octal 77 = $((8#77))"
       '      Product.new("Laptop", 999.99),\n' +
       '      Product.new("Mouse", 29.99),\n' +
       '      Product.new("Keyboard", 79.99),\n' +
-        '      Product.new("Monitor", 449.99),\n' +
-        '    ]\n\n' +
-        '    puts "Sorted by price:"\n' +
-        '    products.sort.each(&:display)\n' +
-        '    puts "\\nCheapest: #{products.min}"\n' +
-        '    puts "Most expensive: #{products.max}"\n' +
-        '}}\n'
+      '      Product.new("Monitor", 449.99),\n' +
+      '    ]\n\n' +
+      '    puts "Sorted by price:"\n' +
+      '    products.sort.each(&:display)\n' +
+      '    puts "\\nCheapest: #{products.min}"\n' +
+      '    puts "Most expensive: #{products.max}"\n' +
+      '}}\n'
   },
   {
     name: 'Kotlin Playground',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-hexagon',
     description: 'Kotlin data classes, null safety, and functional idioms — compile & run',
     content: '# 🟣 Kotlin Playground — Compile & Run\n\n' +
       '> Modern, concise JVM language. Click **▶ Run** to compile and execute.\n\n' +
@@ -1774,7 +1774,7 @@ echo "Octal 77 = $((8#77))"
   {
     name: 'Scala Functional',
     category: 'coding',
-    icon: 'bi-cpu',
+    icon: 'bi-diamond',
     description: 'Scala case classes, pattern matching, and higher-order functions — compile & run',
     content: '# 🔴 Scala Functional — Compile & Run\n\n' +
       '> FP + OOP on the JVM. Click **▶ Run** to compile and execute.\n\n' +

@@ -188,7 +188,7 @@
                         <i class="bi bi-file-earmark-plus"></i>
                     </button>
                     <button id="template-btn" class="tool-button" title="Templates">
-                        <i class="bi bi-file-earmark-richtext"></i>
+                        <i class="bi bi-columns-gap"></i>
                     </button>
                     <span class="toolbar-separator"></span>
                     <button id="toggle-sync" class="tool-button sync-enabled"
@@ -356,7 +356,7 @@
                             </button>
 
                             <button id="mobile-template-btn" class="mobile-menu-item" title="Templates">
-                                <i class="bi bi-file-earmark-richtext me-2"></i> Templates
+                                <i class="bi bi-columns-gap me-2"></i> Templates
                             </button>
 
                             <button id="mobile-import-button" class="mobile-menu-item" title="Import File">
@@ -467,7 +467,7 @@
                     <i class="bi bi-plus-lg"></i> New
                 </button>
                 <button id="qab-template" class="qab-btn" title="Templates">
-                    <i class="bi bi-file-earmark-richtext"></i> Template
+                    <i class="bi bi-columns-gap"></i> Template
                 </button>
                 <button id="qab-import" class="qab-btn" title="Import File">
                     <i class="bi bi-upload"></i> Import
@@ -607,12 +607,17 @@
                 <span class="fmt-ai-group-label">AI Tags</span>
                 <button class="fmt-btn fmt-ai-btn" data-action="ai-tag" title="Tag as AI Generate">AI</button>
                 <button class="fmt-btn fmt-think-btn" data-action="think-tag" title="Tag as AI Think">Think</button>
-                <button class="fmt-btn fmt-image-btn" data-action="image-tag"
-                    title="Tag as AI Image Generate">Image</button>
-                <button class="fmt-btn fmt-agent-btn" data-action="agent-tag"
-                    title="Tag as Agent Flow Pipeline">Agent</button>
-                <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
-                    title="Fill all AI blocks">Fill</button>
+                <div class="fmt-group-overflow">
+                    <button class="fmt-btn fmt-group-more-btn" title="More AI tags">…</button>
+                    <div class="fmt-group-dropdown">
+                        <button class="fmt-btn fmt-image-btn" data-action="image-tag"
+                            title="Tag as AI Image Generate">Image</button>
+                        <button class="fmt-btn fmt-agent-btn" data-action="agent-tag"
+                            title="Tag as Agent Flow Pipeline">Agent</button>
+                        <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
+                            title="Fill all AI blocks">Fill</button>
+                    </div>
+                </div>
             </div>
             <span class="fmt-separator"></span>
             <div class="fmt-api-group" title="API Call Tags">
@@ -623,10 +628,44 @@
                     title="Insert POST API call">POST</button>
             </div>
             <span class="fmt-separator"></span>
-            <div class="fmt-linux-group" title="Linux">
+            <div class="fmt-linux-group" title="Linux & Compiled Languages">
                 <span class="fmt-api-group-label" style="color:#22c55e">Linux</span>
-                <button class="fmt-btn fmt-linux-btn" data-action="linux-tag" title="Insert Linux tag">🐧
+                <button class="fmt-btn fmt-linux-btn" data-action="linux-tag" title="Insert Linux terminal tag">🐧
                     Linux</button>
+                <button class="fmt-btn fmt-linux-btn" data-action="linux-cpp-tag" title="Insert C++ (compile & run)">🔷
+                    C++</button>
+                <div class="fmt-group-overflow">
+                    <button class="fmt-btn fmt-group-more-btn" title="More languages">…</button>
+                    <div class="fmt-group-dropdown">
+                        <button class="fmt-btn fmt-linux-btn" data-action="linux-rust-tag"
+                            title="Insert Rust (compile & run)">🦀 Rust</button>
+                        <button class="fmt-btn fmt-linux-btn" data-action="linux-go-tag"
+                            title="Insert Go (compile & run)">🐹 Go</button>
+                        <button class="fmt-btn fmt-linux-btn" data-action="linux-java-tag"
+                            title="Insert Java (compile & run)">☕ Java</button>
+                    </div>
+                </div>
+            </div>
+            <span class="fmt-separator"></span>
+            <div class="fmt-coding-group" title="Executable Code Blocks">
+                <span class="fmt-coding-group-label">Coding</span>
+                <button class="fmt-btn fmt-coding-btn fmt-coding-bash" data-action="coding-bash"
+                    title="Insert Bash block">🐚 Bash</button>
+                <button class="fmt-btn fmt-coding-btn fmt-coding-math" data-action="coding-math"
+                    title="Insert Math block">🔢 Math</button>
+                <div class="fmt-group-overflow">
+                    <button class="fmt-btn fmt-group-more-btn" title="More coding blocks">…</button>
+                    <div class="fmt-group-dropdown">
+                        <button class="fmt-btn fmt-coding-btn fmt-coding-python" data-action="coding-python"
+                            title="Insert Python block">🐍 Python</button>
+                        <button class="fmt-btn fmt-coding-btn fmt-coding-html" data-action="coding-html"
+                            title="Insert HTML block">🌐 HTML</button>
+                        <button class="fmt-btn fmt-coding-btn fmt-coding-js" data-action="coding-js"
+                            title="Insert JavaScript block">⚡ JS</button>
+                        <button class="fmt-btn fmt-coding-btn fmt-coding-sql" data-action="coding-sql"
+                            title="Insert SQL block">🗄️ SQL</button>
+                    </div>
+                </div>
             </div>
             <span class="fmt-separator"></span>
             <button class="fmt-btn fmt-vars-btn" id="apply-vars-btn"

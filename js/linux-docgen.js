@@ -528,6 +528,23 @@
     M.registerFormattingAction('linux-tag', function () { insertLinuxTag(); });
     M.registerFormattingAction('linux-script-tag', function () { insertLinuxScriptTag(); });
 
+    // Language-specific script tags
+    M.registerFormattingAction('linux-cpp-tag', function () {
+        M.insertAtCursor('\n{{Linux:\n  Language: cpp\n  Script: |\n    #include <iostream>\n    int main() {\n        std::cout << "Hello from C++!" << std::endl;\n        return 0;\n    }\n}}\n');
+    });
+
+    M.registerFormattingAction('linux-rust-tag', function () {
+        M.insertAtCursor('\n{{Linux:\n  Language: rust\n  Script: |\n    fn main() {\n        println!("Hello from Rust!");\n    }\n}}\n');
+    });
+
+    M.registerFormattingAction('linux-go-tag', function () {
+        M.insertAtCursor('\n{{Linux:\n  Language: go\n  Script: |\n    package main\n    import "fmt"\n    func main() {\n        fmt.Println("Hello from Go!")\n    }\n}}\n');
+    });
+
+    M.registerFormattingAction('linux-java-tag', function () {
+        M.insertAtCursor('\n{{Linux:\n  Language: java\n  Script: |\n    public class Main {\n        public static void main(String[] args) {\n            System.out.println("Hello from Java!");\n        }\n    }\n}}\n');
+    });
+
     // ==============================================
     // EXPOSE HOOKS for renderer.js
     // ==============================================

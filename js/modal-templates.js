@@ -587,7 +587,7 @@ const chatResponse = await openai.chat.completions.create({
         <div class="template-modal-content">
             <div class="template-modal-header">
                 <div class="template-header-left">
-                    <div class="template-logo"><i class="bi bi-file-earmark-richtext"></i></div>
+                    <div class="template-logo"><i class="bi bi-columns-gap"></i></div>
                     <div>
                         <h4>Templates</h4>
                         <p class="template-subtitle">Start with a professionally structured template</p>

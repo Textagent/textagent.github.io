@@ -1495,3 +1495,155 @@
 [data-theme="light"] .ai-agent-dl-hint {
     color: rgba(100, 116, 139, 0.7);
 }
+
+/* ============================================
+   Coding Tag Group — Executable Code Blocks
+   Uses indigo accent (#818cf8) to differentiate
+   from AI (teal), API (orange), Linux (green)
+   ============================================ */
+
+.fmt-coding-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid rgba(129, 140, 248, 0.25);
+    border-radius: 8px;
+    padding: 2px 4px;
+    background: rgba(129, 140, 248, 0.05);
+    position: relative;
+    margin-left: 2px;
+}
+
+.fmt-coding-group-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(129, 140, 248, 0.7);
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    background: var(--color-canvas-default, #161b22);
+    padding: 0 4px;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.fmt-coding-btn {
+    color: #818cf8 !important;
+    font-weight: 500;
+    gap: 4px;
+}
+
+.fmt-coding-btn:hover {
+    background: rgba(129, 140, 248, 0.15);
+}
+
+[data-theme="light"] .fmt-coding-group {
+    border-color: rgba(99, 102, 241, 0.3);
+    background: rgba(99, 102, 241, 0.04);
+}
+
+[data-theme="light"] .fmt-coding-group-label {
+    background: var(--color-canvas-default, #f6f8fa);
+    color: rgba(79, 70, 229, 0.7);
+}
+
+[data-theme="light"] .fmt-coding-btn {
+    color: #4f46e5 !important;
+}
+
+[data-theme="light"] .fmt-coding-btn:hover {
+    background: rgba(99, 102, 241, 0.12);
+}
+
+/* ============================================
+   Overflow Dropdown — "…" toggle for tag groups
+   Shared by AI Tags and Coding groups
+   ============================================ */
+
+.fmt-group-overflow {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.fmt-group-more-btn {
+    font-size: 1em !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px;
+    color: var(--color-fg-muted, #8b949e) !important;
+    padding: 2px 6px !important;
+    min-width: 24px;
+    text-align: center;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.fmt-group-more-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-fg-default, #e6edf3) !important;
+}
+
+[data-theme="light"] .fmt-group-more-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1e293b !important;
+}
+
+.fmt-group-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    min-width: 120px;
+    background: var(--color-canvas-default, #1e293b);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 1000;
+    animation: fmt-dropdown-in 0.15s ease-out;
+}
+
+.fmt-group-overflow.open .fmt-group-dropdown {
+    display: flex;
+}
+
+@keyframes fmt-dropdown-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.fmt-group-dropdown .fmt-btn {
+    width: 100%;
+    text-align: left;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-size: 0.82em;
+    transition: background 0.12s;
+}
+
+.fmt-group-dropdown .fmt-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .fmt-group-dropdown {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .fmt-group-dropdown .fmt-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
