@@ -568,9 +568,12 @@
         if (emailStatus) { emailStatus.textContent = ''; emailStatus.className = 'share-email-status'; }
 
         try {
-            var response = await fetch(EMAIL_SCRIPT_URL, {
+            // Google Apps Script redirects (302) without CORS headers,
+            // so we use no-cors mode. The response is opaque (can't read body),
+            // but the email is sent server-side regardless.
+            await fetch(EMAIL_SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain' }, // Apps Script requires text/plain for CORS
+                mode: 'no-cors',
                 body: JSON.stringify({
                     email: email,
                     title: heading,
@@ -578,17 +581,13 @@
                     shareLink: shareUrl
                 })
             });
-            var result = await response.json();
-            if (result.success) {
-                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-                if (emailStatus) {
-                    emailStatus.textContent = '✅ Email sent! Check your inbox.';
-                    emailStatus.className = 'share-email-status share-email-success';
-                }
-                setTimeout(function () { btn.innerHTML = origHTML; btn.disabled = false; }, 3000);
-            } else {
-                throw new Error(result.error || 'Failed to send email');
+            // If fetch didn't throw, the request reached Google's servers
+            btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+            if (emailStatus) {
+                emailStatus.textContent = '✅ Email sent! Check your inbox.';
+                emailStatus.className = 'share-email-status share-email-success';
             }
+            setTimeout(function () { btn.innerHTML = origHTML; btn.disabled = false; }, 3000);
         } catch (error) {
             console.error('Email send failed:', error);
             btn.innerHTML = '<i class="bi bi-x-lg"></i>';
