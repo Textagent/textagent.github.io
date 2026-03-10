@@ -17,7 +17,8 @@
     window.__MDV_TEMPLATES_QUIZ || [],
     window.__MDV_TEMPLATES_TABLES || [],
     window.__MDV_TEMPLATES_AI || [],
-    window.__MDV_TEMPLATES_AGENTS || []
+    window.__MDV_TEMPLATES_AGENTS || [],
+    window.__MDV_TEMPLATES_FINANCE || []
   );
 
 
@@ -45,6 +46,7 @@
       case 'quiz': return 'project';
       case 'tables': return 'technical';
       case 'ai': return 'creative';
+      case 'finance': return 'project';
       default: return 'doc';
     }
   }
@@ -61,6 +63,7 @@
       case 'quiz': return 'bi-patch-question';
       case 'tables': return 'bi-table';
       case 'ai': return 'bi-robot';
+      case 'finance': return 'bi-graph-up-arrow';
       default: return 'bi-file-earmark';
     }
   }
@@ -289,16 +292,38 @@
     // Resolve local variables from the table
     // Fallback to API vars for any empty/missing values
     const apiVars = window.__API_VARS || {};
-    let result = contentWithoutBlock;
+    let result = M._originalTemplateContent || contentWithoutBlock;
     for (const [key, val] of Object.entries(vars)) {
       const resolvedVal = val || apiVars[key] || '';
       result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), resolvedVal);
     }
 
+    // Dynamic stock-grid expansion:
+    // Find <div class="stock-grid" data-var-prefix="PREFIX"></div>
+    // and expand it into one stock-card per matching variable.
+    result = result.replace(
+      /<div\s+class="stock-grid"\s+data-var-prefix="(\w+)"([^>]*)>\s*<\/div>/gi,
+      function (match, prefix, extraAttrs) {
+        var entries = Object.entries(vars)
+          .filter(function (kv) { return kv[0].startsWith(prefix) && kv[0] !== prefix; })
+          .sort(function (a, b) { return a[0].localeCompare(b[0], undefined, { numeric: true }); })
+          .map(function (kv) { return (kv[1] || apiVars[kv[0]] || '').trim(); })
+          .filter(function (v) { return v.length > 0; });
+        if (entries.length === 0) return match;
+        var cards = entries.map(function (sym) {
+          return '  <div class="stock-card" data-symbol="' + sym.replace(/"/g, '&quot;') + '"></div>';
+        }).join('\n');
+        return '<div class="stock-grid"' + extraAttrs + '>\n' + cards + '\n</div>';
+      }
+    );
+
     // Also resolve global built-ins
     result = resolveGlobalVariables(result);
 
-    editor.value = result;
+    // Preserve the @variables block so users can re-edit and re-apply
+    const blockMatch = text.match(/<!-- @variables -->[\s\S]*?<!-- @\/variables -->\s*\n*/);
+    const originalBlock = blockMatch ? blockMatch[0] : '';
+    editor.value = originalBlock + result;
     M.renderMarkdown();
     editor.scrollTop = 0;
     return true;
@@ -318,6 +343,10 @@
     if (tpl.variables && tpl.variables.length > 0) {
       content = generateVariableBlock(tpl.variables) + content;
     }
+
+    // Store the raw template content (with $(var) placeholders)
+    // so applyTemplateVariables can re-resolve from source each time.
+    M._originalTemplateContent = tpl.content;
 
     // Resolve global built-in variables (date, time, etc.)
     content = resolveGlobalVariables(content);

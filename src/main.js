@@ -32,6 +32,7 @@ import '../css/help-mode.css';
 import '../css/workspace.css';
 import '../css/linux-terminal.css';
 import '../css/toast.css';
+import '../css/stock-widget.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -75,6 +76,7 @@ async function loadModules() {
         import('../js/table-tools.js'),
         import('../js/feature-demos.js'),
         import('../js/help-mode.js'),
+        import('../js/stock-widget.js'),
     ]);
 
     // 3b: Sub-modules that depend on 3a namespaces (M._exec, M._table)
@@ -103,6 +105,7 @@ async function loadModules() {
         import('../js/templates/tables.js'),
         import('../js/templates/ai.js'),
         import('../js/templates/agents.js'),
+        import('../js/templates/finance.js'),
     ]);
     await import('../js/templates.js');
 

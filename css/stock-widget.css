@@ -1,0 +1,216 @@
+/* ============================================
+   stock-widget.css — Stock Dashboard Card Grid
+   ============================================ */
+
+/* --- Grid Layout --- */
+.stock-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 8px 0;
+}
+
+@media (max-width: 900px) {
+    .stock-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .stock-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Card Base --- */
+.stock-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stock-card:hover {
+    transform: translateY(-2px);
+}
+
+/* --- Light Theme --- */
+.stock-card {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(209, 213, 219, 0.6);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.stock-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Dark Theme --- */
+[data-theme="dark"] .stock-card {
+    background: rgba(22, 27, 34, 0.85);
+    border: 1px solid rgba(48, 54, 61, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .stock-card:hover {
+    border-color: rgba(88, 166, 255, 0.35);
+    box-shadow: 0 6px 24px rgba(88, 166, 255, 0.12);
+}
+
+/* --- Card Header --- */
+.stock-card-header {
+    padding: 12px 14px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stock-card-symbol {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text-color, #1f2328);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+[data-theme="dark"] .stock-card-symbol {
+    color: #e6edf3;
+}
+
+/* --- Range Toggle Buttons --- */
+.stock-card-controls {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    align-items: center;
+}
+
+.stock-range-buttons {
+    display: flex;
+    gap: 2px;
+}
+
+.stock-range-btn {
+    background: transparent;
+    border: 1px solid rgba(150, 150, 150, 0.3);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #656d76;
+    transition: all 0.15s ease;
+    line-height: 1.3;
+}
+
+.stock-range-btn:hover {
+    background: rgba(100, 100, 100, 0.1);
+    color: #1f2328;
+}
+
+.stock-range-btn.active {
+    background: #0969da;
+    border-color: #0969da;
+    color: #fff;
+}
+
+[data-theme="dark"] .stock-range-btn {
+    color: #8b949e;
+    border-color: rgba(110, 118, 129, 0.4);
+}
+
+[data-theme="dark"] .stock-range-btn:hover {
+    background: rgba(110, 118, 129, 0.15);
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .stock-range-btn.active {
+    background: #58a6ff;
+    border-color: #58a6ff;
+    color: #0d1117;
+}
+
+/* EMA toggle buttons: green accent to distinguish from range */
+.stock-ema-buttons {
+    border-left: 1px solid rgba(150, 150, 150, 0.3);
+    padding-left: 4px;
+}
+
+.stock-ema-btn {
+    background: transparent;
+    border: 1px solid rgba(150, 150, 150, 0.3);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #656d76;
+    transition: all 0.15s ease;
+    line-height: 1.3;
+}
+
+.stock-ema-btn:hover {
+    background: rgba(100, 100, 100, 0.1);
+    color: #1f2328;
+}
+
+.stock-ema-btn.active {
+    background: #1a7f37;
+    border-color: #1a7f37;
+    color: #fff;
+}
+
+[data-theme="dark"] .stock-ema-btn {
+    color: #8b949e;
+    border-color: rgba(110, 118, 129, 0.4);
+}
+
+[data-theme="dark"] .stock-ema-btn:hover {
+    background: rgba(110, 118, 129, 0.15);
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .stock-ema-btn.active {
+    background: #3fb950;
+    border-color: #3fb950;
+    color: #0d1117;
+}
+
+[data-theme="dark"] .stock-ema-buttons {
+    border-left-color: rgba(110, 118, 129, 0.4);
+}
+
+/* --- Chart Container --- */
+.stock-card-chart {
+    flex: 1;
+    min-height: 180px;
+    padding: 0 4px 4px;
+}
+
+.stock-card-chart iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+    border: none;
+    border-radius: 0 0 10px 10px;
+}
+
+/* --- Unresolved variable placeholder --- */
+.stock-card:not([data-widget-loaded="true"]) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    color: var(--text-secondary, #656d76);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+[data-theme="dark"] .stock-card:not([data-widget-loaded="true"]) {
+    color: #8b949e;
+}

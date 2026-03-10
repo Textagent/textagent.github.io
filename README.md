@@ -43,8 +43,9 @@
 | **🧠 Context Memory** | `{{@Memory:}}` tag for workspace intelligence — SQLite FTS5 full-text search with heading-aware chunking (~1500 chars/chunk); three storage modes: browser-only (IndexedDB), disk workspace (`.textagent/memory.db`), external folders (IndexedDB); `@use: workspace, my-docs` in AI/Think/Agent tags for multi-source context retrieval; Memory Selector dropdown on AI/Think/Agent cards; amber-accented Memory card with Folder/Files/Rebuild buttons + stats; auto-discovery of workspace files; `Use: none` opt-out; reuses existing sql.js WASM (zero bundle increase) |
 | **✉️ Email to Self** | Send documents directly to your inbox from the share modal — email address input with `.md` file attached + share link; powered by Google Apps Script (free, 100 emails/day); loading state + success/error feedback; email persisted in localStorage; zero third-party dependencies |
 | **💾 Disk Workspace** | Folder-backed storage via File System Access API — "Open Folder" in sidebar header; `.md` files read/written directly to disk; `.textagent/workspace.json` manifest; debounced autosave ("💾 Saved to disk" indicator); refresh from disk for external edits; disconnect to revert to localStorage; auto-reconnect on reload via IndexedDB handles; unified action modal for rename/duplicate/delete with confirmation; Chromium-only (hidden in unsupported browsers) |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 103+ templates (11 categories: AI, Agents, Coding, Creative, Documentation, Maths, PPT, Project, Quiz, Tables, Technical), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme), Clear All / Clear Selection buttons (undoable via Ctrl+Z) |
-| **Dev Tooling** | ESLint + Prettier (lint, format:check), Playwright test suite — 151 tests across smoke, feature, integration, dev, performance, and QA categories (import, export, share, view-mode, editor, email-to-self, secure share, startup timing, export integrity, persistence, module loading, disk workspace, context memory, build validation, load-time, accessibility), pre-commit changelog enforcement, GitHub Actions CI |
+| **📈 Finance Dashboard** | Stock/crypto/index dashboard templates with live TradingView charts; dynamic grid via `data-var-prefix` (add/remove tickers in `@variables` table, grid auto-adjusts); configurable chart range (`1M`, `12M`, `36M`), interval (`D`, `W`, `M`), and EMA period (default 52); interactive 1M/1Y/3Y range + 52D/52W/52M EMA toggle buttons; `@variables` table persists after ⚡ Vars for re-editing; JS code block generates grid HTML from variables |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 106+ templates (12 categories: AI, Agents, Coding, Creative, Documentation, Finance, Maths, PPT, Project, Quiz, Tables, Technical), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme), Clear All / Clear Selection buttons (undoable via Ctrl+Z) |
+| **Dev Tooling** | ESLint + Prettier (lint, format:check), Playwright test suite — 179 tests across smoke, feature, integration, dev, performance, and QA categories (import, export, share, view-mode, editor, email-to-self, secure share, startup timing, export integrity, persistence, module loading, disk workspace, context memory, build validation, load-time, accessibility), pre-commit changelog enforcement, GitHub Actions CI |
 
 ## 🤖 AI Assistant
 
@@ -95,7 +96,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 ### AI Writing Assistant — Local & Cloud Models
 ![AI Assistant panel with model selector, action chips, and three-column layout](assets/ai-assistant.png)
 
-### Templates Gallery — 103+ Templates, 11 Categories
+### Templates Gallery — 106+ Templates, 12 Categories
 ![Templates modal with category tabs, search, and template cards](assets/templates-gallery.png)
 
 ### LaTeX Math & Mermaid Diagrams
@@ -142,9 +143,9 @@ Import files directly — they're auto-converted to Markdown client-side:
 </details>
 
 <details open>
-<summary><strong>📄 Templates Gallery — 103+ Templates, 11 Categories</strong></summary>
+<summary><strong>📄 Templates Gallery — 106+ Templates, 12 Categories</strong></summary>
 
-**Start any document in seconds.** Browse 103+ professionally designed templates across 11 categories: AI, Agents, Coding, Creative, Documentation, Maths, PPT, Project, Quiz, Tables, and Technical. AI-powered templates include `{{AI:}}` tags for one-click document generation.
+**Start any document in seconds.** Browse 106+ professionally designed templates across 12 categories: AI, Agents, Coding, Creative, Documentation, Finance, Maths, PPT, Project, Quiz, Tables, and Technical. AI-powered templates include `{{AI:}}` tags for one-click document generation.
 
 <img src="public/assets/demos/03_templates_gallery.webp" alt="Templates Gallery — browsing categories and loading AI Business Proposal template" width="100%">
 
@@ -442,6 +443,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Commits | Feature / Update |
 |------|---------|-----------------|
+| **2026-03-10** | — | 📈 **Stock Dashboard** — new Finance template category (3 templates: Stock Watchlist, Crypto Tracker, Market Overview) with live TradingView Advanced Chart widgets and 52-period EMA overlay; dynamic `data-var-prefix` grid engine expands one `stock-card` per non-empty variable; configurable `chartRange`, `chartInterval`, `emaPeriod` via `@variables` table; interactive 1M/1Y/3Y range + 52D/52W/52M EMA toggle buttons; `@variables` block persists after ⚡ Vars for re-editing; JS code block dynamically reads `$(cname*)` variables to generate grid HTML; `data-range`, `data-interval`, `data-ema` forwarded through DOMPurify; 179 Playwright tests pass |
 | **2026-03-10** | — | 🛡️ **CSP Fix for Badges** — added `https://img.shields.io` to the `img-src` directive in `index.html` and `nginx.conf` Content-Security-Policy to allow GitHub license and version badges to render correctly; updated legacy domain to `textagent.github.io`. |
 | **2026-03-10** | — | 🧪 **Toolbar Tags Tests Fix** — fixed 4 failing Playwright tests in `toolbar-tags.spec.js` by updating expected tag syntaxes to the new `@` prefix format (`{{@AI:}}`, `{{@Image:}}`, `{{@Agent:}}`), removing the deprecated `Think` tag test, and resolving a race condition where the test suite executed too fast by explicitly waiting for Phase 3 lazy-loaded modules (`M.formattingActions`) to register; added JSDoc types to silence TypeScript execution errors. |
 | **2026-03-10** | — | 📸 **Help Mode & Feature Demos** — 6 new demo recordings (Workspace Sidebar, Context Memory, Help Mode, Email to Self, Disk Workspace, API & Linux Tags); 4 new README screenshots; 12 new Help Mode button entries (Memory Tag, File Tree, C++/Rust/Go/Java compile, 6 coding block languages); 4 updated help entries with more specific demos; Feature Demos DEMO_MAP expanded 9 → 24 entries; README now has 10 screenshots and 24 feature demos |
