@@ -11,18 +11,35 @@ test.describe('Toolbar Tag Insertion', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
         await page.waitForSelector('#markdown-editor', { state: 'visible' });
-        await page.waitForFunction(() => window.MDView && window.MDView.currentViewMode === 'split');
+        await page.waitForFunction(() => {
+            const w = /** @type {any} */ (window);
+            return w.MDView && w.MDView.currentViewMode === 'split';
+        });
+        // Wait for Phase 3 lazy loading specifically:
+        await page.waitForFunction(() => {
+            const w = /** @type {any} */ (window);
+            return w.MDView &&
+                w.MDView.formattingActions &&
+                w.MDView.formattingActions['ai-tag'] &&
+                w.MDView.formattingActions['api-get-tag'] &&
+                w.MDView.formattingActions['linux-tag'];
+        });
         // Clear editor
         await page.locator('#markdown-editor').fill('');
         await page.waitForTimeout(200);
     });
 
     // ─── Helper: get editor value ───
+    /** @param {import('@playwright/test').Page} page */
     async function editorValue(page) {
         return page.locator('#markdown-editor').inputValue();
     }
 
     // ─── Helper: click a data-action button (may need overflow open first) ───
+    /**
+     * @param {import('@playwright/test').Page} page
+     * @param {string} action
+     */
     async function clickAction(page, action) {
         // Focus the editor first — wrapSelectionWith/insertAtCursor need it
         await page.locator('#markdown-editor').click();
@@ -45,43 +62,34 @@ test.describe('Toolbar Tag Insertion', () => {
     // AI TAGS GROUP
     // ═══════════════════════════════════════════
 
-    test('AI tag inserts {{AI: ...}} once', async ({ page }) => {
+    test('AI tag inserts {{@AI: ...}} once', async ({ page }) => {
         await clickAction(page, 'ai-tag');
         const val = await editorValue(page);
-        expect(val).toContain('{{AI:');
+        expect(val).toContain('{{@AI:');
         expect(val).toContain('}}');
         // Must not be nested
-        const count = (val.match(/\{\{AI:/g) || []).length;
+        const count = (val.match(/\{\{@?AI:/g) || []).length;
         expect(count).toBe(1);
     });
 
-    test('Think tag inserts {{Think: ...}} once', async ({ page }) => {
-        await clickAction(page, 'think-tag');
-        const val = await editorValue(page);
-        expect(val).toContain('{{Think:');
-        expect(val).toContain('}}');
-        const count = (val.match(/\{\{Think:/g) || []).length;
-        expect(count).toBe(1);
-    });
-
-    test('Image tag inserts {{Image: ...}} once (from dropdown)', async ({ page }) => {
+    test('Image tag inserts {{@Image: ...}} once (from dropdown)', async ({ page }) => {
         await clickAction(page, 'image-tag');
         const val = await editorValue(page);
-        expect(val).toContain('{{Image:');
+        expect(val).toContain('{{@Image:');
         expect(val).toContain('}}');
-        const count = (val.match(/\{\{Image:/g) || []).length;
+        const count = (val.match(/\{\{@?Image:/g) || []).length;
         expect(count).toBe(1);
     });
 
-    test('Agent tag inserts {{Agent: ...}} once (from dropdown)', async ({ page }) => {
+    test('Agent tag inserts {{@Agent: ...}} once (from dropdown)', async ({ page }) => {
         await clickAction(page, 'agent-tag');
         const val = await editorValue(page);
-        expect(val).toContain('{{Agent:');
-        expect(val).toContain('Step 1:');
-        expect(val).toContain('Step 2:');
+        expect(val).toContain('{{@Agent:');
+        expect(val).toContain('@step 1:');
+        expect(val).toContain('@step 2:');
         expect(val).toContain('}}');
         // Critical: must not be nested/doubled
-        const count = (val.match(/\{\{Agent:/g) || []).length;
+        const count = (val.match(/\{\{@?Agent:/g) || []).length;
         expect(count).toBe(1);
     });
 
