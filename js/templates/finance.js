@@ -13,7 +13,7 @@ window.__MDV_TEMPLATES_FINANCE = [
             { name: 'cname2', value: 'MSFT', desc: 'Stock ticker 2' },
             { name: 'cname3', value: 'GOOGL', desc: 'Stock ticker 3' },
             { name: 'cname4', value: 'AMZN', desc: 'Stock ticker 4' },
-            { name: 'chartRange', value: '1M', desc: 'Range: 1M, 12M, 36M, 5Y' },
+            { name: 'chartRange', value: '1M', desc: 'Range: 1d, 7d, 1M, 12M, 36M, 5Y' },
             { name: 'chartInterval', value: 'D', desc: 'Interval: D, W, M' },
             { name: 'emaPeriod', value: '52', desc: 'EMA period (e.g. 20, 52, 200)' },
         ],
@@ -43,7 +43,7 @@ window.__MDV_TEMPLATES_FINANCE = [
             'Use the **API** and **Coding** tools to pull real-time data:\n' +
             '\n' +
             '{{API:\n' +
-            '  URL: https://query1.finance.yahoo.com/v8/finance/chart/TICKER?interval=1d&range=5d\n' +
+            '  URL: https://corsproxy.io/?https://query2.finance.yahoo.com/v1/finance/search?q=amazon' +
             '  Method: GET\n' +
             '  Variable: stockData\n' +
             '}}\n' +
@@ -83,7 +83,14 @@ window.__MDV_TEMPLATES_FINANCE = [
             '  ...rows\n' +
             '].join("\\n");\n' +
             'console.log("\\n" + table);\n' +
-            '```\n'
+            '```\n' +
+            '\n' +
+            '---\n' +
+            '\n' +
+            '## 🔍 Find Ticker Symbols\n' +
+            '\n' +
+            '> 🔗 Search on **[Yahoo Finance](https://finance.yahoo.com/lookup/)** or **[TradingView](https://www.tradingview.com/symbol-search/)**\n' +
+            '> then paste the ticker into `cname1`, `cname2`, etc. above and click **⚡ Vars**.\n'
     },
     {
         name: 'Crypto Tracker',

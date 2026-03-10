@@ -207,6 +207,31 @@
             if (M.addJsBlockToolbars) M.addJsBlockToolbars();
             if (M.addSqlBlockToolbars) M.addSqlBlockToolbars();
 
+            // Add copy button to ALL code blocks that don't already have a toolbar
+            M.markdownPreview.querySelectorAll('pre').forEach(function (pre) {
+                // Skip if inside an executable container (already has toolbar)
+                if (pre.closest('.executable-code-container, .executable-math-container, .executable-html-container, .executable-python-container, .executable-js-container, .executable-sql-container')) return;
+                // Skip if already has a copy button
+                if (pre.querySelector('.pre-copy-btn')) return;
+
+                var btn = document.createElement('button');
+                btn.className = 'pre-copy-btn';
+                btn.textContent = '📋';
+                btn.title = 'Copy to clipboard';
+                btn.addEventListener('click', function () {
+                    var code = pre.querySelector('code');
+                    var text = code ? code.textContent : pre.textContent;
+                    navigator.clipboard.writeText(text).then(function () {
+                        btn.textContent = '✅';
+                        setTimeout(function () { btn.textContent = '📋'; }, 1500);
+                    }).catch(function () {
+                        btn.textContent = '❌';
+                        setTimeout(function () { btn.textContent = '📋'; }, 1500);
+                    });
+                });
+                pre.appendChild(btn);
+            });
+
             // Table spreadsheet tools (sort, filter, stats, chart, etc.)
             if (M.addTableToolbars) M.addTableToolbars();
 

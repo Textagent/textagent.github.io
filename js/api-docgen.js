@@ -217,7 +217,26 @@
 
             var header = document.createElement('div');
             header.className = 'ai-review-header';
-            header.textContent = '🔌 API Response — Review';
+
+            var headerLabel = document.createElement('span');
+            headerLabel.textContent = '🔌 API Response — Review';
+            header.appendChild(headerLabel);
+
+            var btnCopyResp = document.createElement('button');
+            btnCopyResp.className = 'ai-review-copy-btn';
+            btnCopyResp.textContent = '📋 Copy';
+            btnCopyResp.title = 'Copy response to clipboard';
+            btnCopyResp.addEventListener('click', function () {
+                var raw = resultMd.replace(/^[\s\S]*?```[a-z]*\n/, '').replace(/\n```[\s\S]*$/, '');
+                navigator.clipboard.writeText(raw).then(function () {
+                    btnCopyResp.textContent = '✅ Copied!';
+                    setTimeout(function () { btnCopyResp.textContent = '📋 Copy'; }, 1500);
+                }).catch(function () {
+                    btnCopyResp.textContent = '❌ Failed';
+                    setTimeout(function () { btnCopyResp.textContent = '📋 Copy'; }, 1500);
+                });
+            });
+            header.appendChild(btnCopyResp);
             panel.appendChild(header);
 
             var body = document.createElement('div');

@@ -4,7 +4,7 @@
 // into embedded TradingView Advanced Chart widgets with EMA overlay.
 //
 // Config via data attributes on .stock-grid:
-//   data-range    — default range  (1M, 12M, 36M)   [default: 1M]
+//   data-range    — default range  (1D, 5D, 1M, 12M, 36M, ALL) [default: 1M]
 //   data-interval — default interval (D, W, M)       [default: D]
 //   data-ema      — EMA period                        [default: 52]
 // ============================================
@@ -60,9 +60,12 @@
 
         // Range buttons
         var ranges = [
+            { label: '1D', range: '1D', interval: '5' },
+            { label: '1W', range: '5D', interval: '15' },
             { label: '1M', range: '1M', interval: 'D' },
             { label: '1Y', range: '12M', interval: 'D' },
             { label: '3Y', range: '36M', interval: 'W' },
+            { label: '5Y', range: 'ALL', interval: 'M' },
         ];
         var rangeGroup = document.createElement('div');
         rangeGroup.className = 'stock-range-buttons';
@@ -84,37 +87,7 @@
             rangeGroup.appendChild(btn);
         });
 
-        // EMA interval buttons
-        var emaIntervals = [
-            { label: cfg.ema + 'D', interval: 'D', title: cfg.ema + '-Day EMA' },
-            { label: cfg.ema + 'W', interval: 'W', title: cfg.ema + '-Week EMA' },
-            { label: cfg.ema + 'M', interval: 'M', title: cfg.ema + '-Month EMA' },
-        ];
-        var emaGroup = document.createElement('div');
-        emaGroup.className = 'stock-range-buttons stock-ema-buttons';
-
-        emaIntervals.forEach(function (e) {
-            var btn = document.createElement('button');
-            var isActive = e.interval === cfg.interval;
-            btn.className = 'stock-ema-btn' + (isActive ? ' active' : '');
-            btn.textContent = e.label;
-            btn.title = e.title;
-            btn.addEventListener('click', function () {
-                emaGroup.querySelectorAll('.stock-ema-btn').forEach(function (b) {
-                    b.classList.remove('active');
-                });
-                btn.classList.add('active');
-                var activeRange = rangeGroup.querySelector('.stock-range-btn.active');
-                var rangeLabel = activeRange ? activeRange.textContent : '1M';
-                var rangeVal = ranges.find(function (r) { return r.label === rangeLabel; });
-                var iframe = iframeWrap.querySelector('iframe');
-                if (iframe) iframe.src = buildWidgetUrl(symbol, e.interval, rangeVal ? rangeVal.range : '12M', cfg.ema);
-            });
-            emaGroup.appendChild(btn);
-        });
-
         controls.appendChild(rangeGroup);
-        controls.appendChild(emaGroup);
         return controls;
     }
 
@@ -165,7 +138,7 @@
             iframe.title = symbol + ' chart';
             iframeWrap.appendChild(iframe);
 
-            // Controls
+            // Controls (range + EMA buttons)
             var controls = createControls(symbol, iframeWrap, cfg);
             header.appendChild(controls);
 

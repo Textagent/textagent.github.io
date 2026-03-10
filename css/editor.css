@@ -104,10 +104,46 @@
 .markdown-body pre {
   background-color: var(--code-bg);
   border-radius: 6px;
+  max-height: 400px;
+  overflow-y: auto;
+  position: relative;
 }
 
 .markdown-body code {
   background-color: var(--code-bg);
   border-radius: 3px;
   padding: 0.2em 0.4em;
+}
+
+/* Copy button on non-executable code blocks */
+.pre-copy-btn {
+  position: sticky;
+  top: 4px;
+  float: right;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.8em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+
+.markdown-body pre:hover .pre-copy-btn {
+  opacity: 1;
+}
+
+.pre-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .pre-copy-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .pre-copy-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
 }

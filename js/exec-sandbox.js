@@ -190,6 +190,27 @@
         if (!codeEl) return;
         var code = codeEl.textContent;
 
+        // Substitute $(api_*) variables from {{API:}} tag responses
+        // Inject as pre-declared variables with properly escaped values
+        if (window.__API_VARS) {
+            var apiPreamble = '';
+            var apiKeys = Object.keys(window.__API_VARS);
+            for (var k = 0; k < apiKeys.length; k++) {
+                var varName = apiKeys[k].replace(/[^a-zA-Z0-9_]/g, '_');
+                var rawVal = window.__API_VARS[apiKeys[k]];
+                // Try to parse as JSON so the variable is a real object
+                try {
+                    JSON.parse(rawVal);
+                    apiPreamble += 'var ' + varName + ' = JSON.parse(' + JSON.stringify(rawVal) + ');\n';
+                } catch (e) {
+                    apiPreamble += 'var ' + varName + ' = ' + JSON.stringify(rawVal) + ';\n';
+                }
+            }
+            if (apiPreamble) {
+                code = apiPreamble + code;
+            }
+        }
+
         var outputEl = container.querySelector('.code-output');
         if (!outputEl) {
             outputEl = document.createElement('div');
