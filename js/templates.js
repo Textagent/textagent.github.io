@@ -304,7 +304,14 @@
     return true;
   }
 
-  function selectTemplate(tpl) {
+  /**
+   * Actually apply the template content into the editor (no confirmation).
+   */
+  function loadTemplate(tpl) {
+    // Clear any stale cloud/shared-doc session so the template loads cleanly
+    // and cloud auto-save doesn't re-inject the old session hash into the URL.
+    if (M.clearCloudSession) M.clearCloudSession();
+
     let content = tpl.content;
 
     // If the template defines variables, generate the block at the top
@@ -315,12 +322,81 @@
     // Resolve global built-in variables (date, time, etc.)
     content = resolveGlobalVariables(content);
 
+    // Push undo state so user can Ctrl+Z to recover previous content
+    M.markdownEditor.dispatchEvent(new Event('input'));  // ensure undo captures current state
+
     M.markdownEditor.value = content;
     M.renderMarkdown();
     closeTemplateModal();
 
     // Scroll editor to top
     M.markdownEditor.scrollTop = 0;
+  }
+
+  /**
+   * Show a confirmation overlay before replacing editor content with a template.
+   * Styled consistently with the clear-confirm overlay in editor-features.js.
+   */
+  function showTemplateConfirm(tpl) {
+    // Remove any existing modal
+    var old = document.getElementById('template-confirm-modal');
+    if (old) old.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'template-confirm-modal';
+    overlay.className = 'clear-confirm-overlay';
+    overlay.innerHTML =
+      '<div class="clear-confirm-card">' +
+      '<div class="clear-confirm-header">' +
+      '<i class="bi bi-arrow-repeat"></i> Replace editor content?' +
+      '</div>' +
+      '<div class="clear-confirm-body">' +
+      '<p>Loading <strong>' + tpl.name + '</strong> will replace your current work.</p>' +
+      '<p class="clear-confirm-hint"><i class="bi bi-arrow-counterclockwise"></i> You can Undo with <kbd>Ctrl+Z</kbd></p>' +
+      '</div>' +
+      '<div class="clear-confirm-actions">' +
+      '<button class="clear-confirm-cancel">Cancel</button>' +
+      '<button class="clear-confirm-ok"><i class="bi bi-file-earmark-text"></i> Use Template</button>' +
+      '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function () { overlay.classList.add('active'); });
+
+    function close() {
+      overlay.classList.remove('active');
+      setTimeout(function () { overlay.remove(); }, 200);
+      document.removeEventListener('keydown', escHandler);
+    }
+
+    function escHandler(e) {
+      if (e.key === 'Escape') { e.stopPropagation(); close(); }
+    }
+    document.addEventListener('keydown', escHandler, true);
+
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    overlay.querySelector('.clear-confirm-cancel').addEventListener('click', close);
+    overlay.querySelector('.clear-confirm-ok').addEventListener('click', function () {
+      close();
+      loadTemplate(tpl);
+    });
+    overlay.querySelector('.clear-confirm-cancel').focus();
+  }
+
+  /**
+   * Select a template: if editor has meaningful content, confirm first;
+   * otherwise load immediately.
+   */
+  function selectTemplate(tpl) {
+    var editorContent = M.markdownEditor.value.trim();
+    var defaultContent = (M.getDefaultContent ? M.getDefaultContent().trim() : '');
+    var hasContent = editorContent.length > 0 && editorContent !== defaultContent;
+
+    if (hasContent) {
+      showTemplateConfirm(tpl);
+    } else {
+      loadTemplate(tpl);
+    }
   }
 
   function openTemplateModal() {

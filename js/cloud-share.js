@@ -363,23 +363,32 @@
         document.body.classList.remove('shared-view-active');
         M.markdownEditor.readOnly = false;
     }
-    document.getElementById('shared-banner-edit').addEventListener('click', function () {
+
+    /**
+     * Clear all cloud/shared-doc session state so subsequent edits create a
+     * NEW document instead of overwriting the original shared one.
+     * Called when: user clicks Edit/Close on shared banner, or loads a template.
+     */
+    function clearCloudSession() {
         hideSharedBanner();
-        // Clear shared state so edits create a NEW document, not overwrite the original
         M.isViewingSharedDoc = false;
         localStorage.removeItem(CLOUD_DOC_KEY);
         localStorage.removeItem(CLOUD_KEY_KEY);
         localStorage.removeItem(CLOUD_WT_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
+        // Stop the cloud-save timer so it doesn't re-inject the session hash
+        if (cloudSaveTimer) { clearInterval(cloudSaveTimer); cloudSaveTimer = null; }
+        cloudSaveDirty = false;
+        lastCloudContent = '';
+    }
+    M.clearCloudSession = clearCloudSession;
+
+    document.getElementById('shared-banner-edit').addEventListener('click', function () {
+        clearCloudSession();
         M.setViewMode('split');
     });
     document.getElementById('shared-banner-close').addEventListener('click', function () {
-        hideSharedBanner();
-        M.isViewingSharedDoc = false;
-        localStorage.removeItem(CLOUD_DOC_KEY);
-        localStorage.removeItem(CLOUD_KEY_KEY);
-        localStorage.removeItem(CLOUD_WT_KEY);
-        window.history.replaceState({}, document.title, window.location.pathname);
+        clearCloudSession();
     });
 
     // --- Share Options Modal ---
