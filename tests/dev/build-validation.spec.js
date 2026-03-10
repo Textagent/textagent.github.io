@@ -65,6 +65,36 @@ test.describe('Development Build Validation', () => {
         expect(csp).toContain('default-src');
     });
 
+    test('no CSP violations on page load', async ({ page }) => {
+        /** @type {string[]} */
+        const cspViolations = [];
+
+        // CSP blocks surface as console warnings (not JS errors)
+        page.on('console', msg => {
+            if (msg.type() === 'warning' || msg.type() === 'error') {
+                const text = msg.text();
+                if (text.includes('Content Security Policy') || text.includes('CSP')) {
+                    cspViolations.push(text);
+                }
+            }
+        });
+
+        // Also catch network requests blocked by CSP
+        page.on('requestfailed', req => {
+            const failure = req.failure();
+            if (failure && failure.errorText.includes('net::ERR_BLOCKED_BY_CSP')) {
+                cspViolations.push(`CSP blocked: ${req.url()}`);
+            }
+        });
+
+        await page.reload();
+        await page.waitForSelector('#markdown-editor', { state: 'visible' });
+        await page.waitForFunction(() => window.MDView && window.MDView.currentViewMode === 'split');
+        await page.waitForTimeout(5000);
+
+        expect(cspViolations, 'CSP violations detected — update img-src / script-src / connect-src in index.html').toEqual([]);
+    });
+
     test('vendor globals are loaded', async ({ page }) => {
         const globals = await page.evaluate(() => ({
             marked: typeof window.marked,
