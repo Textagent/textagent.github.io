@@ -418,6 +418,7 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
         const removeBtn = page.locator('.ai-remove-tag').first();
         await expect(removeBtn).toBeVisible();
 
+        /** @type {string[]} */
         const errors = [];
         page.on('pageerror', err => errors.push(err.message));
 

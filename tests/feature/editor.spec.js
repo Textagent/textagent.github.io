@@ -5,59 +5,56 @@ test.describe('Editor Features', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
         await page.waitForSelector('#markdown-editor', { state: 'visible' });
-        await page.waitForFunction(() => window.MDView && window.MDView.currentViewMode === 'split');
+        await page.waitForFunction(() => {
+            const w = /** @type {any} */ (window);
+            return w.MDView && w.MDView.currentViewMode === 'split';
+        });
     });
 
     test('editor renders markdown in preview', async ({ page }) => {
         await page.locator('#markdown-editor').fill('# Hello World\n\nThis is **bold** text.');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html).toContain('Hello World');
-        expect(html).toContain('<strong>bold</strong>');
+        const preview = page.locator('#markdown-preview');
+        await expect(preview).toContainText('Hello World');
+        await expect(preview.locator('strong')).toHaveText('bold');
     });
 
     test('editor supports code blocks with syntax highlighting', async ({ page }) => {
         await page.locator('#markdown-editor').fill('```javascript\nconst x = 42;\n```');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html).toContain('const');
-        expect(html).toContain('<code');
+        const preview = page.locator('#markdown-preview');
+        await expect(preview).toContainText('const');
+        await expect(preview.locator('code')).toBeVisible({ timeout: 10000 });
     });
 
     test('editor supports LaTeX math rendering', async ({ page }) => {
         await page.locator('#markdown-editor').fill('$$E = mc^2$$');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html).toContain('E');
+        const preview = page.locator('#markdown-preview');
+        await expect(preview.locator('mjx-container, .math')).toBeVisible({ timeout: 10000 });
     });
 
     test('editor supports task lists', async ({ page }) => {
         await page.locator('#markdown-editor').fill('- [x] Done\n- [ ] Todo');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html).toContain('type="checkbox"');
+        const preview = page.locator('#markdown-preview');
+        await expect(preview.locator('input[type="checkbox"]')).toHaveCount(2, { timeout: 10000 });
     });
 
     test('editor supports tables', async ({ page }) => {
         await page.locator('#markdown-editor').fill('| A | B |\n|---|---|\n| 1 | 2 |');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html).toContain('<table');
-        expect(html).toContain('<td');
+        const preview = page.locator('#markdown-preview');
+        await expect(preview.locator('table')).toBeVisible({ timeout: 10000 });
+        await expect(preview.locator('td')).toHaveCount(2);
     });
 
     test('editor supports emoji shortcodes', async ({ page }) => {
         await page.locator('#markdown-editor').fill(':rocket: :star:');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html.length).toBeGreaterThan(0);
+        const preview = page.locator('#markdown-preview');
+        await expect(preview).toContainText('🚀', { timeout: 10000 });
+        await expect(preview).toContainText('⭐', { timeout: 10000 });
     });
 
     test('editor supports GitHub-style callouts', async ({ page }) => {
         await page.locator('#markdown-editor').fill('> [!NOTE]\n> This is a note.');
-        await page.waitForTimeout(500);
-        const html = await page.locator('#markdown-preview').innerHTML();
-        expect(html).toContain('note');
+        const preview = page.locator('#markdown-preview');
+        await expect(preview.locator('.markdown-callout.callout-note')).toBeVisible({ timeout: 10000 });
     });
 
     test('word count and stats update on input', async ({ page }) => {
