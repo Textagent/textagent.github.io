@@ -340,6 +340,15 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
+<details open>
+<summary><strong>🏷️ DocGen Preview Editing — Editable Prompts & Steps</strong></summary>
+
+**Edit prompts and steps directly in preview cards.** Use `@prompt:` for editable AI instructions (bare text stays as a static description label), edit `@step:` inputs inline in Agent Flow cards, and attach images with 📎 for multimodal vision analysis. All edits sync back to the editor in real-time.
+
+<img src="public/assets/demos/25_docgen_preview_editing.webp" alt="DocGen Preview Editing — editable @prompt: textarea, Agent step inputs, description/prompt separation" width="100%">
+
+</details>
+
 ## 📝 Usage
 
 | Action | How |
