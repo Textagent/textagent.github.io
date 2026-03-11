@@ -574,27 +574,57 @@
     var jsAdapter = {
         execute: function (source) {
             return new Promise(function (resolve, reject) {
-                try {
-                    var logs = [];
-                    var origLog = console.log;
-                    console.log = function () {
-                        var args = Array.from(arguments).map(function (a) {
-                            return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a);
-                        });
-                        logs.push(args.join(' '));
-                        origLog.apply(console, arguments);
-                    };
-                    var result = eval(source);
-                    console.log = origLog;
-                    var output = logs.join('\n');
-                    if (result !== undefined && !logs.length) {
-                        output = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
-                    }
-                    resolve(output || '(no output)');
-                } catch (e) {
-                    console.log = origLog;
-                    reject(e);
+                var iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.setAttribute('sandbox', 'allow-scripts');
+                document.body.appendChild(iframe);
+
+                var wrappedCode = '<!DOCTYPE html><html><body><script>' +
+                    'var __logs = [];' +
+                    'function __fmt(a) { return Array.from(a).map(function(v) {' +
+                    '  if (v === null) return "null";' +
+                    '  if (v === undefined) return "undefined";' +
+                    '  if (typeof v === "object") try { return JSON.stringify(v, null, 2); } catch(e) { return String(v); }' +
+                    '  return String(v);' +
+                    '}).join(" "); }' +
+                    'console.log = function() { __logs.push(__fmt(arguments)); };' +
+                    'console.warn = function() { __logs.push(__fmt(arguments)); };' +
+                    'console.error = function() { __logs.push(__fmt(arguments)); };' +
+                    'console.info = function() { __logs.push(__fmt(arguments)); };' +
+                    'try {' +
+                    '  var __result = eval(' + JSON.stringify(source) + ');' +
+                    '  if (__result !== undefined && !__logs.length) __logs.push(String(__result));' +
+                    '  parent.postMessage({type:"js-adapter-result", logs:__logs}, "*");' +
+                    '} catch(e) {' +
+                    '  parent.postMessage({type:"js-adapter-result", logs:__logs, error:e.message}, "*");' +
+                    '}' +
+                    '<\/script></body></html>';
+
+                var timeout = setTimeout(function () {
+                    cleanup();
+                    reject(new Error('Execution timed out (5s limit)'));
+                }, 5000);
+
+                function cleanup() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('message', handler);
+                    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
                 }
+
+                function handler(e) {
+                    if (!e.data || e.data.type !== 'js-adapter-result') return;
+                    if (e.source !== iframe.contentWindow) return;
+                    cleanup();
+                    if (e.data.error) {
+                        reject(new Error(e.data.error));
+                    } else {
+                        var output = (e.data.logs || []).join('\n');
+                        resolve(output || '(no output)');
+                    }
+                }
+
+                window.addEventListener('message', handler);
+                iframe.srcdoc = wrappedCode;
             });
         }
     };

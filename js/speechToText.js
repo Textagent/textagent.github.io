@@ -567,7 +567,7 @@
                         if (trimmedLength >= VAD_MIN_SPEECH_SAMPLES && !whisperTranscribing) {
                             const combined = combineBuffers(vadBuffer, trimmedLength);
                             whisperTranscribing = true;
-                            worker.postMessage({ type: 'transcribe', audio: combined }, [combined.buffer]);
+                            worker.postMessage({ type: 'transcribe', audio: combined, lang: currentLang.split('-')[0] }, [combined.buffer]);
                         }
 
                         vadBuffer = [];

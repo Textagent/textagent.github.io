@@ -665,7 +665,7 @@
     if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
     provider.setLoaded(false);
 
-    const worker = new Worker(provider.workerFile);
+    const worker = new Worker(provider.workerFile, { type: 'module' });
     provider.setWorker(worker);
 
     worker.addEventListener('message', (e) => {

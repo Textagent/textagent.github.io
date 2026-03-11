@@ -105,8 +105,10 @@ self.addEventListener('message', async (e) => {
                 }
             }
 
+            // Use language from caller, default to 'en'
+            const lang = e.data.lang || 'en';
             const result = await transcriber(normalizedAudio, {
-                language: 'en',
+                language: lang,
                 return_timestamps: false,
             });
             self.postMessage({ type: 'result', text: result.text });
