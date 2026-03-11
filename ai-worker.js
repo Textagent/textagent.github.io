@@ -1,9 +1,10 @@
 /**
  * AI Worker — Handles Transformers.js model loading and text generation
- * Supports Qwen 3.5 Small (0.8B), Medium (2B), and Large (4B) via WebGPU/WASM
+ * Supports Qwen 3.5 Small (0.8B), Medium (2B), Large (4B) and
+ * Qwen 3 4B Thinking via WebGPU/WASM
  *
  * This is an ES Module worker (loaded with { type: "module" }).
- * Uses Transformers.js v4 (next) which supports the qwen3_5 architecture.
+ * Uses Transformers.js v4 (next) which supports qwen3_5 and qwen3 architectures.
  *
  * The model ID is configurable via a `setModelId` message sent before `load`.
  */
@@ -12,14 +13,24 @@
 // a top-level import that silently kills the worker when the CDN is unreachable.
 let AutoProcessor = null;
 let Qwen3_5ForConditionalGeneration = null;
+let AutoModelForCausalLM = null;
 let TextStreamer = null;
 let RawImage = null;
 
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
 
+// Self-hosted model mirror — downloads ONNX models from GitLab instead of HuggingFace
+const MODEL_HOST = "https://gitlab.com/textagent/models/-/raw/main";
+const MODEL_HOST_FALLBACK = "https://huggingface.co";
+
+// Reference to Transformers.js env (set after dynamic import)
+let transformersEnv = null;
+
 // Model config — default to 0.8B, overridable via setModelId message
 let MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
 let MODEL_LABEL = "Qwen 3.5";
+let MODEL_ARCH = "qwen3_5";      // 'qwen3_5' or 'qwen3'
+let MODEL_DTYPE = "q4";           // 'q4' or 'q4f16'
 
 // Task-specific token limits to keep responses fast
 const TOKEN_LIMITS = {
@@ -58,8 +69,13 @@ async function loadModel() {
                 const transformers = await import(TRANSFORMERS_URL);
                 AutoProcessor = transformers.AutoProcessor;
                 Qwen3_5ForConditionalGeneration = transformers.Qwen3_5ForConditionalGeneration;
+                AutoModelForCausalLM = transformers.AutoModelForCausalLM;
                 TextStreamer = transformers.TextStreamer;
                 RawImage = transformers.RawImage;
+
+                // Point model downloads to self-hosted GitLab mirror
+                transformersEnv = transformers.env;
+                transformersEnv.remoteHost = MODEL_HOST;
             } catch (importError) {
                 self.postMessage({
                     type: "error",
@@ -87,59 +103,71 @@ async function loadModel() {
             message: `Loading ${MODEL_LABEL} processor...`,
         });
 
-        processor = await AutoProcessor.from_pretrained(MODEL_ID, {
-            progress_callback: (progress) => {
-                if (progress.status === "progress") {
-                    self.postMessage({
-                        type: "progress",
-                        file: progress.file || "processor",
-                        loaded: progress.loaded || 0,
-                        total: progress.total || 0,
-                        progress: progress.progress || 0,
-                    });
-                } else if (progress.status === "initiate") {
-                    self.postMessage({
-                        type: "status",
-                        message: `Downloading ${progress.file || "processor"}...`,
-                    });
-                }
-            },
-        });
+        const progressCb = (label) => (progress) => {
+            if (progress.status === "progress") {
+                self.postMessage({
+                    type: "progress",
+                    file: progress.file || label,
+                    loaded: progress.loaded || 0,
+                    total: progress.total || 0,
+                    progress: progress.progress || 0,
+                });
+            } else if (progress.status === "initiate") {
+                self.postMessage({
+                    type: "status",
+                    message: `Downloading ${progress.file || label}...`,
+                });
+            }
+        };
 
-        self.postMessage({
-            type: "status",
-            message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...`,
-        });
-
-        model = await Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
-            dtype: {
+        // Choose the right model class and dtype config based on architecture
+        const isQwen3 = MODEL_ARCH === 'qwen3';
+        const ModelClass = isQwen3 ? AutoModelForCausalLM : Qwen3_5ForConditionalGeneration;
+        const dtypeConfig = isQwen3
+            ? MODEL_DTYPE     // e.g. 'q4f16' — single string for text-only models
+            : {                // object with per-component dtypes for vision models
                 embed_tokens: "q4",
                 vision_encoder: "fp16",
                 decoder_model_merged: "q4",
-            },
-            device: device,
-            progress_callback: (progress) => {
-                if (progress.status === "progress") {
-                    self.postMessage({
-                        type: "progress",
-                        file: progress.file || "model",
-                        loaded: progress.loaded || 0,
-                        total: progress.total || 0,
-                        progress: progress.progress || 0,
-                    });
-                } else if (progress.status === "initiate") {
-                    self.postMessage({
-                        type: "status",
-                        message: `Downloading ${progress.file || "model"}...`,
-                    });
-                }
-            },
-        });
+            };
+
+        // Helper: load processor + model, with automatic fallback to HuggingFace
+        async function loadFromHost() {
+            processor = await AutoProcessor.from_pretrained(MODEL_ID, {
+                progress_callback: progressCb("processor"),
+            });
+
+            self.postMessage({
+                type: "status",
+                message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...`,
+            });
+
+            model = await ModelClass.from_pretrained(MODEL_ID, {
+                dtype: dtypeConfig,
+                device: device,
+                progress_callback: progressCb("model"),
+            });
+        }
+
+        try {
+            await loadFromHost();
+        } catch (primaryErr) {
+            // Primary host failed — fall back to HuggingFace
+            console.warn(`Primary model host failed: ${primaryErr.message}. Falling back to HuggingFace…`);
+            self.postMessage({
+                type: "status",
+                message: `Primary host unavailable — falling back to HuggingFace…`,
+            });
+            transformersEnv.remoteHost = MODEL_HOST_FALLBACK;
+            processor = null;
+            model = null;
+            await loadFromHost();
+        }
 
         self.postMessage({ type: "loaded", device: device });
     } catch (error) {
         const hint = error.message.includes("Failed to fetch") || error.message.includes("NetworkError")
-            ? " (Check your internet connection and ensure huggingface.co is not blocked by CSP or firewall)"
+            ? " (Check your internet connection and ensure the model host is not blocked by CSP or firewall)"
             : "";
         self.postMessage({
             type: "error",
@@ -359,6 +387,8 @@ self.addEventListener("message", async (event) => {
         case "setModelId":
             MODEL_ID = event.data.modelId || MODEL_ID;
             MODEL_LABEL = event.data.modelLabel || MODEL_LABEL;
+            MODEL_ARCH = event.data.architecture || 'qwen3_5';
+            MODEL_DTYPE = event.data.dtype || 'q4';
             break;
         case "load":
             await loadModel();

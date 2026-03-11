@@ -508,7 +508,7 @@
     ls.worker = worker;
 
     // Send model ID before loading
-    worker.postMessage({ type: 'setModelId', modelId: localModelOnnxId, modelLabel: modelLabel });
+    worker.postMessage({ type: 'setModelId', modelId: localModelOnnxId, modelLabel: modelLabel, architecture: cfg && cfg.architecture, dtype: cfg && cfg.dtype });
 
     // Track download progress per file
     const fileProgress = {};

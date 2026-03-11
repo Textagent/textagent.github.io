@@ -116,6 +116,75 @@
     }
 
     // ==============================================
+    // OCR PROMPT BUILDING
+    // ==============================================
+
+    function buildOcrPrompt(block) {
+        var mode = block.ocrMode || 'text';
+        var userHint = block.prompt ? ('\nAdditional user instructions: ' + block.prompt + '\n') : '';
+
+        if (mode === 'svg') {
+            return 'You are an expert at interpreting visual graphics and converting them into SVG code.\n\n'
+                + 'Analyze the attached image carefully. Convert any charts, diagrams, flowcharts, logos, '
+                + 'chemical formulas, or structured graphics into clean, well-structured SVG code.\n\n'
+                + 'REQUIREMENTS:\n'
+                + '- Preserve the layout, colors, shapes, labels, and text from the original image.\n'
+                + '- Use semantic SVG elements (rect, circle, path, text, line, polyline, polygon, g).\n'
+                + '- Make the SVG responsive with viewBox attribute.\n'
+                + '- Include all visible text as <text> elements.\n'
+                + '- Use clean, readable SVG code with proper indentation.\n\n'
+                + userHint
+                + 'Output ONLY the raw SVG code wrapped in a markdown ```svg code fence. '
+                + 'Do NOT include any explanations, descriptions, or commentary outside the code fence.';
+        }
+
+        // Text mode (default)
+        return 'You are an expert OCR system and document analyst.\n\n'
+            + 'Analyze the attached image(s) and extract ALL text content with high fidelity.\n\n'
+            + 'REQUIREMENTS:\n'
+            + '- Preserve the original document structure: headings, paragraphs, lists, tables.\n'
+            + '- Convert tables to Markdown table syntax with proper alignment.\n'
+            + '- Preserve any formatting (bold, italic) where detectable.\n'
+            + '- For multi-column layouts, transcribe left-to-right, top-to-bottom.\n'
+            + '- Maintain the original reading order.\n'
+            + '- For handwritten text, do your best to accurately transcribe every word.\n'
+            + '- Support ALL languages and scripts (CJK, Arabic, Devanagari, etc.).\n\n'
+            + userHint
+            + 'Output ONLY the extracted text as clean, well-formatted Markdown. '
+            + 'Do NOT describe the image or add any commentary.';
+    }
+
+    // ==============================================
+    // TRANSLATE PROMPT BUILDING
+    // ==============================================
+
+    // Language name → ISO code map for TTS voice selection
+    var LANG_CODE_MAP = {
+        'japanese': 'ja', 'korean': 'ko', 'chinese': 'zh',
+        'french': 'fr', 'german': 'de', 'italian': 'it',
+        'spanish': 'es', 'portuguese': 'pt', 'hindi': 'hi',
+        'english': 'en',
+    };
+
+    function buildTranslatePrompt(block) {
+        var targetLang = block.targetLang || 'Japanese';
+        return 'You are a professional translator with native fluency in ' + targetLang + '.\n\n'
+            + 'Translate the following text into ' + targetLang + ':\n\n'
+            + '---\n' + block.prompt + '\n---\n\n'
+            + 'REQUIREMENTS:\n'
+            + '- Provide a natural, idiomatic translation (not word-for-word).\n'
+            + '- Preserve the original formatting and structure.\n'
+            + '- If the text contains technical terms, translate them appropriately.\n'
+            + '- After the translation, add a pronunciation guide on the next line.\n'
+            + '- For non-Latin scripts (Japanese, Korean, Chinese, Hindi, etc.), include romanization/transliteration in parentheses.\n\n'
+            + 'Format your response as:\n'
+            + '**' + targetLang + ':** [translated text]\n\n'
+            + '**Pronunciation:** [romanization or phonetic guide]\n\n'
+            + '**Literal meaning:** [word-by-word breakdown if helpful]\n\n'
+            + 'Do NOT include any other commentary, explanations, or meta-text.';
+    }
+
+    // ==============================================
     // AUTO-DISCOVER MEMORY SOURCES FROM DOCUMENT
     // ==============================================
 
@@ -548,6 +617,30 @@
 
                 if (block.type === 'Image') {
                     result = await generateImageForBlock(block, perCardModel);
+                } else if (block.type === 'OCR') {
+                    // OCR requires at least one image
+                    if (workerAttachments.length === 0) {
+                        throw new Error('Please attach at least one image to the OCR block before running.');
+                    }
+                    result = await M.requestAiTask({
+                        taskType: 'generate',
+                        context: '',
+                        userPrompt: buildOcrPrompt(block),
+                        enableThinking: false,
+                        silent: true,
+                        attachments: workerAttachments
+                    });
+                } else if (block.type === 'Translate') {
+                    // Read target lang from the card's dropdown (may have been changed)
+                    var langSelect = document.querySelector('.ai-translate-lang-select[data-ai-index="' + blockIndex + '"]');
+                    if (langSelect) block.targetLang = langSelect.value;
+                    result = await M.requestAiTask({
+                        taskType: 'generate',
+                        context: '',
+                        userPrompt: buildTranslatePrompt(block),
+                        enableThinking: false,
+                        silent: true
+                    });
                 } else {
                     // Retrieve memory context: explicit Use: field or auto-discover from document
                     // Use: none explicitly disables all memory for this block
@@ -585,6 +678,63 @@
                     replaceBlockByTag(block.fullMatch, result);
                     _dg.showToast('🖼️ Image generated!', 'success');
                     decision = 'done';
+                } else if (block.type === 'OCR') {
+                    var ocrCleaned = cleanGeneratedOutput(result);
+                    // For SVG mode, ensure the output is in a svg code fence
+                    if (block.ocrMode === 'svg' && ocrCleaned && !ocrCleaned.includes('```svg')) {
+                        // If the model returned raw SVG, wrap it
+                        if (ocrCleaned.trim().startsWith('<svg') || ocrCleaned.trim().startsWith('<?xml')) {
+                            ocrCleaned = '```svg\n' + ocrCleaned.trim() + '\n```';
+                        }
+                    }
+                    decision = await showReviewPanel(blockIndex, ocrCleaned, block);
+                    if (decision === 'accept') {
+                        replaceBlockByTag(block.fullMatch, ocrCleaned);
+                        _dg.showToast('🔍 OCR scan accepted!', 'success');
+                    } else if (decision === 'reject') {
+                        _dg.showToast('❌ Rejected', 'info');
+                    }
+                } else if (block.type === 'Translate') {
+                    var transCleaned = cleanGeneratedOutput(result);
+                    decision = await showReviewPanel(blockIndex, transCleaned, block);
+                    if (decision === 'accept') {
+                        // Extract just the translated text for the TTS block
+                        // Strip markdown formatting, bold labels, and find the first real text line
+                        var ttsLines = transCleaned.split('\n')
+                            .map(function (l) {
+                                return l.trim()
+                                    .replace(/^\*\*[^*]+\*\*[：:]?\s*/g, '')  // Strip **Label:** prefix
+                                    .replace(/\([^)]*\)/g, '')                 // Strip (romanization)
+                                    .trim();
+                            })
+                            .filter(function (l) {
+                                if (l.length < 2) return false;
+                                if (/^-{3,}$/.test(l)) return false;  // Skip --- separators
+                                if (/^\*{3,}$/.test(l)) return false; // Skip *** separators
+                                return true;
+                            });
+                        var ttsText = ttsLines.length > 0 ? ttsLines[0] : transCleaned.trim();
+
+                        var targetLang = block.targetLang || 'Japanese';
+
+                        // If @var: is set, store the translation into the Vars system
+                        if (block.varName) {
+                            if (!window.__API_VARS) window.__API_VARS = {};
+                            window.__API_VARS[block.varName] = ttsText;
+                            console.log('[DocGen] Set variable $(' + block.varName + ') = "' + ttsText.substring(0, 50) + '…"');
+                        }
+
+                        // Insert translated text + a connected TTS block for audio playback
+                        var replacement = transCleaned;
+                        // Only auto-insert TTS block if no @var: was set (user uses $(var) manually)
+                        if (!block.varName) {
+                            replacement += '\n\n{{@TTS:\n  @prompt: ' + ttsText + '\n  @lang: ' + targetLang + '\n}}';
+                        }
+                        replaceBlockByTag(block.fullMatch, replacement);
+                        _dg.showToast('🌐 Translation accepted!' + (block.varName ? ' Stored in $(' + block.varName + ')' : ' TTS card added below.'), 'success');
+                    } else if (decision === 'reject') {
+                        _dg.showToast('❌ Rejected', 'info');
+                    }
                 } else {
                     var cleaned = cleanGeneratedOutput(result);
                     decision = await showReviewPanel(blockIndex, cleaned, block);
@@ -821,5 +971,135 @@
 
     // Re-expose on M for external callers
     M.openModelSelector = showAiSetupPopup;
+
+    // --- Register runtime adapters for exec-controller (auto-accept mode) ---
+    var docgenAiAdapter = {
+        execute: function (source, block) {
+            if (!ensureModelReady()) {
+                return Promise.reject(new Error('AI model not ready. Please select and load a model first.'));
+            }
+            var text = M.markdownEditor.value;
+            var blockStart = block.position || 0;
+            var prevContent = text.substring(0, blockStart);
+
+            // Build prompt from the parsed block data
+            var parsedBlocks = M.parseDocgenBlocks(text);
+            var parsedBlock = null;
+            for (var i = 0; i < parsedBlocks.length; i++) {
+                if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                    parsedBlock = parsedBlocks[i];
+                    break;
+                }
+            }
+            if (!parsedBlock) parsedBlock = { type: 'AI', prompt: source };
+
+            return M.requestAiTask({
+                taskType: 'generate',
+                context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
+                userPrompt: buildPrompt(parsedBlock, prevContent, '', false),
+                enableThinking: parsedBlock.think || false,
+                silent: true
+            }).then(function (result) {
+                var cleaned = cleanGeneratedOutput(result);
+                // Auto-accept: replace tag with generated content
+                if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
+                return cleaned;
+            });
+        }
+    };
+
+    var docgenImageAdapter = {
+        execute: function (source, block) {
+            var parsedBlocks = M.parseDocgenBlocks(M.markdownEditor.value);
+            var parsedBlock = null;
+            for (var i = 0; i < parsedBlocks.length; i++) {
+                if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                    parsedBlock = parsedBlocks[i];
+                    break;
+                }
+            }
+            if (!parsedBlock) parsedBlock = { type: 'Image', prompt: source };
+
+            return generateImageForBlock(parsedBlock).then(function (result) {
+                // Auto-accept: replace tag with image markdown
+                if (block._fullMatch) replaceBlockByTag(block._fullMatch, result);
+                return result;
+            });
+        }
+    };
+
+    var docgenAgentAdapter = {
+        execute: function (source, block) {
+            if (!ensureModelReady()) {
+                return Promise.reject(new Error('AI model not ready. Please select and load a model first.'));
+            }
+            var text = M.markdownEditor.value;
+            var parsedBlocks = M.parseDocgenBlocks(text);
+            var parsedBlock = null;
+            for (var i = 0; i < parsedBlocks.length; i++) {
+                if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                    parsedBlock = parsedBlocks[i];
+                    break;
+                }
+            }
+            if (!parsedBlock || !parsedBlock.steps || parsedBlock.steps.length === 0) {
+                return Promise.reject(new Error('No agent steps found'));
+            }
+
+            var steps = parsedBlock.steps;
+            var docContext = text.substring(0, parsedBlock.start);
+            var accumulatedContext = '';
+            var allResults = [];
+
+            // Sequential step execution
+            var promise = Promise.resolve();
+            for (var s = 0; s < steps.length; s++) {
+                (function (stepIdx) {
+                    promise = promise.then(function () {
+                        var stepPrompt = 'You are an expert writer. This is step ' + steps[stepIdx].number
+                            + ' of ' + steps.length + ' in a multi-step writing flow.\n\n'
+                            + 'Task: ' + steps[stepIdx].description + '\n\n';
+                        if (accumulatedContext) {
+                            stepPrompt += 'Previous steps produced:\n' + accumulatedContext.substring(0, 3000) + '\n\n';
+                        }
+                        if (docContext) {
+                            stepPrompt += 'Document context:\n' + docContext.substring(Math.max(0, docContext.length - 2000)) + '\n\n';
+                        }
+                        stepPrompt += 'Write ONLY the markdown content for this step. Do not include meta-commentary.';
+
+                        return M.requestAiTask({
+                            taskType: 'generate',
+                            context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
+                            userPrompt: stepPrompt,
+                            enableThinking: false,
+                            silent: true
+                        }).then(function (result) {
+                            var cleaned = cleanGeneratedOutput(result);
+                            accumulatedContext += '\n\n' + cleaned;
+                            allResults.push(cleaned);
+                        });
+                    });
+                })(s);
+            }
+
+            return promise.then(function () {
+                var combinedResult = allResults.join('\n\n');
+                // Auto-accept: replace tag with combined agent output
+                if (block._fullMatch) replaceBlockByTag(block._fullMatch, combinedResult);
+                return combinedResult;
+            });
+        }
+    };
+
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('docgen-ai', docgenAiAdapter);
+        M._execRegistry.registerRuntime('docgen-image', docgenImageAdapter);
+        M._execRegistry.registerRuntime('docgen-agent', docgenAgentAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'docgen-ai', adapter: docgenAiAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'docgen-image', adapter: docgenImageAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'docgen-agent', adapter: docgenAgentAdapter });
+    }
 
 })(window.MDView);

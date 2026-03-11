@@ -4,7 +4,12 @@
 // off the main thread for jank-free transcription.
 // WER ~7.7% (batched) — significant upgrade over Moonshine Base (~9.66%)
 // ============================================
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, env } from '@huggingface/transformers';
+
+// Self-hosted model mirror — downloads ONNX models from GitLab instead of HuggingFace
+const MODEL_HOST = 'https://gitlab.com/textagent/models/-/raw/main';
+const MODEL_HOST_FALLBACK = 'https://huggingface.co';
+env.remoteHost = MODEL_HOST;
 
 let transcriber = null;
 
@@ -30,27 +35,41 @@ self.addEventListener('message', async (e) => {
                 self.postMessage({ type: 'status', status: 'loading', message: '⏳ Downloading Whisper Large V3 Turbo…' });
             }
 
-            transcriber = await pipeline(
-                'automatic-speech-recognition',
-                'onnx-community/whisper-large-v3-turbo',
-                {
-                    dtype,
-                    device,
-                    progress_callback: (progress) => {
-                        if (progress.status === 'progress') {
-                            self.postMessage({
-                                type: 'progress',
-                                file: progress.file,
-                                loaded: progress.loaded,
-                                total: progress.total,
-                                percent: Math.round((progress.loaded / progress.total) * 100),
-                            });
-                        } else if (progress.status === 'done') {
-                            self.postMessage({ type: 'progress-done', file: progress.file });
-                        }
-                    },
+            const pipelineOpts = {
+                dtype,
+                device,
+                progress_callback: (progress) => {
+                    if (progress.status === 'progress') {
+                        self.postMessage({
+                            type: 'progress',
+                            file: progress.file,
+                            loaded: progress.loaded,
+                            total: progress.total,
+                            percent: Math.round((progress.loaded / progress.total) * 100),
+                        });
+                    } else if (progress.status === 'done') {
+                        self.postMessage({ type: 'progress-done', file: progress.file });
+                    }
                 },
-            );
+            };
+
+            // Try primary host (GitLab), fall back to HuggingFace
+            try {
+                transcriber = await pipeline(
+                    'automatic-speech-recognition',
+                    'onnx-community/whisper-large-v3-turbo',
+                    pipelineOpts,
+                );
+            } catch (primaryErr) {
+                console.warn(`Primary model host failed: ${primaryErr.message}. Falling back to HuggingFace…`);
+                self.postMessage({ type: 'status', status: 'loading', message: '⚠️ Primary host unavailable — falling back to HuggingFace…' });
+                env.remoteHost = MODEL_HOST_FALLBACK;
+                transcriber = await pipeline(
+                    'automatic-speech-recognition',
+                    'onnx-community/whisper-large-v3-turbo',
+                    pipelineOpts,
+                );
+            }
 
             self.postMessage({
                 type: 'status',

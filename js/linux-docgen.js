@@ -554,4 +554,67 @@
     M.parseLinuxConfig = parseLinuxConfig;
     M.parseLinuxBlocks = parseLinuxBlocks;
 
+    // --- Register runtime adapter for exec-controller ---
+    var linuxAdapter = {
+        execute: function (source, block) {
+            var parsedBlocks = parseLinuxBlocks(M.markdownEditor.value);
+            var parsedBlock = null;
+            for (var i = 0; i < parsedBlocks.length; i++) {
+                if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                    parsedBlock = parsedBlocks[i];
+                    break;
+                }
+            }
+            var cfg = parsedBlock ? parsedBlock.linuxConfig : parseLinuxConfig(source);
+            if (!cfg || !cfg.language || !cfg.script) {
+                return Promise.reject(new Error('Missing Language or Script'));
+            }
+
+            var meta = LANG_META[cfg.language];
+            if (!meta || !meta.judge0Id) {
+                return Promise.reject(new Error('Unsupported language: ' + cfg.language));
+            }
+
+            var apiUrl = (M.judge0ApiUrl || JUDGE0_API_URL) + '/submissions?base64_encoded=false&wait=true';
+            var payload = {
+                language_id: meta.judge0Id,
+                source_code: cfg.script,
+                stdin: cfg.stdin || ''
+            };
+
+            return fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(function (res) {
+                if (!res.ok) {
+                    return res.text().then(function (t) {
+                        throw new Error('HTTP ' + res.status + ': ' + t);
+                    });
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                var output = '';
+                if (data.compile_output && data.status && data.status.id === 6) {
+                    return 'Compilation Error:\n' + data.compile_output;
+                }
+                if (data.stdout) output += data.stdout;
+                if (data.stderr) output += (output ? '\n' : '') + data.stderr;
+                if (data.compile_output && data.status && data.status.id !== 6) {
+                    output += (output ? '\n' : '') + 'Compiler: ' + data.compile_output;
+                }
+                return output || '(no output)';
+            });
+        }
+    };
+
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('linux-script', linuxAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'linux-script', adapter: linuxAdapter });
+    }
+
 })(window.MDView);

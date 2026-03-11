@@ -271,6 +271,12 @@
             shortcut: null,
             demo: 'assets/demos/20_context_memory.webp'
         },
+        '[data-action="ocr-tag"]': {
+            name: 'OCR Scan Tag',
+            desc: 'Insert a {{OCR:}} block to extract text from images as Markdown, or convert charts and diagrams to SVG code. Upload an image, choose Text or SVG mode, and click ▶. Uses your selected AI model\'s vision capabilities.',
+            shortcut: null,
+            demo: 'assets/demos/15_ai_doc_tags.webp'
+        },
         '[data-action="linux-tag"]': {
             name: 'Linux Terminal',
             desc: 'Insert a {{Linux:}} block. Two modes: (1) Terminal — specify Packages: to launch a full Debian Linux (WebVM). (2) Compile & Run — add Language: and Script: fields to compile & execute C++, Rust, Go, Java, and 25+ languages via Judge0 CE, with output inline.',

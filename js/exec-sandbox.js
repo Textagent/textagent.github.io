@@ -467,4 +467,183 @@
     // Expose getSqlJs for reuse by context-memory.js
     M._exec.getSqlJs = getSqlJs;
 
+    // ========================================
+    // EXECUTION CONTEXT — SQLite-backed store
+    // for cross-block result sharing (Run All)
+    // ========================================
+
+    var _contextTableReady = false;
+    var MAX_VALUE_SIZE = 102400; // 100KB
+
+    function ensureContextTable() {
+        if (_contextTableReady && _sqlDb) return;
+        if (!_sqlDb) return;
+        try {
+            _sqlDb.run('CREATE TABLE IF NOT EXISTS _exec_results (block_id TEXT NOT NULL, key TEXT NOT NULL DEFAULT \'output\', value TEXT, PRIMARY KEY (block_id, key))');
+            _contextTableReady = true;
+        } catch (e) {
+            console.warn('[ExecContext] Failed to create _exec_results table:', e);
+        }
+    }
+
+    function ctxSet(blockId, key, value) {
+        if (!_sqlDb) return;
+        ensureContextTable();
+        if (typeof value !== 'string') value = String(value);
+        if (value.length > MAX_VALUE_SIZE) {
+            value = value.substring(0, MAX_VALUE_SIZE) + '\n[...truncated]';
+        }
+        try {
+            _sqlDb.run('INSERT OR REPLACE INTO _exec_results (block_id, key, value) VALUES (?, ?, ?)', [blockId, key || 'output', value]);
+        } catch (e) {
+            console.warn('[ExecContext] set failed:', e);
+        }
+    }
+
+    function ctxGet(blockId, key) {
+        if (!_sqlDb) return null;
+        ensureContextTable();
+        try {
+            var result = _sqlDb.exec('SELECT value FROM _exec_results WHERE block_id = ? AND key = ?', [blockId, key || 'output']);
+            if (result.length > 0 && result[0].values.length > 0) {
+                return result[0].values[0][0];
+            }
+        } catch (e) {
+            console.warn('[ExecContext] get failed:', e);
+        }
+        return null;
+    }
+
+    function ctxGetOutput(blockId) {
+        return ctxGet(blockId, 'output');
+    }
+
+    function ctxClear() {
+        if (!_sqlDb) return;
+        ensureContextTable();
+        try {
+            _sqlDb.run('DELETE FROM _exec_results');
+        } catch (e) {
+            console.warn('[ExecContext] clear failed:', e);
+        }
+    }
+
+    function ctxResolveReferences(text) {
+        if (!_sqlDb || !text) return text;
+        ensureContextTable();
+        // Replace $(blockId) and $(blockId.key) patterns
+        return text.replace(/\$\(([a-zA-Z0-9_-]+)(?:\.([a-zA-Z0-9_]+))?\)/g, function (match, blockId, key) {
+            var value = ctxGet(blockId, key || 'output');
+            if (value !== null) {
+                return value;
+            }
+            // Leave unresolved references as-is
+            console.warn('[ExecContext] Unresolved reference:', match);
+            return match;
+        });
+    }
+
+    // Expose the SQLite database instance and context helpers
+    M._execDb = function () { return _sqlDb; };
+    M._getSqlJs = getSqlJs;
+
+    M._execContext = {
+        set: ctxSet,
+        get: ctxGet,
+        getOutput: ctxGetOutput,
+        clear: ctxClear,
+        resolveReferences: ctxResolveReferences,
+        ensureReady: function (callback) {
+            getSqlJs(function (SQL, err) {
+                if (SQL && !_sqlDb) _sqlDb = new SQL.Database();
+                ensureContextTable();
+                if (callback) callback(err);
+            });
+        }
+    };
+
+    // --- Register runtime adapters for exec-controller ---
+    var htmlAdapter = {
+        execute: function (source) {
+            return new Promise(function (resolve) {
+                resolve('[HTML block executed]');
+            });
+        }
+    };
+
+    var jsAdapter = {
+        execute: function (source) {
+            return new Promise(function (resolve, reject) {
+                try {
+                    var logs = [];
+                    var origLog = console.log;
+                    console.log = function () {
+                        var args = Array.from(arguments).map(function (a) {
+                            return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a);
+                        });
+                        logs.push(args.join(' '));
+                        origLog.apply(console, arguments);
+                    };
+                    var result = eval(source);
+                    console.log = origLog;
+                    var output = logs.join('\n');
+                    if (result !== undefined && !logs.length) {
+                        output = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+                    }
+                    resolve(output || '(no output)');
+                } catch (e) {
+                    console.log = origLog;
+                    reject(e);
+                }
+            });
+        }
+    };
+
+    var sqlAdapter = {
+        execute: function (source) {
+            return new Promise(function (resolve, reject) {
+                getSqlJs(function (SQL, err) {
+                    if (!SQL || err) { reject(err || new Error('Failed to load SQLite')); return; }
+                    if (!_sqlDb) _sqlDb = new SQL.Database();
+                    ensureContextTable();
+                    try {
+                        var statements = source.split(';').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+                        var outputLines = [];
+                        for (var si = 0; si < statements.length; si++) {
+                            var results = _sqlDb.exec(statements[si]);
+                            if (results.length > 0) {
+                                for (var ri = 0; ri < results.length; ri++) {
+                                    var res = results[ri];
+                                    outputLines.push(res.columns.join(' | '));
+                                    outputLines.push(res.columns.map(function () { return '---'; }).join(' | '));
+                                    for (var vi = 0; vi < res.values.length; vi++) {
+                                        outputLines.push(res.values[vi].map(function (v) { return v === null ? 'NULL' : String(v); }).join(' | '));
+                                    }
+                                    outputLines.push(res.values.length + ' row(s)');
+                                }
+                            } else {
+                                var changes = _sqlDb.getRowsModified();
+                                if (changes > 0) outputLines.push(changes + ' row(s) affected');
+                            }
+                        }
+                        resolve(outputLines.join('\n') || '(no output)');
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            });
+        }
+    };
+
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('html', htmlAdapter);
+        M._execRegistry.registerRuntime('javascript', jsAdapter);
+        M._execRegistry.registerRuntime('sql', sqlAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'html', adapter: htmlAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'javascript', adapter: jsAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'sql', adapter: sqlAdapter });
+    }
+
 })(window.MDView);

@@ -441,4 +441,81 @@
     M.parseApiBlocks = parseApiBlocks;
     M.executeApiBlock = executeApiBlock;
 
+    // --- Register runtime adapter for exec-controller (auto-accept mode) ---
+    var apiAdapter = {
+        execute: function (source, block) {
+            var parsedBlocks = parseApiBlocks(M.markdownEditor.value);
+            var parsedBlock = null;
+            for (var i = 0; i < parsedBlocks.length; i++) {
+                if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                    parsedBlock = parsedBlocks[i];
+                    break;
+                }
+            }
+            var config = parsedBlock
+                ? (parsedBlock.apiConfig || parseApiConfig(parsedBlock.prompt))
+                : parseApiConfig(source);
+
+            if (!config.url) {
+                return Promise.reject(new Error('No URL specified in the API block'));
+            }
+
+            var fetchOpts = { method: config.method, mode: 'cors' };
+            var hdrs = new Headers();
+            var headerKeys = Object.keys(config.headers);
+            for (var h = 0; h < headerKeys.length; h++) {
+                hdrs.set(headerKeys[h], config.headers[headerKeys[h]]);
+            }
+            if (headerKeys.length > 0) fetchOpts.headers = hdrs;
+            if (config.method !== 'GET' && config.body) {
+                fetchOpts.body = config.body;
+                if (!hdrs.has('Content-Type')) {
+                    hdrs.set('Content-Type', 'application/json');
+                    fetchOpts.headers = hdrs;
+                }
+            }
+
+            return fetch(config.url, fetchOpts).then(function (response) {
+                var contentType = response.headers.get('content-type') || '';
+                var dataPromise = contentType.indexOf('json') !== -1
+                    ? response.json().then(function (j) { return JSON.stringify(j, null, 2); })
+                    : response.text();
+
+                return dataPromise.then(function (responseText) {
+                    // Store in variable if requested
+                    if (config.variable) {
+                        window.__API_VARS = window.__API_VARS || {};
+                        window.__API_VARS['api_' + config.variable] = responseText;
+                    }
+
+                    var resultMd = '**' + config.method + '** `' + config.url + '` → **' + response.status + '**'
+                        + '\n\n```json\n' + responseText + '\n```';
+                    if (config.variable) {
+                        resultMd += '\n\n> Stored in `$(api_' + config.variable + ')`';
+                    }
+
+                    // Auto-accept: replace tag with result markdown
+                    if (block._fullMatch) {
+                        var text = M.markdownEditor.value;
+                        var idx = text.indexOf(block._fullMatch);
+                        if (idx !== -1) {
+                            var before = text.substring(0, idx);
+                            var after = text.substring(idx + block._fullMatch.length);
+                            M.markdownEditor.value = before + resultMd.trim() + after;
+                            M.markdownEditor.dispatchEvent(new Event('input'));
+                        }
+                    }
+                    return responseText;
+                });
+            });
+        }
+    };
+
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('api', apiAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'api', adapter: apiAdapter });
+    }
+
 })(window.MDView);

@@ -1358,4 +1358,125 @@ Format as a table.}}
 > 💡 **How to use:** Fill in your holdings table, then click **✨ Fill** to get a complete portfolio analysis with rebalancing recommendations.
 `
     },
+    {
+        name: 'AI Language Tutor',
+        category: 'ai',
+    displayTag: 'AI · TTS',
+        icon: 'bi-translate',
+        description: 'Duolingo-style language lessons — pick native \u0026 target language, AI generates vocabulary, dialogues \u0026 quizzes with 🔊 pronunciation',
+        variables: [
+            { name: 'nativeLang', value: 'English', desc: 'Your native language' },
+            { name: 'targetLang', value: 'Japanese', desc: 'Language you want to learn' },
+            { name: 'level', value: 'beginner', desc: 'beginner / intermediate / advanced' },
+            { name: 'topic', value: 'greetings \u0026 introductions', desc: 'Topic for this lesson' },
+        ],
+        content: `# 🌍 Language Lesson — $(targetLang)
+
+**Native Language:** $(nativeLang)
+**Learning:** $(targetLang)
+**Level:** $(level)
+**Topic:** $(topic)
+**Date:** $(date)
+
+> 💡 **How to use:** Click **⚡ Vars** to apply your settings, then **✨ Fill** to generate the lesson. Hover over any text and click **🔊** to hear pronunciation via Kokoro TTS.
+
+---
+
+## 📖 Vocabulary
+
+{{AI: Generate a vocabulary list of 12-15 essential words/phrases for the topic "$(topic)" at the $(level) level.
+
+Format as a table with columns:
+| # | $(targetLang) | Pronunciation | $(nativeLang) | Example Sentence |
+
+The pronunciation column should use romanization/transliteration for non-Latin scripts.
+Each example sentence should be a natural, everyday usage.
+Order from most common to least common.}}
+
+---
+
+## 🗣️ Dialogue Practice
+
+{{AI: Write a natural conversation between two people (Person A and Person B) about "$(topic)" in $(targetLang). This should be at (level) difficulty.
+
+Format:
+For each line, show:
+**Person A:** [$(targetLang) sentence]
+*(pronunciation)* — [$(nativeLang) translation]
+
+**Person B:** [$(targetLang) sentence]
+*(pronunciation)* — [$(nativeLang) translation]
+
+Include 6-8 exchanges. Make it realistic and culturally appropriate. Add a brief cultural note at the end about any relevant customs or etiquette.}}
+
+---
+
+## 📝 Grammar Notes
+
+{{AI: Explain 2-3 key grammar patterns used in the dialogue and vocabulary above. For each pattern:
+
+### Pattern: [Name in $(nativeLang)]
+- **Structure:** Show the grammar pattern formula
+- **Rule:** Explain when and how to use it (1-2 sentences)
+- **Examples:**
+  1. [$(targetLang)] → [$(nativeLang)]
+  2. [$(targetLang)] → [$(nativeLang)]
+  3. [$(targetLang)] → [$(nativeLang)]
+- **Common mistake:** What learners at $(level) level often get wrong
+
+Keep explanations clear and beginner-friendly even for advanced topics.}}
+
+---
+
+## 🎯 Practice Quiz
+
+{{AI: Create a practice quiz with 10 questions about "$(topic)" at the $(level) level. Mix the following question types:
+
+### Fill in the Blank (4 questions)
+Complete the sentence in $(targetLang):
+1. ______ [rest of sentence] → (Answer: [word])
+
+### Translate to $(targetLang) (3 questions)
+5. [$(nativeLang) sentence] → ?
+
+### Choose the Correct Answer (3 questions)
+8. [Question in $(nativeLang)]
+   - a) [option in $(targetLang)]
+   - b) [option in $(targetLang)]
+   - c) [option in $(targetLang)]
+   - d) [option in $(targetLang)]
+
+---
+
+**Answer Key:**
+List all answers with brief explanations for any tricky ones.}}
+
+---
+
+## 🔁 Quick Review Flashcards
+
+{{AI: Create 8 flashcard-style review items for this lesson. Format as:
+
+| Front ($(targetLang)) | Back ($(nativeLang)) | Mnemonic Tip |
+|---|---|---|
+
+Include a memory trick, association, or mnemonic for each word to help retention.}}
+
+---
+
+## 🎓 Next Steps
+
+{{AI: Based on this "$(topic)" lesson at $(level) level, suggest:
+1. **3 related topics** to study next (with brief description of what you'll learn)
+2. **2 practice activities** the learner can do today to reinforce this lesson
+3. **1 cultural immersion tip** — a movie, song, podcast, or social media account in $(targetLang) related to this topic
+
+Keep suggestions specific and actionable.}}
+
+---
+
+> 🔊 **Pronunciation Tip:** Hover over any text in the preview and click the **🔊** button to hear it spoken aloud by the Kokoro TTS engine. This works for all 10+ supported languages!
+`
+    },
 ];
+

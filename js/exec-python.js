@@ -175,4 +175,36 @@
         });
     }
 
+    // --- Register runtime adapter for exec-controller ---
+    var pythonAdapter = {
+        execute: function (source) {
+            return new Promise(function (resolve, reject) {
+                getPyodide(function (pyodide, err) {
+                    if (!pyodide || err) {
+                        reject(err || new Error('Failed to load Pyodide'));
+                        return;
+                    }
+                    try {
+                        pyodide.runPython('sys.stdout = StringIO()\nsys.stderr = StringIO()');
+                        pyodide.runPython(source);
+                        var stdout = pyodide.runPython('sys.stdout.getvalue()');
+                        var stderr = pyodide.runPython('sys.stderr.getvalue()');
+                        var output = '';
+                        if (stdout) output += stdout;
+                        if (stderr) output += (output ? '\n' : '') + stderr;
+                        resolve(output || '(no output)');
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            });
+        }
+    };
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('python', pythonAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'python', adapter: pythonAdapter });
+    }
+
 })(window.MDView);

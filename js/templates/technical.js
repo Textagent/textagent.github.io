@@ -128,13 +128,17 @@ flowchart TD
 ### Data Model
 
 \`\`\`sql
-CREATE TABLE example (
-  id          SERIAL PRIMARY KEY,
-  name        VARCHAR(255) NOT NULL,
-  status      VARCHAR(50) DEFAULT 'active',
-  created_at  TIMESTAMP DEFAULT NOW(),
-  updated_at  TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS example (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,
+  status      TEXT DEFAULT 'active',
+  created_at  TEXT DEFAULT (datetime('now'))
 );
+
+INSERT OR IGNORE INTO example VALUES (1, 'Feature A', 'active', datetime('now'));
+INSERT OR IGNORE INTO example VALUES (2, 'Feature B', 'draft', datetime('now'));
+INSERT OR IGNORE INTO example VALUES (3, 'Feature C', 'active', datetime('now'));
+SELECT * FROM example;
 \`\`\`
 
 ### API Design

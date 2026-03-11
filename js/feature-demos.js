@@ -36,6 +36,7 @@
         { keywords: ['email to self', 'email'], video: 'assets/demos/22_email_to_self.webp', title: 'Email to Self — Share to Inbox' },
         { keywords: ['disk', 'folder', 'file system'], video: 'assets/demos/23_disk_workspace.webp', title: 'Disk-Backed Workspace — Save to Folder' },
         { keywords: ['api call', 'rest api'], video: 'assets/demos/24_api_linux_tags.png', title: 'API Calls & Linux Tags — REST + Compile' },
+        { keywords: ['run all', 'notebook'], video: 'assets/demos/25_run_all.png', title: 'Run All — Notebook Execution Engine' },
     ];
 
     // ── Modal element (lazily created) ──

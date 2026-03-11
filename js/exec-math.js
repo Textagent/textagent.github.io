@@ -367,4 +367,37 @@
         btnEval.innerHTML = '<i class="bi bi-calculator"></i> Evaluate';
     }
 
+    // --- Register runtime adapter for exec-controller ---
+    var mathAdapter = {
+        execute: function (source) {
+            return window.getMathjs().then(function (mathLib) {
+                var lines = source.split('\n').filter(function (l) { return l.trim() !== '' && !l.trim().startsWith('//'); });
+                var scope = {};
+                var results = [];
+                for (var i = 0; i < lines.length; i++) {
+                    try {
+                        var result = mathLib.evaluate(lines[i].trim(), scope);
+                        if (result !== undefined) {
+                            var formatted;
+                            if (typeof result === 'object' && result.entries) formatted = mathLib.format(result, { precision: 10 });
+                            else if (typeof result === 'number') formatted = mathLib.format(result, { precision: 10 });
+                            else if (typeof result === 'function') formatted = '(function defined)';
+                            else formatted = String(result);
+                            results.push(lines[i].trim() + ' → ' + formatted);
+                        }
+                    } catch (e) {
+                        results.push(lines[i].trim() + ' → ❌ ' + e.message);
+                    }
+                }
+                return results.join('\n') || '(no result)';
+            });
+        }
+    };
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('math', mathAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'math', adapter: mathAdapter });
+    }
+
 })(window.MDView);

@@ -1,0 +1,178 @@
+/* ============================================
+   tts.css — TTS Card + Translate Card Styles
+   ============================================ */
+
+/* ============================================
+   Translate Card — Language Selector + TTS
+   ============================================ */
+
+/* Translate card accent */
+.ai-translate-card {
+    border-left: 3px solid #10b981 !important;
+}
+
+.ai-translate-card .ai-placeholder-icon {
+    font-size: 1.1em;
+}
+
+.ai-translate-card .ai-placeholder-label {
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Language selector dropdown (shared by Translate + TTS) */
+.ai-translate-lang-select {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 6px;
+    color: inherit;
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    min-width: 90px;
+}
+
+.ai-translate-lang-select:hover {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.ai-translate-lang-select:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+/* Toolbar Translate button accent */
+.fmt-translate-btn {
+    color: #10b981 !important;
+    font-size: 0.7rem !important;
+}
+
+/* Dark mode — Translate */
+[data-theme="dark"] .ai-translate-card {
+    border-left-color: #34d399 !important;
+}
+
+[data-theme="dark"] .ai-translate-card .ai-placeholder-label {
+    color: #34d399;
+}
+
+[data-theme="dark"] .ai-translate-lang-select {
+    background: rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.3);
+}
+
+/* ============================================
+   TTS Card — Text to Speech
+   ============================================ */
+
+/* TTS card accent — purple/violet */
+.ai-tts-card {
+    border-left: 3px solid #8b5cf6 !important;
+}
+
+.ai-tts-card .ai-placeholder-icon {
+    font-size: 1.1em;
+}
+
+.ai-tts-card .ai-placeholder-label {
+    color: #8b5cf6;
+    font-weight: 600;
+}
+
+/* Kokoro TTS model badge */
+.ai-tts-model-badge {
+    display: inline-block;
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    letter-spacing: 0.02em;
+    margin-left: 6px;
+}
+
+/* TTS lang selector — purple tint */
+.ai-tts-card .ai-translate-lang-select {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.25);
+}
+
+.ai-tts-card .ai-translate-lang-select:hover {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.ai-tts-card .ai-translate-lang-select:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+/* Play / Stop buttons */
+.ai-tts-play,
+.ai-tts-stop {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+}
+
+.ai-tts-play {
+    color: #8b5cf6 !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.ai-tts-play:hover {
+    background: rgba(139, 92, 246, 0.12) !important;
+}
+
+.ai-tts-stop {
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.ai-tts-stop:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Speaking state — pulse animation */
+.ai-tts-speaking {
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    animation: tts-card-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes tts-card-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15); }
+    50% { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25); }
+}
+
+/* Toolbar TTS button accent */
+.fmt-tts-btn {
+    color: #8b5cf6 !important;
+    font-size: 0.7rem !important;
+}
+
+/* Dark mode — TTS */
+[data-theme="dark"] .ai-tts-card {
+    border-left-color: #a78bfa !important;
+}
+
+[data-theme="dark"] .ai-tts-card .ai-placeholder-label {
+    color: #a78bfa;
+}
+
+[data-theme="dark"] .ai-tts-card .ai-translate-lang-select {
+    background: rgba(167, 139, 250, 0.1);
+    border-color: rgba(167, 139, 250, 0.3);
+}
+
+[data-theme="dark"] .ai-tts-play {
+    color: #a78bfa !important;
+}
+
+[data-theme="dark"] .ai-tts-stop {
+    color: #f87171 !important;
+}

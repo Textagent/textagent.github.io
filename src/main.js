@@ -34,6 +34,8 @@ import '../css/linux-terminal.css';
 import '../css/toast.css';
 import '../css/stock-widget.css';
 import '../css/video-player.css';
+import '../css/exec-engine.css';
+import '../css/tts.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -74,6 +76,7 @@ async function loadModules() {
         import('../js/ai-models.js'),
         import('../js/llm-memory.js'),
         import('../js/speechToText.js'),
+        import('../js/textToSpeech.js'),
         import('../js/table-tools.js'),
         import('../js/feature-demos.js'),
         import('../js/help-mode.js'),
@@ -93,6 +96,10 @@ async function loadModules() {
 
     // 3b-ext: Context Memory (depends on M._exec.getSqlJs from exec-sandbox.js)
     await import('../js/context-memory.js');
+
+    // 3b-ext2: Execution Engine (depends on all runtimes for adapter registration)
+    await import('../js/exec-registry.js');
+    await import('../js/exec-controller.js');
 
     // 3c: Templates (parallel — all independent data modules)
     await Promise.all([

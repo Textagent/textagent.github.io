@@ -625,6 +625,12 @@
                             title="Tag as Agent Flow Pipeline">Agent</button>
                         <button class="fmt-btn fmt-memory-btn" data-action="memory-tag"
                             title="Tag as Context Memory Source">📚 Memory</button>
+                        <button class="fmt-btn fmt-ocr-btn" data-action="ocr-tag"
+                            title="Tag as OCR Scan (Image to Text/SVG)">🔍 OCR</button>
+                        <button class="fmt-btn fmt-translate-btn" data-action="translate-tag"
+                            title="Tag as Translation (Text + Audio)">🌐 Translate</button>
+                        <button class="fmt-btn fmt-tts-btn" data-action="tts-tag"
+                            title="Tag as Text-to-Speech (Audio)">🔊 TTS</button>
                         <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
                             title="Fill all AI blocks">Fill</button>
                     </div>
@@ -697,6 +703,11 @@
             <button class="fmt-btn fmt-vars-btn" id="apply-vars-btn"
                 title="Apply Variables — replace all $(varName) placeholders">
                 <i class="bi bi-braces-asterisk"></i> <span>Vars</span>
+            </button>
+            <span class="fmt-separator"></span>
+            <button class="fmt-btn fmt-run-all-btn" data-action="run-all" id="run-all-btn"
+                title="Run all executable blocks in document order">
+                <i class="bi bi-play-circle"></i> <span>Run All</span>
             </button>
         </div>
 

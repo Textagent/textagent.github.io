@@ -38,6 +38,18 @@
             M.wrapSelectionWith('{{@Memory:\n  @name: ', '\n}}', memId);
             return;
         }
+        if (type === 'OCR') {
+            M.wrapSelectionWith('{{@OCR:\n  @mode: text\n  @prompt: ', '\n}}', 'describe what to extract from the image');
+            return;
+        }
+        if (type === 'Translate') {
+            M.wrapSelectionWith('{{@Translate:\n  @prompt: ', '\n  @lang: Japanese\n}}', 'text to translate');
+            return;
+        }
+        if (type === 'TTS') {
+            M.wrapSelectionWith('{{@TTS:\n  @prompt: ', '\n  @lang: English\n}}', 'text to speak aloud');
+            return;
+        }
 
         var placeholder = type === 'Image'
             ? 'describe the image to generate'
@@ -81,7 +93,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -100,6 +112,24 @@
                 if (block.type === 'Think') {
                     block.type = 'AI';
                     block.think = true;
+                }
+                // Parse @mode: field for OCR blocks
+                if (block.type === 'OCR') {
+                    var modeMatch = block.prompt.match(/^(?:@mode|Mode):\s*(text|svg)$/mi);
+                    block.ocrMode = modeMatch ? modeMatch[1].toLowerCase() : 'text';
+                    block.prompt = block.prompt.replace(/^(?:@mode|Mode):\s*\S+$/mi, '').trim();
+                }
+                // Parse @lang: field for Translate blocks
+                if (block.type === 'Translate' || block.type === 'TTS') {
+                    var langMatch = block.prompt.match(/^(?:@lang|Lang):\s*(.+)$/mi);
+                    block.targetLang = langMatch ? langMatch[1].trim() : (block.type === 'TTS' ? 'English' : 'Japanese');
+                    block.prompt = block.prompt.replace(/^(?:@lang|Lang):\s*.+$/mi, '').trim();
+                }
+                // Parse @var: field — allows blocks to store output into a named variable
+                var varMatch = block.prompt.match(/^\s*(?:@var|Var):\s*(\S+)$/mi);
+                if (varMatch) {
+                    block.varName = varMatch[1].trim();
+                    block.prompt = block.prompt.replace(varMatch[0], '').trim();
                 }
                 // Parse @use, @think, @search, @prompt fields
                 if (block.type !== 'Image' && block.type !== 'Memory') {
@@ -260,7 +290,7 @@
         // Auto-rename duplicate Memory names in editor + input
         markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Think|Image|Agent|Memory):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -280,7 +310,8 @@
             if (m.isImageModel) {
                 var sel = id === 'imagen-ultra' ? ' selected' : '';
                 imageModelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
-            } else {
+            } else if (!m.isTtsModel) {
+                // Exclude TTS-only models from text/translation model selectors
                 var sel = id === currentModel ? ' selected' : '';
                 textModelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
             }
@@ -304,8 +335,8 @@
             if (type === 'Think') type = 'AI';
             var thinkFieldMatch = prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : (match[1] === 'Think');
-            var icon = type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
-            var label = type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
+            var icon = type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
+            var label = type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
             var cardModelOpts = type === 'Image' ? imageCardModelOpts : modelOptionsHtml;
 
             if (type === 'Memory') {
@@ -341,6 +372,60 @@
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
                     + '<div class="ai-memory-stats" data-memory-name="' + escapedName + '">No files attached</div>'
+                    + '</div>';
+            } else if (type === 'OCR') {
+                // OCR card — specialized for image-to-text / image-to-SVG
+                var ocrModeMatch = prompt.match(/^(?:@mode|Mode):\s*(text|svg)$/mi);
+                var ocrMode = ocrModeMatch ? ocrModeMatch[1].toLowerCase() : 'text';
+                var ocrDisplayText = prompt.replace(/^(?:@mode|Mode):\s*\S+$/mi, '').trim();
+                // Strip metadata fields from display
+                ocrDisplayText = ocrDisplayText.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
+                ocrDisplayText = ocrDisplayText.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
+                ocrDisplayText = ocrDisplayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
+
+                // Separate description from @prompt:
+                var ocrHasPromptField = /^\s*(?:@prompt|Prompt):\s*/m.test(ocrDisplayText);
+                var ocrPromptMatch = ocrDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
+                var ocrPromptValue = ocrPromptMatch ? ocrPromptMatch[1].trim() : '';
+                var ocrDescText = ocrHasPromptField
+                    ? ocrDisplayText.replace(ocrPromptMatch[0], '').trim()
+                    : ocrDisplayText;
+
+                // Build upload thumbnail strip
+                var ocrUploadThumbs = '';
+                var ocrExistingUploads = blockUploads.get(blockIndex);
+                if (ocrExistingUploads && ocrExistingUploads.length > 0) {
+                    ocrUploadThumbs = '<div class="ai-card-uploads" data-ai-index="' + blockIndex + '">';
+                    ocrExistingUploads.forEach(function (u, ui) {
+                        ocrUploadThumbs += '<div class="ai-card-upload-thumb"><img src="data:' + u.mimeType + ';base64,' + u.data + '" alt="' + escapeHtml(u.name) + '">'
+                            + '<button class="ai-card-upload-remove" data-ai-index="' + blockIndex + '" data-upload-index="' + ui + '" title="Remove">✕</button></div>';
+                    });
+                    ocrUploadThumbs += '</div>';
+                }
+
+                // Mode pills (Text / SVG toggle)
+                var modePillsHtml = '<div class="ai-ocr-mode-pills" data-ai-index="' + blockIndex + '">'
+                    + '<button class="ai-ocr-mode-pill' + (ocrMode === 'text' ? ' active' : '') + '" data-mode="text" data-ai-index="' + blockIndex + '" title="Extract text as Markdown">📝 Text</button>'
+                    + '<button class="ai-ocr-mode-pill' + (ocrMode === 'svg' ? ' active' : '') + '" data-mode="svg" data-ai-index="' + blockIndex + '" title="Convert diagram/chart to SVG">🎨 SVG</button>'
+                    + '</div>';
+
+                result += '<div class="ai-placeholder-card ai-ocr-card" data-ai-type="OCR" data-ai-index="' + blockIndex + '" data-ocr-mode="' + ocrMode + '">'
+                    + '<div class="ai-placeholder-header">'
+                    + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                    + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for OCR">📎</button>'
+                    + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for OCR">'
+                    + cardModelOpts + '</select>'
+                    + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run OCR scan">▶</button>'
+                    + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                    + '</div></div>'
+                    + modePillsHtml
+                    + ocrUploadThumbs
+                    + (ocrDescText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(ocrDescText) + '</div>' : '')
+                    + (ocrHasPromptField
+                        ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Optional: describe what to extract…" rows="2">' + escapeHtml(ocrPromptValue) + '</textarea></div>'
+                        : '')
                     + '</div>';
             } else if (type === 'Agent') {
                 // Render pipeline card for Agent blocks
@@ -411,6 +496,122 @@
                     + '</div>'
                     + '</div>'
                     + '<div class="ai-agent-steps">' + stepsHtml + '</div>'
+                    + '</div>';
+            } else if (type === 'Translate') {
+                // Translate card — specialized for text translation + TTS
+                var translateDisplayText = prompt;
+                translateDisplayText = translateDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
+                translateDisplayText = translateDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+                translateDisplayText = translateDisplayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
+
+                var translateHasPrompt = /^\s*(?:@prompt|Prompt):\s*/m.test(translateDisplayText);
+                var translatePromptMatch = translateDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
+                var translatePromptVal = translatePromptMatch ? translatePromptMatch[1].trim() : '';
+                var translateDescText = translateHasPrompt
+                    ? translateDisplayText.replace(translatePromptMatch[0], '').trim()
+                    : translateDisplayText;
+                // Strip @lang from description (already shown in dropdown)
+                translateDescText = translateDescText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
+
+                // Parse @lang from raw prompt (before stripping)
+                var langFieldMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
+                var currentLang = langFieldMatch ? langFieldMatch[1].trim() : 'Japanese';
+
+                // Language dropdown options
+                var langOptions = [
+                    { code: 'ja', name: 'Japanese' },
+                    { code: 'ko', name: 'Korean' },
+                    { code: 'zh', name: 'Chinese' },
+                    { code: 'fr', name: 'French' },
+                    { code: 'de', name: 'German' },
+                    { code: 'it', name: 'Italian' },
+                    { code: 'es', name: 'Spanish' },
+                    { code: 'pt', name: 'Portuguese' },
+                    { code: 'hi', name: 'Hindi' },
+                    { code: 'en', name: 'English' },
+                ];
+                var langSelectHtml = '<select class="ai-translate-lang-select" data-ai-index="' + blockIndex + '" title="Target language">';
+                langOptions.forEach(function (lo) {
+                    var sel = lo.name.toLowerCase() === currentLang.toLowerCase() ? ' selected' : '';
+                    langSelectHtml += '<option value="' + lo.name + '" data-lang-code="' + lo.code + '"' + sel + '>' + lo.name + '</option>';
+                });
+                langSelectHtml += '</select>';
+
+                result += '<div class="ai-placeholder-card ai-translate-card" data-ai-type="Translate" data-ai-index="' + blockIndex + '" data-target-lang="' + escapeHtml(currentLang) + '">'
+                    + '<div class="ai-placeholder-header">'
+                    + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                    + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + '<div class="ai-placeholder-actions">'
+                    + langSelectHtml
+                    + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for translation">' + cardModelOpts + '</select>'
+                    + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Translate">▶</button>'
+                    + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                    + '</div></div>'
+                    + (translateDescText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(translateDescText) + '</div>' : '')
+                    + (translateHasPrompt
+                        ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Enter text to translate\u2026" rows="2">' + escapeHtml(translatePromptVal) + '</textarea></div>'
+                        : '')
+                    + '</div>';
+            } else if (type === 'TTS') {
+                // TTS card — direct text-to-speech playback via Kokoro
+                var ttsDisplayText = prompt;
+                ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
+                ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+
+                var ttsHasPrompt = /^\s*(?:@prompt|Prompt):\s*/m.test(ttsDisplayText);
+                var ttsPromptMatch = ttsDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
+                var ttsPromptVal = ttsPromptMatch ? ttsPromptMatch[1].trim() : '';
+                // Resolve $(varName) from the Vars system at render time
+                var ttsApiVars = window.__API_VARS || {};
+                ttsPromptVal = ttsPromptVal.replace(/\$\(([^)]+)\)/g, function (full, vn) {
+                    return ttsApiVars[vn] || full;  // keep $(var) if not yet set
+                });
+                var ttsDescText = ttsHasPrompt
+                    ? ttsDisplayText.replace(ttsPromptMatch[0], '').trim()
+                    : ttsDisplayText;
+                ttsDescText = ttsDescText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
+
+                // Parse @lang
+                var ttsLangMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
+                var ttsCurrentLang = ttsLangMatch ? ttsLangMatch[1].trim() : 'English';
+
+                // Language dropdown — Kokoro for EN/ZH, Web Speech API for rest
+                var ttsLangOptions = [
+                    { code: 'en', name: 'English' },
+                    { code: 'en-us', name: 'English (US)' },
+                    { code: 'en-gb', name: 'English (UK)' },
+                    { code: 'zh', name: 'Chinese (Mandarin)' },
+                    { code: 'ja', name: 'Japanese' },
+                    { code: 'ko', name: 'Korean' },
+                    { code: 'fr', name: 'French' },
+                    { code: 'de', name: 'German' },
+                    { code: 'it', name: 'Italian' },
+                    { code: 'es', name: 'Spanish' },
+                    { code: 'pt', name: 'Portuguese' },
+                    { code: 'hi', name: 'Hindi' },
+                ];
+                var ttsLangHtml = '<select class="ai-translate-lang-select ai-tts-lang-select" data-ai-index="' + blockIndex + '" title="Voice language">';
+                ttsLangOptions.forEach(function (lo) {
+                    var sel = lo.name.toLowerCase() === ttsCurrentLang.toLowerCase() ? ' selected' : '';
+                    ttsLangHtml += '<option value="' + lo.name + '" data-lang-code="' + lo.code + '"' + sel + '>' + lo.name + '</option>';
+                });
+                ttsLangHtml += '</select>';
+
+                result += '<div class="ai-placeholder-card ai-tts-card" data-ai-type="TTS" data-ai-index="' + blockIndex + '" data-target-lang="' + escapeHtml(ttsCurrentLang) + '">'
+                    + '<div class="ai-placeholder-header">'
+                    + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                    + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + '<span class="ai-tts-model-badge">Kokoro TTS</span>'
+                    + '<div class="ai-placeholder-actions">'
+                    + ttsLangHtml
+                    + '<button class="ai-placeholder-btn ai-fill-one ai-tts-play" data-ai-index="' + blockIndex + '" title="Play audio">▶ Play</button>'
+                    + '<button class="ai-placeholder-btn ai-tts-stop" data-ai-index="' + blockIndex + '" title="Stop" style="display:none">■ Stop</button>'
+                    + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                    + '</div></div>'
+                    + (ttsDescText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(ttsDescText) + '</div>' : '')
+                    + (ttsHasPrompt
+                        ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Enter text to speak aloud\u2026" rows="2">' + escapeHtml(ttsPromptVal) + '</textarea></div>'
+                        : '')
                     + '</div>';
             } else {
                 // Extract @use and strip @ fields from display
@@ -502,6 +703,45 @@
                 var card = this.closest('.ai-placeholder-card');
                 if (card && card.dataset.aiType === 'Agent') {
                     M._docgen.generateAgentFlow(idx);
+                } else if (card && card.dataset.aiType === 'TTS') {
+                    // TTS: play directly — don't go through AI generation
+                    var ttsBlocks = M.parseDocgenBlocks(M.markdownEditor.value);
+                    if (idx < ttsBlocks.length) {
+                        var ttsBlock = ttsBlocks[idx];
+                        var ttsText = ttsBlock.prompt || '';
+                        // Resolve $(varName) references from the Vars system
+                        var apiVars = window.__API_VARS || {};
+                        ttsText = ttsText.replace(/\$\(([^)]+)\)/g, function (_, vn) {
+                            return apiVars[vn] || '';
+                        }).trim();
+                        // Also check card textarea for latest user edits
+                        var ttsPromptArea = card.querySelector('.ai-card-prompt-input');
+                        if (ttsPromptArea && ttsPromptArea.value.trim()) {
+                            var resolvedPrompt = ttsPromptArea.value.trim().replace(/\$\(([^)]+)\)/g, function (_, vn) {
+                                return apiVars[vn] || '';
+                            }).trim();
+                            if (resolvedPrompt) ttsText = resolvedPrompt;
+                        }
+                        var ttsLangSel = card.querySelector('.ai-tts-lang-select');
+                        var ttsLangName = ttsLangSel ? ttsLangSel.value : 'English';
+                        console.log('[TTS Play] text="' + ttsText.substring(0, 80) + '", lang=' + ttsLangName);
+                        // Pass the language name directly — worker VOICE_MAP accepts both codes and names
+                        var ttsLangCode = ttsLangName.toLowerCase();
+                        if (ttsText && M.tts && M.tts.speak) {
+                            // Show stop button
+                            var playBtn = card.querySelector('.ai-tts-play');
+                            var stopBtn = card.querySelector('.ai-tts-stop');
+                            if (playBtn) playBtn.style.display = 'none';
+                            if (stopBtn) stopBtn.style.display = '';
+                            card.classList.add('ai-tts-speaking');
+                            M.tts.speak(ttsText, null, ttsLangCode);
+                            M.showToast('🔊 Playing: "' + ttsText.substring(0, 40) + '…"', 'info');
+                        } else if (!ttsText) {
+                            M.showToast('⚠️ No text to speak — make sure the prompt has content.', 'warning');
+                        } else if (!M.tts) {
+                            M.showToast('🔊 TTS engine loading — please try again in a moment.', 'info');
+                        }
+                    }
                 } else {
                     M._docgen.generateAndReview(idx);
                 }
@@ -514,6 +754,57 @@
                 e.stopPropagation();
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 M._docgen.removeDocgenTag(idx);
+            });
+        });
+
+        // TTS stop button — stop audio playback
+        container.querySelectorAll('.ai-tts-stop').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (M.tts && M.tts.stop) M.tts.stop();
+                var card = this.closest('.ai-tts-card');
+                if (card) {
+                    card.classList.remove('ai-tts-speaking');
+                    var playBtn = card.querySelector('.ai-tts-play');
+                    if (playBtn) playBtn.style.display = '';
+                    this.style.display = 'none';
+                }
+            });
+        });
+
+        // Model selector change — trigger download consent for undownloaded local models
+        container.querySelectorAll('.ai-card-model-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var modelId = this.value;
+                if (!modelId) return;
+                var models = window.AI_MODELS || {};
+                var modelInfo = models[modelId];
+                if (!modelId) return;
+
+                // For local models, check if downloaded and trigger consent/download if needed
+                if (modelInfo && modelInfo.isLocal && M._ai && M._ai.isLocalModel && M._ai.isLocalModel(modelId)) {
+                    var ls = M._ai.getLocalState(modelId);
+                    if (!ls.loaded && !ls.worker) {
+                        var consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
+                        var hasConsent = localStorage.getItem(consentKey)
+                            || (modelId === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
+                        if (hasConsent) {
+                            M._ai.initAiWorker(modelId);
+                            M.showToast('⏳ Loading ' + (modelInfo.dropdownName || modelInfo.label) + ' from cache…', 'info');
+                        } else {
+                            if (M.openAiPanel) M.openAiPanel();
+                            M.showToast('📥 Please download ' + (modelInfo.dropdownName || modelInfo.label) + ' from the AI panel.', 'info');
+                        }
+                    }
+                }
+
+                // For cloud models, check API key
+                var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+                var cloudProvider = providers[modelId];
+                if (cloudProvider && !cloudProvider.getKey()) {
+                    M.showApiKeyModal(modelId);
+                }
             });
         });
 
@@ -598,6 +889,36 @@
             ta.style.height = ta.scrollHeight + 'px';
         });
 
+        // Translate language selector — sync @lang: field to editor text
+        container.querySelectorAll('.ai-translate-lang-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var newLang = this.value;
+                // Update data attribute on card
+                var card = this.closest('.ai-translate-card');
+                if (card) card.dataset.targetLang = newLang;
+                // Sync @lang: field in editor tag text
+                var text = M.markdownEditor ? M.markdownEditor.value : '';
+                var blocks = parseDocgenBlocks(text);
+                if (idx < blocks.length) {
+                    var block = blocks[idx];
+                    var tagContent = text.substring(block.start, block.end);
+                    var langRe = /^(\s*)(?:@lang|Lang):\s*.+$/mi;
+                    var newTagContent;
+                    if (langRe.test(tagContent)) {
+                        newTagContent = tagContent.replace(langRe, '$1@lang: ' + newLang);
+                    } else {
+                        // Insert @lang before closing }}
+                        var closingIdx = tagContent.lastIndexOf('}}');
+                        newTagContent = tagContent.substring(0, closingIdx)
+                            + '  @lang: ' + newLang + '\n'
+                            + tagContent.substring(closingIdx);
+                    }
+                    M.markdownEditor.value = text.substring(0, block.start) + newTagContent + text.substring(block.end);
+                }
+            });
+        });
+
         // Agent step input — sync edits back to @step lines in editor
         container.querySelectorAll('.ai-agent-step-input').forEach(function (inp) {
             var debounceTimer = null;
@@ -609,6 +930,45 @@
                     var stepNum = parseInt(self.dataset.stepNum, 10);
                     updateBlockStepText(idx, stepNum, self.value);
                 }, 300);
+            });
+        });
+
+        // OCR mode pills — toggle text/svg mode
+        container.querySelectorAll('.ai-ocr-mode-pill').forEach(function (pill) {
+            pill.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var newMode = this.dataset.mode;
+                // Update visual state
+                var pillContainer = this.parentNode;
+                pillContainer.querySelectorAll('.ai-ocr-mode-pill').forEach(function (p) {
+                    p.classList.remove('active');
+                });
+                this.classList.add('active');
+                // Update data attribute on card
+                var card = this.closest('.ai-ocr-card');
+                if (card) card.dataset.ocrMode = newMode;
+                // Sync @mode: field in editor tag text
+                var text = M.markdownEditor ? M.markdownEditor.value : '';
+                var blocks = parseDocgenBlocks(text);
+                if (idx < blocks.length) {
+                    var block = blocks[idx];
+                    var tagContent = text.substring(block.start, block.end);
+                    // Replace or insert @mode: directive
+                    var modeRe = /^(\s*)(?:@mode|Mode):\s*\S+$/mi;
+                    var newTagContent;
+                    if (modeRe.test(tagContent)) {
+                        newTagContent = tagContent.replace(modeRe, '$1@mode: ' + newMode);
+                    } else {
+                        // Insert @mode after the tag opener
+                        var colonIdx = tagContent.indexOf(':');
+                        newTagContent = tagContent.substring(0, colonIdx + 1)
+                            + '\n  @mode: ' + newMode
+                            + tagContent.substring(colonIdx + 1);
+                    }
+                    M.markdownEditor.value = text.substring(0, block.start) + newTagContent + text.substring(block.end);
+                }
             });
         });
 
@@ -733,8 +1093,8 @@
             var lines = inner.split('\n');
             for (var i = 0; i < lines.length; i++) {
                 var trimmed = lines[i].trim();
-                if (/^@(think|search|upload|use|name|step)\s*:/i.test(trimmed)
-                    || /^(Think|Search|Use|Name|Step)\s*\d*\s*:/i.test(trimmed)) {
+                if (/^@(think|search|upload|use|name|step|mode)\s*:/i.test(trimmed)
+                    || /^(Think|Search|Use|Name|Step|Mode)\s*\d*\s*:/i.test(trimmed)) {
                     metaLines.push(trimmed);
                 }
             }
@@ -1176,6 +1536,9 @@
     M.registerFormattingAction('image-tag', function () { insertDocgenTag('Image'); });
     M.registerFormattingAction('agent-tag', function () { insertDocgenTag('Agent'); });
     M.registerFormattingAction('memory-tag', function () { insertDocgenTag('Memory'); });
+    M.registerFormattingAction('ocr-tag', function () { insertDocgenTag('OCR'); });
+    M.registerFormattingAction('translate-tag', function () { insertDocgenTag('Translate'); });
+    M.registerFormattingAction('tts-tag', function () { insertDocgenTag('TTS'); });
 
     // ==============================================
     // EXPOSE FOR RENDERER

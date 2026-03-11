@@ -32,7 +32,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
       '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + window.MDView.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · 📂 Disk-Backed Workspace (File System Access API, .md read/write, autosave, auto-reconnect) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
-      '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · 151 Playwright tests (smoke, feature, integration, startup, export, persistence) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
+      '| **▶ Run All** | One-click notebook execution — runs all code blocks, AI tags, API calls, and Linux compiles in document order · 11 runtime adapters · Progress bar with abort · Per-block status badges · SQLite shared context store for cross-block data |\n' +
+      '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · 191 Playwright tests (smoke, feature, integration, startup, export, persistence, exec engine) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -161,6 +162,23 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       "INSERT INTO demo VALUES (1, 'Alice', 95.5), (2, 'Bob', 87.3), (3, 'Carol', 92.1);\n" +
       'SELECT name, score FROM demo ORDER BY score DESC;\n' +
       '```\n\n' +
+      '---\n\n' +
+      '## ▶ Run All — Notebook Execution\n\n' +
+      'Click the **▶ Run All** button to execute every block in your document — code, AI tags, API calls, and Linux compiles — in document order.\n\n' +
+      '**How it works:**\n' +
+      '1. The **Block Registry** scans the document and discovers all executable blocks\n' +
+      '2. The **Execution Controller** runs them sequentially with a progress bar\n' +
+      '3. Each block gets a status badge: ⏳ pending → ⚡ running → ✅ done / ❌ error\n' +
+      '4. Results are stored in a **SQLite shared context** — downstream blocks can read upstream results\n\n' +
+      '**11 Supported Block Types:**\n\n' +
+      '| Block Type | Examples |\n' +
+      '|:-----------|:---------|\n' +
+      '| **Code** | `bash`, `math`, `python`, `html`, `javascript`, `sql` |\n' +
+      '| **DocGen** | `{{AI:}}`, `{{Image:}}`, `{{Agent:}}` (auto-accept) |\n' +
+      '| **API** | `{{API:}}` — fetches REST API, auto-replaces tag |\n' +
+      '| **Linux** | `{{Linux:}}` — compiles via Judge0 CE |\n\n' +
+      '> [!TIP]\n' +
+      '> AI/Image/Agent tags use **auto-accept** mode during Run All — generated content replaces the tag directly without manual review.\n\n' +
       '---\n\n' +
       '## 🏷️ AI Document Tags\n\n' +
       'Embed AI-powered content generation **directly in your document** using three specialized tags:\n\n' +

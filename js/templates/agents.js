@@ -214,53 +214,53 @@ erDiagram
 ## 1. Schema Definition
 
 \`\`\`sql
--- Create the database schema
-CREATE TABLE categories (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    created_at  TIMESTAMP DEFAULT NOW()
+-- Create the database schema (SQLite)
+CREATE TABLE IF NOT EXISTS categories (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL UNIQUE,
+    description TEXT
 );
 
-CREATE TABLE products (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    price       DECIMAL(10, 2) NOT NULL CHECK (price > 0),
-    category_id INT REFERENCES categories(id),
-    stock       INT DEFAULT 0 CHECK (stock >= 0),
-    created_at  TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS products (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    price       REAL NOT NULL CHECK (price > 0),
+    category_id INTEGER REFERENCES categories(id),
+    stock       INTEGER DEFAULT 0 CHECK (stock >= 0)
 );
 
-CREATE TABLE customers (
-    id         SERIAL PRIMARY KEY,
-    name       VARCHAR(200) NOT NULL,
-    email      VARCHAR(255) NOT NULL UNIQUE,
-    city       VARCHAR(100),
-    created_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS customers (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    name  TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    city  TEXT
 );
 
-CREATE TABLE orders (
-    id          SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL REFERENCES customers(id),
-    total       DECIMAL(12, 2) DEFAULT 0,
-    status      VARCHAR(20) DEFAULT 'pending'
+CREATE TABLE IF NOT EXISTS orders (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL REFERENCES customers(id),
+    total       REAL DEFAULT 0,
+    status      TEXT DEFAULT 'pending'
                 CHECK (status IN ('pending','processing','shipped','delivered','cancelled')),
-    order_date  TIMESTAMP DEFAULT NOW()
+    order_date  TEXT DEFAULT (datetime('now'))
 );
 
-CREATE TABLE order_items (
-    id         SERIAL PRIMARY KEY,
-    order_id   INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id INT NOT NULL REFERENCES products(id),
-    quantity   INT NOT NULL CHECK (quantity > 0),
-    unit_price DECIMAL(10, 2) NOT NULL
+CREATE TABLE IF NOT EXISTS order_items (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id   INTEGER NOT NULL REFERENCES orders(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity   INTEGER NOT NULL CHECK (quantity > 0),
+    unit_price REAL NOT NULL
 );
 
--- Indexes for performance
-CREATE INDEX idx_orders_customer ON orders(customer_id);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_order_items_order ON order_items(order_id);
+-- Insert sample data
+INSERT OR IGNORE INTO categories VALUES (1,'Electronics','Tech gadgets'),(2,'Furniture','Office furniture'),(3,'Audio','Headphones & speakers');
+INSERT OR IGNORE INTO products VALUES (1,'Wireless Mouse',29.99,1,150),(2,'USB-C Hub',49.99,1,80),(3,'Standing Desk',399.00,2,25),(4,'Ergonomic Chair',599.00,2,18),(5,'Noise-Cancel Headphones',249.99,3,60);
+INSERT OR IGNORE INTO customers VALUES (1,'Alice Johnson','alice@example.com','New York'),(2,'Bob Smith','bob@example.com','London'),(3,'Carol Williams','carol@example.com','Tokyo'),(4,'David Kim','david@example.com','Seoul'),(5,'Eve Martinez','eve@example.com','São Paulo');
+INSERT OR IGNORE INTO orders VALUES (1,1,329.98,'delivered','2024-01-15'),(2,2,449.99,'shipped','2024-02-10'),(3,1,599.00,'delivered','2024-03-05'),(4,3,79.98,'processing','2024-03-12'),(5,4,848.99,'shipped','2024-03-18'),(6,5,29.99,'cancelled','2024-03-20');
+INSERT OR IGNORE INTO order_items VALUES (1,1,1,2,29.99),(2,1,2,1,49.99),(3,1,5,1,249.99),(4,2,4,1,449.99),(5,3,4,1,599.00),(6,4,1,1,29.99),(7,4,2,1,49.99),(8,5,4,1,599.00),(9,5,5,1,249.99),(10,6,1,1,29.99);
+
+SELECT 'Schema created & data loaded!' AS status, COUNT(*) AS total_orders FROM orders;
 \`\`\`
 
 ---
@@ -291,7 +291,7 @@ CREATE INDEX idx_order_items_order ON order_items(order_id);
 -- Top 5 customers by total spending
 SELECT c.name, c.email,
        COUNT(o.id) AS total_orders,
-       SUM(o.total) AS total_spent,
+       ROUND(SUM(o.total), 2) AS total_spent,
        ROUND(AVG(o.total), 2) AS avg_order
 FROM customers c
 JOIN orders o ON c.id = o.customer_id
@@ -299,38 +299,31 @@ WHERE o.status != 'cancelled'
 GROUP BY c.id, c.name, c.email
 ORDER BY total_spent DESC
 LIMIT 5;
+\`\`\`
 
+\`\`\`sql
 -- Monthly revenue trend
-SELECT DATE_TRUNC('month', order_date) AS month,
+SELECT strftime('%Y-%m', order_date) AS month,
        COUNT(*) AS orders,
-       SUM(total) AS revenue,
+       ROUND(SUM(total), 2) AS revenue,
        ROUND(AVG(total), 2) AS avg_order_value
 FROM orders
 WHERE status IN ('shipped', 'delivered')
 GROUP BY month
 ORDER BY month;
+\`\`\`
 
+\`\`\`sql
 -- Product sales with category breakdown
 SELECT cat.name AS category,
        p.name AS product,
        SUM(oi.quantity) AS units_sold,
-       SUM(oi.quantity * oi.unit_price) AS revenue,
-       RANK() OVER (PARTITION BY cat.name ORDER BY SUM(oi.quantity * oi.unit_price) DESC) AS rank
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
 FROM order_items oi
 JOIN products p ON oi.product_id = p.id
 JOIN categories cat ON p.category_id = cat.id
 GROUP BY cat.name, p.name
-ORDER BY category, rank;
-
--- Customer cohort analysis
-SELECT DATE_TRUNC('month', c.created_at) AS cohort,
-       COUNT(DISTINCT c.id) AS new_customers,
-       COUNT(DISTINCT o.id) AS orders_placed,
-       ROUND(COUNT(DISTINCT o.id)::DECIMAL / COUNT(DISTINCT c.id), 2) AS orders_per_customer
-FROM customers c
-LEFT JOIN orders o ON c.id = o.customer_id
-GROUP BY cohort
-ORDER BY cohort;
+ORDER BY category, revenue DESC;
 \`\`\`
 
 ---
@@ -464,22 +457,23 @@ Provide specific, actionable recommendations with expected performance improveme
             '---\n\n' +
             '## Database Schema\n\n' +
             '```sql\n' +
-            'CREATE TABLE users (\n' +
-            '    id         SERIAL PRIMARY KEY,\n' +
-            '    email      VARCHAR(255) UNIQUE NOT NULL,\n' +
-            '    password   VARCHAR(255) NOT NULL,\n' +
-            '    name       VARCHAR(100),\n' +
-            '    created_at TIMESTAMP DEFAULT NOW()\n' +
+            'CREATE TABLE IF NOT EXISTS users (\n' +
+            '    id         INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '    email      TEXT UNIQUE NOT NULL,\n' +
+            '    password   TEXT NOT NULL,\n' +
+            '    name       TEXT\n' +
             ');\n\n' +
-            'CREATE TABLE tasks (\n' +
-            '    id         SERIAL PRIMARY KEY,\n' +
-            '    user_id    INT REFERENCES users(id) ON DELETE CASCADE,\n' +
+            'CREATE TABLE IF NOT EXISTS tasks (\n' +
+            '    id         INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '    user_id    INTEGER REFERENCES users(id),\n' +
             '    text       TEXT NOT NULL,\n' +
-            '    done       BOOLEAN DEFAULT false,\n' +
-            '    priority   VARCHAR(10) DEFAULT \'medium\',\n' +
-            '    due_date   DATE,\n' +
-            '    created_at TIMESTAMP DEFAULT NOW()\n' +
-            ');\n' +
+            '    done       INTEGER DEFAULT 0,\n' +
+            '    priority   TEXT DEFAULT \'medium\',\n' +
+            '    due_date   TEXT\n' +
+            ');\n\n' +
+            'INSERT OR IGNORE INTO users VALUES (1,\'admin@example.com\',\'hashed_pw\',\'Admin\');\n' +
+            'INSERT OR IGNORE INTO tasks VALUES (1,1,\'Design landing page\',1,\'high\',NULL),(2,1,\'Implement auth API\',0,\'high\',NULL),(3,1,\'Write unit tests\',0,\'medium\',NULL);\n' +
+            'SELECT t.text, CASE t.done WHEN 1 THEN \'✅\' ELSE \'⬜\' END AS status, t.priority FROM tasks t;\n' +
             '```\n\n' +
             '---\n\n' +
             '## Deployment\n\n' +
@@ -1409,31 +1403,29 @@ Use formal academic language and reference the specific metrics from the benchma
             '## Database Schema\n' +
             '\n' +
             '```sql\n' +
-            'CREATE TABLE urls (\n' +
-            '    id          BIGSERIAL PRIMARY KEY,\n' +
-            '    short_code  VARCHAR(8) UNIQUE NOT NULL,\n' +
+            'CREATE TABLE IF NOT EXISTS urls (\n' +
+            '    id          INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '    short_code  TEXT UNIQUE NOT NULL,\n' +
             '    original_url TEXT NOT NULL,\n' +
-            '    user_id     BIGINT REFERENCES users(id),\n' +
-            '    clicks      BIGINT DEFAULT 0,\n' +
-            '    created_at  TIMESTAMP DEFAULT NOW(),\n' +
-            '    expires_at  TIMESTAMP\n' +
+            '    user_id     INTEGER,\n' +
+            '    clicks      INTEGER DEFAULT 0,\n' +
+            '    created_at  TEXT DEFAULT (datetime(\'now\')),\n' +
+            '    expires_at  TEXT\n' +
             ');\n' +
             '\n' +
-            'CREATE INDEX idx_urls_short_code ON urls(short_code);\n' +
-            'CREATE INDEX idx_urls_user_id ON urls(user_id);\n' +
-            '\n' +
-            'CREATE TABLE clicks (\n' +
-            '    id         BIGSERIAL PRIMARY KEY,\n' +
-            '    url_id     BIGINT REFERENCES urls(id),\n' +
-            '    ip_address INET,\n' +
+            'CREATE TABLE IF NOT EXISTS clicks (\n' +
+            '    id         INTEGER PRIMARY KEY AUTOINCREMENT,\n' +
+            '    url_id     INTEGER REFERENCES urls(id),\n' +
+            '    ip_address TEXT,\n' +
             '    user_agent TEXT,\n' +
             '    referrer   TEXT,\n' +
-            '    country    VARCHAR(2),\n' +
-            '    clicked_at TIMESTAMP DEFAULT NOW()\n' +
+            '    country    TEXT,\n' +
+            '    clicked_at TEXT DEFAULT (datetime(\'now\'))\n' +
             ');\n' +
             '\n' +
-            'CREATE INDEX idx_clicks_url_id ON clicks(url_id);\n' +
-            'CREATE INDEX idx_clicks_time ON clicks(clicked_at);\n' +
+            'INSERT OR IGNORE INTO urls VALUES (1,\'abc123\',\'https://example.com/very-long-article\',NULL,42,datetime(\'now\'),NULL);\n' +
+            'INSERT OR IGNORE INTO urls VALUES (2,\'def456\',\'https://docs.example.com/api-reference\',NULL,128,datetime(\'now\'),NULL);\n' +
+            'SELECT short_code, clicks, original_url FROM urls ORDER BY clicks DESC;\n' +
             '```\n' +
             '\n' +
             '---\n' +

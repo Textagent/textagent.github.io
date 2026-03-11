@@ -53,6 +53,22 @@
             requiresHighEnd: true,
         },
 
+        // ── Local: Qwen 3 4B Thinking ────────────────────────
+        'qwen3-thinking-4b': {
+            label: 'Qwen 3 Thinking · Local',
+            badge: 'Qwen 3 Thinking · Local',
+            icon: 'bi bi-lightbulb',
+            statusReady: 'Qwen 3 4B Thinking · Local',
+            dropdownName: 'Qwen 3 Thinking (4B)',
+            dropdownDesc: 'Local · Chain-of-thought · ~2.5 GB · High-end',
+            isLocal: true,
+            localModelId: 'onnx-community/Qwen3-4B-Thinking-2507-ONNX',
+            downloadSize: '~2.5 GB',
+            requiresHighEnd: true,
+            architecture: 'qwen3',
+            dtype: 'q4f16',
+        },
+
         // ── Cloud: Groq ────────────────────────────────────────
         'groq-llama': {
             label: 'Llama 3.3 · Groq',
@@ -69,6 +85,7 @@
             dialogIcon: 'bi bi-cloud',
             dropdownName: 'Llama 3.3 70B',
             dropdownDesc: 'Groq Cloud · Fast · Free tier',
+            supportsVision: true,
         },
 
         // ── Cloud: Google Gemini ───────────────────────────────
@@ -87,6 +104,7 @@
             dialogIcon: 'bi bi-google',
             dropdownName: 'Gemini 3.1 Flash Lite',
             dropdownDesc: 'Google · Fast · Free tier',
+            supportsVision: true,
         },
 
         // ── Cloud: Google Imagen 4 Ultra (Image Generation) ───
@@ -145,6 +163,7 @@
             dialogIcon: 'bi bi-lightning-charge',
             dropdownName: 'Grok 4.1 Fast',
             dropdownDesc: 'xAI · via OpenRouter',
+            supportsVision: true,
         },
 
         // ── Cloud: Trinity Large via OpenRouter ────────────────
@@ -164,6 +183,7 @@
             dialogIcon: 'bi bi-stars',
             dropdownName: 'Trinity Large',
             dropdownDesc: 'Arcee AI · Free · via OpenRouter',
+            supportsVision: true,
         },
 
         // ── Cloud: GPT-OSS 20B via OpenRouter ─────────────────
@@ -183,6 +203,7 @@
             dialogIcon: 'bi bi-cpu',
             dropdownName: 'GPT-OSS 20B',
             dropdownDesc: 'OpenAI · via OpenRouter',
+            supportsVision: true,
         },
 
         // ── Cloud: Qwen 3.5 Flash via OpenRouter ──────────────
@@ -202,6 +223,7 @@
             dialogIcon: 'bi bi-wind',
             dropdownName: 'Qwen 3.5 Flash',
             dropdownDesc: 'Alibaba · via OpenRouter',
+            supportsVision: true,
         },
 
         // ── Cloud: Qwen 3.5 35B-A3B via OpenRouter ────────────
@@ -221,6 +243,7 @@
             dialogIcon: 'bi bi-wind',
             dropdownName: 'Qwen 3.5 35B-A3B',
             dropdownDesc: 'Alibaba · via OpenRouter',
+            supportsVision: true,
         },
 
         // ── Cloud: DeepSeek V3.2 via OpenRouter ───────────────
@@ -240,6 +263,22 @@
             dialogIcon: 'bi bi-search',
             dropdownName: 'DeepSeek V3.2',
             dropdownDesc: 'DeepSeek · via OpenRouter',
+            supportsVision: true,
         },
+
+        // ── Local: Kokoro 82M TTS (Text-to-Speech) ────────────
+        'kokoro-tts': {
+            label: 'Kokoro TTS · Local',
+            badge: 'Kokoro TTS · Local',
+            icon: 'bi bi-volume-up',
+            statusReady: 'Kokoro 82M TTS · Local',
+            dropdownName: 'Kokoro TTS (82M)',
+            dropdownDesc: 'Local · Text-to-Speech · English + Chinese + Web Speech fallback · ~80 MB',
+            isLocal: true,
+            isTtsModel: true,
+            localModelId: 'onnx-community/Kokoro-82M-v1.1-zh-ONNX',
+            downloadSize: '~80 MB',
+        },
+
     };
 })();

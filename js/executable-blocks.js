@@ -111,4 +111,26 @@
     // --- Expose shared helper for extracted modules ---
     M._exec = { escapeHtml: escapeHtml };
 
+    // --- Register runtime adapter for exec-controller ---
+    var bashAdapter = {
+        execute: function (source) {
+            if (!_justBashReady || !window.JustBash) {
+                return Promise.reject(new Error('just-bash is still loading'));
+            }
+            var bash = getSharedBash();
+            return bash.exec(source).then(function (result) {
+                var output = '';
+                if (result.stdout) output += result.stdout;
+                if (result.stderr) output += (output ? '\n' : '') + result.stderr;
+                return output || '(no output)';
+            });
+        }
+    };
+    if (M._execRegistry) {
+        M._execRegistry.registerRuntime('bash', bashAdapter);
+    } else {
+        if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
+        M._pendingRuntimeAdapters.push({ key: 'bash', adapter: bashAdapter });
+    }
+
 })(window.MDView);
