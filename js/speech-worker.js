@@ -1,7 +1,8 @@
 // ============================================
-// moonshine-worker.js — Moonshine Base ASR WebWorker
-// Runs onnx-community/moonshine-base-ONNX via @huggingface/transformers
+// whisper-worker.js — Whisper Large V3 Turbo ASR WebWorker
+// Runs onnx-community/whisper-large-v3-turbo via @huggingface/transformers
 // off the main thread for jank-free transcription.
+// WER ~7.7% (batched) — significant upgrade over Moonshine Base (~9.66%)
 // ============================================
 import { pipeline } from '@huggingface/transformers';
 
@@ -12,14 +13,29 @@ self.addEventListener('message', async (e) => {
 
     if (type === 'init') {
         try {
-            self.postMessage({ type: 'status', status: 'loading', message: 'Downloading Moonshine Base model…' });
+            // Detect best available device
+            let device = 'wasm';
+            let dtype = 'q8';
+            if (typeof navigator !== 'undefined' && navigator.gpu) {
+                try {
+                    const adapter = await navigator.gpu.requestAdapter();
+                    if (adapter) {
+                        device = 'webgpu';
+                        dtype = 'fp16';  // WebGPU works best with fp16
+                        self.postMessage({ type: 'status', status: 'loading', message: '🚀 WebGPU available — using GPU acceleration' });
+                    }
+                } catch (_) { /* fall through to WASM */ }
+            }
+            if (device === 'wasm') {
+                self.postMessage({ type: 'status', status: 'loading', message: '⏳ Downloading Whisper Large V3 Turbo…' });
+            }
 
             transcriber = await pipeline(
                 'automatic-speech-recognition',
-                'onnx-community/moonshine-base-ONNX',
+                'onnx-community/whisper-large-v3-turbo',
                 {
-                    dtype: 'q8',          // 8-bit quantized — best accuracy/size for WASM
-                    device: 'wasm',       // WebAssembly (universal browser support)
+                    dtype,
+                    device,
                     progress_callback: (progress) => {
                         if (progress.status === 'progress') {
                             self.postMessage({
@@ -36,7 +52,12 @@ self.addEventListener('message', async (e) => {
                 },
             );
 
-            self.postMessage({ type: 'status', status: 'ready', message: 'Model ready' });
+            self.postMessage({
+                type: 'status',
+                status: 'ready',
+                message: 'Model ready',
+                device: device === 'webgpu' ? 'GPU (WebGPU)' : 'CPU (WASM)',
+            });
         } catch (err) {
             self.postMessage({ type: 'error', message: err.message || String(err) });
         }
@@ -57,7 +78,6 @@ self.addEventListener('message', async (e) => {
                 if (abs > maxVal) maxVal = abs;
             }
             if (maxVal > 0 && maxVal < 0.5) {
-                // Audio is too quiet — normalize to peak at ~0.9
                 normalizedAudio = new Float32Array(audio.length);
                 const gain = 0.9 / maxVal;
                 for (let i = 0; i < audio.length; i++) {

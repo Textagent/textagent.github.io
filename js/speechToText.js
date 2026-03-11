@@ -1,7 +1,7 @@
 // ============================================
 // speechToText.js — Dual-Engine Voice Dictation
 // Engine 1: Web Speech API (real-time, multi-language)
-// Engine 2: Moonshine Base ONNX (offline, cross-browser)
+// Engine 2: Whisper Large V3 Turbo ONNX (offline, cross-browser)
 // Engine 3: AI refinement (optional, via connected LLM)
 // Consensus layer merges results for best quality.
 // ============================================
@@ -27,13 +27,13 @@
     let wsaFinalText = '';        // latest final from Web Speech API
     let wsaInterimText = '';      // latest interim
 
-    // Moonshine worker state
+    // Whisper worker state
     let worker = null;
     let modelReady = false;
     let modelLoading = false;
-    let moonshineText = '';       // latest result from Moonshine
+    let whisperText = '';          // latest result from Whisper
 
-    // Audio capture for Moonshine (runs in parallel with Web Speech API)
+    // Audio capture for Whisper (runs in parallel with Web Speech API)
     let audioContext = null;
     let mediaStream = null;
     let sourceNode = null;
@@ -50,11 +50,11 @@
     const VAD_SILENCE_FRAMES = 5;
     const VAD_MIN_SPEECH_SAMPLES = 4800;
     const VAD_MAX_SPEECH_SAMPLES = TARGET_SAMPLE_RATE * 15;
-    let moonshineTranscribing = false;
+    let whisperTranscribing = false;
 
     // Consensus state
     let pendingWSA = null;        // { text, timestamp }
-    let pendingMoonshine = null;  // { text, timestamp }
+    let pendingWhisper = null;    // { text, timestamp }
     let consensusTimer = null;
     const CONSENSUS_WAIT_MS = 2000; // wait up to 2s for second engine
 
@@ -336,7 +336,7 @@
         html += `</div>
         <div class="speech-cheat-footer">
             <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> to toggle mic · 3s pause = new paragraph
-            <br><small style="opacity:0.7">Dual Engine: 🌐 Web Speech + 🧠 Moonshine Base</small>
+            <br><small style="opacity:0.7">Dual Engine: 🌐 Web Speech + 🧠 Whisper V3 Turbo</small>
         </div>`;
 
         return html;
@@ -432,11 +432,11 @@
     }
 
     // ══════════════════════════════════════════════
-    // ENGINE 2: Moonshine Base ONNX (WebWorker)
+    // ENGINE 2: Whisper Large V3 Turbo ONNX (WebWorker)
     // ══════════════════════════════════════════════
     function initWorker() {
         if (worker) return;
-        const workerURL = new URL('./moonshine-worker.js', import.meta.url);
+        const workerURL = new URL('./speech-worker.js', import.meta.url);
         worker = new Worker(workerURL, { type: 'module' });
 
         worker.addEventListener('message', (e) => {
@@ -453,7 +453,7 @@
                     modelReady = true;
                     updateEngineIndicator();
                     const device = e.data.device || 'wasm';
-                    console.log(`🧠 Moonshine Base loaded and ready`);
+                    console.log(`🧠 Whisper V3 Turbo loaded and ready (${device})`);
                     if (interimText) interimText.textContent = e.data.message || '🧠 Model ready';
                     // Brief flash of ready message, then switch to listening
                     setTimeout(() => {
@@ -474,18 +474,18 @@
             }
 
             if (type === 'result') {
-                moonshineTranscribing = false;
+                whisperTranscribing = false;
                 const text = (e.data.text || '').trim();
-                console.log('🧠 Moonshine result:', JSON.stringify(text));
+                console.log('🧠 Whisper result:', JSON.stringify(text));
                 if (text && !isHallucination(text)) {
-                    moonshineText = text;
-                    submitToConsensus('moonshine', text);
+                    whisperText = text;
+                    submitToConsensus('whisper', text);
                 }
             }
 
             if (type === 'error') {
-                moonshineTranscribing = false;
-                console.warn('🧠 Moonshine error:', e.data.message);
+                whisperTranscribing = false;
+                console.warn('🧠 Whisper error:', e.data.message);
                 if (modelLoading) {
                     modelLoading = false;
                     M.showToast('Failed to load speech model: ' + e.data.message, 'error');
@@ -502,7 +502,7 @@
         });
     }
 
-    // ── Audio Capture for Moonshine ──────────────
+    // ── Audio Capture for Whisper ──────────────
     async function startAudioCapture() {
         try {
             // If we already have a stream from Web Speech API, reuse it
@@ -564,9 +564,9 @@
                             ? Math.max(vadBufferLength - (silenceFrames * resampled.length), VAD_MIN_SPEECH_SAMPLES)
                             : vadBufferLength;
 
-                        if (trimmedLength >= VAD_MIN_SPEECH_SAMPLES && !moonshineTranscribing) {
+                        if (trimmedLength >= VAD_MIN_SPEECH_SAMPLES && !whisperTranscribing) {
                             const combined = combineBuffers(vadBuffer, trimmedLength);
-                            moonshineTranscribing = true;
+                            whisperTranscribing = true;
                             worker.postMessage({ type: 'transcribe', audio: combined }, [combined.buffer]);
                         }
 
@@ -640,12 +640,12 @@
 
         if (source === 'wsa') {
             pendingWSA = { text, timestamp: now };
-        } else if (source === 'moonshine') {
-            pendingMoonshine = { text, timestamp: now };
+        } else if (source === 'whisper') {
+            pendingWhisper = { text, timestamp: now };
         }
 
         // If both are available within the window, resolve immediately
-        if (pendingWSA && pendingMoonshine) {
+        if (pendingWSA && pendingWhisper) {
             if (consensusTimer) { clearTimeout(consensusTimer); consensusTimer = null; }
             resolveConsensus();
             return;
@@ -662,11 +662,11 @@
 
     function resolveConsensus() {
         const wsaResult = pendingWSA ? pendingWSA.text : null;
-        const moonResult = pendingMoonshine ? pendingMoonshine.text : null;
+        const moonResult = pendingWhisper ? pendingWhisper.text : null;
 
         // Clear pending
         pendingWSA = null;
-        pendingMoonshine = null;
+        pendingWhisper = null;
 
         let bestText = '';
 
@@ -679,7 +679,7 @@
             console.log('🎯 Consensus (WSA only):', JSON.stringify(bestText));
         } else if (moonResult) {
             bestText = moonResult;
-            console.log('🎯 Consensus (Moonshine only):', JSON.stringify(bestText));
+            console.log('🎯 Consensus (Whisper only):', JSON.stringify(bestText));
         }
 
         if (!bestText || bestText.trim().length === 0) return;
@@ -697,7 +697,7 @@
         const wsaScore = scoreText(wsaText);
         const moonScore = scoreText(moonText);
 
-        console.log(`🎯 WSA score: ${wsaScore} | Moonshine score: ${moonScore}`);
+        console.log(`🎯 WSA score: ${wsaScore} | Whisper score: ${moonScore}`);
 
         // If scores are close (within 2 points), prefer Web Speech API
         // because it has native language support and better real-time quality
@@ -846,7 +846,7 @@
 
         // Reset consensus
         pendingWSA = null;
-        pendingMoonshine = null;
+        pendingWhisper = null;
 
         updateUI(true);
         startPauseDetection();
@@ -854,7 +854,7 @@
         // Start Engine 1: Web Speech API
         startWebSpeech();
 
-        // Start Engine 2: Moonshine (init worker + load model if needed)
+        // Start Engine 2: Whisper (init worker + load model if needed)
         initWorker();
         if (!modelReady && !modelLoading) {
             worker.postMessage({ type: 'init' });
@@ -879,7 +879,7 @@
         stopAudioCapture();
 
         // Flush any pending consensus
-        if (pendingWSA || pendingMoonshine) {
+        if (pendingWSA || pendingWhisper) {
             if (consensusTimer) { clearTimeout(consensusTimer); consensusTimer = null; }
             resolveConsensus();
         }
@@ -956,10 +956,10 @@
         setAiRefine: (enabled) => { aiRefineEnabled = enabled; updateEngineIndicator(); },
         getEngines: () => ({
             webSpeech: hasWebSpeech,
-            moonshine: modelReady,
+            whisper: modelReady,
             aiRefine: aiRefineEnabled,
         }),
     };
 
-    console.log(`🎤 speechToText loaded — Dual Engine [Web Speech: ${hasWebSpeech ? '✓' : '✗'}, Moonshine Medium: pending]`);
+    console.log(`🎤 speechToText loaded — Dual Engine [Web Speech: ${hasWebSpeech ? '✓' : '✗'}, Whisper V3 Turbo: pending]`);
 })();
