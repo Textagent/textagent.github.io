@@ -1902,6 +1902,48 @@
 }
 
 /* ============================================
+   Media Group — Video / Embed Grid / YouTube
+   Uses rose accent (#f472b6) to differentiate
+   from AI (teal), API (orange), Linux (green),
+   Coding (indigo)
+   ============================================ */
+
+.fmt-media-group {
+    border-color: rgba(244, 114, 182, 0.25) !important;
+    background: rgba(244, 114, 182, 0.05) !important;
+}
+
+.fmt-media-group .fmt-coding-group-label {
+    color: rgba(244, 114, 182, 0.7) !important;
+}
+
+.fmt-media-btn {
+    color: #f472b6 !important;
+    font-weight: 500;
+}
+
+.fmt-media-btn:hover {
+    background: rgba(244, 114, 182, 0.15) !important;
+}
+
+[data-theme="light"] .fmt-media-group {
+    border-color: rgba(219, 39, 119, 0.3) !important;
+    background: rgba(219, 39, 119, 0.04) !important;
+}
+
+[data-theme="light"] .fmt-media-group .fmt-coding-group-label {
+    color: rgba(190, 24, 93, 0.7) !important;
+}
+
+[data-theme="light"] .fmt-media-btn {
+    color: #db2777 !important;
+}
+
+[data-theme="light"] .fmt-media-btn:hover {
+    background: rgba(219, 39, 119, 0.12) !important;
+}
+
+/* ============================================
    Overflow Dropdown — "…" toggle for tag groups
    Shared by AI Tags and Coding groups
    ============================================ */

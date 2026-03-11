@@ -21,6 +21,19 @@
         });
     });
 
+    // --- Media block templates ---
+    var MEDIA_TEMPLATES = {
+        'media-video': '![My Video](https://www.w3schools.com/html/mov_bbb.mp4)\n',
+        'media-youtube': '![YouTube Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ)\n',
+        'media-embed-grid': '```embed cols=2 height=350\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ \"YouTube Video\"\nhttps://www.w3schools.com/html/mov_bbb.mp4 \"Sample Video\"\nhttps://wikipedia.org \"Wikipedia\"\nhttps://github.com \"GitHub\"\n```\n'
+    };
+
+    Object.keys(MEDIA_TEMPLATES).forEach(function (action) {
+        M.registerFormattingAction(action, function () {
+            M.insertAtCursor('\n' + MEDIA_TEMPLATES[action]);
+        });
+    });
+
     // --- Overflow "…" toggle for AI Tags / Coding groups ---
     document.querySelectorAll('.fmt-group-more-btn').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
