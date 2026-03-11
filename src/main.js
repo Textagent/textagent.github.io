@@ -33,6 +33,7 @@ import '../css/workspace.css';
 import '../css/linux-terminal.css';
 import '../css/toast.css';
 import '../css/stock-widget.css';
+import '../css/video-player.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -77,6 +78,7 @@ async function loadModules() {
         import('../js/feature-demos.js'),
         import('../js/help-mode.js'),
         import('../js/stock-widget.js'),
+        import('../js/video-player.js'),
     ]);
 
     // 3b: Sub-modules that depend on 3a namespaces (M._exec, M._table)

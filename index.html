@@ -20,14 +20,15 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://www.gstatic.com;
-        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://www.gstatic.com https://vjs.zencdn.net;
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://vjs.zencdn.net;
         connect-src 'self' https: http: https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://huggingface.co https://cdn-lfs.hf.co https://cdn-lfs-us-1.hf.co;
-        img-src 'self' data: blob: https://www.plantuml.com https://textagent.github.io https://img.shields.io;
+        img-src 'self' data: blob: https://www.plantuml.com https://textagent.github.io https://img.shields.io https://www.google.com;
         font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        media-src 'self' blob: https: http:;
         worker-src 'self' blob:;
         child-src 'self' blob:;
-        frame-src 'self' blob: https://webvm.io https://s.tradingview.com;
+        frame-src 'self' blob: https://webvm.io https://s.tradingview.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com;
         object-src 'none';
         base-uri 'self';
     ">

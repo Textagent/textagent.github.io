@@ -12,6 +12,16 @@
             return `<div class="mermaid-container"><div class="mermaid" id="${uniqueId}">${code}</div></div>`;
         }
 
+        // Detect embed grid code blocks
+        // Syntax: ```embed cols=2 height=400
+        //         https://example.com "My Site"
+        //         https://youtube.com/watch?v=xyz "Video"
+        //         ```
+        const embedMatch = (language || '').match(/^embed(?:\s+(.*))?$/i);
+        if (embedMatch) {
+            return M.buildEmbedGridHtml ? M.buildEmbedGridHtml(code, embedMatch[1] || '') : '';
+        }
+
         // Detect executable math code blocks
         if ((language || '').toLowerCase() === 'math') {
             const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -57,6 +67,32 @@
             return `<div class="executable-code-container" data-lang="${language}"><pre><code class="hljs bash">${highlightedCode}</code></pre></div>`;
         }
         return `<pre><code class="hljs ${validLanguage}">${highlightedCode}</code></pre>`;
+    };
+
+    // --- Video-aware image renderer ---
+    // Intercept ![alt](url) for video files, YouTube, and Vimeo URLs.
+    // Falls through to a normal <img> for everything else.
+    const defaultImageRenderer = renderer.image;
+    renderer.image = function (href, title, text) {
+        // Normalize: marked v9+ may pass an object {href, title, text}
+        if (typeof href === 'object' && href !== null) {
+            title = href.title;
+            text = href.text;
+            href = href.href;
+        }
+        if (M.isVideoUrl && M.isVideoUrl(href)) {
+            return M.buildVideoPlayerHtml(href, text || title);
+        }
+        if (M.isYouTubeUrl && M.isYouTubeUrl(href)) {
+            return M.buildYouTubeEmbedHtml(href, text || title);
+        }
+        if (M.isVimeoUrl && M.isVimeoUrl(href)) {
+            return M.buildVimeoEmbedHtml(href, text || title);
+        }
+        // Default image rendering
+        var out = `<img src="${href}" alt="${text || ''}"` +
+            (title ? ` title="${title}"` : '') + '>';
+        return out;
     };
 
     marked.setOptions({
@@ -148,8 +184,8 @@
             : apiMarkdown;
         var html = marked.parse(finalMarkdown);
         var sanitizedHtml = DOMPurify.sanitize(html, {
-            ADD_TAGS: ['mjx-container', 'button', 'select', 'option'],
-            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema']
+            ADD_TAGS: ['mjx-container', 'button', 'select', 'option', 'video', 'source', 'iframe', 'video-player', 'video-skin'],
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height']
         });
         container.innerHTML = sanitizedHtml;
 
@@ -249,6 +285,9 @@
 
             // Finance: render TradingView stock widgets
             if (M.renderStockWidgets) M.renderStockWidgets(M.markdownPreview);
+
+            // Video: initialize video players (Video.js v10 + native fallback)
+            if (M.initVideoPlayers) M.initVideoPlayers(M.markdownPreview);
 
             if (window.MathJax) {
                 try {
