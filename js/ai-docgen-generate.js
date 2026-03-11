@@ -41,9 +41,9 @@
                     M._ai.initAiWorker(currentModel);
                     M.showToast('⏳ Loading model from cache — please try again in a moment.', 'info');
                 } else {
-                    // Open AI panel and show consent
-                    if (M.openAiPanel) M.openAiPanel();
-                    M.showToast('📥 Please download the AI model first from the AI panel.', 'info');
+                    // Show standalone download popup (no need to open AI panel)
+                    if (M.showModelDownloadPopup) M.showModelDownloadPopup(currentModel);
+                    M.showToast('📥 Please download the AI model first.', 'info');
                 }
                 return false;
             }

@@ -31,7 +31,7 @@
 
             var isReady = _ai.isCurrentModelReady();
             if (!isReady) {
-                M.openAiPanel();
+                if (M.showModelDownloadPopup) M.showModelDownloadPopup();
                 return;
             }
 
@@ -93,7 +93,7 @@
             e.preventDefault();
             var isReady = _ai.isCurrentModelReady();
             if (!isReady) {
-                M.openAiPanel();
+                if (M.showModelDownloadPopup) M.showModelDownloadPopup();
                 return;
             }
             if (!_ai.panelOpen) M.openAiPanel();

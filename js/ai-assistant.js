@@ -286,7 +286,6 @@
       initCloudWorker(providerId, () => {
         hideApiKeyModal();
         switchToModel(providerId);
-        if (!aiPanelOpen) openAiPanel();
       }, (errorMsg) => {
         aiApikeySave.disabled = false;
         aiApikeySave.innerHTML = '<i class="bi bi-check-lg me-1"></i> Connect';
@@ -431,8 +430,24 @@
     aiResizeDivider.addEventListener('touchstart', startAiResize, { passive: false });
   }
 
-  // --- Consent Dialog ---
-  function showAiConsentDialog() {
+  // --- Consent Dialog (standalone popup — works without AI panel) ---
+  let _consentTargetModel = null; // which model the consent dialog is for
+
+  function showAiConsentDialog(modelId) {
+    modelId = modelId || currentAiModel;
+    _consentTargetModel = modelId;
+    const cfg = _models[modelId];
+    const modelName = (cfg && cfg.dropdownName) || 'Qwen 3.5';
+    const dlSize = (cfg && cfg.downloadSize) || '~500 MB';
+
+    // Update dialog content dynamically
+    const titleEl = aiConsentModal.querySelector('.ai-consent-header h4');
+    const descEl = aiConsentModal.querySelector('.ai-consent-header p');
+    const sizeEl = aiConsentModal.querySelector('.ai-consent-info .ai-consent-row:first-child strong');
+    if (titleEl) titleEl.textContent = 'Enable AI \u2014 ' + modelName;
+    if (descEl) descEl.innerHTML = 'Powered by <strong>' + modelName + '</strong> \u2014 runs 100% locally in your browser';
+    if (sizeEl) sizeEl.textContent = 'One-time download: ' + dlSize;
+
     aiConsentModal.style.display = 'flex';
     aiProgressSection.style.display = 'none';
     aiConsentDownload.disabled = false;
@@ -441,6 +456,7 @@
 
   function hideAiConsentDialog() {
     aiConsentModal.style.display = 'none';
+    _consentTargetModel = null;
   }
 
   aiConsentCancel.addEventListener('click', hideAiConsentDialog);
@@ -449,10 +465,13 @@
   });
 
   aiConsentDownload.addEventListener('click', () => {
+    const targetModel = _consentTargetModel || currentAiModel;
     aiConsentDownload.disabled = true;
     aiConsentDownload.innerHTML = '<span class="ai-status-spinner"></span> Loading...';
     aiProgressSection.style.display = 'block';
-    initAiWorker(currentAiModel);
+    localStorage.setItem(M.KEYS.AI_CONSENTED_PREFIX + targetModel, 'true');
+    if (targetModel === 'qwen-local') localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
+    initAiWorker(targetModel);
   });
 
   // --- High-end device warning for 4B model ---
@@ -501,7 +520,7 @@
     if (ls.worker) return;
 
     const cfg = _models[modelId];
-    const localModelOnnxId = (cfg && cfg.localModelId) || 'onnx-community/Qwen3.5-0.8B-ONNX';
+    const localModelOnnxId = (cfg && cfg.localModelId) || 'textagent/Qwen3.5-0.8B-ONNX';
     const modelLabel = (cfg && cfg.label) || 'Qwen 3.5';
 
     const worker = new Worker('ai-worker.js', { type: 'module' });
@@ -568,16 +587,8 @@
           // Backward compat: also set the old key for qwen-local
           if (modelId === 'qwen-local') localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
           hideAiConsentDialog();
-          // Open the panel if not already open
-          if (!aiPanelOpen) {
-            aiPanel.style.display = 'flex';
-            aiPanelOverlay.classList.add('active');
-            void aiPanel.offsetWidth;
-            aiPanel.classList.add('ai-panel-open');
-            aiToggleBtn.classList.add('ai-active');
-            aiPanelOpen = true;
-            document.body.classList.add('ai-panel-active');
-          }
+          // Don't force the AI panel open — the user may be downloading
+          // from a DocGen card, context menu, or toolbar action.
           // Add a status bar — show current model name
           if (currentAiModel === modelId) {
             const readyLabel = (cfg && cfg.statusReady) || 'Qwen 3.5 · Local';
@@ -741,42 +752,43 @@
     header.insertAdjacentElement('afterend', bar);
   }
 
-  // Show inline consent bar for Qwen download (not a popup)
+  // Show inline consent bar for Qwen download (falls through to popup)
   function showInlineDownloadConsent(modelId) {
     modelId = modelId || currentAiModel;
+    // Use the standalone popup instead of inline bar
+    showAiConsentDialog(modelId);
+  }
+
+  /**
+   * Public API: show the standalone model download popup.
+   * Can be called from anywhere (DocGen, context menu, toolbar, etc.)
+   * without opening the AI sidebar.
+   */
+  function showModelDownloadPopup(modelId) {
+    modelId = modelId || currentAiModel;
     const cfg = _models[modelId];
-    const modelName = (cfg && cfg.dropdownName) || 'Qwen 3.5';
-    const dlSize = (cfg && cfg.downloadSize) || '~500 MB';
+    if (!cfg || !cfg.isLocal) return;
 
-    // Remove any existing status bar
-    const existing = aiPanel.querySelector('.ai-status-bar');
-    if (existing) existing.remove();
+    const ls = getLocalState(modelId);
+    if (ls.loaded) return; // already loaded, nothing to do
 
-    const bar = document.createElement('div');
-    bar.className = 'ai-status-bar ai-consent-inline';
-    bar.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
-          <span style="font-size:0.82rem"><i class="bi bi-download me-1"></i> ${modelName} requires a one-time <strong>${dlSize}</strong> download (runs locally, 100% private)</span>
-          <button id="ai-inline-agree-btn" style="
-            background:var(--color-accent-emphasis,#2f81f7);color:#fff;border:none;
-            border-radius:6px;padding:4px 14px;font-size:0.8rem;cursor:pointer;
-            white-space:nowrap;font-weight:500
-          "><i class="bi bi-check-lg me-1"></i>Agree &amp; Download</button>
-        </div>
-      `;
+    const consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
+    const hasConsent = localStorage.getItem(consentKey)
+      || (modelId === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
 
-    const header = aiPanel.querySelector('.ai-panel-header');
-    header.insertAdjacentElement('afterend', bar);
-
-    // Wire up the agree button
-    const agreeBtn = document.getElementById('ai-inline-agree-btn');
-    if (agreeBtn) {
-      agreeBtn.addEventListener('click', () => {
-        localStorage.setItem(M.KEYS.AI_CONSENTED_PREFIX + modelId, 'true');
-        if (modelId === 'qwen-local') localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
+    if (hasConsent) {
+      // Already consented — just load from cache
+      if (!ls.worker) {
         initAiWorker(modelId);
-        addAiStatusBar('loading', `Downloading ${modelName} — your message will be sent automatically...`);
-      });
+      }
+      return;
+    }
+
+    // Show the consent popup (works without AI panel open)
+    if (cfg.requiresHighEnd) {
+      showHighEndWarning(modelId, () => showAiConsentDialog(modelId));
+    } else {
+      showAiConsentDialog(modelId);
     }
   }
 
@@ -933,6 +945,7 @@
   M._ai.showInlineDownloadConsent = showInlineDownloadConsent;
   M._ai.updateAiInlineProgress = updateAiInlineProgress;
   M._ai.showHighEndWarning = showHighEndWarning;
+  M._ai.showModelDownloadPopup = showModelDownloadPopup;
   M._ai.initAiWorker = initAiWorker;
   M._ai.initCloudWorker = initCloudWorker;
   M._ai.showApiKeyModal = showApiKeyModal;
@@ -949,6 +962,7 @@
   M.closeAiPanel = closeAiPanel;
   M.hideAiConsentDialog = typeof hideAiConsentDialog !== "undefined" ? hideAiConsentDialog : function () { };
   M.hideApiKeyModal = typeof hideApiKeyModal !== "undefined" ? hideApiKeyModal : function () { };
+  M.showModelDownloadPopup = showModelDownloadPopup;
 
   // ===========================================================
   // Public AI Request API — for non-chat modules (e.g. ai-docgen)

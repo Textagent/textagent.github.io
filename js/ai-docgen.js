@@ -793,8 +793,8 @@
                             M._ai.initAiWorker(modelId);
                             M.showToast('⏳ Loading ' + (modelInfo.dropdownName || modelInfo.label) + ' from cache…', 'info');
                         } else {
-                            if (M.openAiPanel) M.openAiPanel();
-                            M.showToast('📥 Please download ' + (modelInfo.dropdownName || modelInfo.label) + ' from the AI panel.', 'info');
+                            if (M.showModelDownloadPopup) M.showModelDownloadPopup(modelId);
+                            M.showToast('📥 Please download ' + (modelInfo.dropdownName || modelInfo.label) + ' first.', 'info');
                         }
                     }
                 }

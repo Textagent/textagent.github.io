@@ -19,15 +19,15 @@ let RawImage = null;
 
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
 
-// Self-hosted model mirror — downloads ONNX models from GitLab instead of HuggingFace
-const MODEL_HOST = "https://gitlab.com/textagent/models/-/raw/main";
-const MODEL_HOST_FALLBACK = "https://huggingface.co";
+// Model host — downloads ONNX models from textagent HuggingFace org
+const MODEL_HOST = "https://huggingface.co";
+const MODEL_ORG_FALLBACK = "onnx-community";
 
 // Reference to Transformers.js env (set after dynamic import)
 let transformersEnv = null;
 
 // Model config — default to 0.8B, overridable via setModelId message
-let MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+let MODEL_ID = "textagent/Qwen3.5-0.8B-ONNX";
 let MODEL_LABEL = "Qwen 3.5";
 let MODEL_ARCH = "qwen3_5";      // 'qwen3_5' or 'qwen3'
 let MODEL_DTYPE = "q4";           // 'q4' or 'q4f16'
@@ -73,7 +73,7 @@ async function loadModel() {
                 TextStreamer = transformers.TextStreamer;
                 RawImage = transformers.RawImage;
 
-                // Point model downloads to self-hosted GitLab mirror
+                // Point model downloads to HuggingFace
                 transformersEnv = transformers.env;
                 transformersEnv.remoteHost = MODEL_HOST;
             } catch (importError) {
@@ -152,13 +152,13 @@ async function loadModel() {
         try {
             await loadFromHost();
         } catch (primaryErr) {
-            // Primary host failed — fall back to HuggingFace
-            console.warn(`Primary model host failed: ${primaryErr.message}. Falling back to HuggingFace…`);
+            // Primary org (textagent) failed — fall back to onnx-community
+            console.warn(`textagent model failed: ${primaryErr.message}. Falling back to onnx-community…`);
             self.postMessage({
                 type: "status",
-                message: `Primary host unavailable — falling back to HuggingFace…`,
+                message: `Falling back to onnx-community models…`,
             });
-            transformersEnv.remoteHost = MODEL_HOST_FALLBACK;
+            MODEL_ID = MODEL_ID.replace('textagent/', MODEL_ORG_FALLBACK + '/');
             processor = null;
             model = null;
             await loadFromHost();

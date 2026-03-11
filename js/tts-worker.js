@@ -1,15 +1,12 @@
 // ============================================
 // tts-worker.js — Kokoro 82M v1.1-zh Text-to-Speech WebWorker
-// Runs onnx-community/Kokoro-82M-v1.1-zh-ONNX via kokoro-js
+// Runs textagent/Kokoro-82M-v1.1-zh-ONNX via kokoro-js
 // off the main thread for jank-free speech synthesis.
 // Supports English + Chinese with voice auto-selection.
 // ============================================
 import { env } from '@huggingface/transformers';
 
-// Self-hosted model mirror — downloads ONNX models from GitLab instead of HuggingFace
-// Must be set before KokoroTTS import since kokoro-js uses Transformers.js internally
-// NOTE: GitLab mirror lacks CORS headers for localhost dev.
-// Use HuggingFace directly — it has proper CORS and CDN caching.
+// Model host — downloads ONNX models from textagent HuggingFace org
 const MODEL_HOST = 'https://huggingface.co';
 env.remoteHost = MODEL_HOST;
 
@@ -59,7 +56,7 @@ self.addEventListener('message', async (e) => {
             };
 
             tts = await KokoroTTS.from_pretrained(
-                'onnx-community/Kokoro-82M-v1.1-zh-ONNX',
+                'textagent/Kokoro-82M-v1.1-zh-ONNX',
                 fromPretrainedOpts,
             );
 

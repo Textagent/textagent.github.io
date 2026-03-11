@@ -1,14 +1,14 @@
 // ============================================
 // whisper-worker.js — Whisper Large V3 Turbo ASR WebWorker
-// Runs onnx-community/whisper-large-v3-turbo via @huggingface/transformers
+// Runs textagent/whisper-large-v3-turbo via @huggingface/transformers
 // off the main thread for jank-free transcription.
 // WER ~7.7% (batched) — significant upgrade over Moonshine Base (~9.66%)
 // ============================================
 import { pipeline, env } from '@huggingface/transformers';
 
-// Self-hosted model mirror — downloads ONNX models from GitLab instead of HuggingFace
-const MODEL_HOST = 'https://gitlab.com/textagent/models/-/raw/main';
-const MODEL_HOST_FALLBACK = 'https://huggingface.co';
+// Model host — downloads ONNX models from textagent HuggingFace org
+const MODEL_HOST = 'https://huggingface.co';
+const MODEL_ORG_FALLBACK = 'onnx-community';
 env.remoteHost = MODEL_HOST;
 
 let transcriber = null;
@@ -53,20 +53,21 @@ self.addEventListener('message', async (e) => {
                 },
             };
 
-            // Try primary host (GitLab), fall back to HuggingFace
+            // Try primary org (textagent), fall back to onnx-community
+            let whisperModelId = 'textagent/whisper-large-v3-turbo';
             try {
                 transcriber = await pipeline(
                     'automatic-speech-recognition',
-                    'onnx-community/whisper-large-v3-turbo',
+                    whisperModelId,
                     pipelineOpts,
                 );
             } catch (primaryErr) {
-                console.warn(`Primary model host failed: ${primaryErr.message}. Falling back to HuggingFace…`);
-                self.postMessage({ type: 'status', status: 'loading', message: '⚠️ Primary host unavailable — falling back to HuggingFace…' });
-                env.remoteHost = MODEL_HOST_FALLBACK;
+                console.warn(`textagent model failed: ${primaryErr.message}. Falling back to onnx-community…`);
+                self.postMessage({ type: 'status', status: 'loading', message: '⚠️ Falling back to onnx-community models…' });
+                whisperModelId = whisperModelId.replace('textagent/', MODEL_ORG_FALLBACK + '/');
                 transcriber = await pipeline(
                     'automatic-speech-recognition',
-                    'onnx-community/whisper-large-v3-turbo',
+                    whisperModelId,
                     pipelineOpts,
                 );
             }
