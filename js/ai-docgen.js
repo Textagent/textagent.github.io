@@ -11,6 +11,8 @@
     var abortRequested = false;
     var pendingReview = null;      // { blockIndex, result, block, resolve, reject }
     var fillAllQueue = null;       // { remaining, filled, total, prevSections }
+    var blockUploads = new Map();  // blockIndex → [{ data: base64, mimeType, name }]  (image attachments)
+    var MAX_UPLOADS_PER_BLOCK = 3;
 
     // ==============================================
     // TAGGING — wrap selection with {{AI:}}, {{Image:}}, etc.
@@ -120,11 +122,33 @@
                         block.search = searchMatch[1].toLowerCase();
                         block.prompt = block.prompt.replace(searchMatch[0], '').trim();
                     }
-                    // Strip @prompt: prefix if present (backward-compat: works without it too)
-                    var promptMatch = block.prompt.match(/^(?:@prompt|Prompt):\s*/m);
+                    // Separate description (bare text) from @prompt: (actual AI instruction)
+                    var promptMatch = block.prompt.match(/^(?:@prompt|Prompt):\s*(.*)$/m);
                     if (promptMatch) {
-                        block.prompt = block.prompt.replace(promptMatch[0], '').trim();
+                        // Extract @prompt: value as the real prompt
+                        var realPrompt = promptMatch[1].trim();
+                        // Everything else (minus metadata fields) is description
+                        var desc = block.prompt.replace(promptMatch[0], '').trim();
+                        // Strip @step lines from description
+                        desc = desc.replace(/^\s*(?:@step|Step)\s*\d+\s*:.+$/gmi, '').trim();
+                        block.description = desc;
+                        block.prompt = realPrompt;
+                        block.hasPromptField = true;
+                    } else {
+                        block.description = '';
+                        block.hasPromptField = false;
                     }
+                }
+                // Parse @upload: fields (works for AI, Image, Agent)
+                if (block.type !== 'Memory') {
+                    block.uploads = [];
+                    var uploadRe = /^\s*@upload:\s*(.+)$/gmi;
+                    var um;
+                    while ((um = uploadRe.exec(block.prompt)) !== null) {
+                        block.uploads.push(um[1].trim());
+                    }
+                    // Strip all @upload lines from prompt
+                    block.prompt = block.prompt.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
                 }
                 // Parse Memory block fields
                 if (block.type === 'Memory') {
@@ -262,6 +286,11 @@
             }
         });
         var modelOptionsHtml = textModelOptionsHtml;
+        // Image card shows both image generation models AND multimodal text models (for @upload vision analysis)
+        var imageCardModelOpts = imageModelOptionsHtml;
+        if (textModelOptionsHtml) {
+            imageCardModelOpts += '<option disabled>──── Vision ────</option>' + textModelOptionsHtml;
+        }
         var seenMemoryNames = {}; // Track used Memory names for dedup
 
         while ((match = re.exec(markdown)) !== null) {
@@ -277,7 +306,7 @@
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : (match[1] === 'Think');
             var icon = type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
-            var cardModelOpts = type === 'Image' ? imageModelOptionsHtml : modelOptionsHtml;
+            var cardModelOpts = type === 'Image' ? imageCardModelOpts : modelOptionsHtml;
 
             if (type === 'Memory') {
                 // Parse Memory fields
@@ -320,7 +349,7 @@
                 for (var s = 0; s < steps.length; s++) {
                     stepsHtml += '<div class="ai-agent-step" data-step="' + steps[s].number + '">'
                         + '<span class="ai-agent-step-num">&#9312;</span>'.replace('&#9312;', '\u2460'.codePointAt(0) <= 9471 ? String.fromCodePoint(0x245F + steps[s].number) : steps[s].number + '.')
-                        + '<span class="ai-agent-step-desc">' + escapeHtml(steps[s].description) + '</span>'
+                        + '<input class="ai-agent-step-input" data-ai-index="' + blockIndex + '" data-step-num="' + steps[s].number + '" value="' + escapeHtml(steps[s].description) + '" placeholder="Step description…">'
                         + '<span class="ai-agent-step-status">⏸</span>'
                         + '</div>';
                     if (s < steps.length - 1) {
@@ -346,12 +375,25 @@
                     + '<option value="brave"' + (agentSearchVal === 'brave' ? ' selected' : '') + '>🦁 Brave</option>'
                     + '<option value="serper"' + (agentSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>';
 
+                // Build upload thumbnail strip for Agent card
+                var agentUploadThumbs = '';
+                var agentUploads = blockUploads.get(blockIndex);
+                if (agentUploads && agentUploads.length > 0) {
+                    agentUploadThumbs = '<div class="ai-card-uploads" data-ai-index="' + blockIndex + '">';
+                    agentUploads.forEach(function (u, ui) {
+                        agentUploadThumbs += '<div class="ai-card-upload-thumb"><img src="data:' + u.mimeType + ';base64,' + u.data + '" alt="' + escapeHtml(u.name) + '">'
+                            + '<button class="ai-card-upload-remove" data-ai-index="' + blockIndex + '" data-upload-index="' + ui + '" title="Remove">✕</button></div>';
+                    });
+                    agentUploadThumbs += '</div>';
+                }
+
                 result += '<div class="ai-placeholder-card ai-agent-card" data-ai-type="Agent" data-ai-index="' + blockIndex + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
                     + agentUseHint
                     + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
                     + '<select class="ai-agent-search-select" data-ai-index="' + blockIndex + '" title="Search provider">' + searchOpts + '</select>'
@@ -359,6 +401,7 @@
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run this agent flow">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
+                    + agentUploadThumbs
                     + '<div class="ai-memory-dropdown" data-ai-index="' + blockIndex + '" style="display:none">'
                     + '<div class="ai-memory-dropdown-header">📚 Memory Sources</div>'
                     + '<div class="ai-memory-source-list" data-ai-index="' + blockIndex + '"><span class="ai-memory-loading">Loading…</span></div>'
@@ -373,11 +416,19 @@
                 // Extract @use and strip @ fields from display
                 var useMatch = prompt.match(/^(?:@use|Use):\s*(.+)$/m);
                 var useHint = useMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(useMatch[1]) + '</span>' : '';
-                var displayPrompt = useMatch ? prompt.replace(useMatch[0], '').trim() : prompt;
-                // Strip @think, @search, @prompt from display
-                displayPrompt = displayPrompt.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
-                displayPrompt = displayPrompt.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
-                displayPrompt = displayPrompt.replace(/^(?:@prompt|Prompt):\s*/m, '').trim();
+                var displayText = useMatch ? prompt.replace(useMatch[0], '').trim() : prompt;
+                // Strip metadata fields from display
+                displayText = displayText.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
+                displayText = displayText.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
+                displayText = displayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
+
+                // Separate description (bare text) from @prompt: (editable)
+                var hasPromptField = /^\s*(?:@prompt|Prompt):\s*/m.test(displayText);
+                var promptFieldMatch = displayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
+                var promptValue = promptFieldMatch ? promptFieldMatch[1].trim() : '';
+                var descriptionText = hasPromptField
+                    ? displayText.replace(promptFieldMatch[0], '').trim()
+                    : displayText;
 
                 // Parse @search field for AI card
                 var searchFieldMatch = prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
@@ -387,12 +438,25 @@
                     + '<option value="brave"' + (cardSearchVal === 'brave' ? ' selected' : '') + '>🦁 Brave</option>'
                     + '<option value="serper"' + (cardSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>';
 
+                // Build upload thumbnail strip if images are already attached
+                var uploadThumbs = '';
+                var existingUploads = blockUploads.get(blockIndex);
+                if (existingUploads && existingUploads.length > 0) {
+                    uploadThumbs = '<div class="ai-card-uploads" data-ai-index="' + blockIndex + '">';
+                    existingUploads.forEach(function (u, ui) {
+                        uploadThumbs += '<div class="ai-card-upload-thumb"><img src="data:' + u.mimeType + ';base64,' + u.data + '" alt="' + escapeHtml(u.name) + '">'
+                            + '<button class="ai-card-upload-remove" data-ai-index="' + blockIndex + '" data-upload-index="' + ui + '" title="Remove">✕</button></div>';
+                    });
+                    uploadThumbs += '</div>';
+                }
+
                 result += '<div class="ai-placeholder-card" data-ai-type="' + type + '" data-ai-index="' + blockIndex + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
                     + useHint
                     + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
                     + '<select class="ai-agent-search-select" data-ai-index="' + blockIndex + '" title="Search provider">' + aiSearchOpts + '</select>'
@@ -400,6 +464,7 @@
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
+                    + uploadThumbs
                     + '<div class="ai-memory-dropdown" data-ai-index="' + blockIndex + '" style="display:none">'
                     + '<div class="ai-memory-dropdown-header">📚 Memory Sources</div>'
                     + '<div class="ai-memory-source-list" data-ai-index="' + blockIndex + '"><span class="ai-memory-loading">Loading…</span></div>'
@@ -408,7 +473,10 @@
                     + '<button class="ai-placeholder-btn ai-memory-quick-files" data-ai-index="' + blockIndex + '" title="Attach files">📄 Files</button>'
                     + '</div>'
                     + '</div>'
-                    + '<div class="ai-placeholder-prompt">' + escapeHtml(displayPrompt) + '</div>'
+                    + (descriptionText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(descriptionText) + '</div>' : '')
+                    + (hasPromptField
+                        ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Enter prompt for AI\u2026" rows="2">' + escapeHtml(promptValue) + '</textarea></div>'
+                        : '')
                     + '</div>';
             }
 
@@ -446,6 +514,101 @@
                 e.stopPropagation();
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 M._docgen.removeDocgenTag(idx);
+            });
+        });
+
+        // Upload button — 📎 opens file picker for image attachments
+        container.querySelectorAll('.ai-upload-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var existing = blockUploads.get(idx) || [];
+                if (existing.length >= MAX_UPLOADS_PER_BLOCK) {
+                    M.showToast('Maximum ' + MAX_UPLOADS_PER_BLOCK + ' images per block.', 'warning');
+                    return;
+                }
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.multiple = true;
+                input.addEventListener('change', function () {
+                    var files = Array.from(input.files || []);
+                    var remaining = MAX_UPLOADS_PER_BLOCK - existing.length;
+                    files = files.slice(0, remaining);
+                    var processed = 0;
+                    files.forEach(function (file) {
+                        var reader = new FileReader();
+                        reader.onload = function () {
+                            var dataUrl = reader.result;
+                            var base64 = dataUrl.split(',')[1];
+                            var mimeType = file.type || 'image/png';
+                            if (!blockUploads.has(idx)) blockUploads.set(idx, []);
+                            blockUploads.get(idx).push({ data: base64, mimeType: mimeType, name: file.name });
+                            processed++;
+                            if (processed === files.length) {
+                                // Write @upload: lines into the tag text
+                                addUploadFieldsToBlock(idx, files.map(function (f) { return f.name; }));
+                                M.showToast('📎 ' + files.length + ' image(s) attached', 'success');
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+                input.click();
+            });
+        });
+
+        // Upload thumbnail remove — ✕ on individual thumbnails
+        container.querySelectorAll('.ai-card-upload-remove').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var uploadIdx = parseInt(this.dataset.uploadIndex, 10);
+                var uploads = blockUploads.get(idx);
+                if (uploads) {
+                    var removedName = uploads[uploadIdx].name;
+                    uploads.splice(uploadIdx, 1);
+                    if (uploads.length === 0) blockUploads.delete(idx);
+                    // Remove the @upload: line from tag text
+                    removeUploadFieldFromBlock(idx, removedName);
+                }
+            });
+        });
+
+        // Prompt textarea — sync edits back to editor tag text
+        container.querySelectorAll('.ai-card-prompt-input').forEach(function (ta) {
+            var debounceTimer = null;
+            ta.addEventListener('input', function () {
+                var self = this;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    var idx = parseInt(self.dataset.aiIndex, 10);
+                    updateBlockPromptText(idx, self.value);
+                }, 300);
+            });
+            // Auto-resize textarea height
+            ta.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+            // Set initial height
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        });
+
+        // Agent step input — sync edits back to @step lines in editor
+        container.querySelectorAll('.ai-agent-step-input').forEach(function (inp) {
+            var debounceTimer = null;
+            inp.addEventListener('input', function () {
+                var self = this;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    var idx = parseInt(self.dataset.aiIndex, 10);
+                    var stepNum = parseInt(self.dataset.stepNum, 10);
+                    updateBlockStepText(idx, stepNum, self.value);
+                }, 300);
             });
         });
 
@@ -548,6 +711,115 @@
         // ==============================================
         // FIELD SYNC — update @think:/@search: in editor text
         // ==============================================
+
+        // --- Upload field helpers — write/remove @upload: lines in tag text ---
+
+        // Flag to suppress re-render when prompt textarea writes to editor
+        var _promptSyncInProgress = false;
+
+        function updateBlockPromptText(blockIndex, newPromptText) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (blockIndex >= blocks.length) return;
+            var block = blocks[blockIndex];
+
+            var tagContent = text.substring(block.start, block.end);
+            var innerStart = tagContent.indexOf(':') + 1;
+            var innerEnd = tagContent.lastIndexOf('}}');
+            var inner = tagContent.substring(innerStart, innerEnd);
+
+            // Collect metadata lines to preserve (excluding @prompt — we'll rewrite it)
+            var metaLines = [];
+            var lines = inner.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+                var trimmed = lines[i].trim();
+                if (/^@(think|search|upload|use|name|step)\s*:/i.test(trimmed)
+                    || /^(Think|Search|Use|Name|Step)\s*\d*\s*:/i.test(trimmed)) {
+                    metaLines.push(trimmed);
+                }
+            }
+
+            // Rebuild: metadata lines + @prompt: new text
+            var newInner = metaLines.join('\n  ');
+            if (newPromptText.trim()) {
+                var promptLine = '@prompt: ' + newPromptText.trim();
+                newInner = newInner ? newInner + '\n  ' + promptLine : promptLine;
+            }
+
+            var tagType = block.type;
+            var newTag = '{{@' + tagType + ':\n  ' + newInner.trim() + '\n}}';
+
+            _promptSyncInProgress = true;
+            var cursorPos = M.markdownEditor.selectionStart;
+            M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+            // Don't dispatch input event — would cause re-render and lose textarea focus
+            setTimeout(function () { _promptSyncInProgress = false; }, 50);
+        }
+
+        function updateBlockStepText(blockIndex, stepNumber, newDescription) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (blockIndex >= blocks.length) return;
+            var block = blocks[blockIndex];
+
+            var tagContent = text.substring(block.start, block.end);
+            var innerStart = tagContent.indexOf(':') + 1;
+            var innerEnd = tagContent.lastIndexOf('}}');
+            var inner = tagContent.substring(innerStart, innerEnd);
+
+            // Replace the specific @step line
+            var stepRe = new RegExp('^(\\s*(?:@step|Step)\\s*' + stepNumber + '\\s*:\\s*)(.+)$', 'mi');
+            inner = inner.replace(stepRe, '$1' + newDescription.trim());
+
+            var newTag = '{{@' + block.type + ':\n  ' + inner.trim() + '\n}}';
+
+            _promptSyncInProgress = true;
+            M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+            setTimeout(function () { _promptSyncInProgress = false; }, 50);
+        }
+
+        function addUploadFieldsToBlock(blockIndex, fileNames) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (blockIndex >= blocks.length) return;
+            var block = blocks[blockIndex];
+
+            var tagContent = text.substring(block.start, block.end);
+            var innerStart = tagContent.indexOf(':') + 1;
+            var innerEnd = tagContent.lastIndexOf('}}');
+            var inner = tagContent.substring(innerStart, innerEnd).trim();
+
+            // Add @upload: lines at the top
+            var uploadLines = fileNames.map(function (n) { return '@upload: ' + n; }).join('\n  ');
+            inner = uploadLines + '\n  ' + inner;
+
+            var tagType = block.type === 'AI' && block.think ? 'AI' : block.type;
+            var newTag = '{{@' + tagType + ':\n  ' + inner.trim() + '\n}}';
+            M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+            if (M.markdownEditor) M.markdownEditor.dispatchEvent(new Event('input'));
+        }
+
+        function removeUploadFieldFromBlock(blockIndex, fileName) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (blockIndex >= blocks.length) return;
+            var block = blocks[blockIndex];
+
+            var tagContent = text.substring(block.start, block.end);
+            var innerStart = tagContent.indexOf(':') + 1;
+            var innerEnd = tagContent.lastIndexOf('}}');
+            var inner = tagContent.substring(innerStart, innerEnd);
+
+            // Remove the specific @upload: line matching the filename
+            var escapedName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            var lineRe = new RegExp('^\\s*@upload:\\s*' + escapedName + '\\s*$', 'mi');
+            inner = inner.replace(lineRe, '').trim();
+
+            var tagType = block.type === 'AI' && block.think ? 'AI' : block.type;
+            var newTag = '{{@' + tagType + ':\n  ' + inner.trim() + '\n}}';
+            M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+            if (M.markdownEditor) M.markdownEditor.dispatchEvent(new Event('input'));
+        }
 
         function updateBlockField(blockIndex, fieldName, value) {
             var text = M.markdownEditor ? M.markdownEditor.value : '';
@@ -884,6 +1156,8 @@
     // ==============================================
     M._docgen = {
         activeBlockOps: activeBlockOps,
+        blockUploads: blockUploads,
+        MAX_UPLOADS_PER_BLOCK: MAX_UPLOADS_PER_BLOCK,
         get abortRequested() { return abortRequested; },
         set abortRequested(v) { abortRequested = v; },
         get pendingReview() { return pendingReview; },

@@ -291,11 +291,64 @@
 }
 
 .ai-placeholder-prompt {
+    padding: 4px 12px 8px;
+}
+
+.ai-placeholder-prompt-static {
     font-style: italic;
     font-size: 0.9em;
     color: var(--color-fg-muted, #8b949e);
     line-height: 1.5;
     white-space: pre-wrap;
+}
+
+.ai-card-prompt-input {
+    width: 100%;
+    min-height: 32px;
+    font-family: inherit;
+    font-style: italic;
+    font-size: 0.9em;
+    color: var(--color-fg-default, #e6edf3);
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 6px 10px;
+    resize: none;
+    overflow: hidden;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.ai-card-prompt-input:focus {
+    border-color: rgba(45, 212, 191, 0.4);
+    box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.ai-card-prompt-input::placeholder {
+    color: var(--color-fg-muted, #8b949e);
+    opacity: 0.6;
+    font-style: italic;
+}
+
+[data-theme="light"] .ai-card-prompt-input {
+    color: #1e293b;
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .ai-card-prompt-input:focus {
+    border-color: rgba(20, 184, 166, 0.4);
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.08);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Image card prompt input accent */
+.ai-placeholder-card[data-ai-type="Image"] .ai-card-prompt-input:focus {
+    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.1);
 }
 
 /* --- Card Loading State --- */
@@ -1565,6 +1618,40 @@
     line-height: 1.4;
 }
 
+.ai-agent-step-input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.88em;
+    color: var(--color-fg-default, #e6edf3);
+    line-height: 1.4;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.ai-agent-step-input:hover {
+    border-color: rgba(245, 158, 11, 0.2);
+    background: rgba(245, 158, 11, 0.04);
+}
+
+.ai-agent-step-input:focus {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.06);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+}
+
+[data-theme="light"] .ai-agent-step-input {
+    color: #334155;
+}
+
+[data-theme="light"] .ai-agent-step-input:focus {
+    border-color: rgba(217, 119, 6, 0.4);
+    background: rgba(245, 158, 11, 0.04);
+}
+
 [data-theme="light"] .ai-agent-step-desc {
     color: #334155;
 }
@@ -2159,4 +2246,104 @@
     background: rgba(217, 119, 6, 0.08) !important;
     color: #d97706 !important;
     border-color: rgba(217, 119, 6, 0.2) !important;
+}
+
+/* ==============================================
+   UPLOAD BUTTON — 📎 on AI/Agent/Image cards
+   ============================================== */
+
+.ai-upload-btn {
+    font-size: 0.85em !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #60a5fa !important;
+    border: 1px solid rgba(59, 130, 246, 0.25) !important;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ai-upload-btn:hover {
+    background: rgba(59, 130, 246, 0.2) !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .ai-upload-btn {
+    background: rgba(37, 99, 235, 0.08) !important;
+    color: #2563eb !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+[data-theme="light"] .ai-upload-btn:hover {
+    background: rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Upload Thumbnail Strip — shows attached images on cards */
+.ai-card-uploads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 12px 4px;
+    border-top: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+.ai-card-upload-thumb {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ai-card-upload-thumb:hover {
+    transform: scale(1.08);
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.25);
+}
+
+.ai-card-upload-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ai-card-upload-remove {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.9);
+    color: #fff;
+    border: none;
+    font-size: 10px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 0;
+}
+
+.ai-card-upload-thumb:hover .ai-card-upload-remove {
+    opacity: 1;
+}
+
+.ai-card-upload-remove:hover {
+    background: #ef4444;
+    transform: scale(1.15);
+}
+
+[data-theme="light"] .ai-card-uploads {
+    border-top-color: rgba(37, 99, 235, 0.1);
+}
+
+[data-theme="light"] .ai-card-upload-thumb {
+    border-color: rgba(37, 99, 235, 0.25);
+    background: rgba(0, 0, 0, 0.05);
 }

@@ -84,7 +84,7 @@ async function validateApiKey() {
 /**
  * Generate text via Groq API with SSE streaming
  */
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = []) {
     if (!apiKey) {
         self.postMessage({
             type: 'error',
@@ -96,6 +96,25 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
 
     try {
         const messages = buildMessages(taskType, context, userPrompt);
+
+        // If there are image attachments, convert the last user message to multipart content
+        if (attachments && attachments.length > 0) {
+            const lastUserMsg = messages[messages.length - 1];
+            if (lastUserMsg && lastUserMsg.role === 'user') {
+                const parts = [{ type: 'text', text: lastUserMsg.content }];
+                attachments.forEach(att => {
+                    if (att.type === 'image' && att.data) {
+                        parts.push({
+                            type: 'image_url',
+                            image_url: { url: 'data:' + (att.mimeType || 'image/png') + ';base64,' + att.data }
+                        });
+                    } else if (att.type === 'file' && att.textContent) {
+                        parts[0].text += '\n\n[Attached File: ' + (att.name || 'file') + ']\n' + att.textContent;
+                    }
+                });
+                lastUserMsg.content = parts;
+            }
+        }
 
         let maxTokens = TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
@@ -263,7 +282,7 @@ function buildMessages(taskType, context, userPrompt) {
 
 // Listen for messages from the main thread
 self.addEventListener('message', async (event) => {
-    const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments } = event.data;
 
     switch (type) {
         case 'setApiKey':
@@ -273,7 +292,7 @@ self.addEventListener('message', async (event) => {
             await validateApiKey();
             break;
         case 'generate':
-            await generate(taskType, context, userPrompt, messageId, enableThinking);
+            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments);
             break;
         case 'ping':
             self.postMessage({ type: 'pong' });

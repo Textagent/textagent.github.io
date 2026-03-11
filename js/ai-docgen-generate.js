@@ -8,16 +8,92 @@
     var _dg = M._docgen;
 
     // ==============================================
+    // MODEL READINESS — ensure model is loaded before generation
+    // ==============================================
+
+    /**
+     * Check if the current AI model is ready. If not, trigger loading
+     * (consent dialog for local models, API key modal for cloud models)
+     * and return false so the caller can bail out gracefully.
+     */
+    function ensureModelReady(perCardModel) {
+        var currentModel = perCardModel || (M.getCurrentAiModel ? M.getCurrentAiModel() : null);
+        if (!currentModel) {
+            M.showToast('No AI model selected. Open the AI panel to choose a model.', 'warning');
+            return false;
+        }
+
+        // Check if model is ready
+        if (M.isCurrentModelReady && M.isCurrentModelReady()) {
+            return true;
+        }
+
+        // Local model — trigger download/consent flow
+        if (M._ai && M._ai.isLocalModel && M._ai.isLocalModel(currentModel)) {
+            var ls = M._ai.getLocalState(currentModel);
+            var consentKey = M.KEYS.AI_CONSENTED_PREFIX + currentModel;
+            var hasConsent = localStorage.getItem(consentKey)
+                || (currentModel === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
+
+            if (!ls.loaded && !ls.worker) {
+                if (hasConsent) {
+                    // Auto-load from cache
+                    M._ai.initAiWorker(currentModel);
+                    M.showToast('⏳ Loading model from cache — please try again in a moment.', 'info');
+                } else {
+                    // Open AI panel and show consent
+                    if (M.openAiPanel) M.openAiPanel();
+                    M.showToast('📥 Please download the AI model first from the AI panel.', 'info');
+                }
+                return false;
+            }
+
+            if (!ls.loaded && ls.worker) {
+                M.showToast('⏳ Model is still loading — please wait and try again.', 'info');
+                return false;
+            }
+        }
+
+        // Cloud model — trigger API key or connection
+        var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+        var cloudProvider = providers[currentModel];
+        if (cloudProvider) {
+            if (!cloudProvider.getKey()) {
+                M.showApiKeyModal(currentModel);
+                return false;
+            }
+            if (!cloudProvider.isLoaded()) {
+                if (!cloudProvider.getWorker()) {
+                    M.initCloudWorker(currentModel);
+                }
+                M.showToast('⏳ Connecting to cloud model — please try again in a moment.', 'info');
+                return false;
+            }
+        }
+
+        // Fallback: model not recognized or not ready
+        M.showToast('AI model not ready. Please open the AI panel and select a model.', 'warning');
+        return false;
+    }
+
+    // ==============================================
     // PROMPT BUILDING
     // ==============================================
 
-    function buildPrompt(block, prevSections, memoryContext) {
-        var base = block.type === 'Think'
-            ? 'You are a thoughtful writer. Think carefully about the topic, then produce polished markdown content.\n\n'
-            + 'IMPORTANT: Output ONLY the final polished markdown content. Do NOT include your thinking process, '
-            + 'reasoning steps, analysis, or any text like "Thinking Process:" or "Drafting:". '
-            + 'Just write the final, high-quality markdown article directly.\n\n'
-            : 'You are an expert writer. Write well-formatted, high-quality markdown content for this section.\n\n';
+    function buildPrompt(block, prevSections, memoryContext, hasImages) {
+        var base;
+        if (hasImages) {
+            base = 'You are an expert analyst with vision capabilities. '
+                + 'Analyze the attached image(s) and write well-formatted markdown content based on your analysis.\n\n'
+                + 'When describing images, be specific about visual details, text content, data, or structure you observe.\n\n';
+        } else if (block.type === 'Think') {
+            base = 'You are a thoughtful writer. Think carefully about the topic, then produce polished markdown content.\n\n'
+                + 'IMPORTANT: Output ONLY the final polished markdown content. Do NOT include your thinking process, '
+                + 'reasoning steps, analysis, or any text like "Thinking Process:" or "Drafting:". '
+                + 'Just write the final, high-quality markdown article directly.\n\n';
+        } else {
+            base = 'You are an expert writer. Write well-formatted, high-quality markdown content for this section.\n\n';
+        }
 
         var retrieval = '';
         if (memoryContext) {
@@ -428,12 +504,14 @@
         var perCardModel = cardSelect ? cardSelect.value : null;
         if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
             M.switchToModel(perCardModel);
-            var provider = M.getCloudProviders ? M.getCloudProviders()[perCardModel] : null;
-            if (provider && !provider.getKey()) {
-                M.showApiKeyModal(perCardModel);
-                if (originalModel) M.switchToModel(originalModel);
-                return;
+        }
+
+        // Ensure model is loaded (trigger download/consent/API key if needed)
+        if (!ensureModelReady(perCardModel || originalModel)) {
+            if (perCardModel && originalModel && perCardModel !== originalModel) {
+                M.switchToModel(originalModel);
             }
+            return;
         }
 
         var block = blocks[blockIndex];
@@ -462,6 +540,12 @@
 
             try {
                 var result;
+                // Read uploaded images for this block
+                var uploads = _dg.blockUploads.get(blockIndex) || [];
+                var workerAttachments = uploads.map(function (u) {
+                    return { type: 'image', data: u.data, mimeType: u.mimeType, name: u.name };
+                });
+
                 if (block.type === 'Image') {
                     result = await generateImageForBlock(block, perCardModel);
                 } else {
@@ -483,12 +567,14 @@
                         }
                     }
 
+                    var hasImages = workerAttachments.length > 0;
                     result = await M.requestAiTask({
                         taskType: 'generate',
                         context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                        userPrompt: buildPrompt(block, prevContent, memoryContext),
+                        userPrompt: buildPrompt(block, prevContent, memoryContext, hasImages),
                         enableThinking: block.type === 'Think',
-                        silent: true
+                        silent: true,
+                        attachments: workerAttachments
                     });
                 }
 
@@ -544,12 +630,14 @@
         var perCardModel = cardSelect ? cardSelect.value : null;
         if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
             M.switchToModel(perCardModel);
-            var provider = M.getCloudProviders ? M.getCloudProviders()[perCardModel] : null;
-            if (provider && !provider.getKey()) {
-                M.showApiKeyModal(perCardModel);
-                if (originalModel) M.switchToModel(originalModel);
-                return;
+        }
+
+        // Ensure model is loaded (trigger download/consent/API key if needed)
+        if (!ensureModelReady(perCardModel || originalModel)) {
+            if (perCardModel && originalModel && perCardModel !== originalModel) {
+                M.switchToModel(originalModel);
             }
+            return;
         }
 
         var searchSelect = document.querySelector('.ai-agent-search-select[data-ai-index="' + blockIndex + '"]');
@@ -621,13 +709,24 @@
             }
             stepPrompt += 'Write ONLY the markdown content for this step. Do not include meta-commentary.';
 
+            // Read uploaded images for Agent block
+            var agentUploads = _dg.blockUploads.get(blockIndex) || [];
+            var agentAttachments = agentUploads.map(function (u) {
+                return { type: 'image', data: u.data, mimeType: u.mimeType, name: u.name };
+            });
+
+            if (agentAttachments.length > 0 && i === 0) {
+                stepPrompt += 'You have vision capabilities. Analyze the attached image(s) as part of this step.\n\n';
+            }
+
             try {
                 var result = await M.requestAiTask({
                     taskType: 'generate',
                     context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
                     userPrompt: stepPrompt,
                     enableThinking: false,
-                    silent: true
+                    silent: true,
+                    attachments: agentAttachments
                 });
 
                 var cleaned = cleanGeneratedOutput(result);

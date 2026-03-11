@@ -835,6 +835,213 @@
   font-size: 14px;
 }
 
+/* --- Attach Button --- */
+.ai-attach-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.ai-attach-button:hover {
+  opacity: 1;
+  border-color: #667eea;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.ai-attach-button i {
+  font-size: 15px;
+  transform: rotate(-45deg);
+}
+
+/* --- Attachments Preview Strip --- */
+.ai-attachments-strip {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  background: rgba(102, 126, 234, 0.04);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.ai-attachments-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.ai-attachments-strip::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 2px;
+}
+
+/* When strip is visible, input wrapper loses top border radius */
+.ai-attachments-strip:not([style*="display: none"]):not([style*="display:none"]) + .ai-input-wrapper {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top-color: var(--border-color);
+}
+
+/* --- Attachment Thumbnail (Images) --- */
+.ai-attach-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+  cursor: default;
+  transition: border-color 0.2s;
+}
+
+.ai-attach-thumb:hover {
+  border-color: #667eea;
+}
+
+.ai-attach-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ai-attach-thumb .ai-attach-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.ai-attach-thumb:hover .ai-attach-remove {
+  opacity: 1;
+}
+
+/* --- Attachment File Chip (Non-image files) --- */
+.ai-attach-file-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  font-size: 11.5px;
+  color: var(--text-color);
+  flex-shrink: 0;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ai-attach-file-chip i {
+  font-size: 14px;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .ai-attach-file-chip i {
+  color: #a5b4fc;
+}
+
+.ai-attach-file-chip .ai-attach-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.ai-attach-file-chip .ai-attach-remove {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-color);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.ai-attach-file-chip .ai-attach-remove:hover {
+  opacity: 1;
+  background: rgba(248, 113, 113, 0.15);
+  color: #ef4444;
+}
+
+/* --- Drag & Drop highlight --- */
+.ai-chat-area.ai-drag-over {
+  outline: 2px dashed #667eea;
+  outline-offset: -4px;
+  background: rgba(102, 126, 234, 0.06);
+}
+
+[data-theme="dark"] .ai-chat-area.ai-drag-over {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+/* --- User message attachment display --- */
+.ai-msg-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.ai-msg-attachments img {
+  max-width: 180px;
+  max-height: 120px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ai-msg-attach-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 11px;
+  color: inherit;
+}
+
+.ai-msg-attach-file i {
+  font-size: 12px;
+}
+
 /* --- AI Panel Overlay (mobile backdrop) --- */
 .ai-panel-overlay {
   display: none;

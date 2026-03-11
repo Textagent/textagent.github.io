@@ -14,6 +14,14 @@
     var aiSendBtn = document.getElementById('ai-send-btn');
     var aiClearChatBtn = document.getElementById('ai-clear-chat');
     var aiPanel = document.getElementById('ai-panel');
+    var aiAttachBtn = document.getElementById('ai-attach-btn');
+    var aiFileInput = document.getElementById('ai-file-input');
+    var aiAttachmentsStrip = document.getElementById('ai-attachments-strip');
+
+    // --- File Attachment State ---
+    var MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    var MAX_ATTACHMENTS = 5;
+    var pendingAttachments = []; // Array of { file, type: 'image'|'file', dataUrl, mimeType, name }
 
     // --- Helpers ---
     function escapeHtml(text) {
@@ -36,13 +44,26 @@
     }
 
     // --- Chat Messages ---
-    function addUserMessage(text) {
+    function addUserMessage(text, attachments) {
         var welcome = aiChatArea.querySelector('.ai-welcome-message');
         if (welcome) welcome.remove();
 
+        var attachHtml = '';
+        if (attachments && attachments.length > 0) {
+            attachHtml = '<div class="ai-msg-attachments">';
+            attachments.forEach(function (att) {
+                if (att.type === 'image') {
+                    attachHtml += '<img src="' + att.dataUrl + '" alt="' + escapeHtml(att.name) + '" />';
+                } else {
+                    attachHtml += '<span class="ai-msg-attach-file"><i class="bi bi-file-earmark-text"></i> ' + escapeHtml(att.name) + '</span>';
+                }
+            });
+            attachHtml += '</div>';
+        }
+
         var msg = document.createElement('div');
         msg.className = 'ai-message ai-message-user';
-        msg.innerHTML = '<span class="ai-msg-label">You</span>\n<div class="ai-msg-bubble">' + escapeHtml(text) + '</div>';
+        msg.innerHTML = '<span class="ai-msg-label">You</span>\n<div class="ai-msg-bubble">' + attachHtml + escapeHtml(text) + '</div>';
         aiChatArea.appendChild(msg);
         aiChatArea.scrollTop = aiChatArea.scrollHeight;
     }
@@ -254,7 +275,7 @@
         var pending = _ai.pendingMessage;
         if (!pending) return;
         _ai.pendingMessage = null;
-        _ai.sendToAi(pending.taskType, pending.context, pending.userPrompt);
+        _ai.sendToAi(pending.taskType, pending.context, pending.userPrompt, pending.attachments);
     }
 
     // --- Chat Input ---
@@ -274,11 +295,13 @@
 
     function sendChatMessage() {
         var text = aiInput.value.trim();
-        if (!text || _ai.isGenerating) return;
+        var attachments = pendingAttachments.slice(); // snapshot
+        if ((!text && attachments.length === 0) || _ai.isGenerating) return;
 
         aiInput.value = '';
         aiInput.style.height = 'auto';
-        addUserMessage(text);
+        clearAttachments();
+        addUserMessage(text || '(file attached)', attachments);
 
         // If current model is an image model, route to image generation
         var currentModelCfg = _ai.models[_ai.currentModel];
@@ -286,6 +309,13 @@
             M.generateImage(text, _ai.selectedAspectRatio);
             return;
         }
+
+        // Build attachment data for workers: { type, mimeType, data (base64 without prefix), name }
+        var workerAttachments = attachments.map(function (att) {
+            // Strip data URL prefix to get raw base64
+            var base64 = att.dataUrl.split(',')[1] || '';
+            return { type: att.type, mimeType: att.mimeType, data: base64, name: att.name, textContent: att.textContent || null };
+        });
 
         var editorContent = markdownEditor.value;
         var isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
@@ -310,23 +340,23 @@
                     context = searchContext + '\n\n[Document Content]\n' + editorContent;
                 }
 
-                _ai.sendToAi(isQuestion && editorContent.trim() ? 'qa' : 'generate', context || null, text);
+                _ai.sendToAi(isQuestion && editorContent.trim() ? 'qa' : 'generate', context || null, text, workerAttachments);
             }).catch(function () {
                 var ind = aiChatArea.querySelector('.ai-search-indicator');
                 if (ind) ind.remove();
                 if (isQuestion && editorContent.trim()) {
-                    _ai.sendToAi('qa', editorContent, text);
+                    _ai.sendToAi('qa', editorContent, text, workerAttachments);
                 } else {
-                    _ai.sendToAi('generate', null, text);
+                    _ai.sendToAi('generate', null, text, workerAttachments);
                 }
             });
             return;
         }
 
         if (isQuestion && editorContent.trim()) {
-            _ai.sendToAi('qa', editorContent, text);
+            _ai.sendToAi('qa', editorContent, text, workerAttachments);
         } else {
-            _ai.sendToAi('generate', null, text);
+            _ai.sendToAi('generate', null, text, workerAttachments);
         }
     }
 
@@ -561,6 +591,170 @@
         }
     })();
 
+    // ========================================
+    // FILE ATTACHMENT HANDLING
+    // ========================================
+
+    function isImageMime(mime) {
+        return /^image\/(png|jpe?g|gif|webp|svg\+xml|bmp)$/i.test(mime);
+    }
+
+    function getFileIcon(name) {
+        var ext = (name.split('.').pop() || '').toLowerCase();
+        var icons = {
+            pdf: 'bi-file-earmark-pdf', json: 'bi-filetype-json', csv: 'bi-filetype-csv',
+            xml: 'bi-filetype-xml', html: 'bi-filetype-html', css: 'bi-filetype-css',
+            js: 'bi-filetype-js', ts: 'bi-filetype-tsx', py: 'bi-filetype-py',
+            md: 'bi-filetype-md', yaml: 'bi-filetype-yml', yml: 'bi-filetype-yml',
+            txt: 'bi-file-earmark-text', log: 'bi-file-earmark-text'
+        };
+        return icons[ext] || 'bi-file-earmark';
+    }
+
+    function addFilesToPending(files) {
+        for (var i = 0; i < files.length; i++) {
+            if (pendingAttachments.length >= MAX_ATTACHMENTS) {
+                _ai.handleAiError('Maximum ' + MAX_ATTACHMENTS + ' attachments allowed.', null);
+                break;
+            }
+            var file = files[i];
+            if (file.size > MAX_FILE_SIZE) {
+                _ai.handleAiError('File "' + file.name + '" exceeds 10 MB limit.', null);
+                continue;
+            }
+            (function (f) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var isImg = isImageMime(f.type);
+                    var att = {
+                        file: f,
+                        type: isImg ? 'image' : 'file',
+                        dataUrl: e.target.result,
+                        mimeType: f.type || 'application/octet-stream',
+                        name: f.name,
+                        textContent: null
+                    };
+                    // For text-based files, also read as text for local models
+                    if (!isImg) {
+                        var textReader = new FileReader();
+                        textReader.onload = function (te) {
+                            att.textContent = te.target.result;
+                            pendingAttachments.push(att);
+                            renderAttachmentsStrip();
+                        };
+                        textReader.readAsText(f);
+                    } else {
+                        pendingAttachments.push(att);
+                        renderAttachmentsStrip();
+                    }
+                };
+                reader.readAsDataURL(f);
+            })(file);
+        }
+    }
+
+    function removeAttachment(index) {
+        pendingAttachments.splice(index, 1);
+        renderAttachmentsStrip();
+    }
+
+    function clearAttachments() {
+        pendingAttachments = [];
+        if (aiAttachmentsStrip) {
+            aiAttachmentsStrip.innerHTML = '';
+            aiAttachmentsStrip.style.display = 'none';
+        }
+        if (aiFileInput) aiFileInput.value = '';
+    }
+
+    function renderAttachmentsStrip() {
+        if (!aiAttachmentsStrip) return;
+        if (pendingAttachments.length === 0) {
+            aiAttachmentsStrip.innerHTML = '';
+            aiAttachmentsStrip.style.display = 'none';
+            return;
+        }
+        aiAttachmentsStrip.style.display = 'flex';
+        aiAttachmentsStrip.innerHTML = '';
+        pendingAttachments.forEach(function (att, idx) {
+            if (att.type === 'image') {
+                var thumb = document.createElement('div');
+                thumb.className = 'ai-attach-thumb';
+                thumb.innerHTML = '<img src="' + att.dataUrl + '" alt="' + escapeHtml(att.name) + '" />' +
+                    '<button class="ai-attach-remove" title="Remove" data-idx="' + idx + '"><i class="bi bi-x"></i></button>';
+                aiAttachmentsStrip.appendChild(thumb);
+            } else {
+                var chip = document.createElement('div');
+                chip.className = 'ai-attach-file-chip';
+                chip.innerHTML = '<i class="bi ' + getFileIcon(att.name) + '"></i>' +
+                    '<span class="ai-attach-filename">' + escapeHtml(att.name) + '</span>' +
+                    '<button class="ai-attach-remove" title="Remove" data-idx="' + idx + '"><i class="bi bi-x"></i></button>';
+                aiAttachmentsStrip.appendChild(chip);
+            }
+        });
+        // Wire remove buttons
+        aiAttachmentsStrip.querySelectorAll('.ai-attach-remove').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                removeAttachment(parseInt(this.dataset.idx, 10));
+            });
+        });
+    }
+
+    // --- Attach Button ---
+    if (aiAttachBtn && aiFileInput) {
+        aiAttachBtn.addEventListener('click', function () {
+            aiFileInput.click();
+        });
+        aiFileInput.addEventListener('change', function () {
+            if (aiFileInput.files && aiFileInput.files.length > 0) {
+                addFilesToPending(aiFileInput.files);
+                aiFileInput.value = ''; // reset so same file can be re-selected
+            }
+        });
+    }
+
+    // --- Drag & Drop on chat area ---
+    if (aiChatArea) {
+        aiChatArea.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            aiChatArea.classList.add('ai-drag-over');
+        });
+        aiChatArea.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            aiChatArea.classList.remove('ai-drag-over');
+        });
+        aiChatArea.addEventListener('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            aiChatArea.classList.remove('ai-drag-over');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                addFilesToPending(e.dataTransfer.files);
+            }
+        });
+    }
+
+    // --- Clipboard Paste (images) ---
+    if (aiInput) {
+        aiInput.addEventListener('paste', function (e) {
+            var items = e.clipboardData && e.clipboardData.items;
+            if (!items) return;
+            var imageFiles = [];
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image/') === 0) {
+                    var blob = items[i].getAsFile();
+                    if (blob) imageFiles.push(blob);
+                }
+            }
+            if (imageFiles.length > 0) {
+                e.preventDefault();
+                addFilesToPending(imageFiles);
+            }
+        });
+    }
+
     // --- Register on M._ai for cross-module access ---
     _ai.escapeHtml = escapeHtml;
     _ai.formatAiResponse = formatAiResponse;
@@ -576,9 +770,14 @@
     _ai.replayPendingMessage = replayPendingMessage;
     _ai.processDocumentInChunks = processDocumentInChunks;
     _ai.sendChatMessage = sendChatMessage;
+    _ai.addFilesToPending = addFilesToPending;
+    _ai.clearAttachments = clearAttachments;
     Object.defineProperty(_ai, 'savedSelection', {
         get: function () { return savedSelection; },
         set: function (v) { savedSelection = v; }
+    });
+    Object.defineProperty(_ai, 'pendingAttachments', {
+        get: function () { return pendingAttachments; }
     });
 
 })(window.MDView);

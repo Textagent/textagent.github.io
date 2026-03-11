@@ -38,7 +38,7 @@ async function validateApiKey() {
     }
 }
 
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = []) {
     if (!apiKey) {
         self.postMessage({ type: 'error', message: 'API key not set.', messageId });
         return;
@@ -53,10 +53,29 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         const userMessages = messages.filter(m => m.role !== 'system');
 
         const requestBody = {
-            contents: userMessages.map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }],
-            })),
+            contents: userMessages.map(m => {
+                const parts = [{ text: m.content }];
+                // For the last user message, add image attachments as inlineData parts
+                if (m.role === 'user' && attachments && attachments.length > 0) {
+                    attachments.forEach(att => {
+                        if (att.type === 'image' && att.data) {
+                            parts.push({
+                                inlineData: {
+                                    mimeType: att.mimeType || 'image/png',
+                                    data: att.data
+                                }
+                            });
+                        } else if (att.type === 'file' && att.textContent) {
+                            // Append text file content as additional context
+                            parts[0].text += '\n\n[Attached File: ' + (att.name || 'file') + ']\n' + att.textContent;
+                        }
+                    });
+                }
+                return {
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: parts,
+                };
+            }),
             generationConfig: {
                 maxOutputTokens: maxTokens,
                 temperature: 0.7,
@@ -155,11 +174,11 @@ function buildMessages(taskType, context, userPrompt) {
 }
 
 self.addEventListener('message', async (event) => {
-    const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments } = event.data;
     switch (type) {
         case 'setApiKey': apiKey = event.data.apiKey; break;
         case 'load': await validateApiKey(); break;
-        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking); break;
+        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking, attachments); break;
         case 'ping': self.postMessage({ type: 'pong' }); break;
     }
 });

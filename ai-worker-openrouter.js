@@ -49,7 +49,7 @@ async function validateApiKey() {
     }
 }
 
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = []) {
     if (!apiKey) {
         self.postMessage({ type: 'error', message: 'API key not set.', messageId });
         return;
@@ -59,6 +59,24 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         let maxTokens = TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
+        // If there are image attachments, convert the last user message to multipart content
+        if (attachments && attachments.length > 0) {
+            const lastUserMsg = messages[messages.length - 1];
+            if (lastUserMsg && lastUserMsg.role === 'user') {
+                const parts = [{ type: 'text', text: typeof lastUserMsg.content === 'string' ? lastUserMsg.content : '' }];
+                attachments.forEach(att => {
+                    if (att.type === 'image' && att.data) {
+                        parts.push({
+                            type: 'image_url',
+                            image_url: { url: 'data:' + (att.mimeType || 'image/png') + ';base64,' + att.data }
+                        });
+                    } else if (att.type === 'file' && att.textContent) {
+                        parts[0].text += '\n\n[Attached File: ' + (att.name || 'file') + ']\n' + att.textContent;
+                    }
+                });
+                lastUserMsg.content = parts;
+            }
+        }
         const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
             headers: {
@@ -150,12 +168,12 @@ function buildMessages(taskType, context, userPrompt) {
 }
 
 self.addEventListener('message', async (event) => {
-    const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments } = event.data;
     switch (type) {
         case 'setApiKey': apiKey = event.data.apiKey; break;
         case 'setModelId': modelId = event.data.modelId; break;
         case 'load': await validateApiKey(); break;
-        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking); break;
+        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking, attachments); break;
         case 'ping': self.postMessage({ type: 'pong' }); break;
     }
 });

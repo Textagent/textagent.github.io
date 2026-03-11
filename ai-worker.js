@@ -13,8 +13,9 @@
 let AutoProcessor = null;
 let Qwen3_5ForConditionalGeneration = null;
 let TextStreamer = null;
+let RawImage = null;
 
-const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.5";
+const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
 
 // Model config — default to 0.8B, overridable via setModelId message
 let MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
@@ -58,6 +59,7 @@ async function loadModel() {
                 AutoProcessor = transformers.AutoProcessor;
                 Qwen3_5ForConditionalGeneration = transformers.Qwen3_5ForConditionalGeneration;
                 TextStreamer = transformers.TextStreamer;
+                RawImage = transformers.RawImage;
             } catch (importError) {
                 self.postMessage({
                     type: "error",
@@ -149,7 +151,7 @@ async function loadModel() {
 /**
  * Generate text based on a prompt with system instructions
  */
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = []) {
     if (!model || !processor) {
         self.postMessage({
             type: "error",
@@ -160,47 +162,111 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
     }
 
     try {
+        // Separate image attachments from text file attachments
+        const imageAttachments = (attachments || []).filter(a => a.type === 'image' && a.data);
+        const fileAttachments = (attachments || []).filter(a => a.type === 'file' && a.textContent);
+
+        // Append text file contents to the user prompt
+        let augmentedPrompt = userPrompt || '';
+        fileAttachments.forEach(att => {
+            augmentedPrompt += '\n\n[Attached File: ' + (att.name || 'file') + ']\n' + att.textContent;
+        });
+
         // Build messages array based on task type
-        const messages = buildMessages(taskType, context, userPrompt);
+        const messages = buildMessages(taskType, context, augmentedPrompt || userPrompt);
 
         // Use task-specific token limit; thinking mode needs more tokens
         let maxTokens = TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
-        // Apply chat template
-        const text = processor.tokenizer.apply_chat_template(messages, {
-            tokenize: false,
-            add_generation_prompt: true,
-            enable_thinking: enableThinking,
-        });
+        // --- MULTIMODAL PATH: images attached ---
+        console.log('[AI Worker] attachments received:', attachments?.length, 'images:', imageAttachments.length, 'RawImage available:', !!RawImage);
+        if (imageAttachments.length > 0 && RawImage) {
+            // Load the first image (Qwen 3.5 processes one image at a time)
+            const imgAtt = imageAttachments[0];
+            const dataUrl = 'data:' + (imgAtt.mimeType || 'image/png') + ';base64,' + imgAtt.data;
+            const rawImage = await (await RawImage.read(dataUrl)).resize(448, 448);
 
-        const inputs = processor.tokenizer(text, {
-            return_tensors: "pt",
-        });
+            // Build prompt manually with vision tokens
+            // (apply_chat_template doesn't correctly insert vision tokens — see HF reference)
+            let prompt = '';
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+                if (i === messages.length - 1 && msg.role === 'user') {
+                    // Last user message: insert vision tokens before text
+                    const textContent = typeof msg.content === 'string' ? msg.content : (augmentedPrompt || 'Describe this image.');
+                    prompt += '<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>' + textContent + '<|im_end|>\n';
+                } else {
+                    prompt += '<|im_start|>' + msg.role + '\n' + msg.content + '<|im_end|>\n';
+                }
+            }
+            // Add generation prompt (with or without thinking)
+            prompt += enableThinking
+                ? '<|im_start|>assistant\n<think>\n'
+                : '<|im_start|>assistant\n<think>\n\n</think>\n\n';
 
-        // Collect streamed text
-        let fullText = "";
-        const streamer = new TextStreamer(processor.tokenizer, {
-            skip_prompt: true,
-            skip_special_tokens: true,
-            callback_function: (token) => {
-                fullText += token;
-            },
-        });
+            // Process text + image together
+            const inputs = await processor(prompt, rawImage);
 
-        // Generate
-        await model.generate({
-            ...inputs,
-            do_sample: false,
-            max_new_tokens: maxTokens,
-            streamer,
-        });
+            // Collect streamed text
+            let fullText = '';
+            const streamer = new TextStreamer(processor.tokenizer, {
+                skip_prompt: true,
+                skip_special_tokens: true,
+                callback_function: (token) => {
+                    fullText += token;
+                },
+            });
 
-        self.postMessage({
-            type: "complete",
-            text: fullText.trim(),
-            messageId,
-        });
+            // Generate
+            await model.generate({
+                ...inputs,
+                do_sample: true,
+                max_new_tokens: maxTokens,
+                streamer,
+            });
+
+            self.postMessage({
+                type: "complete",
+                text: fullText.trim(),
+                messageId,
+            });
+        } else {
+            // --- TEXT-ONLY PATH: no images ---
+            const text = processor.tokenizer.apply_chat_template(messages, {
+                tokenize: false,
+                add_generation_prompt: true,
+                enable_thinking: enableThinking,
+            });
+
+            const inputs = processor.tokenizer(text, {
+                return_tensors: "pt",
+            });
+
+            // Collect streamed text
+            let fullText = "";
+            const streamer = new TextStreamer(processor.tokenizer, {
+                skip_prompt: true,
+                skip_special_tokens: true,
+                callback_function: (token) => {
+                    fullText += token;
+                },
+            });
+
+            // Generate
+            await model.generate({
+                ...inputs,
+                do_sample: false,
+                max_new_tokens: maxTokens,
+                streamer,
+            });
+
+            self.postMessage({
+                type: "complete",
+                text: fullText.trim(),
+                messageId,
+            });
+        }
     } catch (error) {
         self.postMessage({
             type: "error",
@@ -287,7 +353,7 @@ function buildMessages(taskType, context, userPrompt) {
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (event) => {
-    const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments } = event.data;
 
     switch (type) {
         case "setModelId":
@@ -298,7 +364,7 @@ self.addEventListener("message", async (event) => {
             await loadModel();
             break;
         case "generate":
-            await generate(taskType, context, userPrompt, messageId, enableThinking);
+            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments);
             break;
         case "ping":
             self.postMessage({ type: "pong" });

@@ -253,7 +253,12 @@
                     <!-- Built dynamically from js/ai-models.js -->
                 </div>
             </div>
+            <div class="ai-attachments-strip" id="ai-attachments-strip" style="display:none"></div>
             <div class="ai-input-wrapper">
+                <button id="ai-attach-btn" class="ai-attach-button" title="Attach files or images" type="button">
+                    <i class="bi bi-paperclip"></i>
+                </button>
+                <input type="file" id="ai-file-input" multiple accept="image/*,.txt,.md,.csv,.json,.pdf,.xml,.yaml,.yml,.log,.js,.ts,.py,.html,.css" style="display:none" />
                 <textarea id="ai-input" placeholder="Ask AI anything... (e.g. 'Write a README intro')"
                     rows="1"></textarea>
                 <button id="ai-send-btn" class="ai-send-button" title="Send">
