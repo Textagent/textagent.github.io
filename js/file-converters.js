@@ -20,13 +20,13 @@
     var conversionDetail = document.getElementById('conversion-detail');
 
     function showConversionOverlay(title, detail) {
-        conversionTitle.textContent = title || 'Converting...';
-        conversionDetail.textContent = detail || 'Processing your file';
-        conversionOverlay.style.display = 'flex';
+        if (conversionTitle) conversionTitle.textContent = title || 'Converting...';
+        if (conversionDetail) conversionDetail.textContent = detail || 'Processing your file';
+        if (conversionOverlay) conversionOverlay.style.display = 'flex';
     }
 
     function hideConversionOverlay() {
-        conversionOverlay.style.display = 'none';
+        if (conversionOverlay) conversionOverlay.style.display = 'none';
     }
 
     function getFileExtension(filename) {
@@ -65,7 +65,6 @@
 
             M.markdownEditor.value = markdown;
             M.renderMarkdown();
-            M.dropzone.style.display = 'none';
             M.showToast('\u2713 Converted ' + file.name + ' to Markdown', 'success');
         } catch (err) {
             console.error('File conversion failed:', err);
@@ -80,7 +79,6 @@
         reader.onload = function (e) {
             M.markdownEditor.value = e.target.result;
             M.renderMarkdown();
-            M.dropzone.style.display = "none";
         };
         reader.readAsText(file);
     };
@@ -164,12 +162,10 @@
             emDelimiter: '*'
         });
 
-        var content = html;
-        var bodyRegex = new RegExp('<body[^>]*>([\\s\\S]*?)<\\/body>', 'i');
-        var bodyMatch = html.match(bodyRegex);
-        if (bodyMatch) {
-            content = bodyMatch[1];
-        }
+        // Parse HTML and strip <script>/<style> tags (MarkItDown pattern)
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('script, style').forEach(function (el) { el.remove(); });
+        var content = doc.body ? doc.body.innerHTML : doc.documentElement.innerHTML;
 
         var markdown = turndown.turndown(content);
         var header = '> *Converted from: ' + file.name + '*\n\n---\n\n';
@@ -201,7 +197,7 @@
             if (errors.length === 0) {
                 var serializer = new XMLSerializer();
                 formatted = serializer.serializeToString(xmlDoc);
-                formatted = formatted.replace(/(>)(<)(\/*)/, '$1\n$2$3');
+                formatted = formatted.replace(/(>)(<)(\/*)/g, '$1\n$2$3');
             }
         } catch (e) {
             // Use raw text on error
@@ -217,10 +213,13 @@
             try {
                 var mod = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
                 pdfjsLib = mod;
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
             } catch (e) {
                 throw new Error('PDF.js library could not be loaded. PDF conversion requires a modern browser.');
             }
+        }
+        // Always ensure workerSrc is set (CDN eager load may skip it)
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
         }
 
         var arrayBuffer = await file.arrayBuffer();
