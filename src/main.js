@@ -37,6 +37,7 @@ import '../css/video-player.css';
 import '../css/exec-engine.css';
 import '../css/tts.css';
 import '../css/doc-vars-panel.css';
+import '../css/game-docgen.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -120,6 +121,7 @@ async function loadModules() {
         import('../js/templates/ai.js'),
         import('../js/templates/agents.js'),
         import('../js/templates/finance.js'),
+        import('../js/templates/games.js'),
     ]);
     await import('../js/templates.js');
 
@@ -140,6 +142,10 @@ async function loadModules() {
 
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');
+
+    // 3h: Game Builder Component (standalone — remove to disable feature)
+    await import('../js/game-prebuilts.js');
+    await import('../js/game-docgen.js');
 }
 
 loadModules();

@@ -1,0 +1,431 @@
+/* ============================================
+   game-docgen.css — {{Game:}} Tag Styles
+   Standalone — remove this file to disable
+   ============================================ */
+
+/* Card container */
+.ai-game-card {
+    border: 2px solid #7c3aed;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
+    margin: 12px 0;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ai-game-card:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+}
+
+.ai-game-card.ai-game-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.ai-game-card.ai-game-loading .ai-game-label {
+    animation: game-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes game-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Header */
+.ai-game-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+    flex-wrap: wrap;
+}
+
+.ai-game-icon {
+    font-size: 1.2em;
+}
+
+.ai-game-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #7c3aed;
+}
+
+.ai-game-engine-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(124, 58, 237, 0.15);
+    color: #7c3aed;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.ai-game-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.ai-game-btn {
+    border: none;
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.ai-game-btn:hover {
+    background: rgba(124, 58, 237, 0.2);
+    color: #6d28d9;
+}
+
+.ai-game-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ai-game-generate {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.ai-game-generate:hover {
+    background: #6d28d9;
+    color: #fff;
+}
+
+.ai-game-play {
+    background: #10b981;
+    color: #fff;
+}
+
+.ai-game-play:hover {
+    background: #059669;
+    color: #fff;
+}
+
+/* Model selector */
+.ai-game-model-select {
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    background: transparent;
+    color: inherit;
+    max-width: 140px;
+    cursor: pointer;
+}
+
+/* Engine pills */
+.ai-game-engine-pills {
+    display: flex;
+    gap: 4px;
+    padding: 8px 14px;
+    background: rgba(124, 58, 237, 0.04);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+}
+
+.ai-game-engine-pill {
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    background: transparent;
+    color: #6b7280;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+}
+
+.ai-game-engine-pill:hover {
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+.ai-game-engine-pill.active {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+}
+
+/* Description + Prompt */
+.ai-game-desc {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    color: #6b7280;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+}
+
+.ai-game-prompt {
+    padding: 8px 14px;
+}
+
+.ai-game-prompt-input {
+    width: 100%;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    resize: vertical;
+    background: rgba(255, 255, 255, 0.6);
+    color: inherit;
+    transition: border-color 0.2s;
+    min-height: 60px;
+}
+
+.ai-game-prompt-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+/* Game preview iframe */
+.ai-game-preview {
+    padding: 0;
+    position: relative;
+    background: #000;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+}
+
+.ai-game-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    display: block;
+    background: #000;
+}
+
+/* Fullscreen iframe */
+.ai-game-iframe:fullscreen {
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Toolbar button (game tag) */
+.fmt-game-btn {
+    color: #7c3aed !important;
+    font-weight: 600;
+}
+
+/* ─── Dark Mode ─── */
+
+[data-theme="dark"] .ai-game-card,
+.dark-mode .ai-game-card {
+    border-color: #6d28d9;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+}
+
+[data-theme="dark"] .ai-game-header,
+.dark-mode .ai-game-header {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.18) 0%, rgba(99, 102, 241, 0.1) 100%);
+    border-bottom-color: rgba(124, 58, 237, 0.3);
+}
+
+[data-theme="dark"] .ai-game-label,
+.dark-mode .ai-game-label {
+    color: #a78bfa;
+}
+
+[data-theme="dark"] .ai-game-engine-badge,
+.dark-mode .ai-game-engine-badge {
+    background: rgba(167, 139, 250, 0.2);
+    color: #a78bfa;
+}
+
+[data-theme="dark"] .ai-game-btn,
+.dark-mode .ai-game-btn {
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+}
+
+[data-theme="dark"] .ai-game-prompt-input,
+.dark-mode .ai-game-prompt-input {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(167, 139, 250, 0.3);
+}
+
+[data-theme="dark"] .ai-game-engine-pill,
+.dark-mode .ai-game-engine-pill {
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .ai-game-engine-pill.active,
+.dark-mode .ai-game-engine-pill.active {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+}
+
+[data-theme="dark"] .ai-game-desc,
+.dark-mode .ai-game-desc {
+    color: #9ca3af;
+}
+
+/* ─── Import Button ─── */
+.ai-game-import {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+.ai-game-import:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #2563eb;
+}
+
+/* ─── Import Modal ─── */
+.ai-game-import-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.ai-game-import-overlay.active {
+    opacity: 1;
+}
+
+.ai-game-import-dialog {
+    background: #fff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 640px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.ai-game-import-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(124, 58, 237, 0.08));
+    border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.ai-game-import-close {
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+.ai-game-import-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.ai-game-import-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    overflow: auto;
+}
+
+.ai-game-import-hint {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin: 0;
+}
+.ai-game-import-hint code {
+    background: rgba(59, 130, 246, 0.1);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.ai-game-import-code {
+    width: 100%;
+    min-height: 260px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    resize: vertical;
+    background: #f9fafb;
+    color: #1f2937;
+    transition: border-color 0.2s;
+    tab-size: 2;
+}
+.ai-game-import-code:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.ai-game-import-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.ai-game-import-file-label {
+    cursor: pointer;
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+.ai-game-import-file-label:hover {
+    background: rgba(59, 130, 246, 0.2) !important;
+}
+
+.ai-game-import-run {
+    background: #7c3aed !important;
+    color: #fff !important;
+    font-weight: 600;
+    padding: 6px 18px !important;
+}
+.ai-game-import-run:hover:not(:disabled) {
+    background: #6d28d9 !important;
+}
+.ai-game-import-run:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ─── Dark Mode ─── */
+[data-theme="dark"] .ai-game-import-dialog,
+.dark-mode .ai-game-import-dialog {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+[data-theme="dark"] .ai-game-import-code,
+.dark-mode .ai-game-import-code {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+[data-theme="dark"] .ai-game-import-close,
+.dark-mode .ai-game-import-close {
+    color: #9ca3af;
+}
+[data-theme="dark"] .ai-game-import-hint,
+.dark-mode .ai-game-import-hint {
+    color: #9ca3af;
+}

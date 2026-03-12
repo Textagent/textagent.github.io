@@ -22,7 +22,8 @@ test.describe('Toolbar Tag Insertion', () => {
                 w.MDView.formattingActions &&
                 w.MDView.formattingActions['ai-tag'] &&
                 w.MDView.formattingActions['api-get-tag'] &&
-                w.MDView.formattingActions['linux-tag'];
+                w.MDView.formattingActions['linux-tag'] &&
+                w.MDView.formattingActions['game-tag'];
         });
         // Clear editor
         await page.locator('#markdown-editor').fill('');
@@ -99,6 +100,16 @@ test.describe('Toolbar Tag Insertion', () => {
         expect(val).toContain('{{@STT:');
         expect(val).toContain('}}');
         const count = (val.match(/\{\{@?STT:/g) || []).length;
+        expect(count).toBe(1);
+    });
+
+    test('Game tag inserts {{@Game: ...}} once', async ({ page }) => {
+        await clickAction(page, 'game-tag');
+        const val = await editorValue(page);
+        expect(val).toContain('{{@Game:');
+        expect(val).toContain('@engine: threejs');
+        expect(val).toContain('}}');
+        const count = (val.match(/\{\{@?Game:/g) || []).length;
         expect(count).toBe(1);
     });
 

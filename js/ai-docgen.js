@@ -176,15 +176,15 @@
                 }
                 // Parse @mode: field for OCR blocks
                 if (block.type === 'OCR') {
-                    var modeMatch = block.prompt.match(/^(?:@mode|Mode):\s*(text|svg)$/mi);
+                    var modeMatch = block.prompt.match(/^\s*(?:@mode|Mode):\s*(text|svg)$/mi);
                     block.ocrMode = modeMatch ? modeMatch[1].toLowerCase() : 'text';
-                    block.prompt = block.prompt.replace(/^(?:@mode|Mode):\s*\S+$/mi, '').trim();
+                    block.prompt = block.prompt.replace(/^\s*(?:@mode|Mode):\s*\S+$/mi, '').trim();
                 }
                 // Parse @lang: field for Translate blocks
                 if (block.type === 'Translate' || block.type === 'TTS') {
-                    var langMatch = block.prompt.match(/^(?:@lang|Lang):\s*(.+)$/mi);
+                    var langMatch = block.prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
                     block.targetLang = langMatch ? langMatch[1].trim() : (block.type === 'TTS' ? 'English' : 'Japanese');
-                    block.prompt = block.prompt.replace(/^(?:@lang|Lang):\s*.+$/mi, '').trim();
+                    block.prompt = block.prompt.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 }
                 // Parse @model: field — persists the selected model for this block
                 var modelMatch = block.prompt.match(/^\s*(?:@model|Model):\s*(\S+)$/mi);
@@ -204,13 +204,13 @@
                 }
                 // Parse @use, @think, @search, @prompt fields
                 if (block.type !== 'Image' && block.type !== 'Memory') {
-                    var useMatch = block.prompt.match(/^(?:@use|Use):\s*(.+)$/m);
+                    var useMatch = block.prompt.match(/^\s*(?:@use|Use):\s*(.+)$/m);
                     if (useMatch) {
                         block.useMemory = useMatch[1].split(',').map(function (s) { return s.trim(); });
                         block.prompt = block.prompt.replace(useMatch[0], '').trim();
                     }
                     // Parse @think: yes/no field
-                    var thinkMatch = block.prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
+                    var thinkMatch = block.prompt.match(/^\s*(?:@think|Think):\s*(yes|no)$/mi);
                     if (thinkMatch) {
                         block.think = thinkMatch[1].toLowerCase() === 'yes';
                         block.prompt = block.prompt.replace(thinkMatch[0], '').trim();
@@ -218,7 +218,7 @@
                         block.think = false;
                     }
                     // Parse @search: field
-                    var searchMatch = block.prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
+                    var searchMatch = block.prompt.match(/^\s*(?:@search|Search):\s*(\S+)$/mi);
                     if (searchMatch) {
                         block.search = searchMatch[1].toLowerCase();
                         block.prompt = block.prompt.replace(searchMatch[0], '').trim();
@@ -230,7 +230,7 @@
                         block.prompt = block.prompt.replace(inputMatch[0], '').trim();
                     }
                     // Separate description (bare text) from @prompt: (actual AI instruction)
-                    var promptMatch = block.prompt.match(/^(?:@prompt|Prompt):\s*(.*)$/m);
+                    var promptMatch = block.prompt.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
                     if (promptMatch) {
                         // Extract @prompt: value as the real prompt
                         var realPrompt = promptMatch[1].trim();
@@ -464,12 +464,12 @@
                     + '</div>';
             } else if (type === 'OCR') {
                 // OCR card — specialized for image-to-text / image-to-SVG
-                var ocrModeMatch = prompt.match(/^(?:@mode|Mode):\s*(text|svg)$/mi);
+                var ocrModeMatch = prompt.match(/^\s*(?:@mode|Mode):\s*(text|svg)$/mi);
                 var ocrMode = ocrModeMatch ? ocrModeMatch[1].toLowerCase() : 'text';
-                var ocrDisplayText = prompt.replace(/^(?:@mode|Mode):\s*\S+$/mi, '').trim();
+                var ocrDisplayText = prompt.replace(/^\s*(?:@mode|Mode):\s*\S+$/mi, '').trim();
                 // Strip metadata fields from display
-                ocrDisplayText = ocrDisplayText.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
-                ocrDisplayText = ocrDisplayText.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
+                ocrDisplayText = ocrDisplayText.replace(/^\s*(?:@think|Think):\s*(yes|no)$/mi, '').trim();
+                ocrDisplayText = ocrDisplayText.replace(/^\s*(?:@search|Search):\s*\S+$/mi, '').trim();
                 ocrDisplayText = ocrDisplayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
                 ocrDisplayText = ocrDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
@@ -539,11 +539,11 @@
                     + '<option value="serper">🔎 Serper</option>';
 
                 // @use: hint for Agent
-                var agentUseMatch = prompt.match(/^(?:@use|Use):\s*(.+)$/m);
+                var agentUseMatch = prompt.match(/^\s*(?:@use|Use):\s*(.+)$/m);
                 var agentUseHint = agentUseMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(agentUseMatch[1]) + '</span>' : '';
 
                 // Parse @search field for Agent
-                var agentSearchMatch = prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
+                var agentSearchMatch = prompt.match(/^\s*(?:@search|Search):\s*(\S+)$/mi);
                 var agentSearchVal = agentSearchMatch ? agentSearchMatch[1].toLowerCase() : 'off';
                 var searchOpts = '<option value="off"' + (agentSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
                     + '<option value="duckduckgo"' + (agentSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
@@ -776,12 +776,12 @@
                     + '</div>';
             } else {
                 // Extract @use and strip @ fields from display
-                var useMatch = prompt.match(/^(?:@use|Use):\s*(.+)$/m);
+                var useMatch = prompt.match(/^\s*(?:@use|Use):\s*(.+)$/m);
                 var useHint = useMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(useMatch[1]) + '</span>' : '';
                 var displayText = useMatch ? prompt.replace(useMatch[0], '').trim() : prompt;
                 // Strip metadata fields from display
-                displayText = displayText.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
-                displayText = displayText.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
+                displayText = displayText.replace(/^\s*(?:@think|Think):\s*(yes|no)$/mi, '').trim();
+                displayText = displayText.replace(/^\s*(?:@search|Search):\s*\S+$/mi, '').trim();
                 displayText = displayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
                 displayText = displayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 

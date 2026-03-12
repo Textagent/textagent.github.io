@@ -18,7 +18,8 @@
     window.__MDV_TEMPLATES_TABLES || [],
     window.__MDV_TEMPLATES_AI || [],
     window.__MDV_TEMPLATES_AGENTS || [],
-    window.__MDV_TEMPLATES_FINANCE || []
+    window.__MDV_TEMPLATES_FINANCE || [],
+    window.__MDV_TEMPLATES_GAMES || []
   );
 
 
@@ -47,6 +48,7 @@
       case 'tables': return 'technical';
       case 'ai': return 'creative';
       case 'finance': return 'project';
+      case 'games': return 'creative';
       default: return 'doc';
     }
   }
@@ -64,6 +66,7 @@
       case 'tables': return 'bi-table';
       case 'ai': return 'bi-robot';
       case 'finance': return 'bi-graph-up-arrow';
+      case 'games': return 'bi-controller';
       default: return 'bi-file-earmark';
     }
   }
