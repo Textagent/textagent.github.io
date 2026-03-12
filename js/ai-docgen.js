@@ -73,7 +73,8 @@
     // ==============================================
     function insertDocgenTag(type) {
         if (type === 'Agent') {
-            M.wrapSelectionWith('{{@Agent:\n  @step 1: ', '\n  @step 2: describe the next step\n}}', 'describe this step');
+            var agentDefaultModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : '') || '';
+            M.wrapSelectionWith('{{@Agent:\n  @model: ' + (agentDefaultModel || 'qwen-local') + '\n  @step 1: ', '\n  @step 2: describe the next step\n}}', 'describe this step');
             return;
         }
         if (type === 'Memory') {
@@ -93,19 +94,20 @@
             return;
         }
         if (type === 'OCR') {
-            M.wrapSelectionWith('{{@OCR:\n  @mode: text\n  @prompt: ', '\n}}', 'describe what to extract from the image');
+            M.wrapSelectionWith('{{@OCR:\n  @model: granite-docling\n  @mode: text\n  @prompt: ', '\n}}', 'describe what to extract from the image');
             return;
         }
         if (type === 'Translate') {
-            M.wrapSelectionWith('{{@Translate:\n  @prompt: ', '\n  @lang: Japanese\n}}', 'text to translate');
+            var trDefaultModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : '') || '';
+            M.wrapSelectionWith('{{@Translate:\n  @model: ' + (trDefaultModel || 'gemini-flash') + '\n  @prompt: ', '\n  @lang: Japanese\n}}', 'text to translate');
             return;
         }
         if (type === 'TTS') {
-            M.wrapSelectionWith('{{@TTS:\n  @prompt: ', '\n  @lang: English\n}}', 'text to speak aloud');
+            M.wrapSelectionWith('{{@TTS:\n  @model: kokoro-tts\n  @prompt: ', '\n  @lang: English\n}}', 'text to speak aloud');
             return;
         }
         if (type === 'STT') {
-            M.wrapSelectionWith('{{@STT:\n  @lang: ', '\n}}', 'en-US');
+            M.wrapSelectionWith('{{@STT:\n  @model: voxtral-stt\n  @lang: ', '\n}}', 'en-US');
             return;
         }
 
@@ -113,9 +115,10 @@
             ? 'describe the image to generate'
             : 'describe what to generate';
         if (type === 'AI') {
-            M.wrapSelectionWith('{{@AI:\n  @prompt: ', '\n}}', placeholder);
+            var aiDefaultModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : '') || '';
+            M.wrapSelectionWith('{{@AI:\n  @model: ' + (aiDefaultModel || 'qwen-local') + '\n  @prompt: ', '\n}}', placeholder);
         } else if (type === 'Image') {
-            M.wrapSelectionWith('{{@Image: ', '}}', placeholder);
+            M.wrapSelectionWith('{{@Image:\n  @model: imagen-ultra\n  @prompt: ', '\n}}', placeholder);
         } else {
             M.wrapSelectionWith('{{@' + type + ': ', '}}', placeholder);
         }
@@ -182,6 +185,16 @@
                     var langMatch = block.prompt.match(/^(?:@lang|Lang):\s*(.+)$/mi);
                     block.targetLang = langMatch ? langMatch[1].trim() : (block.type === 'TTS' ? 'English' : 'Japanese');
                     block.prompt = block.prompt.replace(/^(?:@lang|Lang):\s*.+$/mi, '').trim();
+                }
+                // Parse @model: field — persists the selected model for this block
+                var modelMatch = block.prompt.match(/^\s*(?:@model|Model):\s*(\S+)$/mi);
+                if (modelMatch) {
+                    var modelVal = modelMatch[1].trim();
+                    // Only keep if the model exists in the registry
+                    if (window.AI_MODELS && window.AI_MODELS[modelVal]) {
+                        block.model = modelVal;
+                    }
+                    block.prompt = block.prompt.replace(modelMatch[0], '').trim();
                 }
                 // Parse @var: field — allows blocks to store output into a named variable
                 var varMatch = block.prompt.match(/^\s*(?:@var|Var):\s*(\S+)$/mi);
@@ -365,27 +378,31 @@
         var modelIds = Object.keys(models);
         var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
 
-        // Separate text and image model options
-        var textModelOptionsHtml = '';
-        var imageModelOptionsHtml = '';
-        modelIds.forEach(function (id) {
-            var m = models[id];
-            var name = m.dropdownName || m.label || id;
-            if (m.isImageModel) {
-                var sel = id === 'imagen-ultra' ? ' selected' : '';
-                imageModelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
-            } else if (!m.isTtsModel) {
-                // Exclude TTS-only models from text/translation model selectors
-                var sel = id === currentModel ? ' selected' : '';
-                textModelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+        // Build model dropdown HTML with a specific model pre-selected
+        // Shows ALL models in the registry; selectedModelId controls which is pre-selected
+        function buildModelOptionsHtml(selectedModelId, cardType) {
+            var textOpts = '';
+            var imageOpts = '';
+            var allOpts = '';
+            var selId = selectedModelId || currentModel;
+            modelIds.forEach(function (id) {
+                var m = models[id];
+                var name = m.dropdownName || m.label || id;
+                var sel = id === selId ? ' selected' : '';
+                if (m.isImageModel) {
+                    imageOpts += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+                } else if (!m.isTtsModel && !m.isSttModel) {
+                    textOpts += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+                }
+                // Build a combined list for TTS/STT cards that shows all models
+                allOpts += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+            });
+            if (cardType === 'Image') {
+                return imageOpts + (textOpts ? '<option disabled>──── Vision ────</option>' + textOpts : '');
             }
-        });
-        var modelOptionsHtml = textModelOptionsHtml;
-        // Image card shows both image generation models AND multimodal text models (for @upload vision analysis)
-        var imageCardModelOpts = imageModelOptionsHtml;
-        if (textModelOptionsHtml) {
-            imageCardModelOpts += '<option disabled>──── Vision ────</option>' + textModelOptionsHtml;
+            return textOpts;
         }
+
         var seenMemoryNames = {}; // Track used Memory names for dedup
 
         while ((match = re.exec(markdown)) !== null) {
@@ -401,7 +418,15 @@
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : (match[1] === 'Think');
             var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
-            var cardModelOpts = type === 'Image' ? imageCardModelOpts : modelOptionsHtml;
+
+            // Parse @model: from the raw prompt to determine which model to pre-select
+            var blockModelMatch = prompt.match(/^\s*(?:@model|Model):\s*(\S+)$/mi);
+            var blockModelId = blockModelMatch ? blockModelMatch[1].trim() : null;
+            // Validate against registry — only use if the model exists
+            if (blockModelId && !(models[blockModelId])) blockModelId = null;
+            // Strip @model: from display prompt
+            prompt = prompt.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
+            var cardModelOpts = buildModelOptionsHtml(blockModelId, type);
 
             if (type === 'Memory') {
                 // Parse Memory fields
@@ -446,6 +471,7 @@
                 ocrDisplayText = ocrDisplayText.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
                 ocrDisplayText = ocrDisplayText.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
                 ocrDisplayText = ocrDisplayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
+                ocrDisplayText = ocrDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 // Separate description from @prompt:
                 var ocrHasPromptField = /^\s*(?:@prompt|Prompt):\s*/m.test(ocrDisplayText);
@@ -567,6 +593,7 @@
                 translateDisplayText = translateDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 translateDisplayText = translateDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
                 translateDisplayText = translateDisplayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
+                translateDisplayText = translateDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 var translateHasPrompt = /^\s*(?:@prompt|Prompt):\s*/m.test(translateDisplayText);
                 var translatePromptMatch = translateDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
@@ -621,6 +648,7 @@
                 var ttsDisplayText = prompt;
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+                ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 var ttsHasPrompt = /^\s*(?:@prompt|Prompt):\s*/m.test(ttsDisplayText);
                 var ttsPromptMatch = ttsDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
@@ -680,6 +708,7 @@
                 var sttDisplayText = prompt;
                 sttDisplayText = sttDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 sttDisplayText = sttDisplayText.replace(/^\s*(?:@engine|Engine):\s*.+$/mi, '').trim();
+                sttDisplayText = sttDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 // Parse @lang
                 var sttLangMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
@@ -754,6 +783,7 @@
                 displayText = displayText.replace(/^(?:@think|Think):\s*(yes|no)$/mi, '').trim();
                 displayText = displayText.replace(/^(?:@search|Search):\s*\S+$/mi, '').trim();
                 displayText = displayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
+                displayText = displayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 // Separate description (bare text) from @prompt: (editable)
                 var hasPromptField = /^\s*(?:@prompt|Prompt):\s*/m.test(displayText);
@@ -1029,7 +1059,7 @@
             });
         });
 
-        // Model selector change — trigger download consent for undownloaded local models
+        // Model selector change — trigger download consent + sync @model: to editor
         container.querySelectorAll('.ai-card-model-select').forEach(function (sel) {
             sel.addEventListener('change', function () {
                 var modelId = this.value;
@@ -1060,6 +1090,27 @@
                 var cloudProvider = providers[modelId];
                 if (cloudProvider && !cloudProvider.getKey()) {
                     M.showApiKeyModal(modelId);
+                }
+
+                // Sync @model: field in editor tag text
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var text = M.markdownEditor ? M.markdownEditor.value : '';
+                var blocks = parseDocgenBlocks(text);
+                if (idx < blocks.length) {
+                    var block = blocks[idx];
+                    var tagContent = text.substring(block.start, block.end);
+                    var modelRe = /^(\s*)(?:@model|Model):\s*\S+$/mi;
+                    var newTagContent;
+                    if (modelRe.test(tagContent)) {
+                        newTagContent = tagContent.replace(modelRe, '$1@model: ' + modelId);
+                    } else {
+                        // Insert @model after the tag opener (first line)
+                        var colonIdx = tagContent.indexOf(':');
+                        newTagContent = tagContent.substring(0, colonIdx + 1)
+                            + '\n  @model: ' + modelId
+                            + tagContent.substring(colonIdx + 1);
+                    }
+                    M.markdownEditor.value = text.substring(0, block.start) + newTagContent + text.substring(block.end);
                 }
             });
         });
