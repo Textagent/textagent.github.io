@@ -239,6 +239,40 @@
             return;
         }
 
+        // For API blocks, render with copy button and JSON formatting
+        if (block.runtimeKey === 'api') {
+            var copyBtnHtml = '<div style="margin-bottom:6px;text-align:right;">'
+                + '<button class="api-copy-output-btn" title="Copy response" style="background:rgba(88,166,255,0.1);border:1px solid #58a6ff;color:#58a6ff;cursor:pointer;padding:2px 8px;border-radius:4px;font-size:11px;">📋 Copy</button>'
+                + '</div>';
+            var jsonHtml = '<pre style="margin:0;white-space:pre-wrap;word-break:break-word;"><code>'
+                + escapeHtml(resultStr) + '</code></pre>';
+            outputEl.innerHTML = copyBtnHtml + jsonHtml;
+
+            // Bind copy
+            var cpBtn = outputEl.querySelector('.api-copy-output-btn');
+            if (cpBtn) {
+                cpBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(resultStr).then(function () {
+                        cpBtn.textContent = '✅ Copied!';
+                        setTimeout(function () { cpBtn.textContent = '📋 Copy'; }, 1500);
+                    }).catch(function () {
+                        cpBtn.textContent = '❌ Failed';
+                        setTimeout(function () { cpBtn.textContent = '📋 Copy'; }, 1500);
+                    });
+                });
+            }
+
+            // Syntax highlight
+            var cEl = outputEl.querySelector('pre code');
+            if (cEl && window.hljs) {
+                cEl.classList.add('language-json');
+                window.hljs.highlightElement(cEl);
+            }
+            return;
+        }
+
         // Default: render as plain text (bash, python, js, etc.)
         outputEl.innerHTML = '<span class="code-output-stdout">' + escapeHtml(resultStr) + '</span>';
     }

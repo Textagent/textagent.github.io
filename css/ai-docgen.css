@@ -1811,6 +1811,68 @@
     }
 }
 
+/* API card output — distinct background for readability */
+.ai-api-card .code-output {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 0 0 10px 10px;
+    color: #e6edf3;
+    margin-top: 4px;
+}
+
+.ai-api-card .code-output pre {
+    background: transparent;
+}
+
+.ai-api-card .code-output code,
+.ai-api-card .code-output .hljs {
+    color: #e6edf3 !important;
+    background: transparent !important;
+}
+
+.ai-api-card .code-output .hljs-attr {
+    color: #7ee787 !important;
+}
+
+.ai-api-card .code-output .hljs-string {
+    color: #a5d6ff !important;
+}
+
+.ai-api-card .code-output .hljs-number {
+    color: #f2cc60 !important;
+}
+
+.ai-api-card .code-output .hljs-literal {
+    color: #ff7b72 !important;
+}
+
+[data-theme="light"] .ai-api-card .code-output {
+    background: #f6f8fa;
+    border-color: #d1d9e0;
+    color: #1f2328;
+}
+
+[data-theme="light"] .ai-api-card .code-output code,
+[data-theme="light"] .ai-api-card .code-output .hljs {
+    color: #1f2328 !important;
+}
+
+[data-theme="light"] .ai-api-card .code-output .hljs-attr {
+    color: #116329 !important;
+}
+
+[data-theme="light"] .ai-api-card .code-output .hljs-string {
+    color: #0a3069 !important;
+}
+
+[data-theme="light"] .ai-api-card .code-output .hljs-number {
+    color: #953800 !important;
+}
+
+[data-theme="light"] .ai-api-card .code-output .hljs-literal {
+    color: #cf222e !important;
+}
+
 .ai-agent-steps {
     padding: 8px 4px 4px;
     display: flex;

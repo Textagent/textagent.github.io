@@ -208,24 +208,24 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'Make **REST API calls directly from your document** using `{{API:}}` tags:\n\n' +
       '```\n' +
       '{{API:\n' +
-      '  URL: https://jsonplaceholder.typicode.com/posts/1\n' +
+      '  URL: https://httpbin.org/get\n' +
       '  Method: GET\n' +
       '  Variable: getResult\n' +
       '}}\n' +
       '```\n\n' +
       '```\n' +
       '{{API:\n' +
-      '  URL: https://reqres.in/api/users\n' +
+      '  URL: https://httpbin.org/post\n' +
       '  Method: POST\n' +
       '  Headers: Content-Type: application/json\n' +
-      '  Body: {"name":"TextAgent","job":"editor"}\n' +
+      '  Body: {"message": "Hello from TextAgent"}\n' +
       '  Variable: postResult\n' +
       '}}\n' +
       '```\n\n' +
       '**How it works:**\n' +
       '1. Use toolbar **GET** / **POST** buttons or type `{{API:}}` manually\n' +
       '2. Specify URL, Method, Headers, Body, and a Variable name\n' +
-      '3. Click **▶** on the card to execute — review the response\n' +
+      '3. Click **▶** on the card to execute — response appears inline\n' +
       '4. Response stored in `$(api_varName)` — visible in the ⚡ Vars table\n\n' +
       '> [!TIP]\n' +
       '> Use `Variable: myData` to store the API response, then reference it anywhere as `$(api_myData)`.\n\n' +

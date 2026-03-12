@@ -58,11 +58,14 @@
     // TAGGING — insert {{API:}} templates
     // ==============================================
 
+    var _apiTagCounter = 0;
+
     function insertApiTag(method) {
+        _apiTagCounter++;
         if (method === 'POST') {
-            M.wrapSelectionWith('{{API:\n  URL: ', '\n  Method: POST\n  Headers: Content-Type: application/json\n  Body: {}\n  Variable: postResult\n}}', 'https://api.example.com/data');
+            M.wrapSelectionWith('{{API:\n  URL: ', '\n  Method: POST\n  Headers: Content-Type: application/json\n  Body: {"message": "Hello from TextAgent"}\n  Variable: postResult' + _apiTagCounter + '\n}}', 'https://httpbin.org/post');
         } else {
-            M.wrapSelectionWith('{{API:\n  URL: ', '\n  Method: GET\n  Variable: getResult\n}}', 'https://api.example.com/data');
+            M.wrapSelectionWith('{{API:\n  URL: ', '\n  Method: GET\n  Variable: getResult' + _apiTagCounter + '\n}}', 'https://httpbin.org/get');
         }
     }
 
@@ -392,26 +395,60 @@
                 if (lbl2 && lbl2.dataset.originalText) lbl2.textContent = lbl2.dataset.originalText;
             }
 
-            // Build result markdown
-            var statusLine = '**' + config.method + '** `' + config.url + '` → **' + response.status + '**';
-            var resultMd = statusLine + '\n\n```json\n' + responseText + '\n```';
-            if (config.variable) {
-                resultMd += '\n\n> Stored in `$(api_' + config.variable + ')`';
+            // Render output inline below the API card (like Python/Bash)
+            if (apiCard) {
+                var outputEl = apiCard.querySelector('.code-output');
+                if (!outputEl) {
+                    outputEl = document.createElement('div');
+                    outputEl.className = 'code-output';
+                    apiCard.appendChild(outputEl);
+                }
+                outputEl.style.display = 'block';
+
+                var statusHtml = '<div style="margin-bottom:6px;font-size:12px;color:#8b949e;display:flex;align-items:center;justify-content:space-between;">'
+                    + '<span>' + escapeHtml(config.method) + ' ' + escapeHtml(config.url)
+                    + ' → <span style="color:' + (response.status < 400 ? '#7ee787' : '#f47067') + ';font-weight:600;">'
+                    + response.status + '</span></span>'
+                    + '<button class="api-copy-output-btn" title="Copy response" style="background:rgba(88,166,255,0.1);border:1px solid #58a6ff;color:#58a6ff;cursor:pointer;padding:2px 8px;border-radius:4px;font-size:11px;">📋 Copy</button>'
+                    + '</div>';
+
+                var bodyHtml = '<pre style="margin:0;white-space:pre-wrap;word-break:break-word;"><code>'
+                    + escapeHtml(responseText) + '</code></pre>';
+
+                var varHtml = '';
+                if (config.variable) {
+                    varHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #30363d;font-size:11px;color:#8b949e;">'
+                        + '→ Stored in <code>$(api_' + escapeHtml(config.variable) + ')</code></div>';
+                }
+
+                outputEl.innerHTML = statusHtml + bodyHtml + varHtml;
+
+                // Bind copy button
+                var copyBtn = outputEl.querySelector('.api-copy-output-btn');
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(responseText).then(function () {
+                            copyBtn.textContent = '✅ Copied!';
+                            setTimeout(function () { copyBtn.textContent = '📋 Copy'; }, 1500);
+                        }).catch(function () {
+                            copyBtn.textContent = '❌ Failed';
+                            setTimeout(function () { copyBtn.textContent = '📋 Copy'; }, 1500);
+                        });
+                    });
+                }
+
+                // Syntax highlight the code block
+                var codeEl = outputEl.querySelector('pre code');
+                if (codeEl && window.hljs) {
+                    codeEl.classList.add('language-json');
+                    window.hljs.highlightElement(codeEl);
+                }
             }
 
-            // Show review panel
-            var decision = await showApiReviewPanel(blockIndex, resultMd, block);
-
-            if (decision === 'accept') {
-                replaceApiBlockByTag(block.fullMatch, resultMd);
-                showToast('✅ API response accepted!', 'success');
-                return resultMd;
-            } else if (decision === 'reject') {
-                showToast('Discarded — tag kept.', 'info');
-                return null;
-            } else if (decision === 'regenerate') {
-                return executeApiBlock(blockIndex);
-            }
+            showToast('✅ API response received!', 'success');
+            return responseText;
 
         } catch (err) {
             activeApiOps.delete(blockIndex);
@@ -419,6 +456,15 @@
                 apiCard.classList.remove('ai-card-loading');
                 var lbl3 = apiCard.querySelector('.ai-placeholder-label');
                 if (lbl3 && lbl3.dataset.originalText) lbl3.textContent = lbl3.dataset.originalText;
+                // Render error inline
+                var errEl = apiCard.querySelector('.code-output');
+                if (!errEl) {
+                    errEl = document.createElement('div');
+                    errEl.className = 'code-output';
+                    apiCard.appendChild(errEl);
+                }
+                errEl.style.display = 'block';
+                errEl.innerHTML = '<span class="code-output-error">✖ ' + escapeHtml(err.message || 'Network error') + '</span>';
             }
             showToast('❌ API call failed: ' + (err.message || 'Network error'), 'error');
             return null;
@@ -490,23 +536,7 @@
                         window.__API_VARS['api_' + config.variable] = responseText;
                     }
 
-                    var resultMd = '**' + config.method + '** `' + config.url + '` → **' + response.status + '**'
-                        + '\n\n```json\n' + responseText + '\n```';
-                    if (config.variable) {
-                        resultMd += '\n\n> Stored in `$(api_' + config.variable + ')`';
-                    }
-
-                    // Auto-accept: replace tag with result markdown
-                    if (block._fullMatch) {
-                        var text = M.markdownEditor.value;
-                        var idx = text.indexOf(block._fullMatch);
-                        if (idx !== -1) {
-                            var before = text.substring(0, idx);
-                            var after = text.substring(idx + block._fullMatch.length);
-                            M.markdownEditor.value = before + resultMd.trim() + after;
-                            M.markdownEditor.dispatchEvent(new Event('input'));
-                        }
-                    }
+                    // Return response — exec-controller renderBlockOutput handles DOM display
                     return responseText;
                 });
             });
