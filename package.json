@@ -17,9 +17,10 @@
     "test:feature": "playwright test tests/feature",
     "test:integration": "playwright test tests/integration",
     "test:dev": "playwright test tests/dev",
+    "test:regression": "playwright test tests/regression",
     "test:performance": "playwright test tests/performance",
     "test:quality": "playwright test tests/quality",
-    "test:all": "playwright test tests/smoke tests/feature tests/integration tests/dev tests/performance tests/quality"
+    "test:all": "playwright test tests/smoke tests/feature tests/integration tests/dev tests/performance tests/quality tests/regression"
   },
   "repository": {
     "type": "git",
