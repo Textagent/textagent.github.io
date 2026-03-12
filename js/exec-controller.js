@@ -62,6 +62,12 @@
                 var resultStr = typeof result === 'string' ? result : JSON.stringify(result);
                 M._execContext.set(block.id, 'output', resultStr);
             }
+            // Store in named vars if @var: annotation present
+            if (block.varName && M._vars && result !== null && result !== undefined) {
+                var varValue = typeof result === 'string' ? result : JSON.stringify(result);
+                M._vars.setRuntime(block.varName, varValue);
+                console.log('[ExecController] Set variable $(' + block.varName + ') = "' + varValue.substring(0, 50) + '"');
+            }
             return result;
         });
     }

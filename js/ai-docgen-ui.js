@@ -182,8 +182,10 @@
             }
 
             document.getElementById('ai-dl-yes').addEventListener('click', function () {
+                var currentModel = M.getCurrentAiModel ? M.getCurrentAiModel() : 'qwen-local';
+                localStorage.setItem(M.KEYS.AI_CONSENTED_PREFIX + currentModel, 'true');
                 localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
-                if (M.initLocalAiWorker) M.initLocalAiWorker();
+                if (M.initLocalAiWorker) M.initLocalAiWorker(currentModel);
                 finish(true);
             });
 

@@ -8,7 +8,7 @@
     // ==============================================
     // GLOBAL STORE for API response variables
     // ==============================================
-    if (!window.__API_VARS) window.__API_VARS = {};
+    if (!window.__API_VARS) window.__API_VARS = {};  // legacy compat
 
     // Active block operations tracker
     var activeApiOps = new Set();
@@ -379,6 +379,7 @@
 
             // Store in variable if requested
             if (config.variable) {
+                if (M._vars) M._vars.setRuntime('api_' + config.variable, responseText);
                 window.__API_VARS['api_' + config.variable] = responseText;
             }
 
@@ -485,6 +486,7 @@
                     // Store in variable if requested
                     if (config.variable) {
                         window.__API_VARS = window.__API_VARS || {};
+                        if (M._vars) M._vars.setRuntime('api_' + config.variable, responseText);
                         window.__API_VARS['api_' + config.variable] = responseText;
                     }
 

@@ -152,6 +152,12 @@
                         block.search = searchMatch[1].toLowerCase();
                         block.prompt = block.prompt.replace(searchMatch[0], '').trim();
                     }
+                    // Parse @input: field — selects which Doc Vars to inject from M._vars
+                    var inputMatch = block.prompt.match(/^\s*(?:@input|Input):\s*(.+)$/mi);
+                    if (inputMatch) {
+                        block.inputVars = inputMatch[1].split(',').map(function (s) { return s.trim(); });
+                        block.prompt = block.prompt.replace(inputMatch[0], '').trim();
+                    }
                     // Separate description (bare text) from @prompt: (actual AI instruction)
                     var promptMatch = block.prompt.match(/^(?:@prompt|Prompt):\s*(.*)$/m);
                     if (promptMatch) {
@@ -562,10 +568,7 @@
                 var ttsPromptMatch = ttsDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
                 var ttsPromptVal = ttsPromptMatch ? ttsPromptMatch[1].trim() : '';
                 // Resolve $(varName) from the Vars system at render time
-                var ttsApiVars = window.__API_VARS || {};
-                ttsPromptVal = ttsPromptVal.replace(/\$\(([^)]+)\)/g, function (full, vn) {
-                    return ttsApiVars[vn] || full;  // keep $(var) if not yet set
-                });
+                ttsPromptVal = M._vars ? M._vars.resolveText(ttsPromptVal) : ttsPromptVal;
                 var ttsDescText = ttsHasPrompt
                     ? ttsDisplayText.replace(ttsPromptMatch[0], '').trim()
                     : ttsDisplayText;
@@ -710,16 +713,14 @@
                         var ttsBlock = ttsBlocks[idx];
                         var ttsText = ttsBlock.prompt || '';
                         // Resolve $(varName) references from the Vars system
-                        var apiVars = window.__API_VARS || {};
-                        ttsText = ttsText.replace(/\$\(([^)]+)\)/g, function (_, vn) {
-                            return apiVars[vn] || '';
-                        }).trim();
+                        ttsText = M._vars ? M._vars.resolveText(ttsText) : ttsText;
+                        ttsText = ttsText.trim();
                         // Also check card textarea for latest user edits
                         var ttsPromptArea = card.querySelector('.ai-card-prompt-input');
                         if (ttsPromptArea && ttsPromptArea.value.trim()) {
-                            var resolvedPrompt = ttsPromptArea.value.trim().replace(/\$\(([^)]+)\)/g, function (_, vn) {
-                                return apiVars[vn] || '';
-                            }).trim();
+                            var resolvedPrompt = M._vars
+                                ? M._vars.resolveText(ttsPromptArea.value.trim())
+                                : ttsPromptArea.value.trim();
                             if (resolvedPrompt) ttsText = resolvedPrompt;
                         }
                         var ttsLangSel = card.querySelector('.ai-tts-lang-select');

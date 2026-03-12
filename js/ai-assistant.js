@@ -523,7 +523,8 @@
     const localModelOnnxId = (cfg && cfg.localModelId) || 'textagent/Qwen3.5-0.8B-ONNX';
     const modelLabel = (cfg && cfg.label) || 'Qwen 3.5';
 
-    const worker = new Worker('ai-worker.js', { type: 'module' });
+    const workerPath = (cfg && cfg.workerFile) || 'ai-worker.js';
+    const worker = new Worker(workerPath, { type: 'module' });
     ls.worker = worker;
 
     // Send model ID before loading
@@ -1042,7 +1043,7 @@
   M.getCloudProviders = function () { return CLOUD_PROVIDERS; };
   M.getCurrentAiModel = function () { return currentAiModel; };
   M.isCurrentModelReady = isCurrentModelReady;
-  M.initLocalAiWorker = function (modelId) { initAiWorker(modelId || currentAiModel); };
+  M.initLocalAiWorker = function (modelId) { showModelDownloadPopup(modelId || currentAiModel); };
   M.initCloudWorker = initCloudWorker;
 
 })(window.MDView);

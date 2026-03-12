@@ -80,7 +80,7 @@
     // PROMPT BUILDING
     // ==============================================
 
-    function buildPrompt(block, prevSections, memoryContext, hasImages) {
+    function buildPrompt(block, prevSections, memoryContext, hasImages, varsContext) {
         var base;
         if (hasImages) {
             base = 'You are an expert analyst with vision capabilities. '
@@ -93,6 +93,13 @@
                 + 'Just write the final, high-quality markdown article directly.\n\n';
         } else {
             base = 'You are an expert writer. Write well-formatted, high-quality markdown content for this section.\n\n';
+        }
+
+        // Inject document variables selected via @input:
+        var varsSection = '';
+        if (varsContext) {
+            varsSection = varsContext + '\n'
+                + 'Use the above document variables to inform your response as relevant.\n\n';
         }
 
         var retrieval = '';
@@ -110,7 +117,7 @@
                 + prevSections.substring(0, 3000) + '\n\n---\n\n';
         }
 
-        return base + retrieval + instructions + context
+        return base + varsSection + retrieval + instructions + context
             + 'Write ONLY the markdown content. Do not include any meta-commentary, explanations, '
             + 'thinking process, or notes about what you wrote. Start directly with the content.';
     }
@@ -462,23 +469,69 @@
             panel.className = 'ai-setup-slide-panel';
             panel.id = 'ai-setup-slide-panel';
 
-            var cardsHtml = '';
+            // Group models by category
+            var CATEGORY_ORDER = [
+                { key: 'local-multimodal', label: 'Local · Multimodal', icon: 'bi bi-pc-display', desc: 'Text + Vision · Runs in your browser' },
+                { key: 'local-thinking', label: 'Local · Thinking', icon: 'bi bi-lightbulb', desc: 'Chain-of-thought reasoning · Runs in your browser' },
+                { key: 'local-speech', label: 'Local · Speech', icon: 'bi bi-soundwave', desc: 'TTS & STT · Runs in your browser' },
+                { key: 'local-document', label: 'Local · Document', icon: 'bi bi-file-earmark-text', desc: 'Document OCR & parsing · Runs in your browser' },
+                { key: 'cloud-text', label: 'Cloud · Text', icon: 'bi bi-cloud', desc: 'Powerful cloud models · API key required' },
+                { key: 'cloud-image', label: 'Cloud · Image', icon: 'bi bi-image', desc: 'Image generation · API key required' },
+            ];
+
+            var grouped = {};
             modelIds.forEach(function (id) {
-                var m = models[id];
-                var desc = m.dropdownDesc || '';
-                var isSelected = id === selectedId;
-                cardsHtml += '<div class="ai-setup-card' + (isSelected ? ' selected' : '') + '" data-model-id="' + id + '">'
-                    + '<div class="ai-setup-card-radio">'
-                    + '<span class="ai-setup-radio' + (isSelected ? ' active' : '') + '"></span>'
+                var cat = models[id].category || 'cloud-text';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(id);
+            });
+
+            var cardsHtml = '';
+            CATEGORY_ORDER.forEach(function (cat) {
+                var ids = grouped[cat.key];
+                if (!ids || ids.length === 0) return;
+
+                cardsHtml += '<div class="ai-setup-group">'
+                    + '<div class="ai-setup-group-header">'
+                    + '<i class="' + cat.icon + ' ai-setup-group-icon"></i>'
+                    + '<div class="ai-setup-group-text">'
+                    + '<span class="ai-setup-group-label">' + cat.label + '</span>'
+                    + '<span class="ai-setup-group-desc">' + cat.desc + '</span>'
                     + '</div>'
-                    + '<div class="ai-setup-card-info">'
-                    + '<i class="' + (m.icon || 'bi bi-cpu') + ' ai-setup-card-icon"></i>'
-                    + '<div>'
-                    + '<div class="ai-setup-card-name">' + (m.dropdownName || m.label) + '</div>'
-                    + '<div class="ai-setup-card-desc">' + desc + '</div>'
                     + '</div>'
-                    + '</div>'
-                    + '</div>';
+                    + '<div class="ai-setup-group-cards">';
+
+                ids.forEach(function (id) {
+                    var m = models[id];
+                    var desc = m.dropdownDesc || '';
+                    var isSelected = id === selectedId;
+
+                    // Download status badge for local models
+                    var statusBadge = '';
+                    if (m.isLocal) {
+                        var consentKey = (window.MDView && window.MDView.KEYS ? window.MDView.KEYS.AI_CONSENTED_PREFIX : 'ai-consented-') + id;
+                        var isDownloaded = localStorage.getItem(consentKey);
+                        statusBadge = isDownloaded
+                            ? '<span class="ai-setup-badge ai-setup-badge-ready"><i class="bi bi-check-circle-fill"></i> Downloaded</span>'
+                            : '<span class="ai-setup-badge ai-setup-badge-download"><i class="bi bi-download"></i> ' + (m.downloadSize || 'Download') + '</span>';
+                    }
+
+                    cardsHtml += '<div class="ai-setup-card' + (isSelected ? ' selected' : '') + '" data-model-id="' + id + '">'
+                        + '<div class="ai-setup-card-radio">'
+                        + '<span class="ai-setup-radio' + (isSelected ? ' active' : '') + '"></span>'
+                        + '</div>'
+                        + '<div class="ai-setup-card-info">'
+                        + '<i class="' + (m.icon || 'bi bi-cpu') + ' ai-setup-card-icon"></i>'
+                        + '<div>'
+                        + '<div class="ai-setup-card-name">' + (m.dropdownName || m.label) + '</div>'
+                        + '<div class="ai-setup-card-desc">' + desc + '</div>'
+                        + '</div>'
+                        + '</div>'
+                        + (statusBadge ? '<div class="ai-setup-card-status">' + statusBadge + '</div>' : '')
+                        + '</div>';
+                });
+
+                cardsHtml += '</div></div>';
             });
 
             panel.innerHTML =
@@ -523,11 +576,22 @@
             }
 
             document.getElementById('ai-setup-use').addEventListener('click', function () {
+                var selectedModel = models[selectedId];
                 M.switchToModel(selectedId);
+
+                // Cloud model — check for API key
                 var provider = M.getCloudProviders()[selectedId];
                 if (provider && !provider.getKey()) {
                     M.showApiKeyModal(selectedId);
                 }
+
+                // Local model — trigger download with approval if not yet downloaded
+                if (selectedModel && selectedModel.isLocal) {
+                    if (M.showModelDownloadPopup) {
+                        M.showModelDownloadPopup(selectedId);
+                    }
+                }
+
                 finish(selectedId);
             });
 
@@ -642,6 +706,15 @@
                         silent: true
                     });
                 } else {
+                    // Resolve @input: vars from M._vars
+                    var varsContext = '';
+                    if (block.inputVars && M._vars) {
+                        var hasInputOptOut = block.inputVars.indexOf('none') !== -1;
+                        if (!hasInputOptOut) {
+                            varsContext = M._vars.formatForPrompt(block.inputVars);
+                        }
+                    }
+
                     // Retrieve memory context: explicit Use: field or auto-discover from document
                     // Use: none explicitly disables all memory for this block
                     var memoryContext = '';
@@ -664,7 +737,7 @@
                     result = await M.requestAiTask({
                         taskType: 'generate',
                         context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                        userPrompt: buildPrompt(block, prevContent, memoryContext, hasImages),
+                        userPrompt: buildPrompt(block, prevContent, memoryContext, hasImages, varsContext),
                         enableThinking: block.type === 'Think',
                         silent: true,
                         attachments: workerAttachments
@@ -719,8 +792,12 @@
 
                         // If @var: is set, store the translation into the Vars system
                         if (block.varName) {
-                            if (!window.__API_VARS) window.__API_VARS = {};
-                            window.__API_VARS[block.varName] = ttsText;
+                            if (M._vars) {
+                                M._vars.setRuntime(block.varName, ttsText);
+                            } else {
+                                if (!window.__API_VARS) window.__API_VARS = {};
+                                window.__API_VARS[block.varName] = ttsText;
+                            }
                             console.log('[DocGen] Set variable $(' + block.varName + ') = "' + ttsText.substring(0, 50) + '…"');
                         }
 
@@ -832,6 +909,17 @@
             }
 
             stepPrompt += 'Task: ' + steps[i].description + '\n\n';
+
+            // Resolve @input: vars from M._vars for Agent Flow steps
+            if (block.inputVars && M._vars) {
+                var agentInputOptOut = block.inputVars.indexOf('none') !== -1;
+                if (!agentInputOptOut) {
+                    var agentVarsCtx = M._vars.formatForPrompt(block.inputVars);
+                    if (agentVarsCtx) {
+                        stepPrompt += agentVarsCtx + '\n';
+                    }
+                }
+            }
 
             // Retrieve memory context: explicit Use: field or auto-discover from document
             // Use: none explicitly disables all memory for this block

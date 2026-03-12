@@ -263,9 +263,8 @@
 
       // Auto-generate the variable table at the top
       // Pre-fill from API vars if available (truncate for table display, full value used on resolve)
-      const apiVars = window.__API_VARS || {};
       const autoVars = detected.map(name => {
-        let val = apiVars[name] || '';
+        let val = (M._vars ? M._vars.get(name) : null) || '';
         const desc = val ? '*(API result)*' : '';
         // Strip newlines and truncate long values for table safety
         val = val.replace(/\n/g, ' ').replace(/\s+/g, ' ');
@@ -290,11 +289,10 @@
     }
 
     // Resolve local variables from the table
-    // Fallback to API vars for any empty/missing values
-    const apiVars = window.__API_VARS || {};
+    // Fallback to M._vars for any empty/missing values
     let result = M._originalTemplateContent || contentWithoutBlock;
     for (const [key, val] of Object.entries(vars)) {
-      const resolvedVal = val || apiVars[key] || '';
+      const resolvedVal = val || (M._vars ? M._vars.get(key) : null) || '';
       result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), resolvedVal);
     }
 
@@ -307,7 +305,7 @@
         var entries = Object.entries(vars)
           .filter(function (kv) { return kv[0].startsWith(prefix) && kv[0] !== prefix; })
           .sort(function (a, b) { return a[0].localeCompare(b[0], undefined, { numeric: true }); })
-          .map(function (kv) { return (kv[1] || apiVars[kv[0]] || '').trim(); })
+          .map(function (kv) { return (kv[1] || (M._vars ? M._vars.get(kv[0]) : null) || '').trim(); })
           .filter(function (v) { return v.length > 0; });
         if (entries.length === 0) return match;
         var cards = entries.map(function (sym) {

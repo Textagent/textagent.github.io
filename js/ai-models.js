@@ -22,6 +22,7 @@
             dropdownName: 'Qwen 3.5 Small (0.8B)',
             dropdownDesc: 'Local · Private · ~500 MB download',
             isLocal: true,
+            category: 'local-multimodal',
             localModelId: 'textagent/Qwen3.5-0.8B-ONNX',
             downloadSize: '~500 MB',
         },
@@ -35,6 +36,7 @@
             dropdownName: 'Qwen 3.5 Medium (2B)',
             dropdownDesc: 'Local · Smarter · ~1.2 GB download',
             isLocal: true,
+            category: 'local-multimodal',
             localModelId: 'textagent/Qwen3.5-2B-ONNX',
             downloadSize: '~1.2 GB',
         },
@@ -48,6 +50,7 @@
             dropdownName: 'Qwen 3.5 Large (4B)',
             dropdownDesc: 'Local · Best quality · ~2.5 GB · High-end',
             isLocal: true,
+            category: 'local-multimodal',
             localModelId: 'textagent/Qwen3.5-4B-ONNX',
             downloadSize: '~2.5 GB',
             requiresHighEnd: true,
@@ -62,11 +65,30 @@
             dropdownName: 'Qwen 3 Thinking (4B)',
             dropdownDesc: 'Local · Chain-of-thought · ~2.5 GB · High-end',
             isLocal: true,
+            category: 'local-thinking',
             localModelId: 'textagent/Qwen3-4B-Thinking-2507-ONNX',
             downloadSize: '~2.5 GB',
             requiresHighEnd: true,
             architecture: 'qwen3',
             dtype: 'q4f16',
+        },
+
+        // ── Local: LFM 2.5 1.2B Thinking (Liquid AI) ─────────
+        'lfm-thinking-1b': {
+            label: 'LFM 1.2B Thinking · Local',
+            badge: 'LFM 1.2B Thinking · Local',
+            icon: 'bi bi-lightning-charge',
+            statusReady: 'LFM 1.2B Thinking · Local',
+            dropdownName: 'LFM 1.2B Thinking (Liquid AI)',
+            dropdownDesc: 'Local · Blazing fast · WebGPU · ~1.2 GB',
+            isLocal: true,
+            category: 'local-thinking',
+            localModelId: 'textagent/LFM2.5-1.2B-Thinking-ONNX',
+            workerFile: 'ai-worker-lfm.js',
+            downloadSize: '~1.2 GB',
+            requiresWebGPU: true,
+            architecture: 'lfm',
+            dtype: 'q4',
         },
 
         // ── Cloud: Groq ────────────────────────────────────────
@@ -85,6 +107,7 @@
             dialogIcon: 'bi bi-cloud',
             dropdownName: 'Llama 3.3 70B',
             dropdownDesc: 'Groq Cloud · Fast · Free tier',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -104,6 +127,7 @@
             dialogIcon: 'bi bi-google',
             dropdownName: 'Gemini 3.1 Flash Lite',
             dropdownDesc: 'Google · Fast · Free tier',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -124,6 +148,7 @@
             dialogIcon: 'bi bi-image',
             dropdownName: 'Imagen 4 Ultra',
             dropdownDesc: 'Google · Image Generation · 25/day free',
+            category: 'cloud-image',
         },
 
         // ── Cloud: Nano Banana 2 (Gemini 3.1 Flash Image) ─────
@@ -144,6 +169,7 @@
             dialogIcon: 'bi bi-palette',
             dropdownName: 'Nano Banana 2',
             dropdownDesc: 'Gemini 3.1 Flash Image · Google',
+            category: 'cloud-image',
         },
 
         // ── Cloud: Grok 4.1 Fast via OpenRouter ───────────────
@@ -163,6 +189,7 @@
             dialogIcon: 'bi bi-lightning-charge',
             dropdownName: 'Grok 4.1 Fast',
             dropdownDesc: 'xAI · via OpenRouter',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -183,6 +210,7 @@
             dialogIcon: 'bi bi-stars',
             dropdownName: 'Trinity Large',
             dropdownDesc: 'Arcee AI · Free · via OpenRouter',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -203,6 +231,7 @@
             dialogIcon: 'bi bi-cpu',
             dropdownName: 'GPT-OSS 20B',
             dropdownDesc: 'OpenAI · via OpenRouter',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -223,6 +252,7 @@
             dialogIcon: 'bi bi-wind',
             dropdownName: 'Qwen 3.5 Flash',
             dropdownDesc: 'Alibaba · via OpenRouter',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -243,6 +273,7 @@
             dialogIcon: 'bi bi-wind',
             dropdownName: 'Qwen 3.5 35B-A3B',
             dropdownDesc: 'Alibaba · via OpenRouter',
+            category: 'cloud-text',
             supportsVision: true,
         },
 
@@ -263,7 +294,24 @@
             dialogIcon: 'bi bi-search',
             dropdownName: 'DeepSeek V3.2',
             dropdownDesc: 'DeepSeek · via OpenRouter',
+            category: 'cloud-text',
             supportsVision: true,
+        },
+
+        // ── Local: Granite Docling 258M (IBM) — Document OCR ──
+        'granite-docling': {
+            label: 'Granite Docling · Local',
+            badge: 'Granite Docling · Local',
+            icon: 'bi bi-file-earmark-text',
+            statusReady: 'Granite Docling 258M · Local',
+            dropdownName: 'Granite Docling (258M)',
+            dropdownDesc: 'Local · Document OCR → Markdown · ~500 MB',
+            isLocal: true,
+            category: 'local-document',
+            isDocModel: true,
+            localModelId: 'onnx-community/granite-docling-258M-ONNX',
+            workerFile: 'ai-worker-docling.js',
+            downloadSize: '~500 MB',
         },
 
         // ── Local: Kokoro 82M TTS (Text-to-Speech) ────────────
@@ -275,6 +323,7 @@
             dropdownName: 'Kokoro TTS (82M)',
             dropdownDesc: 'Local · Text-to-Speech · English + Chinese + Web Speech fallback · ~80 MB',
             isLocal: true,
+            category: 'local-speech',
             isTtsModel: true,
             localModelId: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
             downloadSize: '~80 MB',
@@ -289,6 +338,7 @@
             dropdownName: 'Voxtral STT (3B)',
             dropdownDesc: 'Local · WebGPU · 13 Languages · ~2.7 GB',
             isLocal: true,
+            category: 'local-speech',
             isSttModel: true,
             localModelId: 'textagent/Voxtral-Mini-3B-2507-ONNX',
             downloadSize: '~2.7 GB',

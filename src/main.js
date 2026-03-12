@@ -36,6 +36,7 @@ import '../css/stock-widget.css';
 import '../css/video-player.css';
 import '../css/exec-engine.css';
 import '../css/tts.css';
+import '../css/doc-vars-panel.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -83,6 +84,10 @@ async function loadModules() {
         import('../js/stock-widget.js'),
         import('../js/video-player.js'),
     ]);
+
+    // 3b-pre: Document Variables façade (must load before exec-sandbox, templates, ai-docgen, api-docgen)
+    await import('../js/doc-vars.js');
+    await import('../js/doc-vars-panel.js');
 
     // 3b: Sub-modules that depend on 3a namespaces (M._exec, M._table)
     await Promise.all([

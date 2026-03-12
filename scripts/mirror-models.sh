@@ -87,6 +87,26 @@ for f in onnx/model_q4f16.onnx onnx/model_q4f16.onnx_data; do
     dl "$MODEL" "$f"
 done
 
+# ── LFM 2.5 1.2B Thinking (Liquid AI, q4) ───────
+echo -e "\n${GREEN}═══ LFM 2.5 1.2B Thinking ONNX ═══${NC}"
+MODEL="textagent/LFM2.5-1.2B-Thinking-ONNX"
+for f in config.json generation_config.json tokenizer.json tokenizer_config.json; do
+    dl "$MODEL" "$f"
+done
+for f in onnx/model_q4.onnx onnx/model_q4.onnx_data; do
+    dl "$MODEL" "$f"
+done
+
+# ── Granite Docling 258M (IBM, fp32) ─────────
+echo -e "\n${GREEN}═══ Granite Docling 258M ONNX ═══${NC}"
+MODEL="onnx-community/granite-docling-258M-ONNX"
+for f in config.json preprocessor_config.json tokenizer.json tokenizer_config.json; do
+    dl "$MODEL" "$f"
+done
+for f in onnx/vision_encoder.onnx onnx/vision_encoder.onnx_data onnx/embed_tokens.onnx onnx/embed_tokens.onnx_data onnx/decoder_model_merged.onnx onnx/decoder_model_merged.onnx_data; do
+    dl "$MODEL" "$f"
+done
+
 # ── Whisper Large V3 Turbo (q8 + fp16) ──────────
 echo -e "\n${GREEN}═══ Whisper Large V3 Turbo ONNX ═══${NC}"
 MODEL="textagent/whisper-large-v3-turbo"

@@ -1,0 +1,282 @@
+/* ============================================
+   doc-vars-panel.css — Document Variables Panel
+   Floating panel matching the existing TOC sidebar pattern.
+   ============================================ */
+
+/* Panel overlay */
+.doc-vars-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.doc-vars-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Slide panel from right */
+.doc-vars-panel {
+    position: fixed;
+    top: 0;
+    right: -380px;
+    width: 360px;
+    max-width: 90vw;
+    height: 100vh;
+    z-index: 1050;
+    background: var(--editor-bg, #fff);
+    border-left: 1px solid var(--border-color, #e1e5e9);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+.doc-vars-panel.open {
+    right: 0;
+}
+
+/* Header */
+.dv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color, #e1e5e9);
+    gap: 8px;
+    flex-shrink: 0;
+}
+.dv-header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color, #1f2937);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dv-header-count {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: var(--accent-color, #6366f1);
+    color: #fff;
+    font-weight: 500;
+}
+.dv-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    color: var(--text-secondary, #6b7280);
+    font-size: 16px;
+    transition: background 0.15s;
+}
+.dv-close-btn:hover {
+    background: var(--hover-bg, #f3f4f6);
+}
+
+/* Body */
+.dv-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+}
+
+/* Section headers */
+.dv-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #6b7280);
+}
+.dv-section-header .dv-section-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+.dv-section-header.runtime .dv-section-badge {
+    background: #dbeafe;
+    color: #2563eb;
+}
+.dv-section-header.manual .dv-section-badge {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+/* Empty state */
+.dv-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Variable row */
+.dv-var-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-color-light, #f3f4f6);
+    transition: background 0.15s;
+}
+.dv-var-row:hover {
+    background: var(--hover-bg, #f9fafb);
+}
+.dv-var-name {
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    color: var(--accent-color, #6366f1);
+    font-weight: 600;
+    min-width: 80px;
+    max-width: 120px;
+    word-break: break-all;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+.dv-var-value {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text-color, #374151);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    line-height: 1.5;
+    max-height: 60px;
+    overflow: hidden;
+    word-break: break-all;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--code-bg, #f3f4f6);
+    transition: max-height 0.2s ease;
+}
+.dv-var-value.expanded {
+    max-height: none;
+}
+.dv-var-value:hover {
+    background: var(--code-bg-hover, #e5e7eb);
+}
+
+/* Source badge */
+.dv-source-badge {
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.dv-source-badge.api { background: #fef3c7; color: #b45309; }
+.dv-source-badge.translate { background: #dbeafe; color: #2563eb; }
+.dv-source-badge.var { background: #ede9fe; color: #7c3aed; }
+.dv-source-badge.code { background: #dcfce7; color: #16a34a; }
+.dv-source-badge.manual { background: #f3f4f6; color: #4b5563; }
+
+/* Actions row */
+.dv-var-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.dv-var-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 12px;
+    transition: color 0.15s, background 0.15s;
+}
+.dv-var-action-btn:hover {
+    color: var(--text-color, #374151);
+    background: var(--hover-bg, #e5e7eb);
+}
+
+/* Footer */
+.dv-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color, #e1e5e9);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.dv-add-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px dashed var(--border-color, #d1d5db);
+    border-radius: 8px;
+    background: none;
+    color: var(--text-secondary, #6b7280);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: border-color 0.15s, color 0.15s;
+}
+.dv-add-btn:hover {
+    border-color: var(--accent-color, #6366f1);
+    color: var(--accent-color, #6366f1);
+}
+
+/* Inline edit input */
+.dv-edit-input {
+    width: 100%;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 4px 6px;
+    border: 1px solid var(--accent-color, #6366f1);
+    border-radius: 4px;
+    background: var(--editor-bg, #fff);
+    color: var(--text-color, #374151);
+    outline: none;
+}
+.dv-edit-name-input {
+    width: 100px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 2px 6px;
+    border: 1px solid var(--accent-color, #6366f1);
+    border-radius: 4px;
+    background: var(--editor-bg, #fff);
+    color: var(--text-color, #374151);
+    outline: none;
+}
+
+/* Divider */
+.dv-divider {
+    height: 1px;
+    background: var(--border-color, #e1e5e9);
+    margin: 4px 16px;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .doc-vars-panel,
+.dark-mode .doc-vars-panel {
+    background: var(--editor-bg, #1e1e2e);
+    border-left-color: var(--border-color, #313244);
+}
+[data-theme="dark"] .dv-var-value,
+.dark-mode .dv-var-value {
+    background: var(--code-bg, #313244);
+}
+[data-theme="dark"] .dv-var-value:hover,
+.dark-mode .dv-var-value:hover {
+    background: var(--code-bg-hover, #45475a);
+}

@@ -85,11 +85,13 @@
 
     // ---- Code block scanner ----
     function scanCodeBlocks(markdown, blocks, seenIds) {
-        var re = /^(`{3,})(bash|sh|shell|math|python|py|html|html-autorun|javascript|js|sql)\s*\n([\s\S]*?)^\1\s*$/gm;
+        // Capture optional @var: annotation after language: ```javascript @var: result
+        var re = /^(`{3,})(bash|sh|shell|math|python|py|html|html-autorun|javascript|js|sql)(?:\s+@var:\s*(\S+))?\s*\n([\s\S]*?)^\1\s*$/gm;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             var lang = match[2].toLowerCase();
-            var source = match[3].trim();
+            var varName = match[3] || null; // optional @var: annotation
+            var source = match[4].trim();
             var runtimeKey = mapLangToRuntime(lang);
             if (!runtimeKey) continue;
 
@@ -108,7 +110,8 @@
                 source: source,
                 runtimeKey: runtimeKey,
                 status: 'pending',
-                result: null
+                result: null,
+                varName: varName  // if set, store result in M._vars
             });
         }
     }

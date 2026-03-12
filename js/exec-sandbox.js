@@ -190,15 +190,15 @@
         if (!codeEl) return;
         var code = codeEl.textContent;
 
-        // Substitute $(api_*) variables from {{API:}} tag responses
-        // Inject as pre-declared variables with properly escaped values
-        if (window.__API_VARS) {
-            var apiPreamble = '';
+        // Substitute document variables as pre-declared JS variables
+        var apiPreamble = M._vars ? M._vars.toJsPreamble() : '';
+        if (!apiPreamble && window.__API_VARS) {
+            // Fallback: build preamble from legacy __API_VARS directly
+            apiPreamble = '';
             var apiKeys = Object.keys(window.__API_VARS);
             for (var k = 0; k < apiKeys.length; k++) {
                 var varName = apiKeys[k].replace(/[^a-zA-Z0-9_]/g, '_');
                 var rawVal = window.__API_VARS[apiKeys[k]];
-                // Try to parse as JSON so the variable is a real object
                 try {
                     JSON.parse(rawVal);
                     apiPreamble += 'var ' + varName + ' = JSON.parse(' + JSON.stringify(rawVal) + ');\n';
@@ -206,9 +206,9 @@
                     apiPreamble += 'var ' + varName + ' = ' + JSON.stringify(rawVal) + ';\n';
                 }
             }
-            if (apiPreamble) {
-                code = apiPreamble + code;
-            }
+        }
+        if (apiPreamble) {
+            code = apiPreamble + code;
         }
 
         var outputEl = container.querySelector('.code-output');
@@ -284,6 +284,19 @@
 
             if (!html) html = '<span class="code-output-muted">(no output)</span>';
             outputEl.innerHTML = html;
+
+            // Store result in M._vars if @var: annotation present
+            var codeFenceVarName = container.dataset && container.dataset.varName;
+            if (codeFenceVarName && M._vars && !e.data.error) {
+                // Use the last non-error log line as the result value
+                var resultText = logs.filter(function (l) { return l.t !== 'error'; })
+                    .map(function (l) { return l.m; }).join('\n');
+                if (resultText) {
+                    M._vars.setRuntime(codeFenceVarName, resultText);
+                    console.log('[ExecSandbox] Set variable $(' + codeFenceVarName + ') = "' + resultText.substring(0, 50) + '"');
+                }
+            }
+
             btnRun.disabled = false;
             btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
         }
@@ -592,6 +605,8 @@
                     'console.error = function() { __logs.push(__fmt(arguments)); };' +
                     'console.info = function() { __logs.push(__fmt(arguments)); };' +
                     'try {' +
+                    // Inject document variables into the Run All sandbox
+                    (M._vars ? M._vars.toJsPreamble() : '') +
                     '  var __result = eval(' + JSON.stringify(source) + ');' +
                     '  if (__result !== undefined && !__logs.length) __logs.push(String(__result));' +
                     '  parent.postMessage({type:"js-adapter-result", logs:__logs}, "*");' +

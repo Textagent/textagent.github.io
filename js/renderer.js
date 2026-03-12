@@ -7,6 +7,17 @@
     // --- Custom Renderer ---
     const renderer = new marked.Renderer();
     renderer.code = function (code, language) {
+        // Strip @var: annotation from language string (e.g. "javascript @var: result")
+        var varName = '';
+        if (language) {
+            var varMatch = language.match(/@var:\s*(\S+)/);
+            if (varMatch) {
+                varName = varMatch[1];
+                language = language.replace(varMatch[0], '').trim();
+            }
+        }
+        var varAttr = varName ? ` data-var-name="${varName}"` : '';
+
         if (language === 'mermaid') {
             const uniqueId = 'mermaid-diagram-' + Math.random().toString(36).substr(2, 9);
             return `<div class="mermaid-container"><div class="mermaid" id="${uniqueId}">${code}</div></div>`;
@@ -25,7 +36,7 @@
         // Detect executable math code blocks
         if ((language || '').toLowerCase() === 'math') {
             const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return `<div class="executable-math-container"><pre><code class="hljs math-expr">${escapedCode}</code></pre></div>`;
+            return `<div class="executable-math-container"${varAttr}><pre><code class="hljs math-expr">${escapedCode}</code></pre></div>`;
         }
 
         // Detect executable HTML code blocks (web sandbox)
@@ -34,26 +45,26 @@
         if (htmlLang === 'html' || htmlLang === 'html-autorun') {
             const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const autorun = htmlLang === 'html-autorun' ? ' data-autorun="true"' : '';
-            return `<div class="executable-html-container"${autorun}><pre><code class="hljs html">${escapedCode}</code></pre></div>`;
+            return `<div class="executable-html-container"${autorun}${varAttr}><pre><code class="hljs html">${escapedCode}</code></pre></div>`;
         }
 
         // Detect executable Python code blocks (Pyodide sandbox)
         const langLower = (language || '').toLowerCase();
         if (langLower === 'python' || langLower === 'py') {
             const highlightedPy = hljs.highlight(code, { language: 'python' }).value;
-            return `<div class="executable-python-container"><pre><code class="hljs python">${highlightedPy}</code></pre></div>`;
+            return `<div class="executable-python-container"${varAttr}><pre><code class="hljs python">${highlightedPy}</code></pre></div>`;
         }
 
         // Detect executable JavaScript code blocks
         if (langLower === 'javascript' || langLower === 'js') {
             const highlightedJs = hljs.highlight(code, { language: 'javascript' }).value;
-            return `<div class="executable-js-container"><pre><code class="hljs javascript">${highlightedJs}</code></pre></div>`;
+            return `<div class="executable-js-container"${varAttr}><pre><code class="hljs javascript">${highlightedJs}</code></pre></div>`;
         }
 
         // Detect executable SQL code blocks
         if (langLower === 'sql') {
             const highlightedSql = hljs.highlight(code, { language: 'sql' }).value;
-            return `<div class="executable-sql-container"><pre><code class="hljs sql">${highlightedSql}</code></pre></div>`;
+            return `<div class="executable-sql-container"${varAttr}><pre><code class="hljs sql">${highlightedSql}</code></pre></div>`;
         }
 
         // Detect executable bash/sh/shell code blocks
@@ -64,7 +75,7 @@
         }).value;
 
         if (isExecutable) {
-            return `<div class="executable-code-container" data-lang="${language}"><pre><code class="hljs bash">${highlightedCode}</code></pre></div>`;
+            return `<div class="executable-code-container" data-lang="${language}"${varAttr}><pre><code class="hljs bash">${highlightedCode}</code></pre></div>`;
         }
         return `<pre><code class="hljs ${validLanguage}">${highlightedCode}</code></pre>`;
     };
@@ -185,7 +196,7 @@
         var html = marked.parse(finalMarkdown);
         var sanitizedHtml = DOMPurify.sanitize(html, {
             ADD_TAGS: ['mjx-container', 'button', 'select', 'option', 'video', 'source', 'iframe', 'video-player', 'video-skin'],
-            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index']
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name']
         });
         container.innerHTML = sanitizedHtml;
 
