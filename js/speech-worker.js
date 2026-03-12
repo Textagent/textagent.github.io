@@ -1,8 +1,9 @@
 // ============================================
-// whisper-worker.js — Whisper Large V3 Turbo ASR WebWorker
+// speech-worker.js — Whisper Large V3 Turbo ASR WebWorker (WASM fallback)
+// Used when WebGPU is NOT available. WebGPU devices use voxtral-worker.js.
 // Runs textagent/whisper-large-v3-turbo via @huggingface/transformers
 // off the main thread for jank-free transcription.
-// WER ~7.7% (batched) — significant upgrade over Moonshine Base (~9.66%)
+// WER ~7.7% (batched)
 // ============================================
 import { pipeline, env } from '@huggingface/transformers';
 
@@ -18,26 +19,11 @@ self.addEventListener('message', async (e) => {
 
     if (type === 'init') {
         try {
-            // Detect best available device
-            let device = 'wasm';
-            let dtype = 'q8';
-            if (typeof navigator !== 'undefined' && navigator.gpu) {
-                try {
-                    const adapter = await navigator.gpu.requestAdapter();
-                    if (adapter) {
-                        device = 'webgpu';
-                        dtype = 'fp16';  // WebGPU works best with fp16
-                        self.postMessage({ type: 'status', status: 'loading', message: '🚀 WebGPU available — using GPU acceleration' });
-                    }
-                } catch (_) { /* fall through to WASM */ }
-            }
-            if (device === 'wasm') {
-                self.postMessage({ type: 'status', status: 'loading', message: '⏳ Downloading Whisper Large V3 Turbo…' });
-            }
+            self.postMessage({ type: 'status', status: 'loading', message: '⏳ Downloading Whisper Large V3 Turbo (WASM)…' });
 
             const pipelineOpts = {
-                dtype,
-                device,
+                dtype: 'q8',
+                device: 'wasm',
                 progress_callback: (progress) => {
                     if (progress.status === 'progress') {
                         self.postMessage({
@@ -75,8 +61,9 @@ self.addEventListener('message', async (e) => {
             self.postMessage({
                 type: 'status',
                 status: 'ready',
-                message: 'Model ready',
-                device: device === 'webgpu' ? 'GPU (WebGPU)' : 'CPU (WASM)',
+                message: 'Whisper ready',
+                device: 'CPU (WASM)',
+                model: 'Whisper V3 Turbo',
             });
         } catch (err) {
             self.postMessage({ type: 'error', message: err.message || String(err) });

@@ -27,7 +27,7 @@
 | **Rendering** | GitHub-style Markdown, syntax highlighting (180+ languages), LaTeX math (MathJax), Mermaid diagrams (zoom/pan/export), PlantUML diagrams, callout blocks, footnotes, emoji, anchor links |
 | **🎬 Media Embedding** | Video playback via `![alt](video.mp4)` image syntax (`.mp4`, `.webm`, `.ogg`, `.mov`, `.m4v`); YouTube/Vimeo embeds auto-detected; `embed` code block for responsive media grids (`cols=1-4`, `height=N`); Video.js v10 lazy-loaded with native `<video>` fallback; website URLs render as rich link preview cards with favicon + "Open ↗" button |
 | **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM), Gemini 3.1 Flash Lite, Groq Llama 3.3 70B, OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags (Polish, Formalize, Elaborate, Shorten, Image); enhanced context menu; per-card model selection; concurrent block generation; inline review with accept/reject/regenerate; AI-powered image generation |
-| **🎤 Voice Dictation** | Dual-engine speech-to-text (Web Speech API + Whisper Large V3 Turbo ONNX) with consensus scoring; WebGPU acceleration (fp16) with WASM fallback; 50+ Markdown-aware voice commands — natural phrases ("heading one", "bold…end bold", "add table", "undo"); auto-punctuation via AI refinement or built-in fallback; hallucination filtering; streaming partial results |
+| **🎤 Voice Dictation** | Dual-engine speech-to-text: **Voxtral Mini 3B** (WebGPU, primary, 13 languages, ~2.7 GB) or **Whisper Large V3 Turbo** (WASM fallback, ~800 MB) with consensus scoring; download consent popup with model info before first use; 50+ Markdown-aware voice commands — natural phrases ("heading one", "bold…end bold", "add table", "undo"); auto-punctuation via AI refinement or built-in fallback; streaming partial results |
 | **🔊 Text-to-Speech** | Hybrid Kokoro TTS engine — English/Chinese via [Kokoro 82M v1.1-zh ONNX](https://huggingface.co/onnx-community/Kokoro-82M-v1.1-zh-ONNX) (~80 MB, off-thread WebWorker), Japanese & 10+ languages via Web Speech API fallback; hover any preview text and click 🔊 to hear pronunciation; voice auto-selection by language |
 | **Import** | MD, DOCX, XLSX/XLS, CSV, HTML, JSON, XML, PDF — drag & drop or click to import |
 | **Export** | Markdown, self-contained styled HTML, PDF (smart page-breaks, shared rendering pipeline), LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |
@@ -62,6 +62,7 @@ TextAgent includes a built-in AI assistant panel with **three local model sizes*
 | **Llama 3.3 70B** | Groq (free tier) | ☁️ Cloud — ultra-low latency | ⚡ Ultra Fast |
 | **Auto · Best Free** | OpenRouter (free tier) | ☁️ Cloud — multi-model routing | 🧠 Powerful |
 | **Kokoro TTS (82M)** | Local (WebWorker) | 🔒 Private — English + Chinese · ~80 MB | 🔊 Speech |
+| **Voxtral STT (3B)** | Local (WebGPU) | 🔒 Private — 13 languages · ~2.7 GB | 🎤 Dictation |
 
 **AI Actions:** Summarize · Expand · Rephrase · Fix Grammar · Explain · Simplify · Auto-complete · Generate Markdown · Polish · Formalize · Elaborate · Shorten
 
@@ -247,7 +248,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 <details open>
 <summary><strong>🎤 Voice Dictation — Speak Your Markdown</strong></summary>
 
-**Hands-free writing with Markdown awareness.** Dual-engine ASR combines Web Speech API and Whisper Large V3 Turbo (WER ~7.7%) with consensus scoring. WebGPU GPU acceleration with WASM fallback. 50+ voice commands with natural phrases — say "heading one" or "title" for H1, "bold text end bold" for **text**, "add table" for a markdown table, "undo" to take it back. Auto-punctuation adds capitalization and periods, with LLM refinement when a model is loaded.
+**Hands-free writing with Markdown awareness.** Triple-engine ASR combines Web Speech API, Voxtral Mini 3B (WebGPU, primary, 13 languages) or Whisper Large V3 Turbo (WASM fallback) with consensus scoring. Download consent popup shows model size and privacy info before first use. 50+ voice commands with natural phrases — say "heading one" or "title" for H1, "bold text end bold" for **text**, "add table" for a markdown table, "undo" to take it back. Auto-punctuation adds capitalization and periods, with LLM refinement when a model is loaded.
 
 <img src="public/assets/demos/14_voice_dictation.webp" alt="Voice Dictation — speech-to-text with Markdown-aware commands" width="100%">
 
@@ -455,6 +456,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Commits | Feature / Update |
 |------|---------|-----------------|
+| **2026-03-12** | — | 🎤 **Voxtral STT** — [Voxtral Mini 3B](https://huggingface.co/textagent/Voxtral-Mini-3B-2507-ONNX) as primary speech-to-text engine on WebGPU (~2.7 GB, q4, 13 languages, streaming partial output via `TextStreamer`); Whisper Large V3 Turbo as WASM fallback (~800 MB, q8); `voxtral-worker.js` new WebWorker with `VoxtralForConditionalGeneration` + `VoxtralProcessor`; `speechToText.js` WebGPU detection + dual-worker routing; download consent popup (`showSttConsentPopup`) with model name/size/privacy info before first download; `STT_CONSENTED` localStorage key; model duplicated to `textagent/` HuggingFace org with `onnx-community/` fallback |
 | **2026-03-12** | — | 🛡️ **Code Audit Fixes** — sandboxed `jsAdapter` in `exec-sandbox.js` (was raw `eval()` on main thread, now iframe-sandboxed); `mirror-models.sh` model IDs updated to `textagent`, Kokoro v1.0→v1.1-zh, GitLab refs removed; Whisper speech worker forwarded user's language selection instead of hardcoded English; shared `ai-worker-common.js` module extracts `TOKEN_LIMITS` + `buildMessages()` from 3 workers; cloud workers load as ES modules |
 | **2026-03-12** | — | 🏠 **Model Hosting Migration** — all 7 ONNX models (Qwen 3.5 0.8B/2B/4B, Qwen 3 4B Thinking, Whisper Large V3 Turbo, Kokoro 82M v1.0/v1.1-zh) duplicated to self-owned [`textagent` HuggingFace org](https://huggingface.co/textagent); model IDs updated from `onnx-community/` to `textagent/` across all workers; automatic fallback to `onnx-community/` namespace if textagent models unavailable; GitLab mirror removed from runtime code |
 | **2026-03-12** | — | 🔊 **Kokoro TTS** — hybrid text-to-speech engine: English/Chinese via [Kokoro 82M v1.1-zh ONNX](https://huggingface.co/textagent/Kokoro-82M-v1.1-zh-ONNX) (~80 MB, off-thread WebWorker via `kokoro-js`), Japanese & 10+ languages via Web Speech API fallback; hover preview text → click 🔊 for pronunciation; voice auto-selection by language; `textToSpeech.js` main module + `tts-worker.js` WebWorker + `tts.css` styling; model-hosts.js for configurable hosting with auto-fallback |

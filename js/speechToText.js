@@ -1,7 +1,7 @@
 // ============================================
 // speechToText.js — Dual-Engine Voice Dictation
 // Engine 1: Web Speech API (real-time, multi-language)
-// Engine 2: Whisper Large V3 Turbo ONNX (offline, cross-browser)
+// Engine 2: Voxtral Mini 3B (WebGPU) or Whisper V3 Turbo (WASM fallback)
 // Engine 3: AI refinement (optional, via connected LLM)
 // Consensus layer merges results for best quality.
 // ============================================
@@ -15,6 +15,19 @@
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const hasWebSpeech = !!SpeechRecognition;
 
+    // ── WebGPU Detection ──────────────────────────
+    // Determines whether to use Voxtral (WebGPU) or Whisper (WASM)
+    let hasWebGPU = false;
+    let sttModelName = 'Whisper V3 Turbo';  // default, updated after detection
+    const webGPUPromise = (async () => {
+        if (typeof navigator !== 'undefined' && navigator.gpu) {
+            try {
+                const adapter = await navigator.gpu.requestAdapter();
+                if (adapter) { hasWebGPU = true; sttModelName = 'Voxtral Mini 3B'; }
+            } catch (_) { /* no WebGPU */ }
+        }
+    })();
+
     // ── State ──────────────────────────────────────
     let isListening = false;
     let lastInsertTime = Date.now();
@@ -27,11 +40,11 @@
     let wsaFinalText = '';        // latest final from Web Speech API
     let wsaInterimText = '';      // latest interim
 
-    // Whisper worker state
+    // STT worker state (Voxtral or Whisper)
     let worker = null;
     let modelReady = false;
     let modelLoading = false;
-    let whisperText = '';          // latest result from Whisper
+    let whisperText = '';          // latest result from STT engine
 
     // Audio capture for Whisper (runs in parallel with Web Speech API)
     let audioContext = null;
@@ -336,7 +349,7 @@
         html += `</div>
         <div class="speech-cheat-footer">
             <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> to toggle mic · 3s pause = new paragraph
-            <br><small style="opacity:0.7">Dual Engine: 🌐 Web Speech + 🧠 Whisper V3 Turbo</small>
+            <br><small style="opacity:0.7">Dual Engine: 🌐 Web Speech + 🧠 ${sttModelName}</small>
         </div>`;
 
         return html;
@@ -432,11 +445,13 @@
     }
 
     // ══════════════════════════════════════════════
-    // ENGINE 2: Whisper Large V3 Turbo ONNX (WebWorker)
+    // ENGINE 2: Voxtral (WebGPU) or Whisper (WASM fallback)
     // ══════════════════════════════════════════════
     function initWorker() {
         if (worker) return;
-        const workerURL = new URL('./speech-worker.js', import.meta.url);
+        // Spawn the correct worker based on WebGPU availability
+        const workerFile = hasWebGPU ? './voxtral-worker.js' : './speech-worker.js';
+        const workerURL = new URL(workerFile, import.meta.url);
         worker = new Worker(workerURL, { type: 'module' });
 
         worker.addEventListener('message', (e) => {
@@ -453,8 +468,9 @@
                     modelReady = true;
                     updateEngineIndicator();
                     const device = e.data.device || 'wasm';
-                    console.log(`🧠 Whisper V3 Turbo loaded and ready (${device})`);
-                    if (interimText) interimText.textContent = e.data.message || '🧠 Model ready';
+                    sttModelName = e.data.model || sttModelName;
+                    console.log(`🧠 ${sttModelName} loaded and ready (${device})`);
+                    if (interimText) interimText.textContent = e.data.message || `🧠 ${sttModelName} ready`;
                     // Brief flash of ready message, then switch to listening
                     setTimeout(() => {
                         if (isListening && interimText) interimText.textContent = '🎤 Listening…';
@@ -476,7 +492,7 @@
             if (type === 'result') {
                 whisperTranscribing = false;
                 const text = (e.data.text || '').trim();
-                console.log('🧠 Whisper result:', JSON.stringify(text));
+                console.log(`🧠 ${sttModelName} result:`, JSON.stringify(text));
                 if (text && !isHallucination(text)) {
                     whisperText = text;
                     submitToConsensus('whisper', text);
@@ -485,10 +501,10 @@
 
             if (type === 'error') {
                 whisperTranscribing = false;
-                console.warn('🧠 Whisper error:', e.data.message);
+                console.warn(`🧠 ${sttModelName} error:`, e.data.message);
                 if (modelLoading) {
                     modelLoading = false;
-                    M.showToast('Failed to load speech model: ' + e.data.message, 'error');
+                    M.showToast(`Failed to load ${sttModelName}: ` + e.data.message, 'error');
                 }
             }
 
@@ -838,6 +854,64 @@
         }
     }
 
+    // ── STT Model Download Consent Popup ────────────
+    function showSttConsentPopup(modelType) {
+        const isVoxtral = modelType === 'voxtral';
+        const modelName = isVoxtral ? 'Voxtral Mini 3B' : 'Whisper Large V3 Turbo';
+        const downloadSize = isVoxtral ? '~2.7 GB' : '~800 MB';
+        const deviceLabel = isVoxtral ? 'GPU (WebGPU)' : 'CPU (WASM)';
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'stt-consent-overlay';
+        overlay.innerHTML = `
+            <div class="stt-consent-popup">
+                <div class="stt-consent-header">
+                    <i class="bi bi-mic-fill"></i> Speech-to-Text Model
+                </div>
+                <div class="stt-consent-body">
+                    <p>To enable <strong>offline voice dictation</strong>, TextAgent needs to download a speech recognition model to your device.</p>
+                    <table class="stt-consent-info">
+                        <tr><td>Model</td><td><strong>${modelName}</strong></td></tr>
+                        <tr><td>Download</td><td><strong>${downloadSize}</strong> (one-time, cached)</td></tr>
+                        <tr><td>Runs on</td><td><strong>${deviceLabel}</strong> — 100% local</td></tr>
+                        <tr><td>Privacy</td><td>No audio leaves your device</td></tr>
+                    </table>
+                    <p class="stt-consent-note">Without this model, voice dictation uses only the browser's built-in Web Speech API (requires internet).</p>
+                </div>
+                <div class="stt-consent-actions">
+                    <button class="stt-consent-cancel" id="stt-consent-cancel">Not Now</button>
+                    <button class="stt-consent-download" id="stt-consent-download">
+                        <i class="bi bi-download"></i> Download ${downloadSize}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('stt-consent-show'));
+
+        // Download button
+        overlay.querySelector('#stt-consent-download').addEventListener('click', () => {
+            localStorage.setItem(M.KEYS.STT_CONSENTED, modelType);
+            overlay.classList.remove('stt-consent-show');
+            setTimeout(() => overlay.remove(), 250);
+
+            // Proceed with model download
+            initWorker();
+            if (!modelReady && !modelLoading) {
+                worker.postMessage({ type: 'init' });
+            }
+        });
+
+        // Cancel button
+        overlay.querySelector('#stt-consent-cancel').addEventListener('click', () => {
+            overlay.classList.remove('stt-consent-show');
+            setTimeout(() => overlay.remove(), 250);
+            if (interimText) interimText.textContent = '🌐 Web Speech only (no model)';
+        });
+    }
+
     // ── Start / Stop ──────────────────────────────
     function startListening() {
         if (isListening) return;
@@ -854,14 +928,28 @@
         // Start Engine 1: Web Speech API
         startWebSpeech();
 
-        // Start Engine 2: Whisper (init worker + load model if needed)
-        initWorker();
-        if (!modelReady && !modelLoading) {
-            worker.postMessage({ type: 'init' });
-        } else if (modelReady) {
-            startAudioCapture();
-        }
-        // If loading, startAudioCapture() will be called when 'ready' fires
+        // Start Engine 2: Voxtral (WebGPU) or Whisper (WASM)
+        // Ensure WebGPU detection is complete before spawning worker
+        webGPUPromise.then(() => {
+            // Check if user already consented to this model download
+            const consentKey = M.KEYS.STT_CONSENTED;
+            const consentedModel = localStorage.getItem(consentKey);
+            const currentModel = hasWebGPU ? 'voxtral' : 'whisper';
+            const alreadyConsented = consentedModel === currentModel;
+
+            if (alreadyConsented || modelReady) {
+                // Already consented or model cached — proceed directly
+                initWorker();
+                if (!modelReady && !modelLoading) {
+                    worker.postMessage({ type: 'init' });
+                } else if (modelReady) {
+                    startAudioCapture();
+                }
+            } else {
+                // Show consent popup
+                showSttConsentPopup(currentModel);
+            }
+        });
 
         updateEngineIndicator();
 
@@ -956,10 +1044,12 @@
         setAiRefine: (enabled) => { aiRefineEnabled = enabled; updateEngineIndicator(); },
         getEngines: () => ({
             webSpeech: hasWebSpeech,
-            whisper: modelReady,
+            sttModel: sttModelName,
+            sttReady: modelReady,
+            webGPU: hasWebGPU,
             aiRefine: aiRefineEnabled,
         }),
     };
 
-    console.log(`🎤 speechToText loaded — Dual Engine [Web Speech: ${hasWebSpeech ? '✓' : '✗'}, Whisper V3 Turbo: pending]`);
+    console.log(`🎤 speechToText loaded — Dual Engine [Web Speech: ${hasWebSpeech ? '✓' : '✗'}, STT: detecting WebGPU…]`);
 })();

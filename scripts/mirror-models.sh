@@ -112,6 +112,18 @@ for voice in af_bella bf_emma jf_alpha zf_xiaobei ff_siwis if_sara ef_dora pf_do
     dl "$MODEL" "voices/${voice}.bin"
 done
 
+# ── Voxtral Mini 3B STT (q4 + q4f16 WebGPU) ────
+echo -e "\n${GREEN}═══ Voxtral Mini 3B STT ONNX ═══${NC}"
+MODEL="textagent/Voxtral-Mini-3B-2507-ONNX"
+for f in config.json generation_config.json preprocessor_config.json processor_config.json tokenizer.json tokenizer_config.json chat_template.jinja; do
+    dl "$MODEL" "$f"
+done
+for f in onnx/embed_tokens_q4.onnx onnx/embed_tokens_q4.onnx_data \
+         onnx/audio_encoder_q4.onnx onnx/audio_encoder_q4.onnx_data \
+         onnx/decoder_model_merged_q4f16.onnx onnx/decoder_model_merged_q4f16.onnx_data; do
+    dl "$MODEL" "$f"
+done
+
 echo -e "\n${GREEN}═══ All done! ═══${NC}"
 echo "Mirror directory: ${OUT_DIR}"
 echo ""

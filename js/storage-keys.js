@@ -44,6 +44,7 @@
 
         // --- Speech ---
         SPEECH_LANG: 'mdview-speech-lang',
+        STT_CONSENTED: 'mdview-stt-consented',
 
         // --- Web Search ---
         SEARCH_ENABLED: 'md-viewer-search-enabled',

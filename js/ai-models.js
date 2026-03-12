@@ -280,5 +280,20 @@
             downloadSize: '~80 MB',
         },
 
+        // ── Local: Voxtral Mini 3B STT (Speech-to-Text, WebGPU) ──
+        'voxtral-stt': {
+            label: 'Voxtral STT · Local',
+            badge: 'Voxtral STT · Local',
+            icon: 'bi bi-mic-fill',
+            statusReady: 'Voxtral Mini 3B STT · Local',
+            dropdownName: 'Voxtral STT (3B)',
+            dropdownDesc: 'Local · WebGPU · 13 Languages · ~2.7 GB',
+            isLocal: true,
+            isSttModel: true,
+            localModelId: 'textagent/Voxtral-Mini-3B-2507-ONNX',
+            downloadSize: '~2.7 GB',
+            requiresWebGPU: true,
+        },
+
     };
 })();
