@@ -8,11 +8,11 @@
     // --- Coding block templates ---
     var CODING_TEMPLATES = {
         'coding-bash': '```bash\n# Your bash commands\necho "Hello, World!"\n```\n',
-        'coding-math': '```math\nx^2 + 2*x + 1\n```\n',
+        'coding-math': '```math\nx = 5\nx^2 + 2*x + 1\n```\n',
         'coding-python': '```python\n# Your Python code\nprint("Hello, World!")\n```\n',
         'coding-html': '```html\n<!-- Your HTML -->\n<h3>Hello, World!</h3>\n<p>Edit this HTML and click <strong>Preview</strong> to see it rendered.</p>\n```\n',
         'coding-js': '```javascript\n// Your JavaScript\nconsole.log("Hello, World!");\n```\n',
-        'coding-sql': '```sql\nCREATE TABLE greetings (id INTEGER PRIMARY KEY, message TEXT);\nINSERT INTO greetings VALUES (1, \'Hello, World!\');\nSELECT * FROM greetings;\n```\n'
+        'coding-sql': '```sql\nCREATE TABLE IF NOT EXISTS greetings (id INTEGER PRIMARY KEY, message TEXT);\nINSERT INTO greetings VALUES (1, \'Hello, World!\');\nSELECT * FROM greetings;\n```\n'
     };
 
     Object.keys(CODING_TEMPLATES).forEach(function (action) {

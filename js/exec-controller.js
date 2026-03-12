@@ -81,7 +81,7 @@
         if (!preview) return null;
 
         if (block.type === 'code') {
-            var containerClass = 'executable-' + (block.lang === 'sh' || block.lang === 'shell' ? 'code' : block.lang.replace('html-autorun', 'html')) + '-container';
+            var containerClass = mapLangToContainer(block.lang);
             var containers = preview.querySelectorAll('.' + containerClass);
 
             // Find by matching order — count how many code blocks of this type
@@ -163,6 +163,87 @@
     }
 
     // ========================================
+    // Render block output into the DOM
+    // ========================================
+
+    function renderBlockOutput(block, result, error) {
+        var container = findBlockContainer(block);
+        if (!container) return;
+
+        var escapeHtml = M._exec && M._exec.escapeHtml ? M._exec.escapeHtml : function (s) {
+            var d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+        };
+
+        var outputEl = container.querySelector('.code-output');
+        if (!outputEl) {
+            outputEl = document.createElement('div');
+            outputEl.className = 'code-output';
+            container.appendChild(outputEl);
+        }
+        outputEl.style.display = 'block';
+
+        if (error) {
+            outputEl.innerHTML = '<span class="code-output-error">✖ ' + escapeHtml(error.message || String(error)) + '</span>';
+            return;
+        }
+
+        if (result === null || result === undefined) {
+            outputEl.innerHTML = '<span class="code-output-muted">(no output)</span>';
+            return;
+        }
+
+        var resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+
+        // For SQL blocks with tabular output, render as a formatted table
+        if (block.runtimeKey === 'sql' && resultStr.indexOf(' | ') !== -1) {
+            var sqlLines = resultStr.split('\n');
+            var html = '<div class="sql-result-table-wrap"><table class="sql-result-table">';
+            for (var li = 0; li < sqlLines.length; li++) {
+                var line = sqlLines[li];
+                if (/^-+(\s*\|\s*-+)*$/.test(line)) continue; // skip separator rows
+                if (/^\d+ row\(s\)$/.test(line)) {
+                    html += '</table><div class="sql-row-count">' + escapeHtml(line) + '</div></div>';
+                    continue;
+                }
+                var cells = line.split(' | ');
+                var tag = li === 0 ? 'th' : 'td';
+                html += '<tr>';
+                for (var ci = 0; ci < cells.length; ci++) {
+                    html += '<' + tag + '>' + escapeHtml(cells[ci]) + '</' + tag + '>';
+                }
+                html += '</tr>';
+            }
+            html += '</table></div>';
+            outputEl.innerHTML = html;
+            return;
+        }
+
+        // For math blocks, render with expression → result formatting
+        if (block.runtimeKey === 'math' && resultStr.indexOf('→') !== -1) {
+            var mathLines = resultStr.split('\n');
+            var mathHtml = '';
+            for (var mi = 0; mi < mathLines.length; mi++) {
+                var parts = mathLines[mi].split(' → ');
+                if (parts.length === 2) {
+                    var isErr = parts[1].indexOf('❌') === 0;
+                    if (isErr) {
+                        mathHtml += '<div class="math-result-line"><span class="math-result-expr">' + escapeHtml(parts[0]) + '</span> <span class="code-output-error">→ ' + escapeHtml(parts[1]) + '</span></div>';
+                    } else {
+                        mathHtml += '<div class="math-result-line"><span class="math-result-expr">' + escapeHtml(parts[0]) + '</span> <span class="math-result-arrow">→</span> <span class="math-result-value">' + escapeHtml(parts[1]) + '</span></div>';
+                    }
+                } else {
+                    mathHtml += '<div>' + escapeHtml(mathLines[mi]) + '</div>';
+                }
+            }
+            outputEl.innerHTML = mathHtml || '<span class="code-output-muted">(no result)</span>';
+            return;
+        }
+
+        // Default: render as plain text (bash, python, js, etc.)
+        outputEl.innerHTML = '<span class="code-output-stdout">' + escapeHtml(resultStr) + '</span>';
+    }
+
+    // ========================================
     // Run All
     // ========================================
 
@@ -233,12 +314,14 @@
                 var result = await executeBlock(block);
                 block.result = result;
                 updateBlockStatus(block, 'done');
+                renderBlockOutput(block, result, null);
                 _currentRun.completed++;
                 emit('exec:block-done', { block: block, result: result, index: i });
             } catch (err) {
                 block.result = null;
                 block.error = err;
                 updateBlockStatus(block, 'error');
+                renderBlockOutput(block, null, err);
                 _currentRun.errors++;
                 emit('exec:block-error', { block: block, error: err, index: i });
                 console.error('[ExecController] Block error:', block.id, err);
