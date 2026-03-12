@@ -12,6 +12,7 @@
 // Transformers.js classes — loaded dynamically in loadModel() to avoid
 // a top-level import that silently kills the worker when the CDN is unreachable.
 let AutoProcessor = null;
+let AutoTokenizer = null;
 let Qwen3_5ForConditionalGeneration = null;
 let AutoModelForCausalLM = null;
 let TextStreamer = null;
@@ -68,6 +69,7 @@ async function loadModel() {
             try {
                 const transformers = await import(TRANSFORMERS_URL);
                 AutoProcessor = transformers.AutoProcessor;
+                AutoTokenizer = transformers.AutoTokenizer;
                 Qwen3_5ForConditionalGeneration = transformers.Qwen3_5ForConditionalGeneration;
                 AutoModelForCausalLM = transformers.AutoModelForCausalLM;
                 TextStreamer = transformers.TextStreamer;
@@ -131,11 +133,22 @@ async function loadModel() {
                 decoder_model_merged: "q4",
             };
 
-        // Helper: load processor + model, with automatic fallback to HuggingFace
+        // Helper: load processor/tokenizer + model, with automatic fallback
         async function loadFromHost() {
-            processor = await AutoProcessor.from_pretrained(MODEL_ID, {
-                progress_callback: progressCb("processor"),
-            });
+            // Text-only models (qwen3) don't have preprocessor_config.json,
+            // so use AutoTokenizer instead of AutoProcessor.
+            if (isQwen3) {
+                const tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, {
+                    progress_callback: progressCb("tokenizer"),
+                });
+                // Wrap tokenizer in a processor-like object so the rest of the
+                // code can uniformly access processor.tokenizer
+                processor = { tokenizer };
+            } else {
+                processor = await AutoProcessor.from_pretrained(MODEL_ID, {
+                    progress_callback: progressCb("processor"),
+                });
+            }
 
             self.postMessage({
                 type: "status",

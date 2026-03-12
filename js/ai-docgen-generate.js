@@ -686,9 +686,14 @@
                     if (workerAttachments.length === 0) {
                         throw new Error('Please attach at least one image to the OCR block before running.');
                     }
+                    // Check if current model is a specialized doc model (e.g. Granite Docling)
+                    var currentModelId = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+                    var modelsCfg = window.AI_MODELS || {};
+                    var isDocModel = currentModelId && modelsCfg[currentModelId] && modelsCfg[currentModelId].isDocModel;
+
                     result = await M.requestAiTask({
                         taskType: 'generate',
-                        context: '',
+                        context: isDocModel ? (block.ocrMode || 'text') : '',
                         userPrompt: buildOcrPrompt(block),
                         enableThinking: false,
                         silent: true,

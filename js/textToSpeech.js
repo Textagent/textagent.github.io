@@ -36,6 +36,7 @@
     let currentSource = null;  // Track currently playing Kokoro audio for stop()
     let pendingSpeak = null;   // Queue speak request during model loading
     let webSpeechUtterance = null; // Track Web Speech API utterance for stop()
+    let lastAudioData = null;  // Store last Kokoro audio for download
 
     // ── Worker Initialization ────────────────────
     function initWorker() {
@@ -74,6 +75,7 @@
             }
 
             if (type === 'audio') {
+                lastAudioData = { data: e.data.data, sampleRate: e.data.sampleRate };
                 playAudio(e.data.data, e.data.sampleRate);
             }
 
@@ -169,6 +171,67 @@
         }
     }
 
+    // ── WAV Encoding & Download ──────────────────
+    function float32ToWav(float32Array, sampleRate) {
+        const numChannels = 1;
+        const bitsPerSample = 16;
+        const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+        const blockAlign = numChannels * (bitsPerSample / 8);
+        const dataSize = float32Array.length * (bitsPerSample / 8);
+        const buffer = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buffer);
+
+        function writeString(offset, str) {
+            for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+        }
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + dataSize, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);            // Subchunk1Size (PCM)
+        view.setUint16(20, 1, true);             // AudioFormat (PCM)
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, byteRate, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitsPerSample, true);
+        writeString(36, 'data');
+        view.setUint32(40, dataSize, true);
+
+        // Convert float32 [-1, 1] → int16
+        let offset = 44;
+        for (let i = 0; i < float32Array.length; i++) {
+            const s = Math.max(-1, Math.min(1, float32Array[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            offset += 2;
+        }
+
+        return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function downloadAudio() {
+        if (!lastAudioData) {
+            M.showToast && M.showToast('⚠️ No audio to download — play something first.', 'warning');
+            return false;
+        }
+        const blob = float32ToWav(lastAudioData.data, lastAudioData.sampleRate);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'tts-audio-' + Date.now() + '.wav';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        M.showToast && M.showToast('💾 Audio downloaded', 'success');
+        return true;
+    }
+
+    function hasAudio() {
+        return lastAudioData !== null;
+    }
+
     // ── Public API ───────────────────────────────
 
     /**
@@ -245,6 +308,8 @@
         stop,
         isReady,
         isSpeaking,
+        downloadAudio,
+        hasAudio,
     };
 
     console.log('🔊 textToSpeech module loaded (Hybrid: Kokoro + Web Speech API)');

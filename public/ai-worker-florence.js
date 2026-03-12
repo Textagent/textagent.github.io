@@ -1,18 +1,8 @@
-/**
- * AI Worker — Granite Docling 258M (IBM) — Document OCR
- *
- * Converts document images to structured Markdown/HTML using
- * IBM's Granite Docling vision-language model via Transformers.js.
- *
- * Uses AutoModelForVision2Seq + AutoProcessor from Transformers.js.
- * Supports WebGPU acceleration.
- *
- * Message interface:
- *   setModelId  → configure model ID before loading
- *   load        → download and initialise model
- *   process     → run document OCR on an image
- *   ping/pong   → health check
- */
+// ============================================
+// ai-worker-florence.js — Florence-2 Vision Worker
+// Runs Florence-2-base-ft (Microsoft) for OCR, captioning,
+// and document understanding via @huggingface/transformers
+// ============================================
 
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
 
@@ -20,44 +10,34 @@ const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers
 const MODEL_ORG_FALLBACK = "onnx-community";
 
 // Model config
-let MODEL_ID = "textagent/granite-docling-258M-ONNX";
-let MODEL_LABEL = "Granite Docling 258M";
+let MODEL_ID = "textagent/Florence-2-base-ft";
+let MODEL_LABEL = "Florence-2 (230M)";
 
 // Dynamically loaded modules
-let AutoProcessor = null;
-let AutoModelForVision2Seq = null;
-let load_image = null;
-let TextStreamer = null;
+let Florence2ForConditionalGeneration, AutoProcessor, load_image, TextStreamer;
 
 // Runtime state
-let processor = null;
 let model = null;
-let device = "wasm"; // will upgrade to webgpu if available
+let processor = null;
 
 /**
- * Initialize the model: load processor + model
+ * Load model and processor
  */
 async function loadModel() {
     try {
-        // 1. Import Transformers.js
-        if (!AutoProcessor) {
-            self.postMessage({ type: "status", message: "Loading AI libraries..." });
-            try {
-                const transformers = await import(TRANSFORMERS_URL);
-                AutoProcessor = transformers.AutoProcessor;
-                AutoModelForVision2Seq = transformers.AutoModelForVision2Seq;
-                load_image = transformers.load_image;
-                TextStreamer = transformers.TextStreamer;
-            } catch (importError) {
-                self.postMessage({
-                    type: "error",
-                    message: `Failed to load AI libraries: ${importError.message}`,
-                });
-                return;
-            }
-        }
+        self.postMessage({ type: "status", message: `Initializing ${MODEL_LABEL}...` });
 
-        // 2. Check WebGPU
+        // 1. Import Transformers.js modules
+        const transformers = await import(TRANSFORMERS_URL);
+        Florence2ForConditionalGeneration = transformers.Florence2ForConditionalGeneration;
+        AutoProcessor = transformers.AutoProcessor;
+        load_image = transformers.RawImage
+            ? (url) => transformers.RawImage.fromURL(url)
+            : transformers.load_image;
+        TextStreamer = transformers.TextStreamer;
+
+        // 2. Detect WebGPU
+        let device = "wasm";
         if (typeof navigator !== "undefined" && navigator.gpu) {
             const adapter = await navigator.gpu.requestAdapter();
             if (adapter) device = "webgpu";
@@ -89,12 +69,8 @@ async function loadModel() {
             });
 
             self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...` });
-            model = await AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
-                dtype: {
-                    embed_tokens: "fp16",
-                    vision_encoder: "fp32",
-                    decoder_model_merged: "fp32",
-                },
+            model = await Florence2ForConditionalGeneration.from_pretrained(MODEL_ID, {
+                dtype: "fp32",
                 device: device,
                 progress_callback: progressCb("model"),
             });
@@ -116,24 +92,33 @@ async function loadModel() {
     } catch (error) {
         self.postMessage({
             type: "error",
-            message: `Failed to load Docling model: ${error.message}`,
+            message: `Failed to load ${MODEL_LABEL}: ${error.message}`,
         });
     }
 }
 
+// ============================================
+// Florence-2 Task Mapping
+// ============================================
+const FLORENCE_TASKS = {
+    'ocr': '<OCR>',
+    'ocr_region': '<OCR_WITH_REGION>',
+    'caption': '<CAPTION>',
+    'detailed_caption': '<DETAILED_CAPTION>',
+    'more_detailed_caption': '<MORE_DETAILED_CAPTION>',
+    'text': '<OCR>',
+    'markdown': '<OCR>',
+    'svg': '<MORE_DETAILED_CAPTION>',
+};
+
 /**
- * Process a document image and convert to structured text
- * @param {object} options
- * @param {string} options.imageData - Base64 data URL or URL to the image
- * @param {string} options.outputFormat - 'docling', 'markdown', 'html', or 'text'
- * @param {boolean} options.doImageSplitting - Split image into patches for more accuracy
- * @param {string} options.messageId
+ * Process a document image using Florence-2
  */
-async function processDocument({ imageData, outputFormat = 'docling', doImageSplitting = true, mimeType = 'image/png', messageId }) {
+async function processDocument({ imageData, outputFormat = 'text', mimeType = 'image/png', messageId }) {
     if (!model || !processor) {
         self.postMessage({
             type: "error",
-            message: "Model not loaded. Please wait for the model to finish loading.",
+            message: "Florence-2 model not loaded. Please wait for loading to complete.",
             messageId,
         });
         return;
@@ -142,10 +127,9 @@ async function processDocument({ imageData, outputFormat = 'docling', doImageSpl
     try {
         self.postMessage({ type: "status", message: "Processing document...", messageId });
 
-        // Ensure imageData is a proper data URL (uploads store raw base64 without prefix)
+        // Reconstruct data URL if needed (raw base64 → data URL)
         let imageUrl = imageData;
         if (imageData && !imageData.startsWith('data:') && !imageData.startsWith('http')) {
-            // Raw base64 — reconstruct data URL
             const mime = mimeType || 'image/png';
             imageUrl = `data:${mime};base64,${imageData}`;
         }
@@ -153,55 +137,31 @@ async function processDocument({ imageData, outputFormat = 'docling', doImageSpl
         // Load image
         const image = await load_image(imageUrl);
 
-        // Build prompt based on output format
-        let promptText = "Convert this page to docling.";
-        if (outputFormat === 'markdown') {
-            promptText = "Convert this page to markdown.";
-        } else if (outputFormat === 'html') {
-            promptText = "Convert this page to html.";
-        } else if (outputFormat === 'text') {
-            promptText = "Extract all text from this page.";
-        }
+        // Determine Florence-2 task from output format
+        const task = FLORENCE_TASKS[outputFormat] || '<OCR>';
 
-        // Create messages
-        const messages = [
-            {
-                role: "user",
-                content: [
-                    { type: "image" },
-                    { type: "text", text: promptText },
-                ],
-            },
-        ];
-
-        // Apply chat template and process inputs
-        const text = processor.apply_chat_template(messages, { add_generation_prompt: true });
-        const inputs = await processor(text, [image], {
-            do_image_splitting: doImageSplitting,
-        });
+        // Build prompt using Florence-2's construct_prompts
+        const prompts = processor.construct_prompts(task);
+        const inputs = await processor(image, prompts);
 
         // Generate with streaming
         let lastToken = '';
         let repeatCount = 0;
-        const MAX_REPEATS = 50; // Stop if same token repeats 50+ times
-        let shouldStop = false;
+        const MAX_REPEATS = 50;
 
         const generated_ids = await model.generate({
             ...inputs,
-            max_new_tokens: 4096,
+            max_new_tokens: 1024,
             do_sample: false,
-            repetition_penalty: 1.5,
+            repetition_penalty: 1.2,
             streamer: new TextStreamer(processor.tokenizer, {
                 skip_prompt: true,
-                skip_special_tokens: false,
+                skip_special_tokens: true,
                 callback_function: (token) => {
                     // Detect degeneration loops
                     if (token === lastToken) {
                         repeatCount++;
-                        if (repeatCount >= MAX_REPEATS) {
-                            // Don't stream garbage tokens
-                            return;
-                        }
+                        if (repeatCount >= MAX_REPEATS) return;
                     } else {
                         lastToken = token;
                         repeatCount = 0;
@@ -212,16 +172,15 @@ async function processDocument({ imageData, outputFormat = 'docling', doImageSpl
         });
 
         // Decode final output
-        const generated_texts = processor.batch_decode(
-            generated_ids.slice(null, [inputs.input_ids.dims.at(-1), null]),
-            { skip_special_tokens: true },
-        );
+        const generated_text = processor.batch_decode(generated_ids, { skip_special_tokens: false })[0];
 
-        const result = generated_texts[0] || "";
+        // Post-process with Florence-2's built-in parser
+        const result = processor.post_process_generation(generated_text, task, image.size);
+        const output = result[task] || generated_text || "";
 
         self.postMessage({
             type: "complete",
-            text: result,
+            text: typeof output === 'string' ? output : JSON.stringify(output, null, 2),
             messageId,
         });
     } catch (error) {
@@ -252,25 +211,25 @@ self.addEventListener("message", async (event) => {
         case "generate": {
             const attachments = event.data.attachments || [];
             const imageAtt = attachments.find(a => a.type === 'image');
-            // Read OCR mode from the context field (set by ai-docgen-generate.js for doc models)
+            // Read OCR mode from the context field
             const ocrMode = event.data.context || 'text';
-            // Map OCR card mode to Docling outputFormat
-            let outputFormat = 'markdown';
+            // Map OCR card mode to Florence-2 task
+            let outputFormat = 'text';
             if (ocrMode === 'text') outputFormat = 'text';
-            else if (ocrMode === 'svg') outputFormat = 'markdown'; // Docling doesn't do SVG — use markdown
+            else if (ocrMode === 'svg') outputFormat = 'svg';
+            else if (ocrMode === 'caption') outputFormat = 'more_detailed_caption';
 
             if (imageAtt) {
                 await processDocument({
                     imageData: imageAtt.data,
                     mimeType: imageAtt.mimeType || 'image/png',
                     outputFormat,
-                    doImageSplitting: false,
                     messageId,
                 });
             } else {
                 self.postMessage({
                     type: "error",
-                    message: "Granite Docling requires a document image. Please attach an image.",
+                    message: "Florence-2 requires a document image. Please attach an image.",
                     messageId,
                 });
             }

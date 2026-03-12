@@ -188,4 +188,44 @@ test.describe('Regression — Recent Fixes', () => {
         expect(value).toContain('Regression Cycle Test');
         expect(value).toContain('Content must survive.');
     });
+
+    // ── STT card renders without page errors ─────────────────────
+
+    test('STT card renders in preview without errors', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', err => errors.push(err.message));
+
+        await page.locator('#markdown-editor').fill('{{@STT:\n  @lang: en-US\n}}');
+        await page.waitForTimeout(2000);
+
+        const hasCard = await page.evaluate(() => {
+            const preview = document.getElementById('markdown-preview');
+            return preview ? !!preview.querySelector('.ai-stt-card') : false;
+        });
+        expect(hasCard).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
+    // ── TTS card has download button ─────────────────────────────
+
+    test('TTS card renders download button', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{@TTS:\n  @prompt: Test\n  @lang: English\n}}');
+        await page.waitForTimeout(2000);
+
+        const hasDownload = await page.evaluate(() => {
+            const preview = document.getElementById('markdown-preview');
+            return preview ? !!preview.querySelector('.ai-tts-download') : false;
+        });
+        expect(hasDownload).toBe(true);
+    });
+
+    // ── Florence-2 model in registry ─────────────────────────────
+
+    test('Florence-2 model entry exists in AI_MODELS', async ({ page }) => {
+        const exists = await page.evaluate(() => {
+            const models = window.AI_MODELS || {};
+            return 'florence-2' in models && models['florence-2'].isDocModel === true;
+        });
+        expect(exists).toBe(true);
+    });
 });

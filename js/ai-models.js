@@ -309,9 +309,25 @@
             isLocal: true,
             category: 'local-document',
             isDocModel: true,
-            localModelId: 'onnx-community/granite-docling-258M-ONNX',
+            localModelId: 'textagent/granite-docling-258M-ONNX',
             workerFile: 'ai-worker-docling.js',
             downloadSize: '~500 MB',
+        },
+
+        // ── Local: Florence-2 (Microsoft) — Vision OCR & Captioning ──
+        'florence-2': {
+            label: 'Florence-2 · Local',
+            badge: 'Florence-2 · Local',
+            icon: 'bi bi-eye',
+            statusReady: 'Florence-2 (230M) · Local',
+            dropdownName: 'Florence-2 (230M)',
+            dropdownDesc: 'Local · OCR + Captioning · ~230 MB',
+            isLocal: true,
+            category: 'local-document',
+            isDocModel: true,
+            localModelId: 'textagent/Florence-2-base-ft',
+            workerFile: 'ai-worker-florence.js',
+            downloadSize: '~230 MB',
         },
 
         // ── Local: Kokoro 82M TTS (Text-to-Speech) ────────────

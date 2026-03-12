@@ -97,13 +97,26 @@ for f in onnx/model_q4.onnx onnx/model_q4.onnx_data; do
     dl "$MODEL" "$f"
 done
 
-# ── Granite Docling 258M (IBM, fp32) ─────────
+# ── Granite Docling 258M (IBM, fp16 embed + fp32 vision/decoder) ──
 echo -e "\n${GREEN}═══ Granite Docling 258M ONNX ═══${NC}"
-MODEL="onnx-community/granite-docling-258M-ONNX"
+MODEL="textagent/granite-docling-258M-ONNX"
 for f in config.json preprocessor_config.json tokenizer.json tokenizer_config.json; do
     dl "$MODEL" "$f"
 done
-for f in onnx/vision_encoder.onnx onnx/vision_encoder.onnx_data onnx/embed_tokens.onnx onnx/embed_tokens.onnx_data onnx/decoder_model_merged.onnx onnx/decoder_model_merged.onnx_data; do
+for f in onnx/vision_encoder.onnx onnx/vision_encoder.onnx_data \
+         onnx/embed_tokens.onnx onnx/embed_tokens.onnx_data \
+         onnx/embed_tokens_fp16.onnx onnx/embed_tokens_fp16.onnx_data \
+         onnx/decoder_model_merged.onnx onnx/decoder_model_merged.onnx_data; do
+    dl "$MODEL" "$f"
+done
+
+# ── Florence-2 base-ft (Microsoft, fp32) ─────
+echo -e "\n${GREEN}═══ Florence-2 base-ft ONNX ═══${NC}"
+MODEL="textagent/Florence-2-base-ft"
+for f in config.json generation_config.json preprocessor_config.json tokenizer.json tokenizer_config.json; do
+    dl "$MODEL" "$f"
+done
+for f in onnx/vision_encoder.onnx onnx/vision_encoder.onnx_data onnx/encoder_model.onnx onnx/encoder_model.onnx_data onnx/decoder_model_merged.onnx onnx/decoder_model_merged.onnx_data onnx/embed_tokens.onnx onnx/embed_tokens.onnx_data; do
     dl "$MODEL" "$f"
 done
 

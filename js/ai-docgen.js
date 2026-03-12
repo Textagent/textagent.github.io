@@ -15,6 +15,60 @@
     var MAX_UPLOADS_PER_BLOCK = 3;
 
     // ==============================================
+    // PDF → IMAGE RENDERER — for OCR on PDF files
+    // Uses pdf.js to render each page to a canvas image
+    // ==============================================
+    async function renderPdfToImages(file, blockIdx, existingCount) {
+        // Load pdf.js
+        var pdfjsLib = window.pdfjsLib;
+        if (!pdfjsLib) {
+            try {
+                var mod = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+                pdfjsLib = mod;
+            } catch (e) {
+                throw new Error('PDF.js could not be loaded. PDF import requires a modern browser.');
+            }
+        }
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+        }
+
+        var arrayBuffer = await file.arrayBuffer();
+        var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        var pageNames = [];
+        var maxPages = Math.min(pdf.numPages, MAX_UPLOADS_PER_BLOCK - existingCount);
+        if (maxPages <= 0) return pageNames;
+
+        if (pdf.numPages > maxPages) {
+            M.showToast('📄 PDF has ' + pdf.numPages + ' pages — processing first ' + maxPages, 'info');
+        }
+
+        for (var i = 1; i <= maxPages; i++) {
+            var page = await pdf.getPage(i);
+            // Render at 2x scale for better OCR accuracy
+            var viewport = page.getViewport({ scale: 2.0 });
+            var canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            var ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+            // Extract as PNG base64
+            var dataUrl = canvas.toDataURL('image/png');
+            var base64 = dataUrl.split(',')[1];
+            var pageName = file.name + ' (page ' + i + ')';
+
+            if (!blockUploads.has(blockIdx)) blockUploads.set(blockIdx, []);
+            blockUploads.get(blockIdx).push({ data: base64, mimeType: 'image/png', name: pageName });
+            pageNames.push(pageName);
+        }
+
+        return pageNames;
+    }
+
+
+    // ==============================================
     // TAGGING — wrap selection with {{AI:}}, {{Image:}}, etc.
     // ==============================================
     function insertDocgenTag(type) {
@@ -48,6 +102,10 @@
         }
         if (type === 'TTS') {
             M.wrapSelectionWith('{{@TTS:\n  @prompt: ', '\n  @lang: English\n}}', 'text to speak aloud');
+            return;
+        }
+        if (type === 'STT') {
+            M.wrapSelectionWith('{{@STT:\n  @lang: ', '\n}}', 'en-US');
             return;
         }
 
@@ -93,7 +151,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -296,7 +354,7 @@
         // Auto-rename duplicate Memory names in editor + input
         markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -341,8 +399,8 @@
             if (type === 'Think') type = 'AI';
             var thinkFieldMatch = prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : (match[1] === 'Think');
-            var icon = type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
-            var label = type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
+            var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
+            var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
             var cardModelOpts = type === 'Image' ? imageCardModelOpts : modelOptionsHtml;
 
             if (type === 'Memory') {
@@ -420,7 +478,7 @@
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
                     + '<div class="ai-placeholder-actions">'
-                    + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for OCR">📎</button>'
+                    + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image or PDF for OCR">📎</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for OCR">'
                     + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run OCR scan">▶</button>'
@@ -609,12 +667,83 @@
                     + ttsLangHtml
                     + '<button class="ai-placeholder-btn ai-fill-one ai-tts-play" data-ai-index="' + blockIndex + '" title="Play audio">▶ Play</button>'
                     + '<button class="ai-placeholder-btn ai-tts-stop" data-ai-index="' + blockIndex + '" title="Stop" style="display:none">■ Stop</button>'
+                    + '<button class="ai-placeholder-btn ai-tts-download" data-ai-index="' + blockIndex + '" title="Download audio as WAV">⬇ Save</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
                     + (ttsDescText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(ttsDescText) + '</div>' : '')
                     + (ttsHasPrompt
                         ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Enter text to speak aloud\u2026" rows="2">' + escapeHtml(ttsPromptVal) + '</textarea></div>'
                         : '')
+                    + '</div>';
+            } else if (type === 'STT') {
+                // STT card — Speech-to-Text via Voxtral/Whisper/Web Speech API
+                var sttDisplayText = prompt;
+                sttDisplayText = sttDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
+                sttDisplayText = sttDisplayText.replace(/^\s*(?:@engine|Engine):\s*.+$/mi, '').trim();
+
+                // Parse @lang
+                var sttLangMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
+                var sttCurrentLang = sttLangMatch ? sttLangMatch[1].trim() : 'en-US';
+
+                // Parse @engine (whisper | voxtral | webspeech)
+                var sttEngineMatch = prompt.match(/^\s*(?:@engine|Engine):\s*(.+)$/mi);
+                var sttEngines = M.speechToText && M.speechToText.getEngines ? M.speechToText.getEngines() : {};
+                var sttDefaultEngine = sttEngines.webGPU ? 'voxtral' : 'whisper';
+                var sttSelectedEngine = sttEngineMatch ? sttEngineMatch[1].trim().toLowerCase() : sttDefaultEngine;
+
+                // Engine selector dropdown
+                var sttEngineOptions = [
+                    { id: 'whisper', name: '🧠 Whisper V3 Turbo', desc: 'WASM · Offline' },
+                    { id: 'voxtral', name: '🚀 Voxtral Mini 3B', desc: 'WebGPU · Offline' },
+                    { id: 'webspeech', name: '🌐 Web Speech API', desc: 'Browser · Online' },
+                ];
+                var sttEngineHtml = '<select class="ai-stt-engine-select" data-ai-index="' + blockIndex + '" title="STT Engine">';
+                sttEngineOptions.forEach(function (eo) {
+                    var sel = eo.id === sttSelectedEngine ? ' selected' : '';
+                    sttEngineHtml += '<option value="' + eo.id + '"' + sel + '>' + eo.name + '</option>';
+                });
+                sttEngineHtml += '</select>';
+
+                // Language dropdown
+                var sttLangOptions = [
+                    { code: 'en-US', name: 'English (US)' },
+                    { code: 'en-GB', name: 'English (UK)' },
+                    { code: 'ja-JP', name: 'Japanese' },
+                    { code: 'ko-KR', name: 'Korean' },
+                    { code: 'zh-CN', name: 'Chinese' },
+                    { code: 'fr-FR', name: 'French' },
+                    { code: 'de-DE', name: 'German' },
+                    { code: 'it-IT', name: 'Italian' },
+                    { code: 'es-ES', name: 'Spanish' },
+                    { code: 'pt-BR', name: 'Portuguese' },
+                    { code: 'hi-IN', name: 'Hindi' },
+                ];
+                var sttLangHtml = '<select class="ai-translate-lang-select ai-stt-lang-select" data-ai-index="' + blockIndex + '" title="Recording language">';
+                sttLangOptions.forEach(function (lo) {
+                    var sel = lo.code === sttCurrentLang ? ' selected' : '';
+                    sttLangHtml += '<option value="' + lo.code + '"' + sel + '>' + lo.name + '</option>';
+                });
+                sttLangHtml += '</select>';
+
+                result += '<div class="ai-placeholder-card ai-stt-card" data-ai-type="STT" data-ai-index="' + blockIndex + '" data-stt-lang="' + escapeHtml(sttCurrentLang) + '" data-stt-engine="' + escapeHtml(sttSelectedEngine) + '">'
+                    + '<div class="ai-placeholder-header">'
+                    + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                    + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + '<div class="ai-placeholder-actions">'
+                    + sttEngineHtml
+                    + sttLangHtml
+                    + '<button class="ai-placeholder-btn ai-stt-record" data-ai-index="' + blockIndex + '" title="Start recording">🎙️ Record</button>'
+                    + '<button class="ai-placeholder-btn ai-stt-stop" data-ai-index="' + blockIndex + '" title="Stop recording" style="display:none">■ Stop</button>'
+                    + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                    + '</div></div>'
+                    + (sttDisplayText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(sttDisplayText) + '</div>' : '')
+                    + '<div class="ai-stt-result" data-ai-index="' + blockIndex + '" style="display:none">'
+                    + '<div class="ai-stt-result-text"></div>'
+                    + '<div class="ai-stt-result-actions">'
+                    + '<button class="ai-placeholder-btn ai-stt-insert" data-ai-index="' + blockIndex + '" title="Insert transcription into document">📋 Insert</button>'
+                    + '<button class="ai-placeholder-btn ai-stt-clear" data-ai-index="' + blockIndex + '" title="Clear result">🗑 Clear</button>'
+                    + '</div>'
+                    + '</div>'
                     + '</div>';
             } else {
                 // Extract @use and strip @ fields from display
@@ -774,6 +903,132 @@
             });
         });
 
+        // STT record button — start recording via mic
+        container.querySelectorAll('.ai-stt-record').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var card = this.closest('.ai-stt-card');
+                if (!card) return;
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var langSel = card.querySelector('.ai-stt-lang-select');
+                var lang = langSel ? langSel.value : 'en-US';
+
+                // Check mic permissions and start recording
+                if (!M.speechToText) {
+                    M.showToast && M.showToast('🎤 Speech-to-Text engine not loaded yet.', 'warning');
+                    return;
+                }
+
+                // Start the STT engine
+                M.speechToText.start();
+
+                // Switch button state
+                this.style.display = 'none';
+                var stopBtn = card.querySelector('.ai-stt-stop');
+                if (stopBtn) stopBtn.style.display = '';
+                card.classList.add('ai-stt-recording');
+
+                // Show live status in result area
+                var resultDiv = card.querySelector('.ai-stt-result');
+                var resultText = card.querySelector('.ai-stt-result-text');
+                if (resultDiv) resultDiv.style.display = '';
+                if (resultText) resultText.textContent = '🎤 Listening… speak now';
+
+                M.showToast && M.showToast('🎤 Recording started — speak now', 'info');
+            });
+        });
+
+        // STT stop button — stop recording and capture transcription
+        container.querySelectorAll('.ai-stt-stop').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var card = this.closest('.ai-stt-card');
+                if (!card) return;
+
+                // Stop the STT engine
+                if (M.speechToText && M.speechToText.isListening()) {
+                    M.speechToText.stop();
+                }
+
+                // Switch button state
+                this.style.display = 'none';
+                var recordBtn = card.querySelector('.ai-stt-record');
+                if (recordBtn) recordBtn.style.display = '';
+                card.classList.remove('ai-stt-recording');
+
+                // Grab whatever was transcribed from the editor
+                // The STT engine inserts text at cursor — read the latest editor content
+                var resultText = card.querySelector('.ai-stt-result-text');
+                if (resultText && resultText.textContent === '🎤 Listening… speak now') {
+                    resultText.textContent = '⏳ Processing transcription…';
+                    // Give a moment for final STT result to arrive
+                    setTimeout(function () {
+                        if (resultText.textContent === '⏳ Processing transcription…') {
+                            resultText.textContent = '(No speech detected — try again)';
+                        }
+                    }, 3000);
+                }
+
+                M.showToast && M.showToast('🎤 Recording stopped', 'info');
+            });
+        });
+
+        // STT insert button — insert transcription replacing the tag
+        container.querySelectorAll('.ai-stt-insert').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var card = this.closest('.ai-stt-card');
+                var resultText = card ? card.querySelector('.ai-stt-result-text') : null;
+                var text = resultText ? resultText.textContent.trim() : '';
+
+                // Don't insert status messages
+                if (!text || text.startsWith('🎤') || text.startsWith('⏳') || text.startsWith('(')) {
+                    M.showToast && M.showToast('⚠️ No transcription to insert.', 'warning');
+                    return;
+                }
+
+                // Replace the STT tag with the transcribed text
+                var editorText = M.markdownEditor ? M.markdownEditor.value : '';
+                var blocks = M.parseDocgenBlocks(editorText);
+                if (idx < blocks.length) {
+                    var block = blocks[idx];
+                    M.markdownEditor.value = editorText.substring(0, block.start) + text + editorText.substring(block.end);
+                    M.markdownEditor.dispatchEvent(new Event('input'));
+                    M.showToast && M.showToast('📋 Transcription inserted', 'success');
+                }
+            });
+        });
+
+        // STT clear button — clear result
+        container.querySelectorAll('.ai-stt-clear').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var card = this.closest('.ai-stt-card');
+                var resultDiv = card ? card.querySelector('.ai-stt-result') : null;
+                var resultText = card ? card.querySelector('.ai-stt-result-text') : null;
+                if (resultText) resultText.textContent = '';
+                if (resultDiv) resultDiv.style.display = 'none';
+            });
+        });
+
+        // TTS download button — download last generated audio as WAV
+        container.querySelectorAll('.ai-tts-download').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (M.tts && M.tts.downloadAudio) {
+                    M.tts.downloadAudio();
+                } else {
+                    M.showToast && M.showToast('⚠️ TTS engine not loaded.', 'warning');
+                }
+            });
+        });
+
         // Model selector change — trigger download consent for undownloaded local models
         container.querySelectorAll('.ai-card-model-select').forEach(function (sel) {
             sel.addEventListener('change', function () {
@@ -809,7 +1064,7 @@
             });
         });
 
-        // Upload button — 📎 opens file picker for image attachments
+        // Upload button — 📎 opens file picker for image/PDF attachments
         container.querySelectorAll('.ai-upload-btn').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -820,16 +1075,37 @@
                     M.showToast('Maximum ' + MAX_UPLOADS_PER_BLOCK + ' images per block.', 'warning');
                     return;
                 }
+                // Check if this is an OCR card — if so, also accept PDFs
+                var card = this.closest('.ai-placeholder-card');
+                var isOcr = card && card.dataset.aiType === 'OCR';
                 var input = document.createElement('input');
                 input.type = 'file';
-                input.accept = 'image/*';
+                input.accept = isOcr ? 'image/*,application/pdf' : 'image/*';
                 input.multiple = true;
                 input.addEventListener('change', function () {
                     var files = Array.from(input.files || []);
                     var remaining = MAX_UPLOADS_PER_BLOCK - existing.length;
                     files = files.slice(0, remaining);
-                    var processed = 0;
-                    files.forEach(function (file) {
+
+                    // Separate PDFs from images
+                    var pdfFiles = files.filter(function (f) { return f.type === 'application/pdf'; });
+                    var imageFiles = files.filter(function (f) { return f.type !== 'application/pdf'; });
+
+                    var allNames = [];
+                    var totalExpected = imageFiles.length + pdfFiles.length;
+                    var totalProcessed = 0;
+
+                    function checkDone() {
+                        totalProcessed++;
+                        if (totalProcessed === totalExpected) {
+                            addUploadFieldsToBlock(idx, allNames);
+                            var count = (blockUploads.get(idx) || []).length - existing.length;
+                            M.showToast('📎 ' + count + ' page(s) attached', 'success');
+                        }
+                    }
+
+                    // Process image files normally
+                    imageFiles.forEach(function (file) {
                         var reader = new FileReader();
                         reader.onload = function () {
                             var dataUrl = reader.result;
@@ -837,15 +1113,25 @@
                             var mimeType = file.type || 'image/png';
                             if (!blockUploads.has(idx)) blockUploads.set(idx, []);
                             blockUploads.get(idx).push({ data: base64, mimeType: mimeType, name: file.name });
-                            processed++;
-                            if (processed === files.length) {
-                                // Write @upload: lines into the tag text
-                                addUploadFieldsToBlock(idx, files.map(function (f) { return f.name; }));
-                                M.showToast('📎 ' + files.length + ' image(s) attached', 'success');
-                            }
+                            allNames.push(file.name);
+                            checkDone();
                         };
                         reader.readAsDataURL(file);
                     });
+
+                    // Process PDF files — render each page to image via pdf.js
+                    pdfFiles.forEach(function (file) {
+                        renderPdfToImages(file, idx, existing.length).then(function (pageNames) {
+                            allNames = allNames.concat(pageNames);
+                            checkDone();
+                        }).catch(function (err) {
+                            M.showToast('❌ PDF error: ' + err.message, 'error');
+                            checkDone();
+                        });
+                    });
+
+                    // If no files at all, do nothing
+                    if (totalExpected === 0) return;
                 });
                 input.click();
             });
@@ -913,6 +1199,36 @@
                         var closingIdx = tagContent.lastIndexOf('}}');
                         newTagContent = tagContent.substring(0, closingIdx)
                             + '  @lang: ' + newLang + '\n'
+                            + tagContent.substring(closingIdx);
+                    }
+                    M.markdownEditor.value = text.substring(0, block.start) + newTagContent + text.substring(block.end);
+                }
+            });
+        });
+
+        // STT engine selector — sync @engine: field to editor text
+        container.querySelectorAll('.ai-stt-engine-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var newEngine = this.value;
+                // Update data attribute on card
+                var card = this.closest('.ai-stt-card');
+                if (card) card.dataset.sttEngine = newEngine;
+                // Sync @engine: field in editor tag text
+                var text = M.markdownEditor ? M.markdownEditor.value : '';
+                var blocks = parseDocgenBlocks(text);
+                if (idx < blocks.length) {
+                    var block = blocks[idx];
+                    var tagContent = text.substring(block.start, block.end);
+                    var engineRe = /^(\s*)(?:@engine|Engine):\s*.+$/mi;
+                    var newTagContent;
+                    if (engineRe.test(tagContent)) {
+                        newTagContent = tagContent.replace(engineRe, '$1@engine: ' + newEngine);
+                    } else {
+                        // Insert @engine before closing }}
+                        var closingIdx = tagContent.lastIndexOf('}}');
+                        newTagContent = tagContent.substring(0, closingIdx)
+                            + '  @engine: ' + newEngine + '\n'
                             + tagContent.substring(closingIdx);
                     }
                     M.markdownEditor.value = text.substring(0, block.start) + newTagContent + text.substring(block.end);
@@ -1540,6 +1856,7 @@
     M.registerFormattingAction('ocr-tag', function () { insertDocgenTag('OCR'); });
     M.registerFormattingAction('translate-tag', function () { insertDocgenTag('Translate'); });
     M.registerFormattingAction('tts-tag', function () { insertDocgenTag('TTS'); });
+    M.registerFormattingAction('stt-tag', function () { insertDocgenTag('STT'); });
 
     // ==============================================
     // EXPOSE FOR RENDERER

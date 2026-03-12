@@ -16,8 +16,11 @@
 
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
 
+// Model host — downloads ONNX models from textagent HuggingFace org
+const MODEL_ORG_FALLBACK = "onnx-community";
+
 // Model config
-let MODEL_ID = "onnx-community/granite-docling-258M-ONNX";
+let MODEL_ID = "textagent/granite-docling-258M-ONNX";
 let MODEL_LABEL = "Granite Docling 258M";
 
 // Dynamically loaded modules
@@ -60,49 +63,54 @@ async function loadModel() {
             if (adapter) device = "webgpu";
         }
 
-        // 3. Load processor
-        self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} processor...` });
-        processor = await AutoProcessor.from_pretrained(MODEL_ID, {
-            progress_callback: (progress) => {
-                if (progress.status === "progress") {
-                    self.postMessage({
-                        type: "progress",
-                        file: progress.file || "processor",
-                        loaded: progress.loaded || 0,
-                        total: progress.total || 0,
-                        progress: progress.progress || 0,
-                    });
-                } else if (progress.status === "initiate") {
-                    self.postMessage({
-                        type: "status",
-                        message: `Downloading ${progress.file || "model"}...`,
-                    });
-                }
-            },
-        });
+        // Progress callback factory
+        const progressCb = (label) => (progress) => {
+            if (progress.status === "progress") {
+                self.postMessage({
+                    type: "progress",
+                    file: progress.file || label,
+                    loaded: progress.loaded || 0,
+                    total: progress.total || 0,
+                    progress: progress.progress || 0,
+                });
+            } else if (progress.status === "initiate") {
+                self.postMessage({
+                    type: "status",
+                    message: `Downloading ${progress.file || label}...`,
+                });
+            }
+        };
 
-        // 4. Load model
-        self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...` });
-        model = await AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
-            dtype: "fp32",
-            device: device,
-            progress_callback: (progress) => {
-                if (progress.status === "progress") {
-                    self.postMessage({
-                        type: "progress",
-                        file: progress.file || "model",
-                        loaded: progress.loaded || 0,
-                        total: progress.total || 0,
-                        progress: progress.progress || 0,
-                    });
-                } else if (progress.status === "initiate") {
-                    self.postMessage({
-                        type: "status",
-                        message: `Downloading ${progress.file || "model"}...`,
-                    });
-                }
-            },
-        });
+        // Helper: load processor + model from current MODEL_ID
+        async function loadFromHost() {
+            self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} processor...` });
+            processor = await AutoProcessor.from_pretrained(MODEL_ID, {
+                progress_callback: progressCb("processor"),
+            });
+
+            self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...` });
+            model = await AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
+                dtype: {
+                    embed_tokens: "fp16",
+                    vision_encoder: "fp32",
+                    decoder_model_merged: "fp32",
+                },
+                device: device,
+                progress_callback: progressCb("model"),
+            });
+        }
+
+        // 3. Load with fallback
+        try {
+            await loadFromHost();
+        } catch (primaryErr) {
+            console.warn(`textagent model failed: ${primaryErr.message}. Falling back to ${MODEL_ORG_FALLBACK}…`);
+            self.postMessage({ type: "status", message: `Falling back to ${MODEL_ORG_FALLBACK} models…` });
+            MODEL_ID = MODEL_ID.replace('textagent/', MODEL_ORG_FALLBACK + '/');
+            processor = null;
+            model = null;
+            await loadFromHost();
+        }
 
         self.postMessage({ type: "loaded", device: device });
     } catch (error) {
@@ -121,7 +129,7 @@ async function loadModel() {
  * @param {boolean} options.doImageSplitting - Split image into patches for more accuracy
  * @param {string} options.messageId
  */
-async function processDocument({ imageData, outputFormat = 'docling', doImageSplitting = false, messageId }) {
+async function processDocument({ imageData, outputFormat = 'docling', doImageSplitting = true, mimeType = 'image/png', messageId }) {
     if (!model || !processor) {
         self.postMessage({
             type: "error",
@@ -134,8 +142,16 @@ async function processDocument({ imageData, outputFormat = 'docling', doImageSpl
     try {
         self.postMessage({ type: "status", message: "Processing document...", messageId });
 
+        // Ensure imageData is a proper data URL (uploads store raw base64 without prefix)
+        let imageUrl = imageData;
+        if (imageData && !imageData.startsWith('data:') && !imageData.startsWith('http')) {
+            // Raw base64 — reconstruct data URL
+            const mime = mimeType || 'image/png';
+            imageUrl = `data:${mime};base64,${imageData}`;
+        }
+
         // Load image
-        const image = await load_image(imageData);
+        const image = await load_image(imageUrl);
 
         // Build prompt based on output format
         let promptText = "Convert this page to docling.";
@@ -165,13 +181,31 @@ async function processDocument({ imageData, outputFormat = 'docling', doImageSpl
         });
 
         // Generate with streaming
+        let lastToken = '';
+        let repeatCount = 0;
+        const MAX_REPEATS = 50; // Stop if same token repeats 50+ times
+        let shouldStop = false;
+
         const generated_ids = await model.generate({
             ...inputs,
             max_new_tokens: 4096,
+            do_sample: false,
+            repetition_penalty: 1.5,
             streamer: new TextStreamer(processor.tokenizer, {
                 skip_prompt: true,
                 skip_special_tokens: false,
                 callback_function: (token) => {
+                    // Detect degeneration loops
+                    if (token === lastToken) {
+                        repeatCount++;
+                        if (repeatCount >= MAX_REPEATS) {
+                            // Don't stream garbage tokens
+                            return;
+                        }
+                    } else {
+                        lastToken = token;
+                        repeatCount = 0;
+                    }
                     self.postMessage({ type: "token", token: token, messageId });
                 },
             }),
@@ -218,10 +252,18 @@ self.addEventListener("message", async (event) => {
         case "generate": {
             const attachments = event.data.attachments || [];
             const imageAtt = attachments.find(a => a.type === 'image');
+            // Read OCR mode from the context field (set by ai-docgen-generate.js for doc models)
+            const ocrMode = event.data.context || 'text';
+            // Map OCR card mode to Docling outputFormat
+            let outputFormat = 'markdown';
+            if (ocrMode === 'text') outputFormat = 'text';
+            else if (ocrMode === 'svg') outputFormat = 'markdown'; // Docling doesn't do SVG — use markdown
+
             if (imageAtt) {
                 await processDocument({
                     imageData: imageAtt.data,
-                    outputFormat: 'markdown',
+                    mimeType: imageAtt.mimeType || 'image/png',
+                    outputFormat,
                     doImageSplitting: false,
                     messageId,
                 });

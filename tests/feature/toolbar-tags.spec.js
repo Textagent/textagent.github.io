@@ -93,6 +93,15 @@ test.describe('Toolbar Tag Insertion', () => {
         expect(count).toBe(1);
     });
 
+    test('STT tag inserts {{@STT: ...}} once', async ({ page }) => {
+        await clickAction(page, 'stt-tag');
+        const val = await editorValue(page);
+        expect(val).toContain('{{@STT:');
+        expect(val).toContain('}}');
+        const count = (val.match(/\{\{@?STT:/g) || []).length;
+        expect(count).toBe(1);
+    });
+
     // ═══════════════════════════════════════════
     // API GROUP
     // ═══════════════════════════════════════════

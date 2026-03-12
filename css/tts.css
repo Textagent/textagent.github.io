@@ -176,3 +176,209 @@
 [data-theme="dark"] .ai-tts-stop {
     color: #f87171 !important;
 }
+
+/* ============================================
+   TTS Download Button
+   ============================================ */
+
+.ai-tts-download {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: #6366f1 !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+.ai-tts-download:hover {
+    background: rgba(99, 102, 241, 0.12) !important;
+}
+
+[data-theme="dark"] .ai-tts-download {
+    color: #818cf8 !important;
+}
+
+/* ============================================
+   STT Card — Speech to Text
+   ============================================ */
+
+/* STT card accent — orange/amber */
+.ai-stt-card {
+    border-left: 3px solid #f59e0b !important;
+}
+
+.ai-stt-card .ai-placeholder-icon {
+    font-size: 1.1em;
+}
+
+.ai-stt-card .ai-placeholder-label {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* STT model badge — reuse TTS badge with orange tint */
+.ai-stt-card .ai-tts-model-badge {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+/* STT lang selector — amber tint */
+.ai-stt-card .ai-translate-lang-select {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+.ai-stt-card .ai-translate-lang-select:hover {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.ai-stt-card .ai-translate-lang-select:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+/* STT engine selector */
+.ai-stt-engine-select {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 6px;
+    color: inherit;
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    min-width: 130px;
+    font-weight: 500;
+}
+
+.ai-stt-engine-select:hover {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.ai-stt-engine-select:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="dark"] .ai-stt-engine-select {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+/* Record / Stop buttons */
+.ai-stt-record {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: #f59e0b !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.ai-stt-record:hover {
+    background: rgba(245, 158, 11, 0.12) !important;
+}
+
+.ai-stt-stop {
+    font-weight: 600;
+    font-size: 0.72rem;
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.ai-stt-stop:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Recording state — pulse animation */
+.ai-stt-recording {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    animation: stt-card-pulse 1s ease-in-out infinite;
+}
+
+@keyframes stt-card-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15); }
+    50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3); }
+}
+
+/* STT result area */
+.ai-stt-result {
+    padding: 8px 12px;
+    border-top: 1px solid rgba(245, 158, 11, 0.15);
+    font-size: 0.82rem;
+}
+
+.ai-stt-result-text {
+    padding: 6px 0;
+    min-height: 24px;
+    line-height: 1.5;
+    color: var(--text-color, #24292f);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ai-stt-result-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.ai-stt-insert {
+    color: #10b981 !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    font-weight: 600;
+    font-size: 0.72rem;
+}
+
+.ai-stt-insert:hover {
+    background: rgba(16, 185, 129, 0.12) !important;
+}
+
+.ai-stt-clear {
+    color: #6b7280 !important;
+    font-size: 0.72rem;
+}
+
+.ai-stt-clear:hover {
+    background: rgba(107, 114, 128, 0.1) !important;
+}
+
+/* Toolbar STT button accent */
+.fmt-stt-btn {
+    color: #f59e0b !important;
+    font-size: 0.7rem !important;
+}
+
+/* Dark mode — STT */
+[data-theme="dark"] .ai-stt-card {
+    border-left-color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .ai-stt-card .ai-placeholder-label {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .ai-stt-card .ai-tts-model-badge {
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.25);
+}
+
+[data-theme="dark"] .ai-stt-card .ai-translate-lang-select {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .ai-stt-record {
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .ai-stt-stop {
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .ai-stt-result-text {
+    color: var(--text-color, #e6edf3);
+}
