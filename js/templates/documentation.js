@@ -16,24 +16,31 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Editor** | Live preview · Split/Editor/Preview modes · Sync scrolling · Formatting toolbar · Find \\& Replace (regex) · Word wrap toggle · Draggable resize divider · Clear All / Clear Selection buttons |\n' +
       '| **Writing Modes** | Zen mode (distraction-free) · Focus mode (dimmed paragraphs) · Dark mode · 6 preview themes (GitHub, GitLab, Notion, Dracula, Solarized, Evergreen) |\n' +
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
-      '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection |\n' +
-      '| **🏷️ AI Document Tags** | `{{@AI:}}` text generation · `{{Think:}}` deep reasoning · `{{@Image:}}` image generation · `{{@Memory:}}` context attachment (SQLite FTS5 search, `@use:` field) · `{{@Agent:}}` multi-step pipeline — `@` prefix on all tags and metadata fields (`@name`, `@use`, `@think`, `@search`, `@prompt`, `@step`) · per-card model selector · concurrent block operations |\\n' +
+      '| **🎬 Media Embedding** | Video playback via `![alt](video.mp4)` syntax · YouTube/Vimeo auto-embeds · `embed` code block for responsive media grids (`cols=1-4`, `height=N`) · Video.js v10 with native fallback · Website URLs as rich link preview cards |\n' +
+      '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection; smart model loading UX (cache vs download, delete cached models) |\n' +
+      '| **🏷️ AI Document Tags** | `{{@AI:}}` text · `{{@Think:}}` reasoning · `{{@Image:}}` images · `{{@Memory:}}` context · `{{@Agent:}}` pipelines · `{{@OCR:}}` image-to-text (Text/Math/Table, Granite Docling, Florence-2) · `{{@TTS:}}` speech · `{{@STT:}}` dictation · `{{@Translate:}}` translation · `{{@Game:}}` game builder — `@model:` per-card persistence · `@upload:` image/PDF · `@prompt:` editable textareas · concurrent blocks |\n' +
       '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
       '| **🔗 Agent Flow** | `{{@Agent:}}` multi-step pipelines — chain @step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
       '| **🐧 Linux Terminal** | `{{Linux:}}` tag — Terminal mode (opens full Debian Linux via WebVM) · Compile \\& Run mode (`Language:` + `Script:`) compiles 25+ languages via Judge0 CE with inline output and execution stats |\n' +
       '| **🔀 Template Variables** | `$(varName)` substitution · 7 built-in globals · Auto-detect mode · ⚡ Vars button |\n' +
-      '| **🎤 Voice** | Speech-to-Text dictation with Markdown voice commands (multi-language) |\n' +
-      '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox · ⚡ JavaScript · 🗄️ SQL (SQLite) · 🐧 Compile \\& Run (25+ compiled languages via Judge0 CE) |\n' +
-      '| **Import** | MD · DOCX · XLSX · CSV · HTML · JSON · XML · PDF |\n' +
-      '| **Export** | Markdown · Self-contained styled HTML (all CSS inlined, theme preserved) · PDF (smart page-breaks, shared rendering pipeline) · LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |\n' +
-      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links · ✉️ Email to Self (send share link + .md attachment to inbox) |\n' +
+      '| **🎤 Voice Dictation** | Dual-engine STT: Voxtral Mini 3B (WebGPU, 13 languages) or Whisper Large V3 Turbo (WASM fallback) with consensus scoring · 50+ Markdown voice commands · Auto-punctuation via AI refinement |\n' +
+      '| **🔊 Text-to-Speech** | Hybrid Kokoro TTS — English/Chinese via Kokoro 82M v1.1-zh (~80 MB, WebWorker) · Japanese \\& 10+ languages via Web Speech API · Hover text → 🔊 pronunciation · ⬇ Save as WAV |\n' +
+      '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox (`html-autorun` for widgets/quizzes) · ⚡ JavaScript · 🗄️ SQL (SQLite) · 🐧 Compile \\& Run (25+ languages via Judge0 CE) |\n' +
+      '| **Import** | MD · DOCX · XLSX/XLS · CSV · HTML · JSON · XML · PDF — drag \\& drop or click to import |\n' +
+      '| **Export** | Markdown · Self-contained styled HTML (all CSS inlined, theme preserved) · PDF (smart page-breaks) · LLM Memory (5 formats + shareable link) |\n' +
+      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links · ✉️ Email to Self |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
-      '| **❓ Help Mode** | Interactive learning mode — click ❓ Help to highlight all buttons · Click any button for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 dedicated demo videos mapped |\n' +
-      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + window.MDView.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · 📂 Disk-Backed Workspace (File System Access API, .md read/write, autosave, auto-reconnect) · Compact header with Quick Action Bar (Files, Search, TOC, Share, Copy, Tools dropdown with Presentation/Zen/Word Wrap/Focus/Voice/Dark Mode/Theme, AI, Model, Upload, Help) |\n' +
-      '| **▶ Run All** | One-click notebook execution — runs all code blocks, AI tags, API calls, and Linux compiles in document order · 11 runtime adapters · Progress bar with abort · Per-block status badges · SQLite shared context store for cross-block data |\n' +
-      '| **Dev Tooling** | ESLint + Prettier (lint, format:check) · 191 Playwright tests (smoke, feature, integration, startup, export, persistence, exec engine) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
+      '| **🎮 Game Builder** | `{{@Game:}}` tag — AI-generated games (Canvas 2D / Three.js / P5.js) or pre-built via `@prebuilt:` (chess, snake, shooter, pong, breakout, maths quiz) · 📋 Import HTML · 📥 Export standalone · ⛶ Fullscreen |\n' +
+      '| **📈 Finance Dashboard** | Stock/crypto/index templates with live TradingView charts · Dynamic grid via `data-var-prefix` · Configurable chart range, interval, EMA period · Interactive toggle buttons |\n' +
+      '| **❓ Help Mode** | Interactive learning — click ❓ Help to highlight all buttons · Click any for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 demo videos |\n' +
+      '| **💾 Disk Workspace** | Folder-backed storage via File System Access API · .md files read/written to disk · Autosave with 💾 indicator · Refresh from disk · Auto-reconnect on reload |\n' +
+      '| **✉️ Email to Self** | Send documents to inbox from share modal · .md attachment + share link · Google Apps Script (free, 100/day) · Email persisted in localStorage |\n' +
+      '| **🧠 Context Memory** | `{{@Memory:}}` tag — SQLite FTS5 full-text search · Heading-aware chunking · Three storage modes (browser, disk, external) · `@use:` field for AI/Think/Agent context retrieval |\n' +
+      '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + window.MDView.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar |\n' +
+      '| **▶ Run All** | One-click notebook execution — runs all code blocks, AI tags, API calls, and Linux compiles in document order · 11 runtime adapters · Progress bar with abort · Per-block status badges · SQLite shared context store |\n' +
+      '| **Dev Tooling** | ESLint + Prettier · 484 Playwright tests (smoke, feature, integration, dev, regression, performance, quality, security) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -188,7 +195,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| `{{Think: prompt}}` | Deep reasoning / analysis | Comparisons, evaluations, strategic analysis |\n' +
       '| `{{Image: prompt}}` | Generate images (Gemini Imagen) | Product mockups, illustrations, diagrams |\n' +
       '| `{{Memory: Name: id}}` | Attach local context | Workspace files, external folders |\n\n' +
-      '**Use: field** — add `Use: workspace, my-docs` to any `{{AI:}}`, `{{Think:}}`, or `{{Agent:}}` tag to auto-retrieve relevant context from indexed memory sources.\n\n' +
+      '**Key metadata fields:** `@model:` persists selected model per card · `@upload:` attaches images/PDFs for multimodal analysis · `@use: workspace, my-docs` auto-retrieves relevant context from indexed memory sources · `@prompt:` editable AI instruction (bare text = static label) · `@engine:` / `@lang:` / `@prebuilt:` for specialized tags.\n\n' +
       '**How it works:**\n' +
       '1. Write a tag like `{{AI: Write an executive summary for a SaaS product}}`\n' +
       '2. Click **Generate** on the placeholder card (or **Fill All** for all tags)\n' +
@@ -343,7 +350,11 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Qwen 3.5 Large (4B)** | 🏠 Local (WebGPU/WASM) — ~2.5 GB, high-end | ⚡ Best quality |\n' +
       '| **Gemini 3.1 Flash Lite** | ☁️ Cloud (Google free tier) | 🚀 Very Fast |\n' +
       '| **Llama 3.3 70B** | ☁️ Cloud via Groq | ⚡ Ultra Fast |\n' +
-      '| **Auto · Best Free** | ☁️ Cloud via OpenRouter | 🧠 Powerful |\n\n' +
+      '| **Auto · Best Free** | ☁️ Cloud via OpenRouter | 🧠 Powerful |\n' +
+      '| **Kokoro TTS (82M)** | 🏠 Local (WebWorker) — ~80 MB | 🔊 Speech |\n' +
+      '| **Voxtral STT (3B)** | 🏠 Local (WebGPU) — ~2.7 GB | 🎤 Dictation |\n' +
+      '| **Granite Docling (258M)** | 🏠 Local (WebGPU/WASM) — ~500 MB | 📄 Document OCR |\n' +
+      '| **Florence-2 (230M)** | 🏠 Local (WebGPU/WASM) — ~230 MB | 📷 Vision OCR |\n\n' +
       '**AI Capabilities:**\n' +
       '- 📝 Summarize documents (agent-style chunked processing)\n' +
       '- ✍️ Improve writing style and grammar\n' +
@@ -360,7 +371,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '> Click the **🤖 AI** button in the toolbar to open the assistant panel. Select text and right-click for quick AI actions via the enhanced context menu.\n\n' +
       '---\n\n' +
       '## 🎤 Voice Dictation (Speech-to-Text)\n\n' +
-      'Dictate your markdown hands-free with **voice commands**:\n\n' +
+      'Dictate your markdown hands-free with **dual-engine speech recognition** — Voxtral Mini 3B (WebGPU, primary, 13 languages, ~2.7 GB) or Whisper Large V3 Turbo (WASM fallback, ~800 MB) with consensus scoring. Download consent popup with model info before first use.\n\n' +
       '| Say this | Gets inserted |\n' +
       '|:---------|:--------------|\n' +
       '| "new line" | Line break |\n' +
@@ -503,6 +514,20 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Desktop app (Neutralino.js)\n' +
       '- [x] Multi-file workspace sidebar (Ctrl+B)\n' +
       '- [x] Compact header with collapsible Tools dropdown\n' +
+      '- [x] Media embedding (video, YouTube, Vimeo, embed grid, link preview cards)\n' +
+      '- [x] Text-to-Speech (Kokoro TTS engine + Web Speech API fallback)\n' +
+      '- [x] OCR tag — image-to-text (Granite Docling + Florence-2)\n' +
+      '- [x] STT tag — in-preview speech-to-text dictation blocks\n' +
+      '- [x] Translate tag — translation with TTS pronunciation\n' +
+      '- [x] Game Builder — AI-generated \\& pre-built games\n' +
+      '- [x] Finance Dashboard — live TradingView charts\n' +
+      '- [x] Disk-Backed Workspace (File System Access API)\n' +
+      '- [x] Email to Self — share to inbox\n' +
+      '- [x] Context Memory — workspace intelligence (SQLite FTS5)\n' +
+      '- [x] Run All notebook execution engine\n' +
+      '- [x] @model: per-card model persistence\n' +
+      '- [x] Smart model loading UX (cache/download detection, delete cached models)\n' +
+      '- [x] Dual-engine voice dictation (Voxtral + Whisper)\n' +
       '- [ ] Your feature suggestion here!\n\n' +
       '---\n\n' +
       '## 😀 Emoji Support\n\n' +
@@ -519,6 +544,78 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- **Sync Scrolling** — Editor and preview scroll together\n' +
       '- **Split / Editor / Preview** — Choose your view mode with draggable resize divider\n' +
       '- **Formatting Toolbar** — Bold, italic, strikethrough, heading, link, image, code, lists, table, undo/redo\n\n' +
+      '---\n\n' +
+      '## 🎬 Media Embedding\n\n' +
+      'Embed videos and websites directly in your markdown:\n\n' +
+      '- **Video playback** — use standard `![alt](video.mp4)` image syntax for `.mp4`, `.webm`, `.ogg`, `.mov`, `.m4v` files\n' +
+      '- **YouTube / Vimeo** — paste any YouTube or Vimeo URL and it auto-embeds as a privacy-enhanced iframe\n' +
+      '- **Embed grid** — use an `embed` code block with `cols=1-4` and `height=N` for responsive media grids\n' +
+      '- **Link previews** — website URLs render as rich link preview cards with favicon, domain, and "Open ↗" button\n' +
+      '- **Video.js v10** — lazy-loaded from CDN with native `<video>` fallback\n\n' +
+      '---\n\n' +
+      '## 🔊 Text-to-Speech (TTS)\n\n' +
+      'Hear any text read aloud — hover over preview text and click 🔊:\n\n' +
+      '| Engine | Languages | Size |\n' +
+      '|:-------|:----------|:-----|\n' +
+      '| **Kokoro 82M v1.1-zh** | 🏠 English + Chinese (ONNX, WebWorker) | ~80 MB |\n' +
+      '| **Web Speech API** | Japanese \\& 10+ languages (browser fallback) | 0 MB |\n\n' +
+      '**Features:** voice auto-selection by language · ⬇ Save button to download generated audio as WAV file · `{{@TTS:}}` tag for per-card TTS playback with language selector\n\n' +
+      '---\n\n' +
+      '## 📷 OCR — Image to Text\n\n' +
+      'Extract text from images and PDFs using the `{{@OCR:}}` tag:\n\n' +
+      '- **Three modes:** Text (general OCR), Math (equation extraction), Table (structured data)\n' +
+      '- **Two models:** Granite Docling 258M (~500 MB) or Florence-2 230M (~230 MB)\n' +
+      '- **📎 Upload** images or PDFs — PDFs rendered page-by-page via pdf.js (2x scale, max 3 pages)\n' +
+      '- Results appear inline with accept/reject controls\n\n' +
+      '---\n\n' +
+      '## 🎤 STT Tag — In-Preview Dictation\n\n' +
+      'Add `{{@STT:}}` tags for speech-to-text recording blocks directly in your document:\n\n' +
+      '- **Engine selector:** Whisper V3 Turbo / Voxtral Mini 3B / Web Speech API\n' +
+      '- **11 languages** with automatic detection\n' +
+      '- **Record / Stop / Insert / Clear** buttons with amber-accented UI and recording pulse animation\n' +
+      '- Transcribed text inserts directly into the document\n\n' +
+      '---\n\n' +
+      '## 🌐 Translation\n\n' +
+      'Translate text with the `{{@Translate:}}` tag:\n\n' +
+      '- **Target language selector** — pick any destination language\n' +
+      '- **Integrated TTS** — hear pronunciation of the translated text\n' +
+      '- **Cloud model routing** — uses the best available AI model\n\n' +
+      '---\n\n' +
+      '## 🎮 Game Builder\n\n' +
+      'Build and play games directly in your markdown with the `{{@Game:}}` tag:\n\n' +
+      '**Two modes:**\n' +
+      '1. **AI-generated** — describe a game and pick an engine (Canvas 2D / Three.js / P5.js)\n' +
+      '2. **Pre-built** — use `@prebuilt:` for instant games: chess, snake, shooter, pong, breakout, maths quiz\n\n' +
+      '**Features:** 📋 Import button for pasting/uploading external HTML game code · 📥 Export as standalone HTML · ⛶ Fullscreen mode · Per-card model picker\n\n' +
+      '> [!TIP]\n' +
+      '> Check out the **Games** category in Templates for 6 playable pre-built games!\n\n' +
+      '---\n\n' +
+      '## 📈 Finance Dashboard\n\n' +
+      'Create live stock, crypto, and market dashboards with **TradingView charts**:\n\n' +
+      '- **Dynamic grid** — add/remove tickers in the `@variables` table, grid auto-adjusts\n' +
+      '- **Configurable** — chart range (1M/1Y/3Y), interval (D/W/M), EMA period (52D/52W/52M)\n' +
+      '- **Interactive buttons** — toggle range and EMA period in the rendered dashboard\n' +
+      '- **Three templates** — Stock Watchlist, Crypto Tracker, Market Overview\n\n' +
+      '> [!TIP]\n' +
+      '> Check out the **Finance** category in Templates for ready-made dashboards!\n\n' +
+      '---\n\n' +
+      '## 💾 Disk-Backed Workspace\n\n' +
+      'Work directly with files on your local disk via the **File System Access API**:\n\n' +
+      '- Click **Open Folder** in the sidebar to connect a local folder\n' +
+      '- `.md` files are read/written directly to disk with debounced autosave\n' +
+      '- "💾 Saved to disk" indicator confirms writes\n' +
+      '- **Refresh from disk** for external edits · **Disconnect** to revert to localStorage\n' +
+      '- **Auto-reconnect** on page reload via IndexedDB-stored handles\n' +
+      '- Unified action modal for rename/duplicate/delete with confirmation\n\n' +
+      '> [!NOTE]\n' +
+      '> Disk workspace requires Chromium-based browsers (Chrome, Edge). The button is hidden in unsupported browsers.\n\n' +
+      '---\n\n' +
+      '## ✉️ Email to Self\n\n' +
+      'Send documents directly to your inbox from the **share modal**:\n\n' +
+      '1. Generate a share link\n' +
+      '2. Enter your email in the "Email to Self" section\n' +
+      '3. The document is sent with the share link and `.md` file attached\n\n' +
+      'Powered by Google Apps Script (free, 100 emails/day). Your email is saved in localStorage for convenience.\n\n' +
       '---\n\n' +
       '## \ud83d\udee1\ufe0f Security \\& Privacy\n\n' +
       '- **100% Client-Side** \u2014 No server processing, no data collection\n' +
