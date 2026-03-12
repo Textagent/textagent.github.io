@@ -50,6 +50,23 @@ self.addEventListener('message', async (e) => {
                             loaded: progress.loaded,
                             total: progress.total,
                             percent: Math.round((progress.loaded / progress.total) * 100),
+                            source: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
+                        });
+                    } else if (progress.status === 'initiate') {
+                        self.postMessage({
+                            type: 'status',
+                            status: 'loading',
+                            message: `Loading ${progress.file || 'model'}...`,
+                            source: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
+                            loadingPhase: 'initiate',
+                        });
+                    } else if (progress.status === 'done') {
+                        self.postMessage({
+                            type: 'status',
+                            status: 'loading',
+                            message: `Loaded ${progress.file || 'model'} ✓`,
+                            source: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
+                            loadingPhase: 'done',
                         });
                     }
                 },

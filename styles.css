@@ -4632,6 +4632,71 @@ body.focus-mode #markdown-editor {
   box-shadow: none;
 }
 
+/* Progress source location */
+.ai-progress-source {
+  font-size: 11.5px;
+  color: var(--text-color);
+  opacity: 0.65;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(102, 126, 234, 0.06);
+  border: 1px solid rgba(102, 126, 234, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ai-progress-source i {
+  flex-shrink: 0;
+  color: #667eea;
+}
+
+[data-theme="dark"] .ai-progress-source i {
+  color: #a5b4fc;
+}
+
+.ai-progress-source code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-color);
+  opacity: 0.85;
+}
+
+/* Danger button (model deletion) */
+.ai-consent-btn-danger {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  flex: 0 0 auto;
+  padding: 10px 14px;
+}
+
+.ai-consent-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.ai-consent-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .ai-consent-btn-danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+[data-theme="dark"] .ai-consent-btn-danger:hover {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
 /* --- Editor Context Menu --- */
 .ai-context-menu {
   position: fixed;

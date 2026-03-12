@@ -30,6 +30,8 @@
   const aiProgressBar = document.getElementById('ai-progress-bar');
   const aiProgressStatus = document.getElementById('ai-progress-status');
   const aiProgressDetail = document.getElementById('ai-progress-detail');
+  const aiProgressSource = document.getElementById('ai-progress-source');
+  const aiConsentDelete = document.getElementById('ai-consent-delete');
   const aiDeviceLabel = document.getElementById('ai-device-label');
   const aiDeviceDetail = document.getElementById('ai-device-detail');
   const aiContextMenu = document.getElementById('ai-context-menu');
@@ -450,8 +452,16 @@
 
     aiConsentModal.style.display = 'flex';
     aiProgressSection.style.display = 'none';
+    if (aiProgressSource) aiProgressSource.style.display = 'none';
     aiConsentDownload.disabled = false;
     aiConsentDownload.innerHTML = '<i class="bi bi-download me-1"></i> Download & Enable AI';
+
+    // Show delete button if model was previously downloaded
+    const consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
+    const hasConsent = localStorage.getItem(consentKey);
+    if (aiConsentDelete) {
+      aiConsentDelete.style.display = hasConsent ? '' : 'none';
+    }
   }
 
   function hideAiConsentDialog() {
@@ -463,6 +473,112 @@
   aiConsentModal.addEventListener('click', (e) => {
     if (e.target === aiConsentModal) hideAiConsentDialog();
   });
+
+  // --- Delete Model Cache ---
+  /**
+   * Delete cached model files from browser storage.
+   * Clears Cache API entries matching the model prefix,
+   * removes consent flag, and resets worker state.
+   */
+  async function deleteModelCache(modelId) {
+    modelId = modelId || currentAiModel;
+    const cfg = _models[modelId];
+    if (!cfg || !cfg.isLocal) return;
+
+    const localModelId = cfg.localModelId || '';
+    // Extract org/model pattern for matching cache keys
+    // e.g. 'textagent/Qwen3.5-0.8B-ONNX' → match cache entries containing this path
+    const modelPathSegment = localModelId.replace(/^.*\/\//, '');
+
+    // 1. Terminate any active worker
+    const ls = getLocalState(modelId);
+    if (ls.worker) {
+      ls.worker.terminate();
+      ls.worker = null;
+    }
+    ls.loaded = false;
+
+    // 2. Clear Cache API entries (Transformers.js uses Cache API)
+    let cacheCleared = 0;
+    try {
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        // Transformers.js typically uses cache names like 'transformers-cache'
+        // or stores in the default cache
+        const cache = await caches.open(cacheName);
+        const requests = await cache.keys();
+        for (const req of requests) {
+          if (req.url.includes(modelPathSegment) || req.url.includes(localModelId)) {
+            await cache.delete(req);
+            cacheCleared++;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Cache API cleanup error:', e);
+    }
+
+    // 3. Clear OPFS (Origin Private File System) if available
+    try {
+      if (navigator.storage && navigator.storage.getDirectory) {
+        const root = await navigator.storage.getDirectory();
+        // Attempt to remove the model directory from OPFS
+        // Transformers.js may store under 'hub' or the model ID
+        const dirsToTry = ['hub'];
+        for (const dirName of dirsToTry) {
+          try {
+            const dir = await root.getDirectoryHandle(dirName, { create: false });
+            // Walk entries and remove matching model dirs
+            for await (const [name] of dir.entries()) {
+              if (name.includes(modelPathSegment.replace('/', '--')) || name.includes(localModelId.replace('/', '--'))) {
+                await dir.removeEntry(name, { recursive: true });
+                cacheCleared++;
+              }
+            }
+          } catch (_) { /* dir doesn't exist */ }
+        }
+      }
+    } catch (e) {
+      console.warn('OPFS cleanup error:', e);
+    }
+
+    // 4. Clear consent flags
+    localStorage.removeItem(M.KEYS.AI_CONSENTED_PREFIX + modelId);
+    if (modelId === 'qwen-local') localStorage.removeItem(M.KEYS.AI_CONSENTED);
+
+    return cacheCleared;
+  }
+
+  if (aiConsentDelete) {
+    aiConsentDelete.addEventListener('click', async () => {
+      const targetModel = _consentTargetModel || currentAiModel;
+      const cfg = _models[targetModel];
+      const modelName = (cfg && cfg.dropdownName) || 'Model';
+
+      // Confirm before deleting
+      aiConsentDelete.disabled = true;
+      aiConsentDelete.innerHTML = '<span class="ai-status-spinner"></span> Deleting...';
+
+      try {
+        const cleared = await deleteModelCache(targetModel);
+        M.showToast('🗑️ ' + modelName + ' deleted (' + cleared + ' cache entries cleared)', 'success');
+      } catch (err) {
+        M.showToast('❌ Failed to delete model: ' + err.message, 'error');
+      }
+
+      // Reset dialog state
+      hideAiConsentDialog();
+      if (aiConsentDelete) {
+        aiConsentDelete.disabled = false;
+        aiConsentDelete.innerHTML = '<i class="bi bi-trash3 me-1"></i> Delete Model';
+      }
+
+      // Update status bar
+      if (currentAiModel === targetModel) {
+        addAiStatusBar('loading', modelName + ' deleted — click AI button to re-download');
+      }
+    });
+  }
 
   aiConsentDownload.addEventListener('click', () => {
     const targetModel = _consentTargetModel || currentAiModel;
@@ -532,12 +648,21 @@
 
     // Track download progress per file
     const fileProgress = {};
+    // Track whether we received real download bytes (to detect cache vs download)
+    let _hasDownloadProgress = false;
+    let _modelSource = localModelOnnxId;
+    // Track initiate/done pairs per file (initiate→done without progress = cached)
+    const _filePhases = {};
 
     worker.addEventListener('message', (e) => {
       const msg = e.data;
 
       switch (msg.type) {
         case 'progress': {
+          // We received real download bytes — this is a network download, not cache
+          _hasDownloadProgress = true;
+          if (msg.source) _modelSource = msg.source;
+
           // Track per-file progress
           fileProgress[msg.file] = {
             loaded: msg.loaded || 0,
@@ -559,7 +684,14 @@
 
               // Update consent modal progress (if visible)
               if (aiProgressBar) aiProgressBar.style.width = overallPercent + '%';
-              if (aiProgressStatus) aiProgressStatus.textContent = `Downloading model... ${overallPercent}%`;
+              const statusPrefix = '⬇️ Downloading';
+              if (aiProgressStatus) aiProgressStatus.textContent = `${statusPrefix} model... ${overallPercent}%`;
+
+              // Show source location
+              if (aiProgressSource && _modelSource) {
+                aiProgressSource.style.display = '';
+                aiProgressSource.innerHTML = '<i class="bi bi-cloud-download me-1"></i> From: <code>huggingface.co/' + _modelSource + '</code>';
+              }
 
               const mbLoaded = (totalLoaded / 1024 / 1024).toFixed(1);
               const mbTotal = (totalSize / 1024 / 1024).toFixed(1);
@@ -567,7 +699,7 @@
 
               // Also update inline progress in AI panel
               const dlLabel = (cfg && cfg.dropdownName) || 'Qwen 3.5';
-              updateAiInlineProgress(overallPercent, `Downloading ${dlLabel}... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
+              updateAiInlineProgress(overallPercent, `⬇️ Downloading ${dlLabel}... ${overallPercent}%`, `${mbLoaded} / ${mbTotal} MB`);
 
               setTimeout(() => { initAiWorker._progressThrottle = false; }, 200);
             });
@@ -575,11 +707,43 @@
           break;
         }
 
-        case 'status':
+        case 'status': {
+          if (msg.source) _modelSource = msg.source;
+
+          // Detect cache vs download via initiate/done pairs
+          if (msg.loadingPhase === 'initiate') {
+            const fname = (msg.message || '').replace('Loading ', '').replace('...', '').trim();
+            if (fname) _filePhases[fname] = 'initiate';
+          } else if (msg.loadingPhase === 'done') {
+            const fname = (msg.message || '').replace('Loaded ', '').replace(' ✓', '').trim();
+            // If file went initiate→done without any progress: it was cached
+            if (fname && _filePhases[fname] === 'initiate' && !_hasDownloadProgress) {
+              // Show cache info
+              if (aiProgressStatus) aiProgressStatus.textContent = '📦 Loading from cache...';
+              if (aiProgressSource && _modelSource) {
+                aiProgressSource.style.display = '';
+                aiProgressSource.innerHTML = '<i class="bi bi-hdd me-1"></i> Cached: <code>' + _modelSource + '</code>';
+              }
+              addAiStatusBar('loading', '📦 Loading ' + modelLabel + ' from cache...');
+              break;
+            }
+          }
+
+          // Show source info for initiate messages
+          if (msg.loadingPhase === 'initiate' && aiProgressSource && _modelSource) {
+            aiProgressSource.style.display = '';
+            if (_hasDownloadProgress) {
+              aiProgressSource.innerHTML = '<i class="bi bi-cloud-download me-1"></i> From: <code>huggingface.co/' + _modelSource + '</code>';
+            } else {
+              aiProgressSource.innerHTML = '<i class="bi bi-hdd me-1"></i> Source: <code>' + _modelSource + '</code>';
+            }
+          }
+
           if (aiProgressStatus) aiProgressStatus.textContent = msg.message;
           // Also show status in the inline panel bar
           addAiStatusBar('loading', msg.message);
           break;
+        }
 
         case 'loaded':
           ls.loaded = true;
@@ -950,6 +1114,7 @@
   M._ai.initAiWorker = initAiWorker;
   M._ai.initCloudWorker = initCloudWorker;
   M._ai.showApiKeyModal = showApiKeyModal;
+  M._ai.deleteModelCache = deleteModelCache;
   M._ai.hideApiKeyModal = hideApiKeyModal;
   M._ai.sendToAi = sendToAi;
 

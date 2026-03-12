@@ -32,9 +32,18 @@ self.addEventListener('message', async (e) => {
                             loaded: progress.loaded,
                             total: progress.total,
                             percent: Math.round((progress.loaded / progress.total) * 100),
+                            source: whisperModelId,
+                        });
+                    } else if (progress.status === 'initiate') {
+                        self.postMessage({
+                            type: 'status',
+                            status: 'loading',
+                            message: `Loading ${progress.file || 'model'}...`,
+                            source: whisperModelId,
+                            loadingPhase: 'initiate',
                         });
                     } else if (progress.status === 'done') {
-                        self.postMessage({ type: 'progress-done', file: progress.file });
+                        self.postMessage({ type: 'progress-done', file: progress.file, source: whisperModelId, loadingPhase: 'done' });
                     }
                 },
             };

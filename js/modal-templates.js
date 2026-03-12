@@ -307,6 +307,7 @@
                 <!-- Progress section (hidden until download starts) -->
                 <div id="ai-download-progress" class="ai-download-progress" style="display:none">
                     <div class="ai-progress-status" id="ai-progress-status">Initializing...</div>
+                    <div class="ai-progress-source" id="ai-progress-source" style="display:none"></div>
                     <div class="ai-progress-bar-container">
                         <div class="ai-progress-bar" id="ai-progress-bar" style="width:0%"></div>
                     </div>
@@ -314,6 +315,10 @@
                 </div>
             </div>
             <div class="ai-consent-footer">
+                <button id="ai-consent-delete" class="ai-consent-btn ai-consent-btn-danger" style="display:none"
+                    title="Delete cached model files from your browser">
+                    <i class="bi bi-trash3 me-1"></i> Delete Model
+                </button>
                 <button id="ai-consent-cancel" class="ai-consent-btn ai-consent-btn-secondary">Cancel</button>
                 <button id="ai-consent-download" class="ai-consent-btn ai-consent-btn-primary">
                     <i class="bi bi-download me-1"></i> Download & Enable AI

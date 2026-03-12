@@ -98,11 +98,21 @@ async function loadModel() {
                             loaded: progress.loaded || 0,
                             total: progress.total || 0,
                             progress: progress.progress || 0,
+                            source: modelId,
                         });
                     } else if (progress.status === "initiate") {
                         self.postMessage({
                             type: "status",
-                            message: `Downloading ${progress.file || "tokenizer"}...`,
+                            message: `Loading ${progress.file || "tokenizer"}...`,
+                            source: modelId,
+                            loadingPhase: "initiate",
+                        });
+                    } else if (progress.status === "done") {
+                        self.postMessage({
+                            type: "status",
+                            message: `Loaded ${progress.file || "tokenizer"} ✓`,
+                            source: modelId,
+                            loadingPhase: "done",
                         });
                     }
                 },

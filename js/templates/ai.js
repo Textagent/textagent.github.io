@@ -1478,5 +1478,84 @@ Keep suggestions specific and actionable.}}
 > 🔊 **Pronunciation Tip:** Hover over any text in the preview and click the **🔊** button to hear it spoken aloud by the Kokoro TTS engine. This works for all 10+ supported languages!
 `
     },
+    {
+        name: 'AI Model Manager',
+        category: 'ai',
+    displayTag: 'AI · Local',
+        icon: 'bi-hdd-stack',
+        description: 'Manage local AI models — view available models, check cache status, and learn how to clear browser storage',
+        content: `# AI Model Manager — Local Models Reference
+
+**Date:** $(date)
+
+---
+
+## 📦 Available Local Models
+
+| Model | Size | Worker | Use Case |
+|:------|:-----|:-------|:---------|
+| **Qwen 3.5 Small (0.8B)** | ~500 MB | ai-worker.js | General writing, fast inference |
+| **Qwen 3.5 Medium (2B)** | ~1.2 GB | ai-worker.js | Better quality, moderate speed |
+| **Qwen 3.5 Large (4B)** | ~2.5 GB | ai-worker.js | Best quality, high-end devices |
+| **Granite Docling (258M)** | ~500 MB | ai-worker-docling.js | Document OCR |
+| **Florence-2 (230M)** | ~230 MB | ai-worker-florence.js | OCR + image captioning |
+| **Voxtral Mini 3B** | ~2.7 GB | voxtral-worker.js | Speech-to-text (WebGPU) |
+| **Whisper V3 Turbo** | ~800 MB | speech-worker.js | Speech-to-text (WASM fallback) |
+| **Kokoro 82M** | ~80 MB | tts-worker.js | Text-to-speech (EN/CN) |
+
+---
+
+## 🔧 Model Loading States
+
+When you download a local model, the consent dialog shows:
+
+- **⬇️ Downloading from huggingface.co/textagent/...** — First-time download with progress bar and file size
+- **📦 Loading from cache...** — Model was previously downloaded and is loading from browser storage
+- **Source location** — Shows the HuggingFace model path (e.g., \`textagent/Qwen3.5-0.8B-ONNX\`)
+
+---
+
+## 🗑️ Deleting Cached Models
+
+To free up browser storage, click the **Delete Model** button in the consent dialog:
+
+1. Click the **✨ AI** button in the toolbar
+2. Select a local model from the model dropdown
+3. The consent dialog will show a red **🗑️ Delete Model** button (visible if the model was previously downloaded)
+4. Click it to clear all cached files from Cache API and OPFS
+5. The consent flag resets — you'll see the download dialog again on next use
+
+> [!TIP]
+> Each model's files are stored in your browser's Cache API. Deleting a model frees the disk space but you'll need to re-download it to use it again.
+
+---
+
+## 📊 Storage Breakdown
+
+{{AI: Create a helpful guide explaining browser storage mechanisms for AI models. Cover:
+1. **Cache API** — how Transformers.js uses it to store model files
+2. **OPFS (Origin Private File System)** — an alternative storage mechanism
+3. **IndexedDB** — used for consent flags and small metadata
+4. **Approximate storage** — how much space each model takes
+5. **Browser limits** — typical storage quotas and how to check usage
+
+Format with clear sections and practical tips.}}
+
+---
+
+## 🔄 Model Hosting
+
+All models are hosted under the [textagent HuggingFace organization](https://huggingface.co/textagent):
+
+- Primary: \`textagent/{model-name}\`
+- Fallback: \`onnx-community/{model-name}\` (if primary unavailable)
+
+Models use ONNX format for efficient browser inference via [Transformers.js](https://huggingface.co/docs/transformers.js).
+
+---
+
+> 💡 **How to use:** This template serves as a reference card for managing your local AI models. Click **✨ Fill** to generate the storage guide section.
+`
+    },
 ];
 
