@@ -208,6 +208,22 @@
     }
 
     /**
+     * Update the thinking block's summary to show a rewritten search query.
+     * Called after refineSearchQuery() resolves with a different query.
+     */
+    function updateThinkingBlockQuery(rewrittenQuery) {
+        var block = document.getElementById('ai-thinking-block-active');
+        if (!block) return;
+        var summary = block.querySelector('summary');
+        if (!summary) return;
+        var queryLabel = escapeHtml(rewrittenQuery);
+        summary.innerHTML =
+            '<i class="bi bi-globe-americas ai-thinking-spin"></i> Searching: ' + queryLabel +
+            ' <span class="ai-search-rewritten">(rewritten)</span>' +
+            ' <span class="ai-search-count">…</span>';
+    }
+
+    /**
      * Update the thinking block with actual search results (or a "no results" message).
      */
     function populateSearchThinkingBlock(results, query) {
@@ -465,31 +481,43 @@
     }
 
     /**
-     * Build a context-aware search query for follow-up questions.
-     * Uses the LLM to rewrite the query into a self-contained search query
-     * when conversation history is available and the model is ready.
-     * Falls back to keyword-extraction heuristic if the model is busy/unavailable.
+     * Rewrite a search query for better web search results.
+     * Works for BOTH first messages and follow-ups:
+     * - First messages: strips conversational fluff, extracts key search terms
+     * - Follow-ups: adds conversation context to make query self-contained
+     * Uses LLM when available, falls back to heuristic keyword extraction.
      *
-     * @param {string} rawText - The user's raw follow-up question
-     * @returns {Promise<string>} The refined search query
+     * @param {string} rawText - The user's raw question
+     * @returns {Promise<string>} The optimized search query
      */
     function refineSearchQuery(rawText) {
-        // No history → use the raw query as-is (first message)
-        if (chatHistory.length === 0) return Promise.resolve(rawText);
+        var hasHistory = chatHistory.length > 0;
+        var recentMsgs = hasHistory ? chatHistory.slice(-4) : [];
 
-        // Build a conversation summary for the LLM to understand context
-        var recentMsgs = chatHistory.slice(-4);
-        var conversationContext = recentMsgs.map(function (m) {
-            return (m.role === 'user' ? 'User' : 'AI') + ': ' + m.content.substring(0, 200);
-        }).join('\n');
-
-        // If the model is ready and not generating, use it to refine the query
+        // If the model is ready and not generating, use LLM to rewrite
         if (M.isCurrentModelReady && M.isCurrentModelReady() && !M.isAiGenerating()) {
-            var refinePrompt =
-                'Given this conversation:\n' + conversationContext +
-                '\n\nThe user now asks: "' + rawText + '"' +
-                '\n\nRewrite this as a single, self-contained web search query that includes the specific topic/entity from the conversation. ' +
-                'Output ONLY the search query text, nothing else. Keep it under 10 words.';
+            var refinePrompt;
+
+            if (hasHistory) {
+                // Follow-up: include conversation context
+                var conversationContext = recentMsgs.map(function (m) {
+                    return (m.role === 'user' ? 'User' : 'AI') + ': ' + m.content.substring(0, 200);
+                }).join('\n');
+
+                refinePrompt =
+                    'Given this conversation:\n' + conversationContext +
+                    '\n\nThe user now asks: "' + rawText + '"' +
+                    '\n\nRewrite this as a single, self-contained web search query that includes the specific topic/entity from the conversation. ' +
+                    'Remove conversational fluff. Output ONLY the search query, nothing else. Keep it under 10 words.';
+            } else {
+                // First message: optimize for search
+                refinePrompt =
+                    'Rewrite this user question as a concise web search query.\n' +
+                    'Remove filler words like "what is", "can you", "tell me about", "please explain".\n' +
+                    'Keep technical terms, proper nouns, and specific keywords.\n' +
+                    'Output ONLY the search query, nothing else. Keep it under 10 words.\n\n' +
+                    'User question: "' + rawText + '"';
+            }
 
             return M.requestAiTask({
                 taskType: 'generate',
@@ -500,26 +528,89 @@
             }).then(function (refined) {
                 // Clean up: strip quotes, thinking artifacts, extra whitespace
                 var cleaned = refined.replace(/^["'\s]+|["'\s]+$/g, '').trim();
+                // Remove common LLM chattiness
+                cleaned = cleaned.replace(/^(?:search query:|here is|here's|query:)\s*/i, '').trim();
                 // Sanity check: if the model returned gibberish or too-long text, fall back
                 if (cleaned.length < 3 || cleaned.length > 150 || cleaned.split('\n').length > 2) {
-                    return fallbackQueryEnrichment(rawText, recentMsgs);
+                    return hasHistory
+                        ? fallbackQueryEnrichment(rawText, recentMsgs)
+                        : heuristicQueryOptimize(rawText);
                 }
-                console.log('[AI Chat] Refined search query:', cleaned);
+                console.log('[AI Chat] Rewritten search query:', JSON.stringify(rawText), '→', JSON.stringify(cleaned));
                 return cleaned;
             }).catch(function () {
-                return fallbackQueryEnrichment(rawText, recentMsgs);
+                return hasHistory
+                    ? fallbackQueryEnrichment(rawText, recentMsgs)
+                    : heuristicQueryOptimize(rawText);
             });
         }
 
-        // Fallback: keyword-based enrichment (model not ready)
-        return Promise.resolve(fallbackQueryEnrichment(rawText, recentMsgs));
+        // Fallback: heuristic optimization (model not ready)
+        if (hasHistory) {
+            return Promise.resolve(fallbackQueryEnrichment(rawText, recentMsgs));
+        }
+        return Promise.resolve(heuristicQueryOptimize(rawText));
     }
 
     /**
-     * Fallback: extract key nouns/entities from recent messages and prepend to query.
+     * Heuristic query optimizer for first messages (no LLM needed).
+     * Strips conversational fluff, extracts key search terms.
+     */
+    function heuristicQueryOptimize(rawText) {
+        var query = rawText;
+
+        // 1. Preserve quoted phrases (user explicitly wants these)
+        var quotedPhrases = [];
+        query = query.replace(/"([^"]+)"/g, function (_, phrase) {
+            quotedPhrases.push(phrase);
+            return '';
+        });
+
+        // 2. Strip common conversational prefixes
+        var prefixPatterns = [
+            /^(?:what (?:is|are|was|were|does|do|did)\s+)/i,
+            /^(?:who (?:is|are|was|were)\s+)/i,
+            /^(?:how (?:to|do|does|can|could|would|should|is|are)\s+)/i,
+            /^(?:can you|could you|would you|please|tell me|explain|describe|show me|help me)\s+(?:(?:about|with|how|what|the)\s+)?/i,
+            /^(?:i (?:want|need|would like) to (?:know|understand|learn|find out)\s+(?:about|how|what|why)?\s*)/i,
+            /^(?:i'm (?:looking for|trying to|wondering)\s+(?:about|how|what|why)?\s*)/i,
+        ];
+        for (var i = 0; i < prefixPatterns.length; i++) {
+            var before = query;
+            query = query.replace(prefixPatterns[i], '');
+            if (query !== before) break; // only strip one prefix
+        }
+
+        // 3. Strip trailing filler
+        query = query.replace(/[?.!]+$/, '').trim();
+        query = query.replace(/\s+(?:please|thanks|thank you|for me)$/i, '').trim();
+
+        // 4. Re-insert quoted phrases at the front
+        if (quotedPhrases.length > 0) {
+            query = quotedPhrases.join(' ') + (query ? ' ' + query : '');
+        }
+
+        // 5. Collapse whitespace
+        query = query.replace(/\s+/g, ' ').trim();
+
+        // 6. If the result is too short or unchanged, return original
+        if (query.length < 3) return rawText;
+
+        // 7. Log only if we actually changed it
+        if (query !== rawText) {
+            console.log('[AI Chat] Heuristic query rewrite:', JSON.stringify(rawText), '→', JSON.stringify(query));
+        }
+        return query;
+    }
+
+    /**
+     * Fallback for follow-ups: extract key nouns/entities from recent messages and prepend to query.
      */
     function fallbackQueryEnrichment(rawText, recentMsgs) {
-        // Extract likely topic keywords from the first user message and assistant reply
+        // Start with heuristic optimization of the raw query
+        var optimized = heuristicQueryOptimize(rawText);
+
+        // Extract likely topic keywords from recent conversation
         var topicWords = [];
         recentMsgs.forEach(function (m) {
             // Grab capitalized words (likely proper nouns/entities)
@@ -537,7 +628,7 @@
             }
         });
         var prefix = unique.slice(0, 3).join(' ');
-        return prefix ? (prefix + ' ' + rawText) : rawText;
+        return prefix ? (prefix + ' ' + optimized) : optimized;
     }
 
     function sendChatMessage() {
@@ -578,13 +669,18 @@
             // Show the thinking block immediately with a "Searching…" spinner
             createSearchThinkingBlock(text);
 
-            // Refine the search query using the LLM (async — may use the model)
+            // Rewrite the search query for better results (async — may use the LLM)
             refineSearchQuery(text).then(function (searchQuery) {
+                // Update the thinking block to show the rewritten query
+                if (searchQuery !== text) {
+                    updateThinkingBlockQuery(searchQuery);
+                }
+
                 return M.webSearch.performMultiSearch(searchQuery).then(function (results) {
                     var searchContext = M.webSearch.formatResultsForLLM(results);
 
                     // Populate the thinking block with actual results (or "no results" msg)
-                    populateSearchThinkingBlock(results, text);
+                    populateSearchThinkingBlock(results, searchQuery);
 
                     var context = searchContext;
                     if (editorContent.trim()) {
