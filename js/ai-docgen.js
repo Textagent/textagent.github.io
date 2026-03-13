@@ -217,10 +217,10 @@
                     } else if (block.think === undefined) {
                         block.think = false;
                     }
-                    // Parse @search: field
-                    var searchMatch = block.prompt.match(/^\s*(?:@search|Search):\s*(\S+)$/mi);
+                    // Parse @search: field (supports comma-separated multi-provider)
+                    var searchMatch = block.prompt.match(/^\s*(?:@search|Search):\s*(.+)$/mi);
                     if (searchMatch) {
-                        block.search = searchMatch[1].toLowerCase();
+                        block.searchProviders = searchMatch[1].split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
                         block.prompt = block.prompt.replace(searchMatch[0], '').trim();
                     }
                     // Parse @input: field — selects which Doc Vars to inject from M._vars
@@ -403,6 +403,31 @@
             return textOpts;
         }
 
+        // Build multi-select search provider pills HTML for a card
+        var SEARCH_PILL_CONFIG = [
+            { id: 'duckduckgo', icon: '🦆', label: 'DDG', title: 'DuckDuckGo · Free · No API key' },
+            { id: 'brave', icon: '🦁', label: 'Brave', title: 'Brave Search · 2,000/month free', hasKey: true },
+            { id: 'serper', icon: '🔎', label: 'Serper', title: 'Serper.dev · 2,500 queries free', hasKey: true },
+            { id: 'tavily', icon: '🤖', label: 'Tavily', title: 'Tavily · AI-optimized · 1,000/month free', hasKey: true },
+            { id: 'google_cse', icon: '🔍', label: 'Google', title: 'Google CSE · 100/day free', hasKey: true },
+            { id: 'wikipedia', icon: '📖', label: 'Wiki', title: 'Wikipedia · Free encyclopedia' },
+            { id: 'wikidata', icon: '📊', label: 'Wikidata', title: 'Wikidata · Free structured data' },
+        ];
+
+        function buildSearchPillsHtml(blockIndex, activeProviders) {
+            var html = '<div class="ai-search-pills-panel" data-ai-index="' + blockIndex + '" style="display:none">'
+                + '<div class="ai-search-pills-row">';
+            SEARCH_PILL_CONFIG.forEach(function (p) {
+                var isActive = activeProviders.indexOf(p.id) !== -1;
+                html += '<label class="ai-card-search-pill' + (isActive ? ' active' : '') + '" data-provider="' + p.id + '" title="' + p.title + '">'
+                    + '<input type="checkbox" class="ai-card-search-check" value="' + p.id + '" data-ai-index="' + blockIndex + '"' + (isActive ? ' checked' : '') + '>'
+                    + '<span class="ai-card-search-pill-label">' + p.icon + ' ' + p.label + '</span>'
+                    + '</label>';
+            });
+            html += '</div></div>';
+            return html;
+        }
+
         var seenMemoryNames = {}; // Track used Memory names for dedup
 
         while ((match = re.exec(markdown)) !== null) {
@@ -532,27 +557,16 @@
                     }
                 }
 
-                // Build search provider options for the card
-                var searchOpts = '<option value="off">🔍 Off</option>'
-                    + '<option value="duckduckgo">🦆 DuckDuckGo</option>'
-                    + '<option value="brave">🦁 Brave</option>'
-                    + '<option value="serper">🔎 Serper</option>';
-
                 // @use: hint for Agent
                 var agentUseMatch = prompt.match(/^\s*(?:@use|Use):\s*(.+)$/m);
                 var agentUseHint = agentUseMatch ? '<span class="ai-use-hint">📚 ' + escapeHtml(agentUseMatch[1]) + '</span>' : '';
 
-                // Parse @search field for Agent
-                var agentSearchMatch = prompt.match(/^\s*(?:@search|Search):\s*(\S+)$/mi);
-                var agentSearchVal = agentSearchMatch ? agentSearchMatch[1].toLowerCase() : 'off';
-                var searchOpts = '<option value="off"' + (agentSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
-                    + '<option value="duckduckgo"' + (agentSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
-                    + '<option value="brave"' + (agentSearchVal === 'brave' ? ' selected' : '') + '>🦁 Brave</option>'
-                    + '<option value="serper"' + (agentSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>'
-                    + '<option value="tavily"' + (agentSearchVal === 'tavily' ? ' selected' : '') + '>🤖 Tavily</option>'
-                    + '<option value="google_cse"' + (agentSearchVal === 'google_cse' ? ' selected' : '') + '>🔍 Google CSE</option>'
-                    + '<option value="wikipedia"' + (agentSearchVal === 'wikipedia' ? ' selected' : '') + '>📖 Wikipedia</option>'
-                    + '<option value="wikidata"' + (agentSearchVal === 'wikidata' ? ' selected' : '') + '>📊 Wikidata</option>';
+                // Parse @search field for Agent (comma-separated multi-provider)
+                var agentSearchMatch = prompt.match(/^\s*(?:@search|Search):\s*(.+)$/mi);
+                var agentActiveSearch = agentSearchMatch
+                    ? agentSearchMatch[1].split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean)
+                    : [];
+                var agentSearchPillsHtml = buildSearchPillsHtml(blockIndex, agentActiveSearch);
 
                 // Build upload thumbnail strip for Agent card
                 var agentUploadThumbs = '';
@@ -575,7 +589,7 @@
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
-                    + '<select class="ai-agent-search-select" data-ai-index="' + blockIndex + '" title="Search provider">' + searchOpts + '</select>'
+                    + '<button class="ai-placeholder-btn ai-search-multi-btn' + (agentActiveSearch.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Search engines">🔍' + (agentActiveSearch.length > 0 ? ' ' + agentActiveSearch.length : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this flow">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run this agent flow">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
@@ -589,6 +603,7 @@
                     + '<button class="ai-placeholder-btn ai-memory-quick-files" data-ai-index="' + blockIndex + '" title="Attach files">📄 Files</button>'
                     + '</div>'
                     + '</div>'
+                    + agentSearchPillsHtml
                     + '<div class="ai-agent-steps">' + stepsHtml + '</div>'
                     + '</div>';
             } else if (type === 'Translate') {
@@ -797,17 +812,12 @@
                     ? displayText.replace(promptFieldMatch[0], '').trim()
                     : displayText;
 
-                // Parse @search field for AI card
-                var searchFieldMatch = prompt.match(/^(?:@search|Search):\s*(\S+)$/mi);
-                var cardSearchVal = searchFieldMatch ? searchFieldMatch[1].toLowerCase() : 'off';
-                var aiSearchOpts = '<option value="off"' + (cardSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
-                    + '<option value="duckduckgo"' + (cardSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
-                    + '<option value="brave"' + (cardSearchVal === 'brave' ? ' selected' : '') + '>🦁 Brave</option>'
-                    + '<option value="serper"' + (cardSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>'
-                    + '<option value="tavily"' + (cardSearchVal === 'tavily' ? ' selected' : '') + '>🤖 Tavily</option>'
-                    + '<option value="google_cse"' + (cardSearchVal === 'google_cse' ? ' selected' : '') + '>🔍 Google CSE</option>'
-                    + '<option value="wikipedia"' + (cardSearchVal === 'wikipedia' ? ' selected' : '') + '>📖 Wikipedia</option>'
-                    + '<option value="wikidata"' + (cardSearchVal === 'wikidata' ? ' selected' : '') + '>📊 Wikidata</option>';
+                // Parse @search field for AI card (comma-separated multi-provider)
+                var searchFieldMatch = prompt.match(/^(?:@search|Search):\s*(.+)$/mi);
+                var aiActiveSearch = searchFieldMatch
+                    ? searchFieldMatch[1].split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean)
+                    : [];
+                var aiSearchPillsHtml = buildSearchPillsHtml(blockIndex, aiActiveSearch);
 
                 // Build upload thumbnail strip if images are already attached
                 var uploadThumbs = '';
@@ -830,7 +840,7 @@
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
-                    + '<select class="ai-agent-search-select" data-ai-index="' + blockIndex + '" title="Search provider">' + aiSearchOpts + '</select>'
+                    + '<button class="ai-placeholder-btn ai-search-multi-btn' + (aiActiveSearch.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Search engines">🔍' + (aiActiveSearch.length > 0 ? ' ' + aiActiveSearch.length : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
@@ -844,6 +854,7 @@
                     + '<button class="ai-placeholder-btn ai-memory-quick-files" data-ai-index="' + blockIndex + '" title="Attach files">📄 Files</button>'
                     + '</div>'
                     + '</div>'
+                    + aiSearchPillsHtml
                     + (descriptionText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(descriptionText) + '</div>' : '')
                     + (hasPromptField
                         ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Enter prompt for AI\u2026" rows="2">' + escapeHtml(promptValue) + '</textarea></div>'
@@ -1569,7 +1580,7 @@
             var inner = tagContent.substring(innerStart, innerEnd);
 
             // Remove existing field line (including leading whitespace/indentation)
-            var fieldRe = new RegExp('^\\s*' + fieldName + ':\\s*\\S+$', 'mi');
+            var fieldRe = new RegExp('^\\s*' + fieldName + ':\\s*.+$', 'mi');
             inner = inner.replace(fieldRe, '').trim();
 
             // Add new field (if value is not empty/off/no)
@@ -1594,12 +1605,44 @@
             });
         });
 
-        // Search change — sync dropdown to editor text
-        container.querySelectorAll('.ai-agent-search-select').forEach(function (sel) {
-            sel.addEventListener('change', function () {
+        // Search toggle — 🔍 multi-select button shows/hides pill panel
+        container.querySelectorAll('.ai-search-multi-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = this.dataset.aiIndex;
+                var panel = container.querySelector('.ai-search-pills-panel[data-ai-index="' + idx + '"]');
+                if (panel) {
+                    var isVisible = panel.style.display !== 'none';
+                    panel.style.display = isVisible ? 'none' : '';
+                }
+            });
+        });
+
+        // Search pill checkbox change — sync to editor @search: field
+        container.querySelectorAll('.ai-card-search-check').forEach(function (cb) {
+            cb.addEventListener('change', function () {
                 var idx = parseInt(this.dataset.aiIndex, 10);
-                var val = this.value;
-                updateBlockField(idx, '@search', val === 'off' ? '' : val);
+                var panel = container.querySelector('.ai-search-pills-panel[data-ai-index="' + idx + '"]');
+                if (!panel) return;
+                // Collect all checked providers
+                var checked = [];
+                panel.querySelectorAll('.ai-card-search-check:checked').forEach(function (c) {
+                    checked.push(c.value);
+                });
+                // Update pill active states
+                panel.querySelectorAll('.ai-card-search-pill').forEach(function (pill) {
+                    var pid = pill.dataset.provider;
+                    pill.classList.toggle('active', checked.indexOf(pid) !== -1);
+                });
+                // Update the toggle button badge
+                var btn = container.querySelector('.ai-search-multi-btn[data-ai-index="' + idx + '"]');
+                if (btn) {
+                    btn.textContent = '🔍' + (checked.length > 0 ? ' ' + checked.length : '');
+                    btn.classList.toggle('active', checked.length > 0);
+                }
+                // Sync to editor — @search: as comma-separated or remove if empty
+                updateBlockField(idx, '@search', checked.length > 0 ? checked.join(', ') : '');
             });
         });
 
@@ -1819,11 +1862,12 @@
             });
         });
 
-        // API key prompt when selecting a search provider that requires one
-        container.querySelectorAll('.ai-agent-search-select').forEach(function (sel) {
-            sel.addEventListener('change', function () {
+        // API key prompt when selecting a search provider that requires one (from pill checkboxes)
+        container.querySelectorAll('.ai-card-search-check').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (!this.checked) return; // only prompt on activation
                 var providerId = this.value;
-                if (!M.webSearch || providerId === 'off' || providerId === 'duckduckgo' || providerId === 'wikipedia' || providerId === 'wikidata') return;
+                if (!M.webSearch || providerId === 'duckduckgo' || providerId === 'wikipedia' || providerId === 'wikidata') return;
 
                 var p = M.webSearch.PROVIDERS[providerId];
                 if (!p || !p.requiresKey) return;
@@ -1833,7 +1877,7 @@
                 if (existingKey) return; // already configured
 
                 // Prompt for key using existing API key modal
-                var selectEl = this;
+                var checkboxEl = this;
                 var modal = document.getElementById('ai-apikey-modal');
                 var titleEl = document.getElementById('ai-apikey-title');
                 var descEl = document.getElementById('ai-apikey-desc');
@@ -1843,7 +1887,8 @@
                 var errorEl = document.getElementById('ai-apikey-error');
 
                 if (!modal || !inputEl) {
-                    selectEl.value = 'off';
+                    checkboxEl.checked = false;
+                    checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
                     return;
                 }
 
@@ -1866,13 +1911,15 @@
                     if (key) {
                         M.webSearch.setProviderKey(providerId, key);
                     } else {
-                        selectEl.value = 'off';
+                        checkboxEl.checked = false;
+                        checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                     modal.style.display = 'none';
                     cleanup();
                 }
                 function onCancel() {
-                    selectEl.value = 'off';
+                    checkboxEl.checked = false;
+                    checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
                     modal.style.display = 'none';
                     cleanup();
                 }

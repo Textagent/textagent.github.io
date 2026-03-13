@@ -7,6 +7,17 @@
 
     var _dg = M._docgen;
 
+    // Helper: read multi-select search providers from card pills
+    function getCardSearchProviders(blockIndex) {
+        var panel = document.querySelector('.ai-search-pills-panel[data-ai-index="' + blockIndex + '"]');
+        if (!panel) return [];
+        var providers = [];
+        panel.querySelectorAll('.ai-card-search-check:checked').forEach(function (cb) {
+            providers.push(cb.value);
+        });
+        return providers;
+    }
+
     // ==============================================
     // MODEL READINESS — ensure model is loaded before generation
     // ==============================================
@@ -766,15 +777,49 @@
                         }
                     }
 
+                    // Read per-card multi-select search providers and perform web search if enabled
+                    var cardSearchProviders = getCardSearchProviders(blockIndex);
+                    var searchContext = '';
+                    if (cardSearchProviders.length > 0 && M.webSearch) {
+                        try {
+                            var searchResults = await M.webSearch.performMultiSearch(block.prompt, 5, cardSearchProviders);
+                            searchContext = M.webSearch.formatResultsForLLM(searchResults);
+                        } catch (_) { /* search failed, proceed without */ }
+                    }
+
                     var hasImages = workerAttachments.length > 0;
+                    var userPrompt = buildPrompt(block, prevContent, memoryContext, hasImages, varsContext);
+                    if (searchContext) {
+                        userPrompt = 'Web research results:\n' + searchContext + '\n\nUse the above search results to inform your response. Cite sources when relevant.\n\n' + userPrompt;
+                    }
+
+                    var useThinking = block.type === 'Think' || block.think;
                     result = await M.requestAiTask({
                         taskType: 'generate',
                         context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                        userPrompt: buildPrompt(block, prevContent, memoryContext, hasImages, varsContext),
-                        enableThinking: block.type === 'Think',
+                        userPrompt: userPrompt,
+                        enableThinking: useThinking,
                         silent: true,
                         attachments: workerAttachments
                     });
+
+                    // When Think is ON, refine: pass the result back and ask the model to enrich it
+                    if (useThinking) {
+                        var draft = cleanGeneratedOutput(result);
+                        console.log('[DocGen Think] 🧠 Refining output (' + draft.length + ' chars)...');
+                        var refinePrompt = 'Here is a draft response:\n\n' + draft + '\n\n'
+                            + 'Improve this content by adding important details, examples, or missing information. '
+                            + 'Keep the same structure and tone. Output the complete improved version.';
+                        result = await M.requestAiTask({
+                            taskType: 'generate',
+                            context: draft.substring(0, 2000),
+                            userPrompt: refinePrompt,
+                            enableThinking: false,
+                            silent: true,
+                            attachments: []
+                        });
+                        console.log('[DocGen Think] 🧠 Refinement done (' + cleanGeneratedOutput(result).length + ' chars)');
+                    }
                 }
 
                 _dg.activeBlockOps.delete(blockIndex);
@@ -900,8 +945,7 @@
             return;
         }
 
-        var searchSelect = document.querySelector('.ai-agent-search-select[data-ai-index="' + blockIndex + '"]');
-        var searchProvider = searchSelect ? searchSelect.value : 'off';
+        var cardSearchProviders = getCardSearchProviders(blockIndex);
 
         _dg.activeBlockOps.add(blockIndex);
         var agentCard = document.querySelector('.ai-placeholder-card[data-ai-index="' + blockIndex + '"]');
@@ -913,6 +957,7 @@
                 var statusEl = stepEls[stepIdx].querySelector('.ai-agent-step-status');
                 if (statusEl) {
                     if (status === 'running') statusEl.textContent = '⏳';
+                    else if (status === 'reasoning') statusEl.textContent = '🤔';
                     else if (status === 'done') statusEl.textContent = '✅';
                     else if (status === 'error') statusEl.textContent = '❌';
                     else statusEl.textContent = '⏸';
@@ -927,15 +972,19 @@
         var allResults = [];
         var docContext = text.substring(0, block.start);
 
+        // Check if Think mode is enabled for this Agent card
+        var thinkToggle = agentCard ? agentCard.querySelector('.ai-think-toggle') : null;
+        var useThinking = thinkToggle && thinkToggle.classList.contains('active');
+
         for (var i = 0; i < steps.length; i++) {
             updateStepStatus(i, 'running');
 
             var stepPrompt = 'You are an expert writer. This is step ' + steps[i].number
                 + ' of ' + steps.length + ' in a multi-step writing flow.\n\n';
 
-            if (searchProvider !== 'off' && M.webSearch) {
+            if (cardSearchProviders.length > 0 && M.webSearch) {
                 try {
-                    var searchResults = await M.webSearch.performSearch(steps[i].description);
+                    var searchResults = await M.webSearch.performMultiSearch(steps[i].description, 5, cardSearchProviders);
                     var searchContext = M.webSearch.formatResultsForLLM(searchResults);
                     stepPrompt += 'Web research results:\n' + searchContext + '\n\n';
                 } catch (_) { /* search failed, proceed without */ }
@@ -995,10 +1044,28 @@
                     taskType: 'generate',
                     context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
                     userPrompt: stepPrompt,
-                    enableThinking: false,
+                    enableThinking: useThinking,
                     silent: true,
                     attachments: agentAttachments
                 });
+
+                // When Think is ON, refine each step's output
+                if (useThinking) {
+                    var draft = cleanGeneratedOutput(result);
+                    console.log('[Agent Think] 🧠 Step ' + steps[i].number + ' refining (' + draft.length + ' chars)...');
+                    var refinePrompt = 'Here is a draft for step ' + steps[i].number + ':\n\n' + draft + '\n\n'
+                        + 'Improve this content by adding important details, examples, or missing information. '
+                        + 'Keep the same structure and tone. Output the complete improved version.';
+                    result = await M.requestAiTask({
+                        taskType: 'generate',
+                        context: draft.substring(0, 2000),
+                        userPrompt: refinePrompt,
+                        enableThinking: false,
+                        silent: true,
+                        attachments: []
+                    });
+                    console.log('[Agent Think] 🧠 Step ' + steps[i].number + ' refined (' + cleanGeneratedOutput(result).length + ' chars)');
+                }
 
                 var cleaned = cleanGeneratedOutput(result);
                 accumulatedContext += '\n\n' + cleaned;

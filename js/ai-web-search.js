@@ -213,11 +213,11 @@
      * Deduplicates by URL and tags each result with its source provider.
      * Returns a combined array of {title, url, snippet, source} objects.
      */
-    async function performMultiSearch(query, maxResults) {
+    async function performMultiSearch(query, maxResults, providerIds) {
         maxResults = maxResults || 5;
         if (!query || !query.trim()) return [];
 
-        var providers = getActiveProviders();
+        var providers = Array.isArray(providerIds) && providerIds.length > 0 ? providerIds : getActiveProviders();
         if (providers.length === 0) return [];
 
         // If only one provider, just use the regular path
