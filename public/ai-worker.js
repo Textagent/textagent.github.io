@@ -472,8 +472,21 @@ function buildMessages(taskType, context, userPrompt, chatHistory) {
     const contextLimit =
         taskType === "summarize" || taskType === "grammar" ? 1500 : 2500;
 
-    // For tasks that need context (selected text or document)
-    if (
+    // Detect if context contains web search results
+    const hasSearchResults = context && context.indexOf('[Web Search Results') !== -1;
+
+    // Web-search grounding: when search results are present, wrap with strong grounding instructions
+    if (hasSearchResults && (taskType === 'generate' || taskType === 'qa' || taskType === 'chat')) {
+        var groundedPrompt =
+            'IMPORTANT: The following web search results were retrieved for the user\'s question. ' +
+            'You MUST base your answer PRIMARILY on these search results. ' +
+            'Do NOT fabricate, invent, or hallucinate any facts, numbers, scores, dates, or statistics that are not explicitly stated in the search results. ' +
+            'If the search results contain the answer, use them directly and cite the sources. ' +
+            'If the search results are insufficient or contradictory, say so honestly rather than guessing.\n\n' +
+            context.substring(0, contextLimit) +
+            '\n\nUser question: ' + (userPrompt || 'Please answer based on the search results above.');
+        messages.push({ role: 'user', content: groundedPrompt });
+    } else if (
         context &&
         (taskType === "qa" || taskType === "explain" || taskType === "simplify")
     ) {
