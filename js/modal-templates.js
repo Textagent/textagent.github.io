@@ -176,20 +176,32 @@
         </div>
 
         <div class="ai-search-provider-bar" id="ai-search-provider-bar" style="display:none">
-            <div class="ai-search-provider-row">
-                <i class="bi bi-globe-americas ai-search-provider-icon"></i>
-                <select id="ai-search-provider-select" class="ai-search-provider-select" title="Search provider">
-                    <option value="duckduckgo">DuckDuckGo (Free)</option>
-                    <option value="brave">Brave Search</option>
-                    <option value="serper">Serper.dev</option>
-                    <option value="tavily">Tavily (AI-optimized)</option>
-                    <option value="google_cse">Google CSE</option>
-                    <option value="wikipedia">Wikipedia</option>
-                    <option value="wikidata">Wikidata</option>
-                </select>
-                <button class="ai-search-key-btn" id="ai-search-key-btn" title="Configure API key" style="display:none">
-                    <i class="bi bi-key"></i>
-                </button>
+            <div class="ai-search-provider-pills" id="ai-search-provider-pills">
+                <label class="ai-provider-pill" data-provider="duckduckgo" title="DuckDuckGo · Free · No API key">
+                    <input type="checkbox" class="ai-provider-check" value="duckduckgo"><span class="ai-provider-pill-label"><i class="bi bi-search"></i> DDG</span>
+                </label>
+                <label class="ai-provider-pill" data-provider="brave" title="Brave Search · Free tier · 2,000/month">
+                    <input type="checkbox" class="ai-provider-check" value="brave"><span class="ai-provider-pill-label"><i class="bi bi-shield-check"></i> Brave</span>
+                    <button class="ai-provider-key-btn" data-provider="brave" title="API key"><i class="bi bi-key"></i></button>
+                </label>
+                <label class="ai-provider-pill" data-provider="serper" title="Serper.dev · Free tier · 2,500 queries">
+                    <input type="checkbox" class="ai-provider-check" value="serper"><span class="ai-provider-pill-label"><i class="bi bi-globe2"></i> Serper</span>
+                    <button class="ai-provider-key-btn" data-provider="serper" title="API key"><i class="bi bi-key"></i></button>
+                </label>
+                <label class="ai-provider-pill" data-provider="tavily" title="Tavily · AI-optimized · 1,000/month free">
+                    <input type="checkbox" class="ai-provider-check" value="tavily"><span class="ai-provider-pill-label"><i class="bi bi-robot"></i> Tavily</span>
+                    <button class="ai-provider-key-btn" data-provider="tavily" title="API key"><i class="bi bi-key"></i></button>
+                </label>
+                <label class="ai-provider-pill" data-provider="google_cse" title="Google CSE · 100/day free">
+                    <input type="checkbox" class="ai-provider-check" value="google_cse"><span class="ai-provider-pill-label"><i class="bi bi-google"></i> Google</span>
+                    <button class="ai-provider-key-btn" data-provider="google_cse" title="API key"><i class="bi bi-key"></i></button>
+                </label>
+                <label class="ai-provider-pill" data-provider="wikipedia" title="Wikipedia · Free encyclopedia">
+                    <input type="checkbox" class="ai-provider-check" value="wikipedia"><span class="ai-provider-pill-label"><i class="bi bi-book"></i> Wiki</span>
+                </label>
+                <label class="ai-provider-pill" data-provider="wikidata" title="Wikidata · Free structured knowledge">
+                    <input type="checkbox" class="ai-provider-check" value="wikidata"><span class="ai-provider-pill-label"><i class="bi bi-diagram-3"></i> Wikidata</span>
+                </label>
             </div>
         </div>
 

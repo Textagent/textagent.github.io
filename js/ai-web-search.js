@@ -85,39 +85,71 @@
 
     // --- State ---
     let searchEnabled = localStorage.getItem(M.KEYS.SEARCH_ENABLED) === 'true';
-    let activeProvider = localStorage.getItem(M.KEYS.SEARCH_PROVIDER) || 'duckduckgo';
+
+    // Multi-provider: stored as JSON array, default to ['duckduckgo']
+    var activeProviders;
+    try {
+        var stored = localStorage.getItem(M.KEYS.SEARCH_PROVIDER);
+        // Backward compat: old format was a plain string like 'duckduckgo'
+        if (stored && stored.startsWith('[')) {
+            activeProviders = new Set(JSON.parse(stored));
+        } else if (stored && PROVIDERS[stored]) {
+            activeProviders = new Set([stored]);
+        } else {
+            activeProviders = new Set(['duckduckgo']);
+        }
+    } catch (_) {
+        activeProviders = new Set(['duckduckgo']);
+    }
+
+    function persistProviders() {
+        localStorage.setItem(M.KEYS.SEARCH_PROVIDER, JSON.stringify(Array.from(activeProviders)));
+    }
 
     // --- Public API ---
 
-    /**
-     * Check if web search is enabled.
-     */
     function isSearchEnabled() {
         return searchEnabled;
     }
 
-    /**
-     * Toggle search on/off.
-     */
     function setSearchEnabled(enabled) {
         searchEnabled = !!enabled;
         localStorage.setItem(M.KEYS.SEARCH_ENABLED, searchEnabled ? 'true' : 'false');
     }
 
-    /**
-     * Get the active search provider id.
-     */
-    function getActiveProvider() {
-        return activeProvider;
+    /** Get all active provider IDs as an array. */
+    function getActiveProviders() {
+        return Array.from(activeProviders);
     }
 
-    /**
-     * Set the active search provider.
-     */
+    /** Backward-compat: returns the first active provider. */
+    function getActiveProvider() {
+        return getActiveProviders()[0] || 'duckduckgo';
+    }
+
+    /** Toggle a single provider on/off. */
+    function toggleProvider(providerId) {
+        if (!PROVIDERS[providerId]) return;
+        if (activeProviders.has(providerId)) {
+            activeProviders.delete(providerId);
+            // Ensure at least one provider is active
+            if (activeProviders.size === 0) activeProviders.add('duckduckgo');
+        } else {
+            activeProviders.add(providerId);
+        }
+        persistProviders();
+    }
+
+    /** Check if a specific provider is active. */
+    function isProviderActive(providerId) {
+        return activeProviders.has(providerId);
+    }
+
+    /** Replace all active providers (backward compat). */
     function setActiveProvider(providerId) {
         if (PROVIDERS[providerId]) {
-            activeProvider = providerId;
-            localStorage.setItem(M.KEYS.SEARCH_PROVIDER, providerId);
+            activeProviders = new Set([providerId]);
+            persistProviders();
         }
     }
 
@@ -177,13 +209,79 @@
     }
 
     /**
+     * Run search across ALL active providers in parallel.
+     * Deduplicates by URL and tags each result with its source provider.
+     * Returns a combined array of {title, url, snippet, source} objects.
+     */
+    async function performMultiSearch(query, maxResults) {
+        maxResults = maxResults || 5;
+        if (!query || !query.trim()) return [];
+
+        var providers = getActiveProviders();
+        if (providers.length === 0) return [];
+
+        // If only one provider, just use the regular path
+        if (providers.length === 1) {
+            var results = await performSearch(query, maxResults, providers[0]);
+            var providerName = PROVIDERS[providers[0]] ? PROVIDERS[providers[0]].name : providers[0];
+            results.forEach(function (r) { r.source = providerName; });
+            return results;
+        }
+
+        // Fire all providers in parallel
+        var promises = providers.map(function (pid) {
+            return performSearch(query, maxResults, pid)
+                .then(function (results) {
+                    var name = PROVIDERS[pid] ? PROVIDERS[pid].name : pid;
+                    results.forEach(function (r) { r.source = name; });
+                    return results;
+                })
+                .catch(function (err) {
+                    console.warn('Search provider ' + pid + ' failed:', err.message);
+                    return [];
+                });
+        });
+
+        var allResults = await Promise.all(promises);
+
+        // Flatten and deduplicate by URL
+        var combined = [];
+        var seenUrls = new Set();
+        allResults.forEach(function (providerResults) {
+            providerResults.forEach(function (r) {
+                var normalizedUrl = (r.url || '').replace(/\/$/, '').toLowerCase();
+                if (!seenUrls.has(normalizedUrl)) {
+                    seenUrls.add(normalizedUrl);
+                    combined.push(r);
+                }
+            });
+        });
+
+        return combined;
+    }
+
+    /**
      * Format search results into a context string for LLM injection.
+     * Groups results by source provider for clarity.
      */
     function formatResultsForLLM(results) {
         if (!results || results.length === 0) return '';
-        let context = '[Web Search Results]\n';
-        results.forEach((r, i) => {
-            context += `${i + 1}. ${r.title}\n   ${r.snippet}\n   Source: ${r.url}\n\n`;
+
+        // Group by source
+        var groups = {};
+        results.forEach(function (r) {
+            var src = r.source || 'Web';
+            if (!groups[src]) groups[src] = [];
+            groups[src].push(r);
+        });
+
+        var context = '';
+        var sourceNames = Object.keys(groups);
+        sourceNames.forEach(function (src) {
+            context += '[Web Search Results — ' + src + ']\n';
+            groups[src].forEach(function (r, i) {
+                context += (i + 1) + '. ' + r.title + '\n   ' + r.snippet + '\n   Source: ' + r.url + '\n\n';
+            });
         });
         return context.trim();
     }
@@ -550,9 +648,13 @@
         setSearchEnabled,
         getActiveProvider,
         setActiveProvider,
+        getActiveProviders,
+        toggleProvider,
+        isProviderActive,
         getProviderKey,
         setProviderKey,
         performSearch,
+        performMultiSearch,
         formatResultsForLLM,
     };
 

@@ -223,9 +223,11 @@
             results.forEach(function (r) {
                 var domain = '';
                 try { domain = new URL(r.url).hostname.replace('www.', ''); } catch (_) { domain = r.url; }
+                var sourceBadge = r.source ? '<span class="ai-search-result-source">' + escapeHtml(r.source) + '</span>' : '';
                 detailsInner += '<div class="ai-search-result-item">' +
                     '<div class="ai-search-result-title">' +
                     '<a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">' + escapeHtml(r.title || domain) + '</a>' +
+                    sourceBadge +
                     '</div>' +
                     (r.snippet ? '<div class="ai-search-result-snippet">' + escapeHtml(r.snippet).substring(0, 200) + '</div>' : '') +
                     '<div class="ai-search-result-url">' + escapeHtml(domain) + '</div>' +
@@ -578,7 +580,7 @@
 
             // Refine the search query using the LLM (async — may use the model)
             refineSearchQuery(text).then(function (searchQuery) {
-                return M.webSearch.performSearch(searchQuery).then(function (results) {
+                return M.webSearch.performMultiSearch(searchQuery).then(function (results) {
                     var searchContext = M.webSearch.formatResultsForLLM(results);
 
                     // Populate the thinking block with actual results (or "no results" msg)
@@ -764,40 +766,50 @@
         });
     }
 
-    // --- Web Search Toggle & Provider Selector ---
+    // --- Web Search Toggle & Provider Selector (multi-select pills) ---
     (function initSearchUI() {
         var searchToggle = document.getElementById('ai-search-toggle');
         var providerBar = document.getElementById('ai-search-provider-bar');
-        var providerSelect = document.getElementById('ai-search-provider-select');
-        var keyBtn = document.getElementById('ai-search-key-btn');
+        var pillContainer = document.getElementById('ai-search-provider-pills');
         if (!searchToggle || !M.webSearch) return;
 
         searchToggle.checked = M.webSearch.isSearchEnabled();
         if (searchToggle.checked && providerBar) providerBar.style.display = '';
-        if (providerSelect) providerSelect.value = M.webSearch.getActiveProvider();
-        updateKeyBtnVisibility();
+
+        // Sync checkbox state from saved providers
+        function syncPillState() {
+            if (!pillContainer) return;
+            var checks = pillContainer.querySelectorAll('.ai-provider-check');
+            checks.forEach(function (cb) {
+                cb.checked = M.webSearch.isProviderActive(cb.value);
+                var pill = cb.closest('.ai-provider-pill');
+                if (pill) pill.classList.toggle('active', cb.checked);
+            });
+        }
+        syncPillState();
 
         searchToggle.addEventListener('change', function () {
             M.webSearch.setSearchEnabled(searchToggle.checked);
             if (providerBar) providerBar.style.display = searchToggle.checked ? '' : 'none';
         });
 
-        if (providerSelect) {
-            providerSelect.addEventListener('change', function () {
-                M.webSearch.setActiveProvider(providerSelect.value);
-                updateKeyBtnVisibility();
+        // Checkbox toggle handler
+        if (pillContainer) {
+            pillContainer.addEventListener('change', function (e) {
+                var cb = e.target;
+                if (!cb.classList.contains('ai-provider-check')) return;
+                M.webSearch.toggleProvider(cb.value);
+                syncPillState(); // re-sync in case duckduckgo was force-activated
             });
-        }
 
-        function updateKeyBtnVisibility() {
-            if (!keyBtn) return;
-            var p = M.webSearch.PROVIDERS[M.webSearch.getActiveProvider()];
-            keyBtn.style.display = (p && p.requiresKey) ? '' : 'none';
-        }
+            // Per-pill API key buttons
+            pillContainer.addEventListener('click', function (e) {
+                var keyBtn = e.target.closest('.ai-provider-key-btn');
+                if (!keyBtn) return;
+                e.preventDefault();
+                e.stopPropagation();
 
-        if (keyBtn) {
-            keyBtn.addEventListener('click', function () {
-                var providerId = M.webSearch.getActiveProvider();
+                var providerId = keyBtn.getAttribute('data-provider');
                 var p = M.webSearch.PROVIDERS[providerId];
                 if (!p || !p.requiresKey) return;
 
