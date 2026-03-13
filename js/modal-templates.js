@@ -182,6 +182,10 @@
                     <option value="duckduckgo">DuckDuckGo (Free)</option>
                     <option value="brave">Brave Search</option>
                     <option value="serper">Serper.dev</option>
+                    <option value="tavily">Tavily (AI-optimized)</option>
+                    <option value="google_cse">Google CSE</option>
+                    <option value="wikipedia">Wikipedia</option>
+                    <option value="wikidata">Wikidata</option>
                 </select>
                 <button class="ai-search-key-btn" id="ai-search-key-btn" title="Configure API key" style="display:none">
                     <i class="bi bi-key"></i>

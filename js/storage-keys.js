@@ -41,6 +41,8 @@
         API_KEY_OPENROUTER: 'md-viewer-openrouter-key',
         API_KEY_BRAVE: 'md-viewer-brave-api-key',
         API_KEY_SERPER: 'md-viewer-serper-api-key',
+        API_KEY_TAVILY: 'md-viewer-tavily-api-key',
+        API_KEY_GOOGLE_CSE: 'md-viewer-google-cse-key',
 
         // --- Speech ---
         SPEECH_LANG: 'mdview-speech-lang',

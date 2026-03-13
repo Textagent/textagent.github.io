@@ -548,7 +548,11 @@
                 var searchOpts = '<option value="off"' + (agentSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
                     + '<option value="duckduckgo"' + (agentSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
                     + '<option value="brave"' + (agentSearchVal === 'brave' ? ' selected' : '') + '>🦁 Brave</option>'
-                    + '<option value="serper"' + (agentSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>';
+                    + '<option value="serper"' + (agentSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>'
+                    + '<option value="tavily"' + (agentSearchVal === 'tavily' ? ' selected' : '') + '>🤖 Tavily</option>'
+                    + '<option value="google_cse"' + (agentSearchVal === 'google_cse' ? ' selected' : '') + '>🔍 Google CSE</option>'
+                    + '<option value="wikipedia"' + (agentSearchVal === 'wikipedia' ? ' selected' : '') + '>📖 Wikipedia</option>'
+                    + '<option value="wikidata"' + (agentSearchVal === 'wikidata' ? ' selected' : '') + '>📊 Wikidata</option>';
 
                 // Build upload thumbnail strip for Agent card
                 var agentUploadThumbs = '';
@@ -799,7 +803,11 @@
                 var aiSearchOpts = '<option value="off"' + (cardSearchVal === 'off' ? ' selected' : '') + '>🔍 Off</option>'
                     + '<option value="duckduckgo"' + (cardSearchVal === 'duckduckgo' ? ' selected' : '') + '>🦆 DuckDuckGo</option>'
                     + '<option value="brave"' + (cardSearchVal === 'brave' ? ' selected' : '') + '>🦁 Brave</option>'
-                    + '<option value="serper"' + (cardSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>';
+                    + '<option value="serper"' + (cardSearchVal === 'serper' ? ' selected' : '') + '>🔎 Serper</option>'
+                    + '<option value="tavily"' + (cardSearchVal === 'tavily' ? ' selected' : '') + '>🤖 Tavily</option>'
+                    + '<option value="google_cse"' + (cardSearchVal === 'google_cse' ? ' selected' : '') + '>🔍 Google CSE</option>'
+                    + '<option value="wikipedia"' + (cardSearchVal === 'wikipedia' ? ' selected' : '') + '>📖 Wikipedia</option>'
+                    + '<option value="wikidata"' + (cardSearchVal === 'wikidata' ? ' selected' : '') + '>📊 Wikidata</option>';
 
                 // Build upload thumbnail strip if images are already attached
                 var uploadThumbs = '';
@@ -1815,7 +1823,7 @@
         container.querySelectorAll('.ai-agent-search-select').forEach(function (sel) {
             sel.addEventListener('change', function () {
                 var providerId = this.value;
-                if (!M.webSearch || providerId === 'off' || providerId === 'duckduckgo') return;
+                if (!M.webSearch || providerId === 'off' || providerId === 'duckduckgo' || providerId === 'wikipedia' || providerId === 'wikidata') return;
 
                 var p = M.webSearch.PROVIDERS[providerId];
                 if (!p || !p.requiresKey) return;

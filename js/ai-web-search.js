@@ -1,6 +1,7 @@
 // ============================================
 // ai-web-search.js — Web Search for AI Assistant
-// Supports DuckDuckGo (free), Brave Search, Serper.dev
+// Supports DuckDuckGo (free), Brave Search, Serper.dev,
+// Tavily (AI-optimized), Google CSE, Wikipedia, Wikidata
 // ============================================
 (function (M) {
     'use strict';
@@ -39,6 +40,46 @@
             dialogPlaceholder: 'Your Serper API key...',
             dialogLink: 'https://serper.dev/',
             dialogLinkText: 'serper.dev',
+        },
+        tavily: {
+            id: 'tavily',
+            name: 'Tavily',
+            desc: 'AI-optimized · 1,000/month free',
+            icon: 'bi bi-robot',
+            requiresKey: true,
+            keyStorageKey: M.KEYS.API_KEY_TAVILY,
+            dialogTitle: 'Connect to Tavily',
+            dialogDesc: 'Enter your Tavily API key — search results optimized for AI agents.',
+            dialogPlaceholder: 'tvly-...',
+            dialogLink: 'https://tavily.com/',
+            dialogLinkText: 'tavily.com',
+        },
+        google_cse: {
+            id: 'google_cse',
+            name: 'Google CSE',
+            desc: 'Google results · 100/day free',
+            icon: 'bi bi-google',
+            requiresKey: true,
+            keyStorageKey: M.KEYS.API_KEY_GOOGLE_CSE,
+            dialogTitle: 'Connect to Google Custom Search',
+            dialogDesc: 'Enter your Google API key and Search Engine ID separated by a colon (key:cx).',
+            dialogPlaceholder: 'AIzaSy...:a1b2c3d4e5f...',
+            dialogLink: 'https://programmablesearchengine.google.com/',
+            dialogLinkText: 'programmablesearchengine.google.com',
+        },
+        wikipedia: {
+            id: 'wikipedia',
+            name: 'Wikipedia',
+            desc: 'Free · Encyclopedia',
+            icon: 'bi bi-book',
+            requiresKey: false,
+        },
+        wikidata: {
+            id: 'wikidata',
+            name: 'Wikidata',
+            desc: 'Free · Structured knowledge',
+            icon: 'bi bi-diagram-3',
+            requiresKey: false,
         },
     };
 
@@ -117,6 +158,14 @@
                     return await searchBrave(query, maxResults);
                 case 'serper':
                     return await searchSerper(query, maxResults);
+                case 'tavily':
+                    return await searchTavily(query, maxResults);
+                case 'google_cse':
+                    return await searchGoogleCSE(query, maxResults);
+                case 'wikipedia':
+                    return await searchWikipedia(query, maxResults);
+                case 'wikidata':
+                    return await searchWikidata(query, maxResults);
                 case 'duckduckgo':
                 default:
                     return await searchDuckDuckGo(query, maxResults);
@@ -349,6 +398,145 @@
                     title: r.title || '',
                     url: r.link || '',
                     snippet: r.snippet || '',
+                });
+            });
+        }
+        return results;
+    }
+
+    // --- Tavily API (AI-optimized search) ---
+    async function searchTavily(query, maxResults) {
+        const apiKey = getProviderKey('tavily');
+        if (!apiKey) throw new Error('Tavily API key not configured.');
+
+        const response = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                api_key: apiKey,
+                query: query,
+                max_results: maxResults,
+                include_answer: true,
+                search_depth: 'basic',
+            }),
+            signal: AbortSignal.timeout(10000),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Invalid Tavily API key.');
+            }
+            throw new Error('Tavily search failed: HTTP ' + response.status);
+        }
+
+        const data = await response.json();
+        const results = [];
+
+        // Tavily returns a direct AI-generated answer — include as first result
+        if (data.answer) {
+            results.push({
+                title: 'AI Summary',
+                url: (data.results && data.results[0] && data.results[0].url) || 'https://tavily.com',
+                snippet: data.answer,
+            });
+        }
+
+        // Individual search results
+        if (data.results) {
+            data.results.slice(0, maxResults).forEach(r => {
+                results.push({
+                    title: r.title || '',
+                    url: r.url || '',
+                    snippet: r.content || '',
+                });
+            });
+        }
+        return results.slice(0, maxResults + 1); // +1 for the AI answer
+    }
+
+    // --- Google Custom Search Engine (CSE) ---
+    async function searchGoogleCSE(query, maxResults) {
+        const raw = getProviderKey('google_cse');
+        if (!raw) throw new Error('Google CSE API key not configured.');
+
+        // Key format: "apiKey:searchEngineId"
+        const parts = raw.split(':');
+        if (parts.length < 2) throw new Error('Google CSE key format: API_KEY:SEARCH_ENGINE_ID');
+        const apiKey = parts[0].trim();
+        const cx = parts.slice(1).join(':').trim();
+
+        const encoded = encodeURIComponent(query);
+        const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encoded}&num=${Math.min(maxResults, 10)}`;
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Invalid Google CSE API key.');
+            }
+            if (response.status === 429) {
+                throw new Error('Google CSE daily quota exceeded (100/day free).');
+            }
+            throw new Error('Google CSE search failed: HTTP ' + response.status);
+        }
+
+        const data = await response.json();
+        const results = [];
+        if (data.items) {
+            data.items.slice(0, maxResults).forEach(r => {
+                results.push({
+                    title: r.title || '',
+                    url: r.link || '',
+                    snippet: r.snippet || '',
+                });
+            });
+        }
+        return results;
+    }
+
+    // --- Wikipedia API (free, no API key) ---
+    async function searchWikipedia(query, maxResults) {
+        const encoded = encodeURIComponent(query);
+        // Use Wikipedia REST API for search + extracts
+        const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encoded}&srlimit=${maxResults}&format=json&origin=*&utf8=1`;
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!response.ok) throw new Error('Wikipedia search failed: HTTP ' + response.status);
+
+        const data = await response.json();
+        const results = [];
+
+        if (data.query && data.query.search) {
+            data.query.search.slice(0, maxResults).forEach(r => {
+                // Strip HTML tags from snippet
+                const snippet = (r.snippet || '').replace(/<[^>]*>/g, '');
+                results.push({
+                    title: r.title || '',
+                    url: 'https://en.wikipedia.org/wiki/' + encodeURIComponent((r.title || '').replace(/ /g, '_')),
+                    snippet: snippet,
+                });
+            });
+        }
+        return results;
+    }
+
+    // --- Wikidata API (free, no API key) ---
+    async function searchWikidata(query, maxResults) {
+        const encoded = encodeURIComponent(query);
+        const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encoded}&language=en&limit=${maxResults}&format=json&origin=*`;
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!response.ok) throw new Error('Wikidata search failed: HTTP ' + response.status);
+
+        const data = await response.json();
+        const results = [];
+
+        if (data.search) {
+            data.search.slice(0, maxResults).forEach(r => {
+                results.push({
+                    title: r.label || r.id || '',
+                    url: r.concepturi || ('https://www.wikidata.org/wiki/' + r.id),
+                    snippet: r.description || ('Wikidata entity: ' + (r.label || r.id)),
                 });
             });
         }

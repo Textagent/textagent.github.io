@@ -249,7 +249,7 @@
         },
         '[data-action="agent-tag"]': {
             name: 'Agent Flow Tag',
-            desc: 'Insert a multi-step {{Agent:}} pipeline — define Step 1, Step 2, etc. Each step\'s output chains into the next. Pick a search provider (DuckDuckGo, Brave, Serper) and model per card.',
+            desc: 'Insert a multi-step {{Agent:}} pipeline — define Step 1, Step 2, etc. Each step\'s output chains into the next. Pick a search provider (DuckDuckGo, Brave, Serper, Tavily, Google CSE, Wikipedia, Wikidata) and model per card.',
             shortcut: null,
             demo: 'assets/demos/17_agent_flow.webp'
         },
