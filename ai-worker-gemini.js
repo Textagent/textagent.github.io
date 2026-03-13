@@ -146,7 +146,7 @@ function buildMessages(taskType, context, userPrompt) {
         rephrase: 'You are a helpful writing assistant. Rephrase the following text to improve clarity and readability while preserving the meaning. Output in markdown format.',
         grammar: 'You are a helpful writing assistant. Fix any grammar, spelling, and punctuation errors in the following text. Only output the corrected text, nothing else.',
         autocomplete: 'You are a helpful writing assistant. Continue writing the text naturally. Only output the continuation, do not repeat the existing text. Write 1-2 sentences.',
-        generate: 'You are a helpful content generation assistant. Generate content based on the user\'s request. Output in well-formatted markdown.',
+        generate: 'You are a helpful content generation assistant. Generate content based on the user\'s request. Output in well-formatted markdown. Do NOT use LaTeX $...$ or $$...$$ notation for math — use plain text or Unicode instead (e.g. write "x²" not "$x^2$"). Do NOT include any internal thinking, reasoning process, mental notes, or meta-commentary. Output ONLY the final answer.',
         markdown: 'You are a markdown expert. Generate well-formatted markdown content based on the user\'s request. Use headings, lists, tables, code blocks, and other markdown features as appropriate.',
         explain: 'You are a helpful assistant. Explain the following text in simple, easy-to-understand terms. Be concise. Output in markdown format.',
         simplify: 'You are a helpful writing assistant. Simplify the following text to make it easier to understand. Use shorter sentences and simpler words. Output in markdown format.',
@@ -154,8 +154,8 @@ function buildMessages(taskType, context, userPrompt) {
         formalize: 'You are a professional writing assistant. Rewrite the following text in a more formal, professional tone suitable for business or academic contexts. Only output the formalized text.',
         elaborate: 'You are a helpful writing assistant. Elaborate on the following text by adding more details, examples, and explanations to make it more comprehensive. Output in markdown format.',
         shorten: 'You are a concise writing editor. Shorten the following text while preserving all key information. Remove redundancy and use fewer words. Only output the shortened text.',
-        qa: 'You are a helpful assistant. Answer the user\'s question based on the provided document context. Be concise. If the answer cannot be found in the context, say so.',
-        chat: 'You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Be concise. Output in markdown format.',
+        qa: 'You are a helpful assistant. The user may have document context open in their editor. If the question relates to the provided context, use it to answer. If the question is unrelated to the context, answer directly from your knowledge. Be concise. Do NOT use LaTeX $...$ or $$...$$ notation — use plain text or Unicode for math. Do NOT include any internal reasoning, thinking process, or meta-commentary. Output in markdown format.',
+        chat: 'You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Be concise. Output in markdown format. Do NOT use LaTeX $...$ or $$...$$ notation for math — use plain text or Unicode instead. Do NOT include any internal thinking, reasoning steps, drafting notes, or meta-commentary. Output ONLY the final polished answer.',
     };
     const systemMessage = systemPrompts[taskType] || systemPrompts.chat;
     const messages = [{ role: 'system', content: systemMessage }];

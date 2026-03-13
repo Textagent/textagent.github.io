@@ -38,12 +38,29 @@ Refactors the AI chat search flow to show web search results in a collapsible "t
 **What:** Added `.ai-thinking-block` container with green-accented border and fade-in animation, `.ai-thinking-spin` rotation keyframe for the search spinner, `.ai-thinking-searching` for the loading state, and `.ai-thinking-no-results` for the empty state with amber info icon. Dark mode variants included.
 **Impact:** Consistent, polished visual treatment matching the existing AI panel design.
 
+## 5. Qwen3 Thinking Model — Correct Sampling Parameters
+**Files:** `ai-worker.js`
+**What:** Replaced greedy decoding (`do_sample: false`) with sampling using Qwen3 model card recommended parameters: `temperature=0.6, top_p=0.95, top_k=20` for thinking mode and `temperature=0.7, top_p=0.8, top_k=20` for non-thinking mode. Greedy decoding causes "performance degradation and endless repetitions" per Qwen3 docs. Increased max tokens from 1024 to 4096 for thinking mode.
+**Impact:** Thinking model no longer gets stuck in infinite thinking loop and actually produces the answer.
+
+## 6. Thinking Content Filter — Worker-level `<think>` Tag Stripping
+**Files:** `ai-worker.js`
+**What:** When `enableThinking` is true, set `skip_special_tokens: false` so `<think>`/`</think>` markers remain visible in the TextStreamer callback. Added state machine that buffers thinking tokens and only forwards content after `</think>`. Strips leftover special tokens (`<|im_start|>`, etc.) from forwarded content. Applied to both text-only and vision generation paths.
+**Impact:** Raw thinking content (planning bullets, reasoning monologue) no longer leaks into the chat response.
+
+## 7. Improved `cleanThinkingArtifacts` — Contraction Patterns & Trailing Cleanup
+**Files:** `js/ai-chat.js`
+**What:** Added `I'll/I'm/I've/I'd` contraction patterns to reasoning detector (previously only matched `I 'll` with a space). Added trailing cleanup that strips planning outlines (`1. What the Black-Scholes equation is...`) and bare numbered items (`4.`) from end of responses.
+**Impact:** Catches residual reasoning that appears after `</think>` in the model's actual response content.
+
 ---
 
-## Files Changed (3 total)
+## Files Changed (5 total)
 
 | File | Lines Changed | Type |
 |------|:---:|------|
-| `js/ai-chat.js` | +217 −48 | Two-phase thinking block, removed inline search duplication |
+| `js/ai-chat.js` | +217 −48 | Two-phase thinking block, reasoning cleanup, removed inline search duplication |
 | `js/ai-assistant.js` | +4 −3 | Fixed user message dedup check |
 | `css/ai-panel.css` | +194 −0 | Thinking block styles, spinner, no-results state |
+| `ai-worker.js` | ~+80 −30 | Correct sampling params, thinking content filter |
+| `ai-worker-common.js` | modified | Supporting worker changes |

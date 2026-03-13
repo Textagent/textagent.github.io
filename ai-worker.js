@@ -259,27 +259,62 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             // Process text + image together
             const inputs = await processor(prompt, rawImage);
 
-            // Collect streamed text
+            // Collect streamed text — filter thinking content
+            // Use skip_special_tokens:false when thinking is on so we see <think>/</ think> markers
             let fullText = '';
+            let inThinkingPhase = !!enableThinking;
+            let thinkingBuffer = '';
             const streamer = new TextStreamer(processor.tokenizer, {
                 skip_prompt: true,
-                skip_special_tokens: true,
+                skip_special_tokens: !enableThinking,
                 callback_function: (token) => {
-                    fullText += token;
+                    if (!enableThinking) {
+                        fullText += token;
+                        self.postMessage({ type: "token", token, messageId });
+                        return;
+                    }
+                    if (inThinkingPhase) {
+                        thinkingBuffer += token;
+                        if (thinkingBuffer.includes('</think>')) {
+                            inThinkingPhase = false;
+                            const afterThink = thinkingBuffer.substring(
+                                thinkingBuffer.indexOf('</think>') + '</think>'.length
+                            );
+                            const cleaned = afterThink.replace(/<\|[^|]*\|>/g, '').replace(/<\/?(?:think|thinking|thought)>/gi, '');
+                            if (cleaned.trim()) {
+                                fullText += cleaned;
+                                self.postMessage({ type: "token", token: cleaned, messageId });
+                            }
+                        }
+                        return;
+                    }
+                    const cleaned = token.replace(/<\|[^|]*\|>/g, '').replace(/<\/?(?:think|thinking|thought)>/gi, '');
+                    if (cleaned) {
+                        fullText += cleaned;
+                        self.postMessage({ type: "token", token: cleaned, messageId });
+                    }
                 },
             });
 
-            // Generate
-            await model.generate({
-                ...inputs,
-                do_sample: true,
-                max_new_tokens: maxTokens,
-                streamer,
-            });
+            // Generate — Qwen3 model card: use sampling, NOT greedy, for thinking mode
+            const genConfig = enableThinking
+                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096) }
+                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens };
+            await model.generate({ ...inputs, ...genConfig, streamer });
+
+            // Final cleanup — strip any remaining think tags or special tokens
+            let cleanedText = fullText.trim();
+            cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*?<\/(?:think|thinking|thought)>/gi, '');
+            cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*$/gi, '');
+            const closeMatch = cleanedText.match(/<\/(?:think|thinking|thought)>/i);
+            if (closeMatch) {
+                cleanedText = cleanedText.substring(cleanedText.indexOf(closeMatch[0]) + closeMatch[0].length);
+            }
+            cleanedText = cleanedText.replace(/<\|[^|]*\|>/g, '').trim();
 
             self.postMessage({
                 type: "complete",
-                text: fullText.trim(),
+                text: cleanedText.trim(),
                 messageId,
             });
         } else {
@@ -294,27 +329,82 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                 return_tensors: "pt",
             });
 
-            // Collect streamed text
+            // --- Thinking-aware streaming ---
+            // When enableThinking is on, the model generates:
+            //   <think>...thinking content...</think>\n\nactual response
+            //
+            // Problem: skip_special_tokens:true strips <think> and </think> markers,
+            // making it impossible to detect where thinking ends.
+            // Solution: use skip_special_tokens:false so we see the markers,
+            // then manually filter thinking content and strip special tokens.
             let fullText = "";
+            let inThinkingPhase = !!enableThinking;
+            let thinkingBuffer = "";  // buffer thinking content (not forwarded)
+
             const streamer = new TextStreamer(processor.tokenizer, {
                 skip_prompt: true,
-                skip_special_tokens: true,
+                skip_special_tokens: !enableThinking,  // false when thinking, so we see markers
                 callback_function: (token) => {
-                    fullText += token;
+                    if (!enableThinking) {
+                        // Normal mode: forward everything
+                        fullText += token;
+                        self.postMessage({ type: "token", token, messageId });
+                        return;
+                    }
+
+                    // Thinking mode: track <think>...</think> boundary
+                    if (inThinkingPhase) {
+                        thinkingBuffer += token;
+                        // Check if we've seen the </think> closing marker
+                        if (thinkingBuffer.includes('</think>')) {
+                            inThinkingPhase = false;
+                            // Extract anything after </think> (there might be content)
+                            const afterThink = thinkingBuffer.substring(
+                                thinkingBuffer.indexOf('</think>') + '</think>'.length
+                            );
+                            // Clean special tokens from the after-think content
+                            const cleaned = afterThink
+                                .replace(/<\|[^|]*\|>/g, '')  // strip <|im_start|>, <|im_end|>, etc.
+                                .replace(/<\/?(?:think|thinking|thought)>/gi, '');
+                            if (cleaned.trim()) {
+                                fullText += cleaned;
+                                self.postMessage({ type: "token", token: cleaned, messageId });
+                            }
+                        }
+                        return; // don't forward thinking tokens
+                    }
+
+                    // Post-thinking: forward real content, strip any special tokens
+                    const cleaned = token
+                        .replace(/<\|[^|]*\|>/g, '')
+                        .replace(/<\/?(?:think|thinking|thought)>/gi, '');
+                    if (cleaned) {
+                        fullText += cleaned;
+                        self.postMessage({ type: "token", token: cleaned, messageId });
+                    }
                 },
             });
 
-            // Generate
-            await model.generate({
-                ...inputs,
-                do_sample: false,
-                max_new_tokens: maxTokens,
-                streamer,
-            });
+            // Generate — Qwen3 model card: use sampling, NOT greedy, for thinking mode
+            // Thinking: temp=0.6, top_p=0.95, top_k=20 | Non-thinking: temp=0.7, top_p=0.8, top_k=20
+            const genConfig = enableThinking
+                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096) }
+                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens };
+            await model.generate({ ...inputs, ...genConfig, streamer });
+
+            // Final cleanup: strip any remaining think tags or reasoning artifacts
+            let cleanedText = fullText.trim();
+            cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*?<\/(?:think|thinking|thought)>/gi, '');
+            cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*$/gi, '');
+            const closeMatch = cleanedText.match(/<\/(?:think|thinking|thought)>/i);
+            if (closeMatch) {
+                cleanedText = cleanedText.substring(cleanedText.indexOf(closeMatch[0]) + closeMatch[0].length);
+            }
+            cleanedText = cleanedText.replace(/<\|[^|]*\|>/g, '').trim();
 
             self.postMessage({
                 type: "complete",
-                text: fullText.trim(),
+                text: cleanedText.trim(),
                 messageId,
             });
         }

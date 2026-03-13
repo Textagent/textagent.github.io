@@ -214,7 +214,10 @@
     function cleanGeneratedOutput(text) {
         if (!text) return text;
 
-        text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+        text = text.replace(/<(?:think|thinking|thought)>[\s\S]*?<\/(?:think|thinking|thought)>/gi, '');
+        text = text.replace(/<(?:think|thinking|thought)>[\s\S]*$/gi, '');
+        var closeMatch = text.match(/<\/(?:think|thinking|thought)>/i);
+        if (closeMatch) { text = text.substring(text.indexOf(closeMatch[0]) + closeMatch[0].length); }
 
         var thinkingPatterns = [
             /^[\s\S]*?Thinking Process:[\s\S]*?(?=^#|\n#)/m,
