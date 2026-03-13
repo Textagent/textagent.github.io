@@ -286,25 +286,24 @@
         return context.trim();
     }
 
-    // --- DuckDuckGo (free, no API key) ---
-    // Uses DuckDuckGo Instant Answer API (returns JSON with CORS headers, no proxy needed)
+    // --- DuckDuckGo Instant Answer (free, no API key, CORS-enabled) ---
+    // NOTE: This is the Instant Answer API — it returns Wikipedia/entity-style
+    // results, NOT full web search results. For general web queries it may return
+    // nothing. For best coverage, combine DDG with other providers (Tavily, Brave, etc.).
     async function searchDuckDuckGo(query, maxResults) {
         const encoded = encodeURIComponent(query);
-
-        // Primary: DuckDuckGo Instant Answer API (no CORS proxy needed)
         const apiUrl = `https://api.duckduckgo.com/?q=${encoded}&format=json&no_html=1&skip_disambig=1`;
-
         const response = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
         if (!response.ok) throw new Error('DuckDuckGo search failed: HTTP ' + response.status);
 
         const data = await response.json();
-        return parseDuckDuckGoJSON(data, maxResults);
+        return parseDuckDuckGoJSON(data, query, maxResults);
     }
 
-    function parseDuckDuckGoJSON(data, maxResults) {
+    function parseDuckDuckGoJSON(data, query, maxResults) {
         const results = [];
 
-        // Abstract (main result from Wikipedia etc.)
+        // 1. Abstract (main Wikipedia/entity result)
         if (data.Abstract && data.AbstractURL) {
             results.push({
                 title: data.Heading || data.AbstractSource || 'Result',
@@ -313,7 +312,55 @@
             });
         }
 
-        // Related topics
+        // 2. Answer (instant answer — e.g. calculations, conversions)
+        if (data.Answer) {
+            results.push({
+                title: 'Instant Answer' + (data.AnswerType ? ' (' + data.AnswerType + ')' : ''),
+                url: data.AbstractURL || 'https://duckduckgo.com/?q=' + encodeURIComponent(query),
+                snippet: typeof data.Answer === 'string' ? data.Answer : JSON.stringify(data.Answer),
+            });
+        }
+
+        // 3. Results array (official site links, etc.)
+        if (data.Results && Array.isArray(data.Results)) {
+            for (let i = 0; i < data.Results.length && results.length < maxResults; i++) {
+                var r = data.Results[i];
+                if (r.FirstURL && r.Text) {
+                    results.push({
+                        title: r.Text.substring(0, 120),
+                        url: r.FirstURL,
+                        snippet: r.Text,
+                    });
+                }
+            }
+        }
+
+        // 4. Infobox (structured data — social profiles, key facts)
+        if (data.Infobox && data.Infobox.content && Array.isArray(data.Infobox.content)) {
+            var infoSnippet = data.Infobox.content
+                .filter(function (item) { return item.label && item.value; })
+                .slice(0, 5)
+                .map(function (item) { return item.label + ': ' + item.value; })
+                .join('; ');
+            if (infoSnippet && results.length < maxResults) {
+                results.push({
+                    title: (data.Heading || 'Info') + ' — Key Facts',
+                    url: data.AbstractURL || 'https://duckduckgo.com/?q=' + encodeURIComponent(query),
+                    snippet: infoSnippet,
+                });
+            }
+        }
+
+        // 5. Definition
+        if (data.Definition && data.DefinitionURL && results.length < maxResults) {
+            results.push({
+                title: 'Definition — ' + (data.DefinitionSource || ''),
+                url: data.DefinitionURL,
+                snippet: data.Definition,
+            });
+        }
+
+        // 6. Related topics
         if (data.RelatedTopics) {
             for (let i = 0; i < data.RelatedTopics.length && results.length < maxResults; i++) {
                 const topic = data.RelatedTopics[i];
@@ -324,7 +371,7 @@
                         snippet: topic.Text,
                     });
                 }
-                // Some topics are groups with sub-topics
+                // Sub-topics within groups
                 if (topic.Topics) {
                     for (let j = 0; j < topic.Topics.length && results.length < maxResults; j++) {
                         const sub = topic.Topics[j];
@@ -340,88 +387,12 @@
             }
         }
 
-        // Definition
-        if (results.length < maxResults && data.Definition && data.DefinitionURL) {
+        // 7. Redirect (DDG sometimes returns a redirect for !bang queries)
+        if (data.Redirect && results.length < maxResults) {
             results.push({
-                title: 'Definition — ' + (data.DefinitionSource || ''),
-                url: data.DefinitionURL,
-                snippet: data.Definition,
-            });
-        }
-
-        // Answer (instant answer)
-        if (results.length < maxResults && data.Answer) {
-            results.push({
-                title: 'Instant Answer',
-                url: data.AbstractURL || 'https://duckduckgo.com/?q=' + encodeURIComponent(data.Heading || ''),
-                snippet: typeof data.Answer === 'string' ? data.Answer : JSON.stringify(data.Answer),
-            });
-        }
-
-        // Fallback: if DDG returned no structured results, try CORS proxy for HTML scraping
-        if (results.length === 0) {
-            return searchDuckDuckGoFallback(data._query || '', maxResults);
-        }
-
-        return results;
-    }
-
-    // Fallback: try CORS proxies for HTML scraping (legacy approach)
-    async function searchDuckDuckGoFallback(query, maxResults) {
-        if (!query) return [];
-        const encoded = encodeURIComponent(query);
-        const proxies = [
-            `https://api.allorigins.win/raw?url=${encodeURIComponent('https://lite.duckduckgo.com/lite/?q=' + encoded)}`,
-            `https://corsproxy.io/?url=${encodeURIComponent('https://lite.duckduckgo.com/lite/?q=' + encoded)}`,
-        ];
-
-        for (const proxyUrl of proxies) {
-            try {
-                const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
-                if (!response.ok) continue;
-                const html = await response.text();
-                const parsed = parseDuckDuckGoHTML(html, maxResults);
-                if (parsed.length > 0) return parsed;
-            } catch (_) { /* try next proxy */ }
-        }
-        return [];
-    }
-
-    function parseDuckDuckGoHTML(html, maxResults) {
-        const results = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        const links = doc.querySelectorAll('a.result-link');
-        const snippets = doc.querySelectorAll('td.result-snippet');
-
-        for (let i = 0; i < Math.min(links.length, maxResults); i++) {
-            const link = links[i];
-            const snippet = snippets[i];
-            const url = link.getAttribute('href') || '';
-            const title = (link.textContent || '').trim();
-            const snippetText = snippet ? (snippet.textContent || '').trim() : '';
-
-            if (url && title && !url.startsWith('//duckduckgo.com')) {
-                results.push({ title, url, snippet: snippetText });
-            }
-        }
-
-        if (results.length === 0) {
-            const allLinks = doc.querySelectorAll('a[href]');
-            const seenUrls = new Set();
-            allLinks.forEach(a => {
-                if (results.length >= maxResults) return;
-                const href = a.getAttribute('href') || '';
-                const text = (a.textContent || '').trim();
-                if (href.startsWith('http') && text.length > 5 &&
-                    !href.includes('duckduckgo.com') && !seenUrls.has(href)) {
-                    seenUrls.add(href);
-                    const parentTd = a.closest('td');
-                    const nextTd = parentTd ? parentTd.nextElementSibling : null;
-                    const snippet = nextTd ? (nextTd.textContent || '').trim().substring(0, 200) : '';
-                    results.push({ title: text, url: href, snippet });
-                }
+                title: 'Redirected result',
+                url: data.Redirect,
+                snippet: 'DuckDuckGo redirected this query to: ' + data.Redirect,
             });
         }
 

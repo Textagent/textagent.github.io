@@ -177,7 +177,7 @@
 
         <div class="ai-search-provider-bar" id="ai-search-provider-bar" style="display:none">
             <div class="ai-search-provider-pills" id="ai-search-provider-pills">
-                <label class="ai-provider-pill" data-provider="duckduckgo" title="DuckDuckGo · Free · No API key">
+                <label class="ai-provider-pill" data-provider="duckduckgo" title="DuckDuckGo Instant Answers · Entity lookups · Free · No API key">
                     <input type="checkbox" class="ai-provider-check" value="duckduckgo"><span class="ai-provider-pill-label"><i class="bi bi-search"></i> DDG</span>
                 </label>
                 <label class="ai-provider-pill" data-provider="brave" title="Brave Search · Free tier · 2,000/month">
