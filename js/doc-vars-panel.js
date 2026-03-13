@@ -84,14 +84,31 @@
         if (!body) return;
 
         var allVars = M._vars.list();
+
+        // Also scan AI/Agent blocks for declared @var: names not yet in runtime
+        if (M.parseDocgenBlocks && M.markdownEditor) {
+            try {
+                var blocks = M.parseDocgenBlocks(M.markdownEditor.value);
+                for (var b = 0; b < blocks.length; b++) {
+                    var declaredVar = blocks[b].varName;
+                    if (declaredVar && !allVars[declaredVar]) {
+                        allVars[declaredVar] = { value: '(not yet run)', layer: 'declared' };
+                    }
+                }
+            } catch (_) {}
+        }
+
         var keys = Object.keys(allVars);
 
         var manualVars = [];
         var runtimeVars = [];
+        var declaredVars = [];
         for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
             if (allVars[k].layer === 'manual') {
                 manualVars.push({ name: k, value: allVars[k].value, layer: 'manual' });
+            } else if (allVars[k].layer === 'declared') {
+                declaredVars.push({ name: k, value: allVars[k].value, layer: 'declared' });
             } else {
                 runtimeVars.push({ name: k, value: allVars[k].value, layer: 'runtime' });
             }
@@ -132,6 +149,17 @@
             }
         }
 
+        // Declared (pending) vars section — from @var: on AI blocks not yet run
+        if (declaredVars.length > 0) {
+            if (manualVars.length > 0 || runtimeVars.length > 0) html += '<div class="dv-divider"></div>';
+            html += '<div class="dv-section-header declared">' +
+                '<i class="bi bi-hourglass-split"></i> Pending Vars ' +
+                '<span class="dv-section-badge">' + declaredVars.length + '</span></div>';
+            for (var d = 0; d < declaredVars.length; d++) {
+                html += renderVarRow(declaredVars[d]);
+            }
+        }
+
         body.innerHTML = html;
 
         // Wire copy buttons
@@ -167,8 +195,8 @@
     }
 
     function renderVarRow(v) {
-        var source = v.layer === 'manual' ? 'manual' : inferSource(v.name);
-        var sourceLabel = source === 'api' ? 'API' : source === 'manual' ? 'DOC' : '@var';
+        var source = v.layer === 'manual' ? 'manual' : v.layer === 'declared' ? 'declared' : inferSource(v.name);
+        var sourceLabel = source === 'api' ? 'API' : source === 'manual' ? 'DOC' : source === 'declared' ? 'PENDING' : '@var';
         var displayVal = escapeHtml(truncate(String(v.value), 200));
 
         return '<div class="dv-var-row">' +

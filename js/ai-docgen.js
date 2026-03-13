@@ -568,6 +568,16 @@
                     : [];
                 var agentSearchPillsHtml = buildSearchPillsHtml(blockIndex, agentActiveSearch);
 
+                // Parse @var: field for Agent card
+                var agentVarMatch = prompt.match(/^\s*(?:@var|Var):\s*(\S+)$/mi);
+                var agentVarName = agentVarMatch ? agentVarMatch[1].trim() : '';
+
+                // Parse @input: field for Agent card
+                var agentInputMatch = prompt.match(/^\s*(?:@input|Input):\s*(.+)$/mi);
+                var agentActiveInputs = agentInputMatch
+                    ? agentInputMatch[1].split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+                    : [];
+
                 // Build upload thumbnail strip for Agent card
                 var agentUploadThumbs = '';
                 var agentUploads = blockUploads.get(blockIndex);
@@ -590,6 +600,7 @@
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
                     + '<button class="ai-placeholder-btn ai-search-multi-btn' + (agentActiveSearch.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Search engines">🔍' + (agentActiveSearch.length > 0 ? ' ' + agentActiveSearch.length : '') + '</button>'
+                    + '<button class="ai-placeholder-btn ai-vars-toggle' + (agentVarName || agentActiveInputs.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Variables — set output name and select input variables">🔗' + (agentVarName ? ' ' + escapeHtml(agentVarName) : '') + (agentActiveInputs.length > 0 ? ' +' + agentActiveInputs.length : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this flow">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run this agent flow">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
@@ -604,6 +615,19 @@
                     + '</div>'
                     + '</div>'
                     + agentSearchPillsHtml
+                    + '<div class="ai-vars-panel" data-ai-index="' + blockIndex + '" style="display:none">'
+                    + '<div class="ai-vars-section">'
+                    + '<div class="ai-vars-section-label">📤 Output Variable</div>'
+                    + '<div class="ai-var-panel-row">'
+                    + '<input class="ai-var-input" data-ai-index="' + blockIndex + '" type="text" placeholder="Variable name, e.g. my_result" value="' + escapeHtml(agentVarName) + '" spellcheck="false">'
+                    + '<button class="ai-var-clear" data-ai-index="' + blockIndex + '" title="Clear">✕</button>'
+                    + '</div>'
+                    + '</div>'
+                    + '<div class="ai-vars-section ai-vars-input-section">'
+                    + '<div class="ai-vars-section-label">📥 Input Variables</div>'
+                    + '<div class="ai-input-var-list" data-ai-index="' + blockIndex + '"></div>'
+                    + '</div>'
+                    + '</div>'
                     + '<div class="ai-agent-steps">' + stepsHtml + '</div>'
                     + '</div>';
             } else if (type === 'Translate') {
@@ -803,6 +827,8 @@
                 displayText = displayText.replace(/^\s*(?:@search|Search):\s*\S+$/mi, '').trim();
                 displayText = displayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
                 displayText = displayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
+                displayText = displayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+                displayText = displayText.replace(/^\s*(?:@input|Input):\s*.+$/mi, '').trim();
 
                 // Separate description (bare text) from @prompt: (editable)
                 var hasPromptField = /^\s*(?:@prompt|Prompt):\s*/m.test(displayText);
@@ -818,6 +844,16 @@
                     ? searchFieldMatch[1].split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean)
                     : [];
                 var aiSearchPillsHtml = buildSearchPillsHtml(blockIndex, aiActiveSearch);
+
+                // Parse @var: field for AI card
+                var aiVarMatch = prompt.match(/^\s*(?:@var|Var):\s*(\S+)$/mi);
+                var aiVarName = aiVarMatch ? aiVarMatch[1].trim() : '';
+
+                // Parse @input: field for AI card
+                var aiInputMatch = prompt.match(/^\s*(?:@input|Input):\s*(.+)$/mi);
+                var aiActiveInputs = aiInputMatch
+                    ? aiInputMatch[1].split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+                    : [];
 
                 // Build upload thumbnail strip if images are already attached
                 var uploadThumbs = '';
@@ -841,6 +877,7 @@
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
                     + '<button class="ai-placeholder-btn ai-search-multi-btn' + (aiActiveSearch.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Search engines">🔍' + (aiActiveSearch.length > 0 ? ' ' + aiActiveSearch.length : '') + '</button>'
+                    + '<button class="ai-placeholder-btn ai-vars-toggle' + (aiVarName || aiActiveInputs.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Variables — set output name and select input variables">🔗' + (aiVarName ? ' ' + escapeHtml(aiVarName) : '') + (aiActiveInputs.length > 0 ? ' +' + aiActiveInputs.length : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">' + cardModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
@@ -855,6 +892,19 @@
                     + '</div>'
                     + '</div>'
                     + aiSearchPillsHtml
+                    + '<div class="ai-vars-panel" data-ai-index="' + blockIndex + '" style="display:none">'
+                    + '<div class="ai-vars-section">'
+                    + '<div class="ai-vars-section-label">📤 Output Variable</div>'
+                    + '<div class="ai-var-panel-row">'
+                    + '<input class="ai-var-input" data-ai-index="' + blockIndex + '" type="text" placeholder="Variable name, e.g. my_result" value="' + escapeHtml(aiVarName) + '" spellcheck="false">'
+                    + '<button class="ai-var-clear" data-ai-index="' + blockIndex + '" title="Clear">✕</button>'
+                    + '</div>'
+                    + '</div>'
+                    + '<div class="ai-vars-section ai-vars-input-section">'
+                    + '<div class="ai-vars-section-label">📥 Input Variables</div>'
+                    + '<div class="ai-input-var-list" data-ai-index="' + blockIndex + '"></div>'
+                    + '</div>'
+                    + '</div>'
                     + (descriptionText ? '<div class="ai-placeholder-prompt ai-placeholder-prompt-static">' + escapeHtml(descriptionText) + '</div>' : '')
                     + (hasPromptField
                         ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Enter prompt for AI\u2026" rows="2">' + escapeHtml(promptValue) + '</textarea></div>'
@@ -1643,6 +1693,136 @@
                 }
                 // Sync to editor — @search: as comma-separated or remove if empty
                 updateBlockField(idx, '@search', checked.length > 0 ? checked.join(', ') : '');
+            });
+        });
+
+        // 🔗 Vars toggle — unified button shows/hides combined vars panel
+        container.querySelectorAll('.ai-vars-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = this.dataset.aiIndex;
+                var panel = container.querySelector('.ai-vars-panel[data-ai-index="' + idx + '"]');
+                if (panel) {
+                    var isVisible = panel.style.display !== 'none';
+                    if (!isVisible) {
+                        // Focus the output var input
+                        var varInput = panel.querySelector('.ai-var-input');
+                        if (varInput) setTimeout(function () { varInput.focus(); }, 50);
+
+                        // Populate input variables list
+                        var listEl = panel.querySelector('.ai-input-var-list');
+                        if (listEl) {
+                            // Merge: runtime/manual vars + declared @var: from other blocks
+                            var allVars = M._vars ? M._vars.list() : {};
+                            var text = M.markdownEditor ? M.markdownEditor.value : '';
+                            var blocks = parseDocgenBlocks(text);
+                            var blockIdx = parseInt(idx, 10);
+                            var currentInputs = (blockIdx < blocks.length && blocks[blockIdx].inputVars) || [];
+
+                            // Scan all blocks for declared @var: names (from other blocks)
+                            for (var bi = 0; bi < blocks.length; bi++) {
+                                if (bi === blockIdx) continue; // skip self
+                                var declaredVar = blocks[bi].varName;
+                                if (declaredVar && !allVars[declaredVar]) {
+                                    allVars[declaredVar] = { value: '', layer: 'declared' };
+                                }
+                            }
+
+                            var varNames = Object.keys(allVars);
+
+                            if (varNames.length === 0) {
+                                listEl.innerHTML = '<span class="ai-input-empty">No variables available yet. Use <code>@var:</code> on other blocks or <code>Variable:</code> on API tags.</span>';
+                            } else {
+                                var html = '';
+                                varNames.forEach(function (name) {
+                                    var info = allVars[name];
+                                    var checked = currentInputs.indexOf(name) !== -1 ? ' checked' : '';
+                                    var preview = info.layer === 'declared'
+                                        ? '(not yet run)'
+                                        : String(info.value || '').substring(0, 60);
+                                    if (info.layer !== 'declared' && String(info.value || '').length > 60) preview += '…';
+                                    html += '<label class="ai-input-checkbox-item">'
+                                        + '<input type="checkbox" class="ai-input-var-check" value="' + escapeHtml(name) + '" data-ai-index="' + idx + '"' + checked + '>'
+                                        + '<span class="ai-input-var-name">' + escapeHtml(name) + '</span>'
+                                        + '<span class="ai-input-var-layer">' + info.layer + '</span>'
+                                        + '<span class="ai-input-var-preview">' + escapeHtml(preview) + '</span>'
+                                        + '</label>';
+                                });
+                                var wildChecked = currentInputs.indexOf('*') !== -1 ? ' checked' : '';
+                                html += '<label class="ai-input-checkbox-item ai-input-wildcard">'
+                                    + '<input type="checkbox" class="ai-input-var-check" value="*" data-ai-index="' + idx + '"' + wildChecked + '>'
+                                    + '<span class="ai-input-var-name">* (all variables)</span>'
+                                    + '</label>';
+                                listEl.innerHTML = html;
+
+                                // Bind checkbox change handlers
+                                listEl.querySelectorAll('.ai-input-var-check').forEach(function (cb) {
+                                    cb.addEventListener('change', function () {
+                                        var cbIdx = parseInt(this.dataset.aiIndex, 10);
+                                        var list = listEl.querySelectorAll('.ai-input-var-check:checked');
+                                        var selected = [];
+                                        list.forEach(function (c) { selected.push(c.value); });
+                                        updateBlockField(cbIdx, '@input', selected.length > 0 ? selected.join(', ') : '');
+                                        // Update toggle button badge
+                                        updateVarsToggleBadge(container, cbIdx);
+                                    });
+                                });
+                            }
+                        }
+                    }
+                    panel.style.display = isVisible ? 'none' : '';
+                }
+            });
+        });
+
+        // Helper: update the 🔗 Vars button badge text
+        function updateVarsToggleBadge(container, idx) {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var blocks = parseDocgenBlocks(text);
+            if (idx >= blocks.length) return;
+            var block = blocks[idx];
+            var varName = block.varName || '';
+            var inputCount = block.inputVars ? block.inputVars.length : 0;
+            var toggle = container.querySelector('.ai-vars-toggle[data-ai-index="' + idx + '"]');
+            if (toggle) {
+                var label = '🔗';
+                if (varName) label += ' ' + varName;
+                if (inputCount > 0) label += ' +' + inputCount;
+                toggle.textContent = label;
+                toggle.classList.toggle('active', !!(varName || inputCount));
+            }
+        }
+
+        // @var input — blur or Enter syncs variable name to editor
+        container.querySelectorAll('.ai-var-input').forEach(function (input) {
+            function syncVar() {
+                var idx = parseInt(input.dataset.aiIndex, 10);
+                var val = input.value.trim().replace(/\s+/g, '_');
+                input.value = val;
+                updateBlockField(idx, '@var', val);
+                updateVarsToggleBadge(container, idx);
+            }
+            input.addEventListener('blur', syncVar);
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    syncVar();
+                }
+            });
+        });
+
+        // @var clear — ✕ button clears the variable name
+        container.querySelectorAll('.ai-var-clear').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var panel = this.closest('.ai-vars-panel');
+                var input = panel ? panel.querySelector('.ai-var-input') : null;
+                if (input) input.value = '';
+                updateBlockField(idx, '@var', '');
+                updateVarsToggleBadge(container, idx);
             });
         });
 

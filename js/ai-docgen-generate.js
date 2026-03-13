@@ -1163,36 +1163,53 @@
     // --- Register runtime adapters for exec-controller (auto-accept mode) ---
     var docgenAiAdapter = {
         execute: function (source, block) {
-            if (!ensureModelReady()) {
-                return Promise.reject(new Error('AI model not ready. Please select and load a model first.'));
-            }
-            var text = M.markdownEditor.value;
-            var blockStart = block.position || 0;
-            var prevContent = text.substring(0, blockStart);
+            var self = this;
+            function doExecute() {
+                var text = M.markdownEditor.value;
+                var blockStart = block.position || 0;
+                var prevContent = text.substring(0, blockStart);
 
-            // Build prompt from the parsed block data
-            var parsedBlocks = M.parseDocgenBlocks(text);
-            var parsedBlock = null;
-            for (var i = 0; i < parsedBlocks.length; i++) {
-                if (parsedBlocks[i].fullMatch === block._fullMatch) {
-                    parsedBlock = parsedBlocks[i];
-                    break;
+                // Build prompt from the parsed block data
+                var parsedBlocks = M.parseDocgenBlocks(text);
+                var parsedBlock = null;
+                for (var i = 0; i < parsedBlocks.length; i++) {
+                    if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                        parsedBlock = parsedBlocks[i];
+                        break;
+                    }
                 }
-            }
-            if (!parsedBlock) parsedBlock = { type: 'AI', prompt: source };
+                if (!parsedBlock) parsedBlock = { type: 'AI', prompt: source };
 
-            return M.requestAiTask({
-                taskType: 'generate',
-                context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                userPrompt: buildPrompt(parsedBlock, prevContent, '', false),
-                enableThinking: parsedBlock.think || false,
-                silent: true
-            }).then(function (result) {
-                var cleaned = cleanGeneratedOutput(result);
-                // Auto-accept: replace tag with generated content
-                if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
-                return cleaned;
-            });
+                return M.requestAiTask({
+                    taskType: 'generate',
+                    context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
+                    userPrompt: buildPrompt(parsedBlock, prevContent, '', false),
+                    enableThinking: parsedBlock.think || false,
+                    silent: true
+                }).then(function (result) {
+                    var cleaned = cleanGeneratedOutput(result);
+                    // Auto-accept: replace tag with generated content
+                    if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
+                    return cleaned;
+                });
+            }
+
+            if (!ensureModelReady()) {
+                // Show model selector popup and retry after user picks a model
+                return showAiSetupPopup().then(function (selectedModelId) {
+                    if (!selectedModelId) {
+                        return Promise.reject(new Error('No AI model selected. Generation cancelled.'));
+                    }
+                    // Wait a moment for the model to initialize
+                    return new Promise(function (resolve) { setTimeout(resolve, 500); });
+                }).then(function () {
+                    if (!ensureModelReady()) {
+                        return Promise.reject(new Error('AI model is still loading. Please wait and try again.'));
+                    }
+                    return doExecute();
+                });
+            }
+            return doExecute();
         }
     };
 
@@ -1218,64 +1235,79 @@
 
     var docgenAgentAdapter = {
         execute: function (source, block) {
-            if (!ensureModelReady()) {
-                return Promise.reject(new Error('AI model not ready. Please select and load a model first.'));
-            }
-            var text = M.markdownEditor.value;
-            var parsedBlocks = M.parseDocgenBlocks(text);
-            var parsedBlock = null;
-            for (var i = 0; i < parsedBlocks.length; i++) {
-                if (parsedBlocks[i].fullMatch === block._fullMatch) {
-                    parsedBlock = parsedBlocks[i];
-                    break;
+            function doExecute() {
+                var text = M.markdownEditor.value;
+                var parsedBlocks = M.parseDocgenBlocks(text);
+                var parsedBlock = null;
+                for (var i = 0; i < parsedBlocks.length; i++) {
+                    if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                        parsedBlock = parsedBlocks[i];
+                        break;
+                    }
                 }
-            }
-            if (!parsedBlock || !parsedBlock.steps || parsedBlock.steps.length === 0) {
-                return Promise.reject(new Error('No agent steps found'));
-            }
+                if (!parsedBlock || !parsedBlock.steps || parsedBlock.steps.length === 0) {
+                    return Promise.reject(new Error('No agent steps found'));
+                }
 
-            var steps = parsedBlock.steps;
-            var docContext = text.substring(0, parsedBlock.start);
-            var accumulatedContext = '';
-            var allResults = [];
+                var steps = parsedBlock.steps;
+                var docContext = text.substring(0, parsedBlock.start);
+                var accumulatedContext = '';
+                var allResults = [];
 
-            // Sequential step execution
-            var promise = Promise.resolve();
-            for (var s = 0; s < steps.length; s++) {
-                (function (stepIdx) {
-                    promise = promise.then(function () {
-                        var stepPrompt = 'You are an expert writer. This is step ' + steps[stepIdx].number
-                            + ' of ' + steps.length + ' in a multi-step writing flow.\n\n'
-                            + 'Task: ' + steps[stepIdx].description + '\n\n';
-                        if (accumulatedContext) {
-                            stepPrompt += 'Previous steps produced:\n' + accumulatedContext.substring(0, 3000) + '\n\n';
-                        }
-                        if (docContext) {
-                            stepPrompt += 'Document context:\n' + docContext.substring(Math.max(0, docContext.length - 2000)) + '\n\n';
-                        }
-                        stepPrompt += 'Write ONLY the markdown content for this step. Do not include meta-commentary.';
+                // Sequential step execution
+                var promise = Promise.resolve();
+                for (var s = 0; s < steps.length; s++) {
+                    (function (stepIdx) {
+                        promise = promise.then(function () {
+                            var stepPrompt = 'You are an expert writer. This is step ' + steps[stepIdx].number
+                                + ' of ' + steps.length + ' in a multi-step writing flow.\n\n'
+                                + 'Task: ' + steps[stepIdx].description + '\n\n';
+                            if (accumulatedContext) {
+                                stepPrompt += 'Previous steps produced:\n' + accumulatedContext.substring(0, 3000) + '\n\n';
+                            }
+                            if (docContext) {
+                                stepPrompt += 'Document context:\n' + docContext.substring(Math.max(0, docContext.length - 2000)) + '\n\n';
+                            }
+                            stepPrompt += 'Write ONLY the markdown content for this step. Do not include meta-commentary.';
 
-                        return M.requestAiTask({
-                            taskType: 'generate',
-                            context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
-                            userPrompt: stepPrompt,
-                            enableThinking: false,
-                            silent: true
-                        }).then(function (result) {
-                            var cleaned = cleanGeneratedOutput(result);
-                            accumulatedContext += '\n\n' + cleaned;
-                            allResults.push(cleaned);
+                            return M.requestAiTask({
+                                taskType: 'generate',
+                                context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
+                                userPrompt: stepPrompt,
+                                enableThinking: false,
+                                silent: true
+                            }).then(function (result) {
+                                var cleaned = cleanGeneratedOutput(result);
+                                accumulatedContext += '\n\n' + cleaned;
+                                allResults.push(cleaned);
+                            });
                         });
-                    });
-                })(s);
+                    })(s);
+                }
+
+                return promise.then(function () {
+                    var combinedResult = allResults.join('\n\n');
+                    // Auto-accept: replace tag with combined agent output
+                    if (block._fullMatch) replaceBlockByTag(block._fullMatch, combinedResult);
+                    return combinedResult;
+                });
             }
 
-            return promise.then(function () {
-                var combinedResult = allResults.join('\n\n');
-                // Auto-accept: replace tag with combined agent output
-                if (block._fullMatch) replaceBlockByTag(block._fullMatch, combinedResult);
-                return combinedResult;
-            });
+            if (!ensureModelReady()) {
+                // Show model selector popup and retry after user picks a model
+                return showAiSetupPopup().then(function (selectedModelId) {
+                    if (!selectedModelId) {
+                        return Promise.reject(new Error('No AI model selected. Generation cancelled.'));
+                    }
+                    return new Promise(function (resolve) { setTimeout(resolve, 500); });
+                }).then(function () {
+                    if (!ensureModelReady()) {
+                        return Promise.reject(new Error('AI model is still loading. Please wait and try again.'));
+                    }
+                    return doExecute();
+                });
+            }
+            return doExecute();
         }
     };
 

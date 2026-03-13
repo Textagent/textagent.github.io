@@ -2570,8 +2570,243 @@
 }
 
 /* ==============================================
-   MEMORY SELECTOR — dropdown on AI/Agent cards
+   🔗 VARS TOGGLE — unified button on AI/Agent cards
+   Cyan accent (#06b6d4)
    ============================================== */
+
+.ai-vars-toggle {
+    font-size: 0.85em !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    background: rgba(100, 100, 120, 0.15) !important;
+    color: #888 !important;
+    border: 1px solid rgba(100, 100, 120, 0.25) !important;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.ai-vars-toggle:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.ai-vars-toggle.active {
+    background: rgba(6, 182, 212, 0.2) !important;
+    color: #22d3ee !important;
+    border-color: rgba(6, 182, 212, 0.4) !important;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+}
+
+[data-theme="light"] .ai-vars-toggle.active {
+    background: rgba(6, 182, 212, 0.12) !important;
+    color: #0891b2 !important;
+    border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+/* Combined vars panel */
+.ai-vars-panel {
+    border-top: 1px solid rgba(6, 182, 212, 0.15);
+    background: rgba(6, 182, 212, 0.03);
+    animation: ai-pills-slide 0.2s ease;
+}
+
+.ai-vars-section {
+    padding: 8px 12px;
+}
+
+.ai-vars-section + .ai-vars-section {
+    border-top: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+.ai-vars-section-label {
+    font-size: 0.72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #22d3ee;
+    margin-bottom: 6px;
+}
+
+.ai-vars-input-section .ai-vars-section-label {
+    color: #a78bfa;
+}
+
+.ai-var-panel-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-var-input {
+    flex: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    background: rgba(6, 182, 212, 0.08);
+    color: var(--text-color, #e6edf3);
+    font-size: 0.82em;
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ai-var-input:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+}
+
+.ai-var-input::placeholder {
+    color: rgba(6, 182, 212, 0.4);
+}
+
+.ai-var-clear {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    font-size: 10px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.ai-var-clear:hover {
+    background: rgba(239, 68, 68, 0.3);
+    transform: scale(1.1);
+}
+
+/* Input variables list */
+.ai-input-var-list {
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.ai-input-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82em;
+    color: #e2e8f0;
+    transition: background 0.15s;
+}
+
+.ai-input-checkbox-item:hover {
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.ai-input-checkbox-item input[type="checkbox"] {
+    accent-color: #8b5cf6;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.ai-input-var-name {
+    font-weight: 600;
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-size: 0.92em;
+    color: #c4b5fd;
+}
+
+.ai-input-var-layer {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.68em;
+    font-weight: 600;
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.ai-input-var-preview {
+    flex: 1;
+    font-size: 0.78em;
+    color: rgba(148, 163, 184, 0.7);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-input-wildcard {
+    border-top: 1px solid rgba(139, 92, 246, 0.1);
+    margin-top: 4px;
+    padding-top: 8px;
+}
+
+.ai-input-wildcard .ai-input-var-name {
+    color: #f59e0b;
+}
+
+.ai-input-empty {
+    display: block;
+    padding: 12px;
+    font-size: 0.78em;
+    color: rgba(148, 163, 184, 0.7);
+    text-align: center;
+}
+
+.ai-input-empty code {
+    background: rgba(139, 92, 246, 0.15);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #a78bfa;
+}
+
+/* Light theme */
+[data-theme="light"] .ai-vars-panel {
+    background: rgba(6, 182, 212, 0.02);
+    border-top-color: rgba(6, 182, 212, 0.12);
+}
+
+[data-theme="light"] .ai-vars-section-label {
+    color: #0891b2;
+}
+
+[data-theme="light"] .ai-vars-input-section .ai-vars-section-label {
+    color: #7c3aed;
+}
+
+[data-theme="light"] .ai-var-input {
+    background: rgba(6, 182, 212, 0.06);
+    border-color: rgba(6, 182, 212, 0.25);
+    color: #334155;
+}
+
+[data-theme="light"] .ai-input-checkbox-item {
+    color: #334155;
+}
+
+[data-theme="light"] .ai-input-checkbox-item:hover {
+    background: rgba(139, 92, 246, 0.06);
+}
+
+[data-theme="light"] .ai-input-var-name {
+    color: #6d28d9;
+}
+
+[data-theme="light"] .ai-input-var-preview {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+[data-theme="light"] .ai-input-empty {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+[data-theme="light"] .ai-input-empty code {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+}
 
 .ai-memory-select-btn {
     font-size: 0.85em !important;
