@@ -38,6 +38,7 @@ import '../css/exec-engine.css';
 import '../css/tts.css';
 import '../css/doc-vars-panel.css';
 import '../css/game-docgen.css';
+import '../css/git-docgen.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -146,6 +147,9 @@ async function loadModules() {
     // 3h: Game Builder Component (standalone — remove to disable feature)
     await import('../js/game-prebuilts.js');
     await import('../js/game-docgen.js');
+
+    // 3i: GitHub Tools Component (standalone — remove to disable feature)
+    await import('../js/git-docgen.js');
 }
 
 loadModules();

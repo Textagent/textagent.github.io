@@ -1,0 +1,467 @@
+/* ============================================
+   git-docgen.css — {{Git:}} Tag Styles
+   GitHub-themed card (dark green accent)
+   Standalone — remove this file to disable
+   ============================================ */
+
+/* Card container */
+.ai-git-card {
+    border: 2px solid #238636;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(35, 134, 54, 0.08) 0%, rgba(46, 160, 67, 0.04) 100%);
+    margin: 12px 0;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ai-git-card:hover {
+    border-color: #2ea043;
+    box-shadow: 0 4px 20px rgba(35, 134, 54, 0.15);
+}
+
+.ai-git-card.ai-git-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.ai-git-card.ai-git-loading .ai-git-label {
+    animation: git-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes git-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Header */
+.ai-git-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(35, 134, 54, 0.12) 0%, rgba(46, 160, 67, 0.06) 100%);
+    border-bottom: 1px solid rgba(35, 134, 54, 0.2);
+    flex-wrap: wrap;
+}
+
+.ai-git-icon {
+    font-size: 1.2em;
+}
+
+.ai-git-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #238636;
+}
+
+.ai-git-repo-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(35, 134, 54, 0.15);
+    color: #238636;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-git-branch-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(35, 134, 54, 0.1);
+    color: #238636;
+    font-weight: 500;
+}
+
+.ai-git-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.ai-git-btn {
+    border: none;
+    background: rgba(35, 134, 54, 0.1);
+    color: #238636;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.ai-git-btn:hover {
+    background: rgba(35, 134, 54, 0.2);
+    color: #1a7f37;
+}
+
+.ai-git-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ai-git-run {
+    background: #238636;
+    color: #fff;
+}
+
+.ai-git-run:hover {
+    background: #1a7f37;
+    color: #fff;
+}
+
+/* Model selector */
+.ai-git-model-select {
+    border: 1px solid rgba(35, 134, 54, 0.3);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    background: transparent;
+    color: inherit;
+    max-width: 140px;
+    cursor: pointer;
+}
+
+/* Action pills */
+.ai-git-action-pills {
+    display: flex;
+    gap: 4px;
+    padding: 8px 14px;
+    background: rgba(35, 134, 54, 0.04);
+    border-bottom: 1px solid rgba(35, 134, 54, 0.1);
+    flex-wrap: wrap;
+}
+
+.ai-git-action-pill {
+    border: 1px solid rgba(35, 134, 54, 0.2);
+    background: transparent;
+    color: #6b7280;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+}
+
+.ai-git-action-pill:hover {
+    border-color: #238636;
+    color: #238636;
+}
+
+.ai-git-action-pill.active {
+    background: #238636;
+    color: #fff;
+    border-color: #238636;
+}
+
+/* Repo info */
+.ai-git-info {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: #6b7280;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid rgba(35, 134, 54, 0.08);
+}
+
+.ai-git-info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Prompt area */
+.ai-git-prompt {
+    padding: 8px 14px;
+}
+
+.ai-git-prompt-input {
+    width: 100%;
+    border: 1px solid rgba(35, 134, 54, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    resize: vertical;
+    background: rgba(255, 255, 255, 0.6);
+    color: inherit;
+    transition: border-color 0.2s;
+    min-height: 50px;
+}
+
+.ai-git-prompt-input:focus {
+    outline: none;
+    border-color: #238636;
+    box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.1);
+}
+
+/* Token hint */
+.ai-git-token-hint {
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(35, 134, 54, 0.04);
+    border-bottom: 1px solid rgba(35, 134, 54, 0.08);
+}
+
+.ai-git-token-hint a {
+    color: #238636;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Result area */
+.ai-git-result {
+    padding: 14px;
+    border-top: 1px solid rgba(35, 134, 54, 0.1);
+}
+
+.ai-git-result-content {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(35, 134, 54, 0.04);
+    border: 1px solid rgba(35, 134, 54, 0.1);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.ai-git-result-content pre {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 10px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.78rem;
+}
+
+.ai-git-result-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    justify-content: flex-end;
+}
+
+.ai-git-accept {
+    background: #238636 !important;
+    color: #fff !important;
+}
+
+.ai-git-accept:hover {
+    background: #1a7f37 !important;
+}
+
+.ai-git-reject {
+    background: rgba(218, 54, 51, 0.1) !important;
+    color: #da3633 !important;
+}
+
+.ai-git-reject:hover {
+    background: rgba(218, 54, 51, 0.2) !important;
+}
+
+/* Token modal */
+.ai-git-token-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.ai-git-token-overlay.active {
+    opacity: 1;
+}
+
+.ai-git-token-dialog {
+    background: #fff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.ai-git-token-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, rgba(35, 134, 54, 0.1), rgba(46, 160, 67, 0.06));
+    border-bottom: 1px solid rgba(35, 134, 54, 0.15);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.ai-git-token-close {
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.ai-git-token-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.ai-git-token-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-git-token-body p {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.ai-git-token-input {
+    width: 100%;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 0.82rem;
+    transition: border-color 0.2s;
+}
+
+.ai-git-token-input:focus {
+    outline: none;
+    border-color: #238636;
+    box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.1);
+}
+
+.ai-git-token-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 20px 16px;
+}
+
+/* Toolbar button */
+.fmt-git-btn {
+    color: #238636 !important;
+    font-weight: 600;
+}
+
+/* ─── Dark Mode ─── */
+
+[data-theme="dark"] .ai-git-card,
+.dark-mode .ai-git-card {
+    border-color: #238636;
+    background: linear-gradient(135deg, rgba(35, 134, 54, 0.12) 0%, rgba(46, 160, 67, 0.06) 100%);
+}
+
+[data-theme="dark"] .ai-git-header,
+.dark-mode .ai-git-header {
+    background: linear-gradient(135deg, rgba(35, 134, 54, 0.18) 0%, rgba(46, 160, 67, 0.08) 100%);
+    border-bottom-color: rgba(35, 134, 54, 0.3);
+}
+
+[data-theme="dark"] .ai-git-label,
+.dark-mode .ai-git-label {
+    color: #3fb950;
+}
+
+[data-theme="dark"] .ai-git-repo-badge,
+.dark-mode .ai-git-repo-badge {
+    background: rgba(63, 185, 80, 0.2);
+    color: #3fb950;
+}
+
+[data-theme="dark"] .ai-git-branch-badge,
+.dark-mode .ai-git-branch-badge {
+    background: rgba(63, 185, 80, 0.15);
+    color: #3fb950;
+}
+
+[data-theme="dark"] .ai-git-btn,
+.dark-mode .ai-git-btn {
+    background: rgba(63, 185, 80, 0.15);
+    color: #3fb950;
+}
+
+[data-theme="dark"] .ai-git-prompt-input,
+.dark-mode .ai-git-prompt-input {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(63, 185, 80, 0.3);
+}
+
+[data-theme="dark"] .ai-git-action-pill,
+.dark-mode .ai-git-action-pill {
+    border-color: rgba(63, 185, 80, 0.3);
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .ai-git-action-pill.active,
+.dark-mode .ai-git-action-pill.active {
+    background: #238636;
+    color: #fff;
+    border-color: #238636;
+}
+
+[data-theme="dark"] .ai-git-info,
+.dark-mode .ai-git-info {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .ai-git-result-content,
+.dark-mode .ai-git-result-content {
+    background: rgba(63, 185, 80, 0.06);
+    border-color: rgba(63, 185, 80, 0.15);
+}
+
+[data-theme="dark"] .ai-git-result-content pre,
+.dark-mode .ai-git-result-content pre {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ai-git-token-dialog,
+.dark-mode .ai-git-token-dialog {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .ai-git-token-input,
+.dark-mode .ai-git-token-input {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .ai-git-token-close,
+.dark-mode .ai-git-token-close {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .ai-git-token-body p,
+.dark-mode .ai-git-token-body p {
+    color: #9ca3af;
+}

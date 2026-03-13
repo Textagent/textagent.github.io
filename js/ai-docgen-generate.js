@@ -509,14 +509,25 @@
                     var desc = m.dropdownDesc || '';
                     var isSelected = id === selectedId;
 
-                    // Download status badge for local models
+                    // Status badge for local models / API key button for cloud models
                     var statusBadge = '';
+                    var keyButton = '';
                     if (m.isLocal) {
                         var consentKey = (window.MDView && window.MDView.KEYS ? window.MDView.KEYS.AI_CONSENTED_PREFIX : 'ai-consented-') + id;
                         var isDownloaded = localStorage.getItem(consentKey);
                         statusBadge = isDownloaded
                             ? '<span class="ai-setup-badge ai-setup-badge-ready"><i class="bi bi-check-circle-fill"></i> Downloaded</span>'
                             : '<span class="ai-setup-badge ai-setup-badge-download"><i class="bi bi-download"></i> ' + (m.downloadSize || 'Download') + '</span>';
+                    } else if (m.keyStorageKey) {
+                        // Cloud model — show API key status and a button to enter/change key
+                        var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+                        var hasKey = providers[id] && providers[id].getKey();
+                        keyButton = '<button class="ai-setup-key-btn" data-key-model="' + id + '" title="' + (hasKey ? 'Change API Key' : 'Enter API Key') + '">'
+                            + '<i class="bi bi-key' + (hasKey ? '-fill' : '') + '"></i>'
+                            + '</button>';
+                        statusBadge = hasKey
+                            ? '<span class="ai-setup-badge ai-setup-badge-ready"><i class="bi bi-check-circle-fill"></i> Key Set</span>'
+                            : '<span class="ai-setup-badge ai-setup-badge-download"><i class="bi bi-key"></i> Key Required</span>';
                     }
 
                     cardsHtml += '<div class="ai-setup-card' + (isSelected ? ' selected' : '') + '" data-model-id="' + id + '">'
@@ -530,6 +541,7 @@
                         + '<div class="ai-setup-card-desc">' + desc + '</div>'
                         + '</div>'
                         + '</div>'
+                        + keyButton
                         + (statusBadge ? '<div class="ai-setup-card-status">' + statusBadge + '</div>' : '')
                         + '</div>';
                 });
@@ -565,8 +577,21 @@
             }
 
             panel.querySelectorAll('.ai-setup-card').forEach(function (card) {
-                card.addEventListener('click', function () {
+                card.addEventListener('click', function (e) {
+                    // Don't select model if clicking the key button
+                    if (e.target.closest('.ai-setup-key-btn')) return;
                     selectCard(this.dataset.modelId);
+                });
+            });
+
+            // API key buttons for cloud models
+            panel.querySelectorAll('.ai-setup-key-btn').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var modelId = this.dataset.keyModel;
+                    if (modelId && M.showApiKeyModal) {
+                        M.showApiKeyModal(modelId);
+                    }
                 });
             });
 

@@ -194,13 +194,17 @@
             ? M.transformLinuxMarkdown(apiMarkdown)
             : apiMarkdown;
         // Chain Game tag transform
-        var finalMarkdown = M.transformGameMarkdown
+        var gameMarkdown = M.transformGameMarkdown
             ? M.transformGameMarkdown(linuxMarkdown)
             : linuxMarkdown;
+        // Chain Git tag transform
+        var finalMarkdown = M.transformGitMarkdown
+            ? M.transformGitMarkdown(gameMarkdown)
+            : gameMarkdown;
         var html = marked.parse(finalMarkdown);
         var sanitizedHtml = DOMPurify.sanitize(html, {
             ADD_TAGS: ['mjx-container', 'button', 'select', 'option', 'video', 'source', 'iframe', 'video-player', 'video-skin'],
-            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine']
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action']
         });
         container.innerHTML = sanitizedHtml;
 
@@ -300,6 +304,9 @@
 
             // Game: bind Game Builder card actions
             if (M.bindGamePreviewActions) M.bindGamePreviewActions(M.markdownPreview);
+
+            // Git: bind GitHub Tools card actions
+            if (M.bindGitPreviewActions) M.bindGitPreviewActions(M.markdownPreview);
 
             // Finance: render TradingView stock widgets
             if (M.renderStockWidgets) M.renderStockWidgets(M.markdownPreview);

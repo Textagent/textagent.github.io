@@ -143,7 +143,14 @@
       btn.innerHTML = `<i class="${cfg.icon}"></i><div><strong>${cfg.dropdownName}</strong><small>${cfg.dropdownDesc}</small></div>`;
       btn.addEventListener('click', () => {
         aiModelSelector.classList.remove('open');
-        if (id === currentAiModel) return;
+        if (id === currentAiModel) {
+          // If re-clicking current cloud model that has no key or isn't loaded, re-show key dialog
+          const p = CLOUD_PROVIDERS[id];
+          if (p && (!p.getKey() || (!p.isLoaded() && !p.getWorker()))) {
+            showApiKeyModal(id);
+          }
+          return;
+        }
         const provider = CLOUD_PROVIDERS[id];
         if (provider) {
           if (!provider.getKey()) { showApiKeyModal(id); return; }
@@ -870,7 +877,21 @@
         case 'error':
           if (!provider.isLoaded()) {
             if (onError) { onError(msg.message); onError = null; }
-            else { addAiStatusBar('error', msg.message); }
+            else {
+              addAiStatusBar('error', msg.message);
+              // Show clickable "Change API Key" link in status bar for auth errors
+              if (msg.message.includes('API key') || msg.message.includes('Invalid') || msg.message.includes('401')) {
+                const bar = aiPanel.querySelector('.ai-status-bar');
+                if (bar) {
+                  const link = document.createElement('a');
+                  link.href = '#';
+                  link.textContent = 'Change API Key';
+                  link.style.cssText = 'margin-left:8px;color:var(--color-accent-fg,#2f81f7);cursor:pointer;text-decoration:underline;font-size:0.85em';
+                  link.addEventListener('click', (ev) => { ev.preventDefault(); showApiKeyModal(providerId); });
+                  bar.appendChild(link);
+                }
+              }
+            }
             if (provider.getWorker()) { provider.getWorker().terminate(); provider.setWorker(null); }
             if (msg.message.includes('Invalid API key') || msg.message.includes('API key')) {
               provider.setKey(null);

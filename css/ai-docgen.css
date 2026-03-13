@@ -1084,6 +1084,31 @@
     border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
+/* API key button for cloud models */
+.ai-setup-key-btn {
+    flex-shrink: 0;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #60a5fa;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.15s;
+    align-self: center;
+}
+
+.ai-setup-key-btn:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    transform: scale(1.1);
+}
+
 /* Light theme */
 [data-theme="light"] .ai-setup-group + .ai-setup-group {
     border-top-color: #e2e8f0;
