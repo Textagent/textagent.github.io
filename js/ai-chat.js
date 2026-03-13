@@ -43,6 +43,94 @@
         });
     }
 
+    // Strip thinking/reasoning artifacts from AI responses
+    function cleanThinkingArtifacts(text) {
+        if (!text) return text;
+
+        // 1. Remove <think>...</think>, <thinking>...</thinking>, <thought>...</thought> blocks
+        text = text.replace(/<(?:think|thinking|thought)>[\s\S]*?<\/(?:think|thinking|thought)>/gi, '');
+
+        // 1b. Remove unclosed <think> blocks (model still streaming or forgot to close)
+        text = text.replace(/<(?:think|thinking|thought)>[\s\S]*$/gi, '');
+
+        // 1c. Remove orphaned closing tags + all content before them
+        // (opener was already stripped in previous stream chunk, content before tag is thinking residue)
+        // Use indexOf to avoid catastrophic regex backtracking
+        var closeTagMatch = text.match(/<\/(?:think|thinking|thought)>/i);
+        if (closeTagMatch) {
+            text = text.substring(text.indexOf(closeTagMatch[0]) + closeTagMatch[0].length);
+        }
+
+        // 2. Remove reasoning header blocks (content up to next heading)
+        var reasoningHeaders = [
+            /^[\s\S]*?(?:Thinking Process|Analyze the Request|Drafting the Content|Analysis|My Approach):[\s\S]*?(?=\n#{1,6}\s)/m,
+        ];
+        for (var i = 0; i < reasoningHeaders.length; i++) {
+            text = text.replace(reasoningHeaders[i], '');
+        }
+
+        // 3. Remove italicized meta-commentary lines
+        text = text.replace(/^\s*\*(?:mental note|double-check|planning|imagines|checks|biggest worry|checks mental|planning tone|thinks|notices|decides|last thought)[^*]*\*\s*$/gim, '');
+
+        // 4. Remove multi-line reasoning blocks:
+        //    Lines starting with internal-monologue patterns — these are chain-of-thought
+        var lines = text.split('\n');
+        var cleaned = [];
+        var inReasoningBlock = false;
+        var reasoningStartPatterns = /^\s*(?:Let me (?:analyze|check|think|consider|look|first|start|review|clarify|see|also)|I (?:should|need to|must|can see|see |notice|remember|'ll |will |can |want to )|I'(?:ll|m|ve|d) (?:provide|explain|start|give|break|cover|structure|outline|keep|now|also|include|note|mention|use|add|format|write|create|make|summarize|describe|present|walk|help)|Actually,|Hmm,?|Wait,|Okay,? (?:so|let|I |the user|structuring|planning|right)|The (?:user |context |instructions? |question )|First,? I|But (?:this is|wait|the)|Since (?:they|the|I)|So (?:the|I should|let me)|Oh right!|Did I |Will do:|If they|Must (?:stress|clarify|mention)|Should (?:I |start|mention)|- (?:Don't |Should |Must |Better |Add |End |Keep )|thinks about|notices |decides on|double-checks|last thought)/i;
+        var contentPatterns = /^\s*(?:#{1,6}\s|[-*+]\s(?!Don't |Should |Must |Better )|\d+\.\s|>\s|\||\$\$|```|!\[|<[a-z]|The Black|##|In |A |An |\*\*)/;
+
+        for (var j = 0; j < lines.length; j++) {
+            var line = lines[j];
+            var trimmedLine = line.trim();
+
+            // Skip empty lines during reasoning blocks
+            if (inReasoningBlock && trimmedLine === '') {
+                continue;
+            }
+
+            // Detect reasoning start
+            if (reasoningStartPatterns.test(trimmedLine) && !contentPatterns.test(trimmedLine)) {
+                inReasoningBlock = true;
+                continue;
+            }
+
+            // Exit reasoning block when we hit real content (heading, list, bold start, etc.)
+            if (inReasoningBlock) {
+                if (contentPatterns.test(trimmedLine) || /^\*\*[^*]+\*\*/.test(trimmedLine)) {
+                    inReasoningBlock = false;
+                    cleaned.push(line);
+                }
+                // Otherwise skip the line (still in reasoning)
+                continue;
+            }
+
+            cleaned.push(line);
+        }
+
+        // 4b. Strip trailing reasoning/planning outlines from end of response
+        // These are planning lists or reasoning sentences that appear after the main content
+        while (cleaned.length > 0) {
+            var lastLine = cleaned[cleaned.length - 1].trim();
+            if (lastLine === '') {
+                cleaned.pop();
+                continue;
+            }
+            // Trailing reasoning indicators: planning outlines, incomplete sentences, meta-commentary
+            if (/^(?:\d+\.\s*$|\d+\.\s*(?:What |How |Why |The |Its |Key |Basic |Practical |Brief )|I'(?:ll|m|ve|d) |I (?:should|need to|will|can|want|'ll )|(?:Let me|Based on|In this|From this|Here'?s|The document|This (?:is |covers|explains|includes|provides))\s)/i.test(lastLine)) {
+                cleaned.pop();
+                continue;
+            }
+            break;
+        }
+
+        text = cleaned.join('\n');
+
+        // 5. Collapse excessive blank lines left after stripping
+        text = text.replace(/\n{3,}/g, '\n\n');
+        return text.trim();
+    }
+
     // --- Chat Messages ---
     function addUserMessage(text, attachments) {
         var welcome = aiChatArea.querySelector('.ai-welcome-message');
@@ -89,6 +177,84 @@
 
     // Track last search results for citation rendering
     var _lastSearchResults = null;
+    var _lastSearchQuery = null;
+
+    /**
+     * Create a collapsible "Thinking" block in the chat area.
+     * Shows an animated "Searching…" state immediately, then gets populated with results.
+     * Returns the block element so the caller can update it later.
+     */
+    function createSearchThinkingBlock(query) {
+        var queryLabel = query ? escapeHtml(query) : 'web';
+        var block = document.createElement('div');
+        block.className = 'ai-thinking-block';
+        block.id = 'ai-thinking-block-active';
+        block.innerHTML =
+            '<details class="ai-search-details" open>' +
+            '<summary><i class="bi bi-globe-americas ai-thinking-spin"></i> Searching: ' + queryLabel +
+            ' <span class="ai-search-count">…</span></summary>' +
+            '<div class="ai-search-results-list"><div class="ai-thinking-searching">' +
+            '<i class="bi bi-arrow-clockwise ai-thinking-spin"></i> Searching the web…</div></div>' +
+            '</details>';
+        aiChatArea.appendChild(block);
+        aiChatArea.scrollTop = aiChatArea.scrollHeight;
+        return block;
+    }
+
+    /**
+     * Update the thinking block with actual search results (or a "no results" message).
+     */
+    function populateSearchThinkingBlock(results, query) {
+        var block = document.getElementById('ai-thinking-block-active');
+        if (!block) return;
+        block.removeAttribute('id');
+
+        var queryLabel = query ? escapeHtml(query) : 'web';
+        var count = results ? results.length : 0;
+
+        var detailsInner = '';
+        if (count > 0) {
+            results.forEach(function (r) {
+                var domain = '';
+                try { domain = new URL(r.url).hostname.replace('www.', ''); } catch (_) { domain = r.url; }
+                detailsInner += '<div class="ai-search-result-item">' +
+                    '<div class="ai-search-result-title">' +
+                    '<a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">' + escapeHtml(r.title || domain) + '</a>' +
+                    '</div>' +
+                    (r.snippet ? '<div class="ai-search-result-snippet">' + escapeHtml(r.snippet).substring(0, 200) + '</div>' : '') +
+                    '<div class="ai-search-result-url">' + escapeHtml(domain) + '</div>' +
+                    '</div>';
+            });
+        } else {
+            detailsInner = '<div class="ai-thinking-no-results"><i class="bi bi-info-circle"></i> No search results found — answering from model knowledge.</div>';
+        }
+
+        // Source pills
+        var pillsHtml = '';
+        if (count > 0) {
+            pillsHtml = '<div class="ai-source-citations">';
+            var seen = new Set();
+            results.forEach(function (r) {
+                try {
+                    var domain = new URL(r.url).hostname.replace('www.', '');
+                    if (!seen.has(domain)) {
+                        seen.add(domain);
+                        pillsHtml += '<a class="ai-source-link" href="' + r.url + '" target="_blank" rel="noopener">' +
+                            '<i class="bi bi-link-45deg"></i>' + domain + '</a>';
+                    }
+                } catch (_) { /* invalid url */ }
+            });
+            pillsHtml += '</div>';
+        }
+
+        block.innerHTML =
+            '<details class="ai-search-details">' +
+            '<summary><i class="bi bi-globe-americas"></i> Search: ' + queryLabel +
+            ' <span class="ai-search-count">' + count + ' result' + (count !== 1 ? 's' : '') + '</span></summary>' +
+            '<div class="ai-search-results-list">' + detailsInner + '</div>' +
+            '</details>' +
+            pillsHtml;
+    }
 
     function addAiMessage(text, messageId) {
         removeTypingIndicator();
@@ -100,30 +266,12 @@
         var msg = document.createElement('div');
         msg.className = 'ai-message ai-message-ai';
 
-        var formattedText = formatAiResponse(text);
+        var formattedText = formatAiResponse(cleanThinkingArtifacts(text));
 
-        // Build source citations
-        var citationsHtml = '';
-        if (_lastSearchResults && _lastSearchResults.length > 0) {
-            citationsHtml = '<div class="ai-source-citations">';
-            var seen = new Set();
-            _lastSearchResults.forEach(function (r) {
-                try {
-                    var domain = new URL(r.url).hostname.replace('www.', '');
-                    if (!seen.has(domain)) {
-                        seen.add(domain);
-                        citationsHtml += '<a class="ai-source-link" href="' + r.url + '" target="_blank" rel="noopener">' +
-                            '<i class="bi bi-link-45deg"></i>' + domain + '</a>';
-                    }
-                } catch (_) { /* invalid url */ }
-            });
-            citationsHtml += '</div>';
-            _lastSearchResults = null;
-        }
+        // Search details are now rendered in the thinking block above — no inline citations needed
 
         msg.innerHTML = '<span class="ai-msg-label">AI</span>\n' +
             '<div class="ai-msg-bubble">' + formattedText + '</div>\n' +
-            citationsHtml + '\n' +
             '<div class="ai-msg-actions">\n' +
             '  <button class="ai-msg-action-btn" data-action="insert" data-text="' + encodeURIComponent(text) + '" title="Insert into editor">\n' +
             '    <i class="bi bi-box-arrow-in-down"></i> Insert\n' +
@@ -224,7 +372,7 @@
 
         if (!bubble._rawText) bubble._rawText = '';
         bubble._rawText += token;
-        bubble.innerHTML = formatAiResponse(bubble._rawText);
+        bubble.innerHTML = formatAiResponse(cleanThinkingArtifacts(bubble._rawText));
         aiChatArea.scrollTop = aiChatArea.scrollHeight;
     }
 
@@ -238,9 +386,11 @@
             var bubble = document.getElementById('ai-streaming-bubble-' + messageId);
             if (bubble) {
                 bubble.removeAttribute('id');
-                bubble.innerHTML = formatAiResponse(text);
+                bubble.innerHTML = formatAiResponse(cleanThinkingArtifacts(text));
             }
             msgEl.removeAttribute('id');
+
+            // Search details are now rendered in the thinking block above — no inline duplication needed
 
             var actions = document.createElement('div');
             actions.className = 'ai-msg-actions';
@@ -322,28 +472,25 @@
 
         // Web search integration
         if (M.webSearch && M.webSearch.isSearchEnabled()) {
-            var searchIndicator = document.createElement('div');
-            searchIndicator.className = 'ai-search-indicator';
-            searchIndicator.innerHTML = '<i class="bi bi-globe-americas"></i> Searching the web...';
-            aiChatArea.appendChild(searchIndicator);
-            aiChatArea.scrollTop = aiChatArea.scrollHeight;
+            // Show the thinking block immediately with a "Searching…" spinner
+            createSearchThinkingBlock(text);
 
             M.webSearch.performSearch(text).then(function (results) {
                 var searchContext = M.webSearch.formatResultsForLLM(results);
-                _lastSearchResults = results;
 
-                var ind = aiChatArea.querySelector('.ai-search-indicator');
-                if (ind) ind.remove();
+                // Populate the thinking block with actual results (or "no results" msg)
+                populateSearchThinkingBlock(results, text);
 
                 var context = searchContext;
-                if (isQuestion && editorContent.trim()) {
+                if (editorContent.trim()) {
                     context = searchContext + '\n\n[Document Content]\n' + editorContent;
                 }
 
-                _ai.sendToAi(isQuestion && editorContent.trim() ? 'qa' : 'generate', context || null, text, workerAttachments);
-            }).catch(function () {
-                var ind = aiChatArea.querySelector('.ai-search-indicator');
-                if (ind) ind.remove();
+                _ai.sendToAi(editorContent.trim() ? 'qa' : 'generate', context || null, text, workerAttachments);
+            }).catch(function (err) {
+                // Populate thinking block with "no results" state
+                populateSearchThinkingBlock([], text);
+
                 if (isQuestion && editorContent.trim()) {
                     _ai.sendToAi('qa', editorContent, text, workerAttachments);
                 } else {

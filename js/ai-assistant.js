@@ -1051,10 +1051,11 @@
     const thinkingToggle = document.getElementById('ai-thinking-toggle');
     const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
 
-    // Show user message in chat (if not already shown)
+    // Show user message in chat (if not already shown by sendChatMessage)
     const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
-    if (!document.querySelector('.ai-message-user:last-child') ||
-      aiChatArea.lastElementChild?.querySelector('.ai-msg-bubble')?.textContent !== displayText) {
+    const allUserBubbles = aiChatArea.querySelectorAll('.ai-message-user .ai-msg-bubble');
+    const lastUserBubble = allUserBubbles.length > 0 ? allUserBubbles[allUserBubbles.length - 1] : null;
+    if (!lastUserBubble || lastUserBubble.textContent.trim() !== displayText.trim()) {
       M._ai.addUserMessage(displayText);
     }
     M._ai.addTypingIndicator();

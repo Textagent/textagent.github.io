@@ -618,11 +618,13 @@
   margin-bottom: 4px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
-  padding: 4px;
+  padding: 3px;
   z-index: 10;
   animation: aiModelDropIn 0.15s ease;
+  max-height: 50vh;
+  overflow-y: auto;
 }
 
 .ai-model-selector.open .ai-model-dropdown {
@@ -644,14 +646,14 @@
 .ai-model-option {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 3px 8px;
   border: none;
   background: none;
   color: var(--text-color);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 5px;
   transition: all 0.15s;
   text-align: left;
 }
@@ -671,9 +673,9 @@
 }
 
 .ai-model-option>i {
-  font-size: 18px;
+  font-size: 13px;
   color: #667eea;
-  width: 22px;
+  width: 16px;
   text-align: center;
   flex-shrink: 0;
 }
@@ -684,14 +686,16 @@
 
 .ai-model-option strong {
   display: block;
-  font-size: 13px;
-  margin-bottom: 1px;
+  font-size: 11px;
+  margin-bottom: 0;
+  line-height: 1.3;
 }
 
 .ai-model-option small {
   display: block;
-  font-size: 11px;
+  font-size: 9.5px;
   opacity: 0.6;
+  line-height: 1.2;
 }
 
 /* --- API Key Modal --- */
@@ -1818,6 +1822,68 @@
   background: rgba(16, 185, 129, 0.08);
 }
 
+/* Thinking block — collapsible search results shown before AI response */
+.ai-thinking-block {
+  margin: 6px 0 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.12);
+  animation: aiThinkIn 0.25s ease;
+}
+
+[data-theme="dark"] .ai-thinking-block {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(52, 211, 153, 0.15);
+}
+
+@keyframes aiThinkIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-thinking-block .ai-search-details {
+  margin-top: 0;
+}
+
+.ai-thinking-block .ai-source-citations {
+  margin-top: 4px;
+}
+
+/* Thinking block — spinner for "Searching…" state */
+.ai-thinking-spin {
+  display: inline-block;
+  animation: aiSpin 1s linear infinite;
+}
+
+.ai-thinking-searching {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .ai-thinking-searching {
+  color: #34d399;
+}
+
+.ai-thinking-no-results {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+.ai-thinking-no-results i {
+  color: #f59e0b;
+}
+
 /* Search indicator in chat */
 .ai-search-indicator {
   display: flex;
@@ -1862,6 +1928,114 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Collapsible search results details */
+.ai-search-details {
+  margin-top: 6px;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.ai-search-details summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  user-select: none;
+  list-style: none;
+}
+
+.ai-search-details summary::-webkit-details-marker { display: none; }
+
+.ai-search-details summary::before {
+  content: '▶';
+  font-size: 8px;
+  transition: transform 0.15s;
+}
+
+.ai-search-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.ai-search-details summary:hover {
+  opacity: 1;
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.ai-search-details summary i {
+  color: #10b981;
+  font-size: 12px;
+}
+
+.ai-search-count {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+[data-theme="dark"] .ai-search-count {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.ai-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ai-search-result-item {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+}
+
+.ai-search-result-title a {
+  font-size: 11px;
+  font-weight: 600;
+  color: #667eea;
+  text-decoration: none;
+}
+
+.ai-search-result-title a:hover {
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .ai-search-result-title a {
+  color: #a5b4fc;
+}
+
+.ai-search-result-snippet {
+  font-size: 10.5px;
+  color: var(--text-color);
+  opacity: 0.65;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.ai-search-result-url {
+  font-size: 9.5px;
+  color: #10b981;
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .ai-search-result-url {
+  color: #34d399;
 }
 
 /* Source citations under AI response */
