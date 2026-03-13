@@ -232,6 +232,13 @@ test.describe('Toolbar Tag Insertion', () => {
         expect(val).toContain('SELECT');
     });
 
+    test('LaTeX coding block inserts $$...$$ display math (from dropdown)', async ({ page }) => {
+        await clickAction(page, 'coding-latex');
+        const val = await editorValue(page);
+        expect(val).toContain('$$');
+        expect(val).toContain('\\frac');
+    });
+
     // ═══════════════════════════════════════════
     // OVERFLOW DROPDOWN BEHAVIOR
     // ═══════════════════════════════════════════

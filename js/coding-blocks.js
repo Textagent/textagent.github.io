@@ -12,7 +12,8 @@
         'coding-python': '```python\n# Your Python code\nprint("Hello, World!")\n```\n',
         'coding-html': '```html\n<!-- Your HTML -->\n<h3>Hello, World!</h3>\n<p>Edit this HTML and click <strong>Preview</strong> to see it rendered.</p>\n```\n',
         'coding-js': '```javascript\n// Your JavaScript\nconsole.log("Hello, World!");\n```\n',
-        'coding-sql': '```sql\nCREATE TABLE IF NOT EXISTS greetings (id INTEGER PRIMARY KEY, message TEXT);\nINSERT INTO greetings VALUES (1, \'Hello, World!\');\nSELECT * FROM greetings;\n```\n'
+        'coding-sql': '```sql\nCREATE TABLE IF NOT EXISTS greetings (id INTEGER PRIMARY KEY, message TEXT);\nINSERT INTO greetings VALUES (1, \'Hello, World!\');\nSELECT * FROM greetings;\n```\n',
+        'coding-latex': '$$\n\\frac{\\sqrt{2025} + \\sqrt{3025}}{\\sqrt{25}}\n$$\n'
     };
 
     Object.keys(CODING_TEMPLATES).forEach(function (action) {
@@ -25,7 +26,7 @@
     var MEDIA_TEMPLATES = {
         'media-video': '![My Video](https://www.w3schools.com/html/mov_bbb.mp4)\n',
         'media-youtube': '![YouTube Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ)\n',
-        'media-embed-grid': '```embed cols=2 height=350\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ \"YouTube Video\"\nhttps://www.w3schools.com/html/mov_bbb.mp4 \"Sample Video\"\nhttps://wikipedia.org \"Wikipedia\"\nhttps://github.com \"GitHub\"\n```\n'
+        'media-embed-grid': '```embed cols=2 height=350\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ "YouTube Video"\nhttps://www.w3schools.com/html/mov_bbb.mp4 "Sample Video"\nhttps://wikipedia.org "Wikipedia"\nhttps://github.com "GitHub"\n```\n'
     };
 
     Object.keys(MEDIA_TEMPLATES).forEach(function (action) {
