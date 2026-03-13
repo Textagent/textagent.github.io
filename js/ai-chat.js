@@ -190,17 +190,24 @@
      * Shows an animated "Searching…" state immediately, then gets populated with results.
      * Returns the block element so the caller can update it later.
      */
-    function createSearchThinkingBlock(query) {
+    function createSearchThinkingBlock(query, isRewriting) {
         var queryLabel = query ? escapeHtml(query) : 'web';
         var block = document.createElement('div');
         block.className = 'ai-thinking-block';
         block.id = 'ai-thinking-block-active';
+
+        var statusIcon = isRewriting ? 'bi-stars' : 'bi-globe-americas';
+        var statusText = isRewriting ? '✨ Rewriting query…' : 'Searching the web…';
+        var headerText = isRewriting
+            ? '<i class="bi bi-stars ai-thinking-spin"></i> Rewriting: ' + queryLabel
+            : '<i class="bi bi-globe-americas ai-thinking-spin"></i> Searching: ' + queryLabel;
+
         block.innerHTML =
             '<details class="ai-search-details" open>' +
-            '<summary><i class="bi bi-globe-americas ai-thinking-spin"></i> Searching: ' + queryLabel +
+            '<summary>' + headerText +
             ' <span class="ai-search-count">…</span></summary>' +
             '<div class="ai-search-results-list"><div class="ai-thinking-searching">' +
-            '<i class="bi bi-arrow-clockwise ai-thinking-spin"></i> Searching the web…</div></div>' +
+            '<i class="bi bi-arrow-clockwise ai-thinking-spin"></i> ' + statusText + '</div></div>' +
             '</details>';
         aiChatArea.appendChild(block);
         aiChatArea.scrollTop = aiChatArea.scrollHeight;
@@ -214,13 +221,22 @@
     function updateThinkingBlockQuery(rewrittenQuery) {
         var block = document.getElementById('ai-thinking-block-active');
         if (!block) return;
+
+        // Update summary to show searching with rewritten query
         var summary = block.querySelector('summary');
-        if (!summary) return;
-        var queryLabel = escapeHtml(rewrittenQuery);
-        summary.innerHTML =
-            '<i class="bi bi-globe-americas ai-thinking-spin"></i> Searching: ' + queryLabel +
-            ' <span class="ai-search-rewritten">(rewritten)</span>' +
-            ' <span class="ai-search-count">…</span>';
+        if (summary) {
+            var queryLabel = escapeHtml(rewrittenQuery);
+            summary.innerHTML =
+                '<i class="bi bi-globe-americas ai-thinking-spin"></i> Searching: ' + queryLabel +
+                ' <span class="ai-search-rewritten">(rewritten)</span>' +
+                ' <span class="ai-search-count">…</span>';
+        }
+
+        // Update inner status text from "Rewriting" to "Searching"
+        var statusDiv = block.querySelector('.ai-thinking-searching');
+        if (statusDiv) {
+            statusDiv.innerHTML = '<i class="bi bi-arrow-clockwise ai-thinking-spin"></i> Searching the web…';
+        }
     }
 
     /**
@@ -666,8 +682,9 @@
 
         // Web search integration
         if (M.webSearch && M.webSearch.isSearchEnabled()) {
-            // Show the thinking block immediately with a "Searching…" spinner
-            createSearchThinkingBlock(text);
+            // Show the thinking block — if model is ready, show "Rewriting…" phase first
+            var willRewrite = M.isCurrentModelReady && M.isCurrentModelReady() && !M.isAiGenerating();
+            createSearchThinkingBlock(text, willRewrite);
 
             // Rewrite the search query for better results (async — may use the LLM)
             refineSearchQuery(text).then(function (searchQuery) {
