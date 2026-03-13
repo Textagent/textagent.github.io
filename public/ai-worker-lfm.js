@@ -204,7 +204,7 @@ function updateCache(cache, outputs) {
 /**
  * Generate text based on a prompt with system instructions
  */
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = []) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = []) {
     if (!session || !tokenizer) {
         self.postMessage({
             type: "error",
@@ -223,7 +223,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         });
 
         // Build messages
-        const messages = buildMessages(taskType, context, augmentedPrompt || userPrompt);
+        const messages = buildMessages(taskType, context, augmentedPrompt || userPrompt, chatHistory);
 
         // Use task-specific token limit; thinking mode gets more
         let maxTokens = TOKEN_LIMITS[taskType] || 512;
@@ -318,14 +318,14 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
 /**
  * Build chat messages (local worker: smaller context limits)
  */
-function buildMessages(taskType, context, userPrompt) {
+function buildMessages(taskType, context, userPrompt, chatHistory) {
     const contextLimit = taskType === 'summarize' || taskType === 'grammar' ? 1500 : 2500;
-    return _buildMessages(taskType, context, userPrompt, { contextLimit, autocompleteLimit: 800 });
+    return _buildMessages(taskType, context, userPrompt, { contextLimit, autocompleteLimit: 800, chatHistory });
 }
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (event) => {
-    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory } = event.data;
 
     switch (type) {
         case "setModelId":
@@ -337,7 +337,7 @@ self.addEventListener("message", async (event) => {
             await loadModel();
             break;
         case "generate":
-            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments);
+            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory);
             break;
         case "ping":
             self.postMessage({ type: "pong" });

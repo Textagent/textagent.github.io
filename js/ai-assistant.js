@@ -988,7 +988,7 @@
     }
   }
 
-  function sendToAi(taskType, context, userPrompt, attachments) {
+  function sendToAi(taskType, context, userPrompt, attachments, chatHistory) {
     // If a local model is selected but not loaded yet, show inline consent before downloading
     if (isLocalModel(currentAiModel)) {
       const ls = getLocalState(currentAiModel);
@@ -996,7 +996,7 @@
       const hasConsent = localStorage.getItem(consentKey) || (currentAiModel === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
 
       if (!ls.loaded && !ls.worker) {
-        pendingAiMessage = { taskType, context, userPrompt, attachments };
+        pendingAiMessage = { taskType, context, userPrompt, attachments, chatHistory };
         if (hasConsent) {
           initAiWorker(currentAiModel);
           addAiStatusBar('loading', 'Loading cached model — your message will be sent automatically...');
@@ -1014,7 +1014,7 @@
       }
 
       if (!ls.loaded && ls.worker) {
-        pendingAiMessage = { taskType, context, userPrompt, attachments };
+        pendingAiMessage = { taskType, context, userPrompt, attachments, chatHistory };
         addAiStatusBar('loading', 'Model still loading — your message will be sent automatically...');
         return;
       }
@@ -1022,7 +1022,7 @@
 
     const cloudProvider = CLOUD_PROVIDERS[currentAiModel];
     if (cloudProvider && !cloudProvider.isLoaded()) {
-      pendingAiMessage = { taskType, context, userPrompt, attachments };
+      pendingAiMessage = { taskType, context, userPrompt, attachments, chatHistory };
       if (!cloudProvider.getWorker()) {
         if (!cloudProvider.getKey()) {
           showApiKeyModal(currentAiModel);
@@ -1067,7 +1067,8 @@
       userPrompt,
       messageId,
       enableThinking,
-      attachments: attachments || []
+      attachments: attachments || [],
+      chatHistory: chatHistory || []
     });
   }
 

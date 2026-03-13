@@ -65,6 +65,7 @@ const SYSTEM_PROMPTS = {
  * @param {object} [opts] - Options
  * @param {number} [opts.contextLimit] - Max characters for context (default: 2500)
  * @param {number} [opts.autocompleteLimit] - Max trailing chars for autocomplete (default: 800)
+ * @param {Array<{role:string, content:string}>} [opts.chatHistory] - Prior conversation turns
  * @returns {Array<{role: string, content: string}>}
  */
 export function buildMessages(taskType, context, userPrompt, opts = {}) {
@@ -74,6 +75,20 @@ export function buildMessages(taskType, context, userPrompt, opts = {}) {
 
     const systemMessage = SYSTEM_PROMPTS[taskType] || SYSTEM_PROMPTS.chat;
     const messages = [{ role: 'system', content: systemMessage }];
+
+    // Inject conversation history for conversational task types
+    const chatHistory = opts.chatHistory;
+    if (chatHistory && chatHistory.length > 0 &&
+        ['generate', 'qa', 'chat', 'explain', 'markdown'].includes(taskType)) {
+        // Add up to 10 recent history messages, trimming each to 500 chars
+        const recent = chatHistory.slice(-10);
+        recent.forEach(function (m) {
+            messages.push({
+                role: m.role,
+                content: m.content.substring(0, 500)
+            });
+        });
+    }
 
     if (
         context &&

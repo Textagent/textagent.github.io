@@ -23,6 +23,12 @@
     var MAX_ATTACHMENTS = 5;
     var pendingAttachments = []; // Array of { file, type: 'image'|'file', dataUrl, mimeType, name }
 
+    // --- Conversation Memory ---
+    // Tracks {role:'user'|'assistant', content:string} pairs for multi-turn context.
+    // Capped at MAX_HISTORY_TURNS recent turns (user+assistant = 2 messages per turn).
+    var MAX_HISTORY_TURNS = 10;
+    var chatHistory = [];
+
     // --- Helpers ---
     function escapeHtml(text) {
         var div = document.createElement('div');
@@ -335,6 +341,8 @@
         _ai.isGenerating = false;
         if (aiSendBtn) aiSendBtn.disabled = false;
         addAiMessage(text, messageId);
+        // Record assistant reply in conversation history
+        pushHistory('assistant', text);
     }
 
     function handleAiError(message, messageId) {
@@ -417,6 +425,8 @@
             removeTypingIndicator();
             addAiMessage(text, messageId);
         }
+        // Record assistant reply in conversation history
+        pushHistory('assistant', text);
         aiChatArea.scrollTop = aiChatArea.scrollHeight;
     }
 
@@ -425,7 +435,7 @@
         var pending = _ai.pendingMessage;
         if (!pending) return;
         _ai.pendingMessage = null;
-        _ai.sendToAi(pending.taskType, pending.context, pending.userPrompt, pending.attachments);
+        _ai.sendToAi(pending.taskType, pending.context, pending.userPrompt, pending.attachments, pending.chatHistory);
     }
 
     // --- Chat Input ---
@@ -443,6 +453,91 @@
 
     aiSendBtn.addEventListener('click', sendChatMessage);
 
+    // --- Conversation History Helpers ---
+    function pushHistory(role, content) {
+        chatHistory.push({ role: role, content: content });
+        // Cap at MAX_HISTORY_TURNS turns (each turn = user + assistant = 2 messages)
+        while (chatHistory.length > MAX_HISTORY_TURNS * 2) {
+            chatHistory.shift();
+        }
+    }
+
+    /**
+     * Build a context-aware search query for follow-up questions.
+     * Uses the LLM to rewrite the query into a self-contained search query
+     * when conversation history is available and the model is ready.
+     * Falls back to keyword-extraction heuristic if the model is busy/unavailable.
+     *
+     * @param {string} rawText - The user's raw follow-up question
+     * @returns {Promise<string>} The refined search query
+     */
+    function refineSearchQuery(rawText) {
+        // No history → use the raw query as-is (first message)
+        if (chatHistory.length === 0) return Promise.resolve(rawText);
+
+        // Build a conversation summary for the LLM to understand context
+        var recentMsgs = chatHistory.slice(-4);
+        var conversationContext = recentMsgs.map(function (m) {
+            return (m.role === 'user' ? 'User' : 'AI') + ': ' + m.content.substring(0, 200);
+        }).join('\n');
+
+        // If the model is ready and not generating, use it to refine the query
+        if (M.isCurrentModelReady && M.isCurrentModelReady() && !M.isAiGenerating()) {
+            var refinePrompt =
+                'Given this conversation:\n' + conversationContext +
+                '\n\nThe user now asks: "' + rawText + '"' +
+                '\n\nRewrite this as a single, self-contained web search query that includes the specific topic/entity from the conversation. ' +
+                'Output ONLY the search query text, nothing else. Keep it under 10 words.';
+
+            return M.requestAiTask({
+                taskType: 'generate',
+                context: null,
+                userPrompt: refinePrompt,
+                enableThinking: false,
+                silent: true
+            }).then(function (refined) {
+                // Clean up: strip quotes, thinking artifacts, extra whitespace
+                var cleaned = refined.replace(/^["'\s]+|["'\s]+$/g, '').trim();
+                // Sanity check: if the model returned gibberish or too-long text, fall back
+                if (cleaned.length < 3 || cleaned.length > 150 || cleaned.split('\n').length > 2) {
+                    return fallbackQueryEnrichment(rawText, recentMsgs);
+                }
+                console.log('[AI Chat] Refined search query:', cleaned);
+                return cleaned;
+            }).catch(function () {
+                return fallbackQueryEnrichment(rawText, recentMsgs);
+            });
+        }
+
+        // Fallback: keyword-based enrichment (model not ready)
+        return Promise.resolve(fallbackQueryEnrichment(rawText, recentMsgs));
+    }
+
+    /**
+     * Fallback: extract key nouns/entities from recent messages and prepend to query.
+     */
+    function fallbackQueryEnrichment(rawText, recentMsgs) {
+        // Extract likely topic keywords from the first user message and assistant reply
+        var topicWords = [];
+        recentMsgs.forEach(function (m) {
+            // Grab capitalized words (likely proper nouns/entities)
+            var caps = m.content.match(/\b[A-Z][a-z]{2,}\b/g);
+            if (caps) topicWords = topicWords.concat(caps);
+        });
+        // Deduplicate and take top 3
+        var unique = [];
+        var seen = {};
+        topicWords.forEach(function (w) {
+            var lw = w.toLowerCase();
+            if (!seen[lw] && lw !== 'the' && lw !== 'this' && lw !== 'that') {
+                seen[lw] = true;
+                unique.push(w);
+            }
+        });
+        var prefix = unique.slice(0, 3).join(' ');
+        return prefix ? (prefix + ' ' + rawText) : rawText;
+    }
+
     function sendChatMessage() {
         var text = aiInput.value.trim();
         var attachments = pendingAttachments.slice(); // snapshot
@@ -452,6 +547,9 @@
         aiInput.style.height = 'auto';
         clearAttachments();
         addUserMessage(text || '(file attached)', attachments);
+
+        // Record user message in conversation history
+        pushHistory('user', text || '(file attached)');
 
         // If current model is an image model, route to image generation
         var currentModelCfg = _ai.models[_ai.currentModel];
@@ -467,6 +565,9 @@
             return { type: att.type, mimeType: att.mimeType, data: base64, name: att.name, textContent: att.textContent || null };
         });
 
+        // Snapshot of history to pass to the worker (exclude the just-pushed user msg)
+        var historySnapshot = chatHistory.slice(0, -1);
+
         var editorContent = markdownEditor.value;
         var isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
 
@@ -475,35 +576,38 @@
             // Show the thinking block immediately with a "Searching…" spinner
             createSearchThinkingBlock(text);
 
-            M.webSearch.performSearch(text).then(function (results) {
-                var searchContext = M.webSearch.formatResultsForLLM(results);
+            // Refine the search query using the LLM (async — may use the model)
+            refineSearchQuery(text).then(function (searchQuery) {
+                return M.webSearch.performSearch(searchQuery).then(function (results) {
+                    var searchContext = M.webSearch.formatResultsForLLM(results);
 
-                // Populate the thinking block with actual results (or "no results" msg)
-                populateSearchThinkingBlock(results, text);
+                    // Populate the thinking block with actual results (or "no results" msg)
+                    populateSearchThinkingBlock(results, text);
 
-                var context = searchContext;
-                if (editorContent.trim()) {
-                    context = searchContext + '\n\n[Document Content]\n' + editorContent;
-                }
+                    var context = searchContext;
+                    if (editorContent.trim()) {
+                        context = searchContext + '\n\n[Document Content]\n' + editorContent;
+                    }
 
-                _ai.sendToAi(editorContent.trim() ? 'qa' : 'generate', context || null, text, workerAttachments);
+                    _ai.sendToAi(editorContent.trim() ? 'qa' : 'generate', context || null, text, workerAttachments, historySnapshot);
+                });
             }).catch(function (err) {
                 // Populate thinking block with "no results" state
                 populateSearchThinkingBlock([], text);
 
                 if (isQuestion && editorContent.trim()) {
-                    _ai.sendToAi('qa', editorContent, text, workerAttachments);
+                    _ai.sendToAi('qa', editorContent, text, workerAttachments, historySnapshot);
                 } else {
-                    _ai.sendToAi('generate', null, text, workerAttachments);
+                    _ai.sendToAi('generate', null, text, workerAttachments, historySnapshot);
                 }
             });
             return;
         }
 
         if (isQuestion && editorContent.trim()) {
-            _ai.sendToAi('qa', editorContent, text, workerAttachments);
+            _ai.sendToAi('qa', editorContent, text, workerAttachments, historySnapshot);
         } else {
-            _ai.sendToAi('generate', null, text, workerAttachments);
+            _ai.sendToAi('generate', null, text, workerAttachments, historySnapshot);
         }
     }
 
@@ -644,6 +748,8 @@
     // --- Clear Chat ---
     if (aiClearChatBtn) {
         aiClearChatBtn.addEventListener('click', function () {
+            // Clear conversation history so follow-up context resets
+            chatHistory = [];
             aiChatArea.innerHTML =
                 '<div class="ai-welcome-message">\n' +
                 '  <div class="ai-welcome-icon"><i class="bi bi-stars"></i></div>\n' +

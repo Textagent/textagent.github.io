@@ -38,13 +38,13 @@ async function validateApiKey() {
     }
 }
 
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = []) {
     if (!apiKey) {
         self.postMessage({ type: 'error', message: 'API key not set.', messageId });
         return;
     }
     try {
-        const messages = buildMessages(taskType, context, userPrompt);
+        const messages = buildMessages(taskType, context, userPrompt, chatHistory);
         let maxTokens = TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
@@ -53,10 +53,29 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         const userMessages = messages.filter(m => m.role !== 'system');
 
         const requestBody = {
-            contents: userMessages.map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }],
-            })),
+            contents: userMessages.map(m => {
+                const parts = [{ text: m.content }];
+                // For the last user message, add image attachments as inlineData parts
+                if (m.role === 'user' && attachments && attachments.length > 0) {
+                    attachments.forEach(att => {
+                        if (att.type === 'image' && att.data) {
+                            parts.push({
+                                inlineData: {
+                                    mimeType: att.mimeType || 'image/png',
+                                    data: att.data
+                                }
+                            });
+                        } else if (att.type === 'file' && att.textContent) {
+                            // Append text file content as additional context
+                            parts[0].text += '\n\n[Attached File: ' + (att.name || 'file') + ']\n' + att.textContent;
+                        }
+                    });
+                }
+                return {
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: parts,
+                };
+            }),
             generationConfig: {
                 maxOutputTokens: maxTokens,
                 temperature: 0.7,
@@ -120,14 +139,14 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
     }
 }
 
-function buildMessages(taskType, context, userPrompt) {
+function buildMessages(taskType, context, userPrompt, chatHistory) {
     const systemPrompts = {
         summarize: 'You are a helpful assistant. Summarize the following text concisely while keeping the key points. Be brief. Output in markdown format.',
         expand: 'You are a helpful writing assistant. Expand the following text with more details, examples, and explanations. Keep the same tone and style. Output in markdown format.',
         rephrase: 'You are a helpful writing assistant. Rephrase the following text to improve clarity and readability while preserving the meaning. Output in markdown format.',
         grammar: 'You are a helpful writing assistant. Fix any grammar, spelling, and punctuation errors in the following text. Only output the corrected text, nothing else.',
         autocomplete: 'You are a helpful writing assistant. Continue writing the text naturally. Only output the continuation, do not repeat the existing text. Write 1-2 sentences.',
-        generate: 'You are a helpful content generation assistant. Generate content based on the user\'s request. Output in well-formatted markdown.',
+        generate: 'You are a helpful content generation assistant. Generate content based on the user\'s request. Output in well-formatted markdown. Do NOT use LaTeX $...$ or $$...$$ notation for math — use plain text or Unicode instead (e.g. write "x²" not "$x^2$"). Do NOT include any internal thinking, reasoning process, mental notes, or meta-commentary. Output ONLY the final answer.',
         markdown: 'You are a markdown expert. Generate well-formatted markdown content based on the user\'s request. Use headings, lists, tables, code blocks, and other markdown features as appropriate.',
         explain: 'You are a helpful assistant. Explain the following text in simple, easy-to-understand terms. Be concise. Output in markdown format.',
         simplify: 'You are a helpful writing assistant. Simplify the following text to make it easier to understand. Use shorter sentences and simpler words. Output in markdown format.',
@@ -135,12 +154,24 @@ function buildMessages(taskType, context, userPrompt) {
         formalize: 'You are a professional writing assistant. Rewrite the following text in a more formal, professional tone suitable for business or academic contexts. Only output the formalized text.',
         elaborate: 'You are a helpful writing assistant. Elaborate on the following text by adding more details, examples, and explanations to make it more comprehensive. Output in markdown format.',
         shorten: 'You are a concise writing editor. Shorten the following text while preserving all key information. Remove redundancy and use fewer words. Only output the shortened text.',
-        qa: 'You are a helpful assistant. Answer the user\'s question based on the provided document context. Be concise. If the answer cannot be found in the context, say so.',
-        chat: 'You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Be concise. Output in markdown format.',
+        qa: 'You are a helpful assistant. The user may have document context open in their editor. If the question relates to the provided context, use it to answer. If the question is unrelated to the context, answer directly from your knowledge. Be concise. Do NOT use LaTeX $...$ or $$...$$ notation — use plain text or Unicode for math. Do NOT include any internal reasoning, thinking process, or meta-commentary. Output in markdown format.',
+        chat: 'You are a helpful AI assistant integrated into a Markdown editor. Help the user with writing, editing, and formatting tasks. Be concise. Output in markdown format. Do NOT use LaTeX $...$ or $$...$$ notation for math — use plain text or Unicode instead. Do NOT include any internal thinking, reasoning steps, drafting notes, or meta-commentary. Output ONLY the final polished answer.',
     };
     const systemMessage = systemPrompts[taskType] || systemPrompts.chat;
     const messages = [{ role: 'system', content: systemMessage }];
     const contextLimit = taskType === 'summarize' || taskType === 'grammar' ? 4000 : 8000;
+
+    // Inject conversation history for conversational task types
+    if (chatHistory && chatHistory.length > 0 &&
+        ['generate', 'qa', 'chat', 'explain', 'markdown'].includes(taskType)) {
+        const recent = chatHistory.slice(-10);
+        recent.forEach(function (m) {
+            messages.push({
+                role: m.role,
+                content: m.content.substring(0, 500)
+            });
+        });
+    }
 
     if (context && (taskType === 'qa' || taskType === 'explain' || taskType === 'simplify')) {
         messages.push({ role: 'user', content: `Context:\n\`\`\`\n${context.substring(0, contextLimit)}\n\`\`\`\n\n${userPrompt || 'Please process this text.'}` });
@@ -155,11 +186,11 @@ function buildMessages(taskType, context, userPrompt) {
 }
 
 self.addEventListener('message', async (event) => {
-    const { type, taskType, context, userPrompt, messageId, enableThinking } = event.data;
+    const { type, taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory } = event.data;
     switch (type) {
         case 'setApiKey': apiKey = event.data.apiKey; break;
         case 'load': await validateApiKey(); break;
-        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking); break;
+        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory); break;
         case 'ping': self.postMessage({ type: 'pong' }); break;
     }
 });
