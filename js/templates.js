@@ -297,6 +297,10 @@
     for (const [key, val] of Object.entries(vars)) {
       const resolvedVal = val || (M._vars ? M._vars.get(key) : null) || '';
       result = result.replace(new RegExp('\\$\\(' + key + '\\)', 'g'), resolvedVal);
+      // Sync into M._vars so $(varName) resolves during Run All
+      if (M._vars && resolvedVal) {
+        M._vars.setManual(key, resolvedVal);
+      }
     }
 
     // Dynamic stock-grid expansion:
@@ -341,8 +345,17 @@
     let content = tpl.content;
 
     // If the template defines variables, generate the block at the top
+    // AND auto-populate M._vars so $(varName) resolves during Run All
     if (tpl.variables && tpl.variables.length > 0) {
       content = generateVariableBlock(tpl.variables) + content;
+      if (M._vars) {
+        for (const v of tpl.variables) {
+          const val = v.value || v.default || '';
+          if (v.name && val) {
+            M._vars.setManual(v.name, val);
+          }
+        }
+      }
     }
 
     // Store the raw template content (with $(var) placeholders)

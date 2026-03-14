@@ -635,6 +635,7 @@
                 var translateDisplayText = prompt;
                 translateDisplayText = translateDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 translateDisplayText = translateDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+                translateDisplayText = translateDisplayText.replace(/^\s*(?:@input|Input):\s*.+$/mi, '').trim();
                 translateDisplayText = translateDisplayText.replace(/^\s*@upload:\s*.+$/gmi, '').trim();
                 translateDisplayText = translateDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
@@ -691,6 +692,7 @@
                 var ttsDisplayText = prompt;
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+                ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@input|Input):\s*.+$/mi, '').trim();
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 var ttsHasPrompt = /^\s*(?:@prompt|Prompt):\s*/m.test(ttsDisplayText);
@@ -751,6 +753,8 @@
                 var sttDisplayText = prompt;
                 sttDisplayText = sttDisplayText.replace(/^\s*(?:@lang|Lang):\s*.+$/mi, '').trim();
                 sttDisplayText = sttDisplayText.replace(/^\s*(?:@engine|Engine):\s*.+$/mi, '').trim();
+                sttDisplayText = sttDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
+                sttDisplayText = sttDisplayText.replace(/^\s*(?:@input|Input):\s*.+$/mi, '').trim();
                 sttDisplayText = sttDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
 
                 // Parse @lang

@@ -550,6 +550,13 @@
             if (value !== null) {
                 return value;
             }
+            // Fallback: check document/template variables (M._vars)
+            if (!key && M._vars) {
+                var varsValue = M._vars.get(blockId);
+                if (varsValue !== undefined && varsValue !== null) {
+                    return varsValue;
+                }
+            }
             // Leave unresolved references as-is
             console.warn('[ExecContext] Unresolved reference:', match);
             return match;

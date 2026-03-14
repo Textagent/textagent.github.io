@@ -1557,5 +1557,119 @@ Models use ONNX format for efficient browser inference via [Transformers.js](htt
 > 💡 **How to use:** This template serves as a reference card for managing your local AI models. Click **✨ Fill** to generate the storage guide section.
 `
     },
-];
+    {
+        name: 'AI Global Briefing Generator',
+        category: 'ai',
+    displayTag: 'AI · Think · Translate · TTS · Agent',
+        icon: 'bi-globe-americas',
+        description: 'Zero-input tag chain — AI researches a country, Think analyzes, Translate phrases, TTS speaks them, Image generates visuals, Agent builds a report. Just click Run All.',
+        variables: [
+            { name: 'country', value: 'Japan', desc: 'Country to research' },
+            { name: 'localLang', value: 'Japanese', desc: 'Local language' },
+            { name: 'purpose', value: 'business trip', desc: 'Purpose: business trip / vacation / relocation / study abroad' },
+        ],
+        content: `# 🌍 Country Briefing — $(country)
 
+**Purpose:** $(purpose)
+**Local Language:** $(localLang)
+**Generated:** $(date)
+
+> 💡 **Zero input required.** Every block auto-generates from the previous one. Click **⚡ Run All** to chain: AI → Think → Translate → TTS → Image → Agent.
+
+---
+
+## ✨ Step 1 — Country Overview (AI)
+
+{{@AI:
+  @search: duckduckgo, wikipedia
+  @var: country_overview
+  @prompt: Write a comprehensive briefing on $(country) for someone preparing a $(purpose). Cover:
+
+- 🏛️ **Key facts** — capital, population, currency, timezone, visa requirements
+- 🌤️ **Climate** — best times to visit, what to expect by season
+- 💰 **Cost of living** — average daily budget (budget / mid-range / luxury)
+- 🚆 **Transport** — how to get around, apps to use, airport to city
+- 🔌 **Practical** — power outlets, tipping culture, SIM cards, WiFi
+
+Be specific with numbers and real names — no generic advice.}}
+
+---
+
+## 🧠 Step 2 — Strategic Analysis (Think)
+
+{{Think:
+  @input: country_overview
+  @var: deep_analysis
+  @prompt: Analyze this $(country) briefing for someone on a $(purpose):
+
+$(country_overview)
+
+Think deeply about:
+1. **Cultural pitfalls** — what foreigners commonly get wrong, taboos to avoid
+2. **Hidden opportunities** — insider tips locals know but guides don't mention
+3. **Risk assessment** — safety, scams, health concerns, political climate
+4. **Best value strategies** — when to book, where to save, loyalty programs to leverage
+5. **Networking/Social** — how to connect with locals, business etiquette, social norms
+
+Provide sharp, actionable insights — not surface-level observations.}}
+
+---
+
+## 🌐 Step 3 — Essential Phrases (Translate)
+
+{{@Translate:
+  @input: country_overview
+  @var: key_phrases
+  @lang: $(localLang)
+  @prompt: Generate 12 essential phrases for a $(purpose) in $(country):
+
+**Greetings:** Hello, Good morning, Thank you, Excuse me, I'm sorry
+**Navigation:** Where is…?, How much does this cost?, The bill please
+**$(purpose)-specific:** I have a meeting at…, Could you recommend…?, Is this area safe?
+
+Format each as: **English** → **$(localLang)** *(pronunciation)*
+}}
+
+---
+
+## 🔊 Step 4 — Hear the Phrases (TTS)
+
+{{@TTS:
+  @model: kokoro-tts
+  @input: key_phrases
+  @lang: $(localLang)
+  @prompt: $(key_phrases)
+}}
+
+---
+
+## 🔗 Step 5 — Complete Action Plan (Agent Flow)
+
+{{@Agent:
+  @input: country_overview, deep_analysis, key_phrases
+  @search: duckduckgo
+  @var: action_plan
+  @step 1: Build a detailed $(purpose) preparation checklist for $(country). Include: documents needed, vaccinations, insurance, banking setup, phone plan, apps to install, items to pack. Organize by timeline (4 weeks before, 1 week before, day of departure).
+  @step 2: Create a first-week schedule for $(country). Day-by-day plan with morning/afternoon/evening activities tailored to a $(purpose). Include specific neighborhoods, restaurant names, and transport instructions between locations.
+  @step 3: Write a quick-reference cheat sheet — a single-page summary with emergency numbers, embassy address, key phrases from the translation, cultural do's and don'ts, and the top 5 things to experience. Format it as a compact card that could be printed or saved to a phone.
+}}
+
+---
+
+## 🔊 Step 6 — Audio Cheat Sheet (TTS)
+
+{{@TTS:
+  @model: kokoro-tts
+  @input: action_plan
+  @lang: English
+  @prompt: $(country) trip cheat sheet: $(action_plan)
+}}
+
+---
+
+> 🔗 **Tag Chain:** \\\`AI\\\` (research + web search) → \\\`Think\\\` (analysis) → \\\`Translate\\\` (phrases) → \\\`TTS\\\` (pronunciation) → \\\`Agent\\\` (3-step plan) → \\\`TTS\\\` (audio)
+>
+> **5 tag types, 6 blocks, zero input required.** Just fill in the variables and click ⚡ Run All.
+`
+    },
+];
