@@ -255,7 +255,9 @@ Brief description of the project.
 
 ## The Problem
 
-{{Think: Analyze the core problem or challenge that readers face regarding [your topic]. Use relatable examples and data points to make it tangible.}}
+{{@AI:
+  @think: yes
+  @prompt: Analyze the core problem or challenge that readers face regarding [your topic]. Use relatable examples and data points to make it tangible.}}
 
 ## The Solution
 

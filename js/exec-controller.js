@@ -10,6 +10,12 @@
     var _abortRequested = false;
     var _currentRun = null; // { blocks, current, total, startTime }
 
+    function escapeHtml(str) {
+        var d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
     // ========================================
     // Event emitter (simple)
     // ========================================
@@ -162,6 +168,55 @@
         }
     }
 
+    /**
+     * If a debounced renderMarkdown() is pending, flush it immediately
+     * and wait for the DOM to settle, so that status badges are applied
+     * to the freshly-rendered DOM rather than a stale one about to be replaced.
+     */
+    function flushPendingRender() {
+        if (M.markdownRenderTimeout) {
+            clearTimeout(M.markdownRenderTimeout);
+            M.markdownRenderTimeout = null;
+            M.renderMarkdown();
+        }
+        // Wait one frame for the DOM to settle after render
+        return new Promise(function (r) { requestAnimationFrame(r); });
+    }
+
+    /**
+     * Re-stamp status badges and update stale _blockIndex values after DOM re-render.
+     * After each block's adapter replaces its tag in the editor, renderMarkdown()
+     * re-indexes remaining cards. _blockIndex on remaining blocks becomes stale.
+     */
+    function reapplyAllStatuses(blocks, lastCompletedIdx) {
+        // Re-scan the current editor to get fresh block indices
+        var freshBlocks = M._execRegistry ? M._execRegistry.scanDocument(M.markdownEditor.value) : [];
+
+        // Update _blockIndex for remaining unexecuted blocks
+        for (var j = lastCompletedIdx + 1; j < blocks.length; j++) {
+            var b = blocks[j];
+            if (!b._fullMatch) continue;
+            for (var k = 0; k < freshBlocks.length; k++) {
+                if (freshBlocks[k]._fullMatch === b._fullMatch) {
+                    b._blockIndex = freshBlocks[k]._blockIndex;
+                    break;
+                }
+            }
+        }
+
+        // Re-apply status badges for completed blocks (they may have been removed by re-render)
+        // Note: completed blocks' tags are already replaced with output, so their containers
+        // no longer exist as AI cards — this is fine, updateBlockStatus just does nothing.
+        for (var j2 = 0; j2 <= lastCompletedIdx && j2 < blocks.length; j2++) {
+            var b2 = blocks[j2];
+            if (b2.error) {
+                updateBlockStatus(b2, 'error');
+            } else if (b2.result !== undefined && b2.result !== null) {
+                updateBlockStatus(b2, 'done');
+            }
+        }
+    }
+
     // ========================================
     // Render block output into the DOM
     // ========================================
@@ -278,7 +333,7 @@
     }
 
     // ========================================
-    // Run All
+    // Run All — with Preflight Compilation
     // ========================================
 
     async function runAll(options) {
@@ -288,8 +343,6 @@
         }
 
         options = options || {};
-        _running = true;
-        _abortRequested = false;
 
         // Ensure SQLite is ready
         await new Promise(function (resolve) {
@@ -300,15 +353,313 @@
             }
         });
 
+        // Run the compiler
+        var markdown = M.markdownEditor ? M.markdownEditor.value : '';
+        var compiled = M.compileRequirements ? M.compileRequirements(markdown) : null;
+
+        if (!compiled || compiled.blocks.length === 0) {
+            if (M.showToast) M.showToast('No executable blocks found in the document.', 'warning');
+            return;
+        }
+
+        // If skipPreflight option is set, execute directly
+        if (options.skipPreflight) {
+            return executeBlocks(compiled.blocks, options);
+        }
+
+        // Show preflight dialog
+        var userAction = await showPreflightDialog(compiled);
+
+        if (userAction === 'cancel') return;
+
+        if (userAction === 'download-all') {
+            // Download all missing models, then run
+            await downloadMissingModels(compiled.models);
+            // Re-compile after downloads
+            compiled = M.compileRequirements(markdown);
+        }
+
+        // Filter blocks based on user action
+        var blocksToRun = compiled.blocks;
+        if (userAction === 'run-available') {
+            blocksToRun = blocksToRun.filter(function (b) {
+                return b._hasAdapter && b._support === 'full';
+            });
+        }
+
+        return executeBlocks(blocksToRun, options);
+    }
+
+    // ========================================
+    // Preflight Dialog
+    // ========================================
+
+    function showPreflightDialog(compiled) {
+        return new Promise(function (resolve) {
+            var overlay = document.createElement('div');
+            overlay.className = 'preflight-overlay';
+            overlay.innerHTML = buildPreflightHtml(compiled);
+            document.body.appendChild(overlay);
+
+            function close(action) {
+                overlay.remove();
+                resolve(action);
+            }
+
+            // Button handlers
+            overlay.querySelector('.preflight-close-btn').addEventListener('click', function () { close('cancel'); });
+            overlay.querySelector('.preflight-btn-cancel').addEventListener('click', function () { close('cancel'); });
+
+            var runAvailBtn = overlay.querySelector('.preflight-btn-run-available');
+            if (runAvailBtn) {
+                runAvailBtn.addEventListener('click', function () { close('run-available'); });
+            }
+
+            var runAllBtn = overlay.querySelector('.preflight-btn-run');
+            if (runAllBtn) {
+                runAllBtn.addEventListener('click', function () { close('run-all'); });
+            }
+
+            var downloadBtn = overlay.querySelector('.preflight-btn-download');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function () { close('download-all'); });
+            }
+
+            // Close on overlay click
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) close('cancel');
+            });
+
+            // Close on Escape
+            function onEsc(e) {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', onEsc);
+                    close('cancel');
+                }
+            }
+            document.addEventListener('keydown', onEsc);
+        });
+    }
+
+    function buildPreflightHtml(compiled) {
+        var s = compiled.summary;
+        var blocks = compiled.blocks;
+        var models = compiled.models;
+
+        var html = '<div class="preflight-dialog">';
+
+        // Header
+        html += '<div class="preflight-header">'
+            + '<h3><i class="bi bi-lightning-charge-fill"></i> Run All — Preflight Check</h3>'
+            + '<button class="preflight-close-btn" title="Close"><i class="bi bi-x-lg"></i></button>'
+            + '</div>';
+
+        // Body
+        html += '<div class="preflight-body">';
+
+        // Stats
+        html += '<div class="preflight-stats">'
+            + '<div class="preflight-stat"><div class="preflight-stat-value">' + s.total + '</div><div class="preflight-stat-label">Total blocks</div></div>'
+            + '<div class="preflight-stat"><div class="preflight-stat-value">' + s.runnable + '</div><div class="preflight-stat-label">Runnable</div></div>';
+        if (s.skipped > 0) {
+            html += '<div class="preflight-stat"><div class="preflight-stat-value">' + s.skipped + '</div><div class="preflight-stat-label">Skipped</div></div>';
+        }
+        if (s.needsDownload.length > 0) {
+            html += '<div class="preflight-stat"><div class="preflight-stat-value">' + s.needsDownload.length + '</div><div class="preflight-stat-label">Need download</div></div>';
+        }
+        html += '</div>';
+
+        // Summary table
+        html += '<div class="preflight-table-wrap"><table class="preflight-table">'
+            + '<thead><tr>'
+            + '<th>#</th><th>Block Name</th><th>Type</th><th>Output Var</th>'
+            + '<th>Model</th><th>Features</th><th>Reads</th><th>Status</th>'
+            + '</tr></thead><tbody>';
+
+        for (var i = 0; i < blocks.length; i++) {
+            var b = blocks[i];
+            var statusClass = 'ready';
+            var statusText = '🟢 Ready';
+
+            if (!b._hasAdapter) {
+                statusClass = 'missing';
+                statusText = '❌ No adapter';
+            } else if (b._support === 'excluded') {
+                statusClass = 'excluded';
+                statusText = '⏭ Excluded';
+            } else if (b._effectiveModel && models[b._effectiveModel] && !models[b._effectiveModel].cached) {
+                statusClass = 'download';
+                statusText = '⬇ Download';
+            } else if (b._effectiveModel && models[b._effectiveModel] && !models[b._effectiveModel].keySet) {
+                statusClass = 'missing';
+                statusText = '🔑 Key needed';
+            }
+
+            var varHtml = b.varName
+                ? '<span class="preflight-var">$(' + escapeHtml(b.varName) + ')</span>'
+                : '<span style="color:#484f58">—</span>';
+
+            var modelHtml = b._modelLabel
+                ? '<span class="preflight-model">' + escapeHtml(b._modelLabel) + '</span>'
+                : '<span style="color:#484f58">—</span>';
+
+            var featuresHtml = '';
+            if (b._features && b._features.length > 0) {
+                featuresHtml = '<div class="preflight-features">';
+                for (var f = 0; f < b._features.length; f++) {
+                    featuresHtml += '<span class="preflight-feature-pill">' + b._features[f] + '</span>';
+                }
+                featuresHtml += '</div>';
+            } else {
+                featuresHtml = '<span style="color:#484f58">—</span>';
+            }
+
+            var readsHtml = '';
+            if (b._reads && b._reads.length > 0) {
+                readsHtml = '<div class="preflight-reads">';
+                for (var r = 0; r < b._reads.length; r++) {
+                    readsHtml += '<span class="preflight-var">$(' + escapeHtml(b._reads[r]) + ')</span>';
+                }
+                readsHtml += '</div>';
+            } else {
+                readsHtml = '<span style="color:#484f58">—</span>';
+            }
+
+            html += '<tr>'
+                + '<td>' + b._seqIndex + '</td>'
+                + '<td>' + escapeHtml(b.blockLabel) + '</td>'
+                + '<td>' + escapeHtml(b._displayType) + '</td>'
+                + '<td>' + varHtml + '</td>'
+                + '<td>' + modelHtml + '</td>'
+                + '<td>' + featuresHtml + '</td>'
+                + '<td>' + readsHtml + '</td>'
+                + '<td><span class="preflight-status preflight-status-' + statusClass + '">' + statusText + '</span></td>'
+                + '</tr>';
+        }
+
+        html += '</tbody></table></div>';
+
+        // Errors
+        if (compiled.errors.length > 0) {
+            html += '<div class="preflight-section-header"><i class="bi bi-exclamation-triangle-fill" style="color:#f85149"></i> Errors</div>';
+            html += '<ul class="preflight-error-list">';
+            for (var e = 0; e < compiled.errors.length; e++) {
+                html += '<li class="preflight-error-item">' + escapeHtml(compiled.errors[e].message) + '</li>';
+            }
+            html += '</ul>';
+        }
+
+        // Warnings
+        if (compiled.warnings.length > 0) {
+            html += '<div class="preflight-section-header"><i class="bi bi-exclamation-circle-fill" style="color:#d29922"></i> Warnings</div>';
+            html += '<ul class="preflight-warning-list">';
+            for (var w = 0; w < compiled.warnings.length; w++) {
+                html += '<li class="preflight-warning-item">' + escapeHtml(compiled.warnings[w].message) + '</li>';
+            }
+            html += '</ul>';
+        }
+
+        // Model downloads needed
+        if (s.needsDownload.length > 0) {
+            html += '<div class="preflight-model-section">'
+                + '<div class="preflight-section-header"><i class="bi bi-cloud-download" style="color:#d29922"></i> Models need download</div>';
+            for (var d = 0; d < s.needsDownload.length; d++) {
+                var m = s.needsDownload[d];
+                html += '<div class="preflight-model-row">'
+                    + '<span class="preflight-model-name">' + escapeHtml(m.label) + '</span>'
+                    + (m.size ? '<span class="preflight-model-size">' + escapeHtml(m.size) + '</span>' : '')
+                    + '</div>';
+            }
+            html += '</div>';
+        }
+
+        html += '</div>'; // end body
+
+        // Footer with action buttons
+        html += '<div class="preflight-footer">';
+        html += '<button class="preflight-btn preflight-btn-cancel"><i class="bi bi-x-lg"></i> Cancel</button>';
+
+        if (s.needsDownload.length > 0) {
+            html += '<button class="preflight-btn preflight-btn-download"><i class="bi bi-cloud-download"></i> Download All</button>';
+            if (s.runnable > 0 && s.runnable > s.needsDownload.length) {
+                html += '<button class="preflight-btn preflight-btn-run-available"><i class="bi bi-play-circle"></i> Run '
+                    + (s.runnable - s.needsDownload.reduce(function (c, m) { return c + m.usedBy.length; }, 0))
+                    + ' Available</button>';
+            }
+        }
+
+        html += '<button class="preflight-btn preflight-btn-run"><i class="bi bi-play-fill"></i> Run All (' + s.runnable + ')</button>';
+        html += '</div>';
+
+        html += '</div>'; // end dialog
+        return html;
+    }
+
+    // ========================================
+    // Download Missing Models
+    // ========================================
+
+    async function downloadMissingModels(modelPlan) {
+        var toDownload = Object.keys(modelPlan).filter(function (id) {
+            var m = modelPlan[id];
+            return m.isLocal && !m.cached;
+        });
+
+        for (var i = 0; i < toDownload.length; i++) {
+            var modelId = toDownload[i];
+            if (M.showToast) M.showToast('📥 Downloading ' + modelPlan[modelId].label + '...', 'info');
+
+            // Use existing switchToModel + wait for load
+            if (M.switchToModel) M.switchToModel(modelId);
+
+            // Wait for model to become ready
+            await waitForModelReady(modelId, 120000); // 2 min timeout
+        }
+    }
+
+    function waitForModelReady(modelId, timeout) {
+        timeout = timeout || 60000;
+        return new Promise(function (resolve) {
+            var start = Date.now();
+            var check = setInterval(function () {
+                var isReady = false;
+                // Kokoro TTS — check TTS module state
+                if (modelId === 'kokoro-tts' && M.tts && M.tts.isKokoroReady) {
+                    isReady = M.tts.isKokoroReady();
+                }
+                // AI local models
+                if (!isReady && M._ai && M._ai.getLocalState) {
+                    var ls = M._ai.getLocalState(modelId);
+                    isReady = ls && ls.loaded;
+                }
+                if (!isReady && M.isCurrentModelReady) {
+                    isReady = M.isCurrentModelReady();
+                }
+                if (isReady || Date.now() - start > timeout) {
+                    clearInterval(check);
+                    resolve(isReady);
+                }
+            }, 500);
+        });
+    }
+
+    // ========================================
+    // Execute Blocks (core loop)
+    // ========================================
+
+    async function executeBlocks(blocks, options) {
+        options = options || {};
+        _running = true;
+        _abortRequested = false;
+        M._execAborted = false; // expose for cross-module abort checks
+
         // Clear previous results
         if (M._execContext) M._execContext.clear();
-
-        // Scan document for all executable blocks
-        var markdown = M.markdownEditor ? M.markdownEditor.value : '';
-        var blocks = M._execRegistry.scanDocument(markdown);
+        if (M._vars && M._vars.clearRuntime) M._vars.clearRuntime();
 
         if (blocks.length === 0) {
-            if (M.showToast) M.showToast('No executable blocks found in the document.', 'warning');
+            console.log('[RunAll] ⚠ No executable blocks found.');
+            if (M.showToast) M.showToast('No executable blocks to run.', 'warning');
             _running = false;
             return;
         }
@@ -322,12 +673,158 @@
             errors: 0
         };
 
+        // ── Detailed session start log ──
+        console.group('[RunAll] ⚡ Starting execution — ' + blocks.length + ' blocks');
+        console.log('[RunAll] 🕐 Start time:', new Date().toLocaleTimeString());
+        console.table(blocks.map(function (b, idx) {
+            return {
+                '#': idx + 1,
+                Type: b._displayType || b.runtimeKey || b.type,
+                Lang: b.lang || '—',
+                Var: b.varName || '—',
+                Model: b._effectiveModel || '—',
+                Input: (b.inputVars && b.inputVars.length) ? b.inputVars.join(', ') : '—',
+                Think: b.think ? '✓' : '—',
+                Label: (b.blockLabel || '').substring(0, 50)
+            };
+        }));
+        console.groupEnd();
+
         emit('exec:start', { total: blocks.length });
         updateRunAllButton(true);
         showProgress(0, blocks.length);
 
+        var currentModelId = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+        console.log('[RunAll] 🤖 Current AI model:', currentModelId || '(none)');
+
+        // ── Pre-execution: ensure all required models are ready ──
+        var requiredModels = {};
+        for (var p = 0; p < blocks.length; p++) {
+            var bm = blocks[p]._effectiveModel;
+            if (bm && !requiredModels[bm]) requiredModels[bm] = [];
+            if (bm) requiredModels[bm].push(p + 1);
+        }
+        var modelIds = Object.keys(requiredModels);
+        console.log('[RunAll] 📦 Required models:', modelIds.join(', '));
+
+        for (var mi = 0; mi < modelIds.length; mi++) {
+            var modelId = modelIds[mi];
+            if (_abortRequested) break;
+
+            // ── Kokoro TTS — separate from AI models ──
+            if (modelId === 'kokoro-tts') {
+                if (M.tts && M.tts.isKokoroReady && M.tts.isKokoroReady()) {
+                    console.log('[RunAll] ✅ Kokoro TTS ready');
+                    continue;
+                }
+                // Trigger Kokoro loading
+                console.log('[RunAll] ⏳ Loading Kokoro TTS (121 MB)…');
+                if (M.tts && M.tts.initKokoro) M.tts.initKokoro();
+                M.showToast('⏳ Loading Kokoro TTS — please wait…', 'info');
+                // Wait up to 3 min for TTS model download
+                var ttsStart = Date.now();
+                while (Date.now() - ttsStart < 180000) {
+                    if (_abortRequested) break;
+                    if (M.tts && M.tts.isKokoroReady && M.tts.isKokoroReady()) {
+                        console.log('[RunAll] ✅ Kokoro TTS ready (' + ((Date.now() - ttsStart) / 1000).toFixed(1) + 's)');
+                        M.showToast('✅ Kokoro TTS ready!', 'success');
+                        break;
+                    }
+                    await new Promise(function (r) { setTimeout(r, 1000); });
+                }
+                continue;
+            }
+
+            // ── AI / Cloud models ──
+            // Check if already ready
+            var isReady = false;
+            if (M._ai && M._ai.getLocalState) {
+                var mls = M._ai.getLocalState(modelId);
+                isReady = mls && mls.loaded;
+            }
+            if (!isReady && M.isCurrentModelReady && M.isCurrentModelReady() && currentModelId === modelId) {
+                isReady = true;
+            }
+            // Check cloud models
+            var cloudProviders = M.getCloudProviders ? M.getCloudProviders() : {};
+            if (!isReady && cloudProviders[modelId] && cloudProviders[modelId].isLoaded()) {
+                isReady = true;
+            }
+            if (isReady) {
+                console.log('[RunAll] ✅ Model ready:', modelId);
+                continue;
+            }
+
+            // Model not ready — auto-trigger loading
+            console.log('[RunAll] ⏳ Model not ready, triggering load:', modelId);
+
+            if (M._ai && M._ai.isLocalModel && M._ai.isLocalModel(modelId)) {
+                var mls2 = M._ai.getLocalState(modelId);
+                var consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
+                var hasConsent = localStorage.getItem(consentKey)
+                    || (modelId === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
+
+                if (!mls2.loaded && !mls2.worker) {
+                    if (hasConsent) {
+                        // Auto-load from cache
+                        if (M.switchToModel) M.switchToModel(modelId);
+                        else if (M._ai.initAiWorker) M._ai.initAiWorker(modelId);
+                        M.showToast('⏳ Loading ' + modelId + '…', 'info');
+                    } else {
+                        // Need consent — show download popup
+                        if (M.showModelDownloadPopup) M.showModelDownloadPopup(modelId);
+                        M.showToast('📥 ' + modelId + ' requires download. Please accept to continue.', 'warning');
+                    }
+                } else if (!mls2.loaded && mls2.worker) {
+                    M.showToast('⏳ ' + modelId + ' is loading…', 'info');
+                }
+
+                // Wait for model to become ready (up to 60s)
+                var mStart = Date.now();
+                while (Date.now() - mStart < 60000) {
+                    if (_abortRequested) {
+                        console.log('[RunAll] ⏹ Aborted during model loading');
+                        break;
+                    }
+                    var mlsCheck = M._ai.getLocalState(modelId);
+                    if (mlsCheck && mlsCheck.loaded) {
+                        console.log('[RunAll] ✅ Model loaded:', modelId, '(' + ((Date.now() - mStart) / 1000).toFixed(1) + 's)');
+                        M.showToast('✅ ' + modelId + ' ready!', 'success');
+                        break;
+                    }
+                    await new Promise(function (r) { setTimeout(r, 1000); });
+                }
+            } else if (cloudProviders[modelId]) {
+                var cp = cloudProviders[modelId];
+                if (!cp.getKey()) {
+                    M.showApiKeyModal(modelId);
+                    M.showToast('🔑 API key needed for ' + modelId, 'warning');
+                    // Wait briefly for key entry
+                    await new Promise(function (r) { setTimeout(r, 3000); });
+                }
+                if (!cp.isLoaded() && !cp.getWorker()) {
+                    M.initCloudWorker(modelId);
+                    await new Promise(function (r) { setTimeout(r, 2000); });
+                }
+            }
+        }
+
+        if (_abortRequested) {
+            console.log('[RunAll] ⏹ Aborted during pre-flight model loading');
+            _running = false;
+            _abortRequested = false;
+            M._execAborted = false;
+            updateRunAllButton(false);
+            hideProgress();
+            return;
+        }
+
+        // Track per-block timings
+        var _blockTimings = [];
+
         for (var i = 0; i < blocks.length; i++) {
             if (_abortRequested) {
+                console.warn('[RunAll] ⏹ Aborted by user after block #' + i);
                 emit('exec:abort', { completed: _currentRun.completed, total: blocks.length });
                 break;
             }
@@ -337,28 +834,91 @@
 
             // Skip blocks without a registered runtime
             if (!M._execRegistry.getRuntime(block.runtimeKey)) {
+                console.log('[RunAll] ⏭ Block #' + (i + 1) + ' skipped — no runtime for: ' + block.runtimeKey);
+                _blockTimings.push({ index: i + 1, status: 'skipped', elapsed: '—' });
                 continue;
             }
 
+            // Model switching: if this block needs a different model, switch
+            if (block._effectiveModel && block._effectiveModel !== currentModelId && M.switchToModel) {
+                console.log('[RunAll] 🔄 Switching model: ' + currentModelId + ' → ' + block._effectiveModel);
+                M.switchToModel(block._effectiveModel);
+                var modelReady = await waitForModelReady(block._effectiveModel, 60000);
+                console.log('[RunAll] 🔄 Model switch ' + (modelReady ? '✅ ready' : '❌ timeout') + ': ' + block._effectiveModel);
+                currentModelId = block._effectiveModel;
+            }
+
+            // ── Per-block start log ──
+            var blockType = block._displayType || block.runtimeKey;
+            var blockLabel = (block.blockLabel || block.source || '').substring(0, 60);
+            console.group('[RunAll] ▶ Block #' + (i + 1) + '/' + blocks.length + ' — ' + blockType);
+            console.log('  📝 Label:', blockLabel);
+            console.log('  🔧 Runtime:', block.runtimeKey);
+            console.log('  🤖 Model:', block._effectiveModel || '(default)');
+            if (block.varName) console.log('  📤 Output var: $(' + block.varName + ')');
+            if (block.inputVars && block.inputVars.length) {
+                var inputValues = {};
+                block.inputVars.forEach(function (v) {
+                    inputValues[v] = M._vars && M._vars.get ? (M._vars.get(v) ? '✅ resolved (' + String(M._vars.get(v)).substring(0, 80) + '…)' : '⚠ empty') : '?';
+                });
+                console.log('  📥 Input vars:', inputValues);
+            }
+            if (block.think) console.log('  🧠 Think mode: enabled');
+            if (block.search && block.search.length) console.log('  🔍 Search:', block.search.join(', '));
+            if (block.useMemory && block.useMemory.length && block.useMemory[0] !== 'none') console.log('  📎 Memory:', block.useMemory.join(', '));
+            if (block.targetLang) console.log('  🌐 Language:', block.targetLang);
+
             emit('exec:block-start', { block: block, index: i, total: blocks.length });
-            updateBlockStatus(block, 'running');
             showProgress(i + 1, blocks.length, block);
+
+            // Flush any pending debounced render so the badge is applied to the final DOM
+            await flushPendingRender();
+            updateBlockStatus(block, 'running');
+
+            var blockStart = Date.now();
 
             try {
                 var result = await executeBlock(block);
                 block.result = result;
-                updateBlockStatus(block, 'done');
-                renderBlockOutput(block, result, null);
                 _currentRun.completed++;
+                var blockElapsed = ((Date.now() - blockStart) / 1000).toFixed(2);
+
+                console.log('  ✅ Done in ' + blockElapsed + 's');
+                if (block.varName && M._vars && M._vars.get) {
+                    var stored = M._vars.get(block.varName);
+                    console.log('  📤 $(' + block.varName + ') = ' + (stored ? String(stored).substring(0, 120) + (String(stored).length > 120 ? '…' : '') : '(empty)'));
+                }
+                if (typeof result === 'string' && result.length > 0) {
+                    console.log('  📄 Result preview: ' + result.substring(0, 150) + (result.length > 150 ? '…' : ''));
+                }
+                console.groupEnd(); // close block group
+
+                _blockTimings.push({ index: i + 1, type: blockType, status: '✅', elapsed: blockElapsed + 's' });
+
                 emit('exec:block-done', { block: block, result: result, index: i });
+
+                // After adapter runs, the DOM may have been rebuilt via renderMarkdown().
+                // Flush any pending render then re-apply all status badges.
+                await flushPendingRender();
+                reapplyAllStatuses(blocks, i);
+                renderBlockOutput(block, result, null);
             } catch (err) {
                 block.result = null;
                 block.error = err;
-                updateBlockStatus(block, 'error');
-                renderBlockOutput(block, null, err);
                 _currentRun.errors++;
+                var blockElapsed2 = ((Date.now() - blockStart) / 1000).toFixed(2);
+
+                console.error('  ❌ Error after ' + blockElapsed2 + 's:', err.message || err);
+                console.error('  Stack:', err.stack || '(no stack)');
+                console.groupEnd(); // close block group
+
+                _blockTimings.push({ index: i + 1, type: blockType, status: '❌', elapsed: blockElapsed2 + 's', error: (err.message || String(err)).substring(0, 100) });
+
                 emit('exec:block-error', { block: block, error: err, index: i });
-                console.error('[ExecController] Block error:', block.id, err);
+
+                await new Promise(function (r) { requestAnimationFrame(r); });
+                reapplyAllStatuses(blocks, i);
+                renderBlockOutput(block, null, err);
                 // Continue to next block (non-fatal)
             }
         }
@@ -372,6 +932,21 @@
             summary = '⏹ Stopped. ' + _currentRun.completed + ' of ' + blocks.length + ' blocks executed';
         }
 
+        // ── Final summary log ──
+        console.group('[RunAll] 🏁 Execution complete');
+        console.log('[RunAll] ' + summary);
+        console.log('[RunAll] 🕐 End time:', new Date().toLocaleTimeString());
+        console.table(_blockTimings);
+        if (M._vars && M._vars.list) {
+            var finalVars = M._vars.list();
+            var varSummary = {};
+            Object.keys(finalVars).forEach(function (k) {
+                varSummary[k] = String(finalVars[k]).substring(0, 80) + (String(finalVars[k]).length > 80 ? '…' : '');
+            });
+            console.log('[RunAll] 📦 Final variables:', varSummary);
+        }
+        console.groupEnd();
+
         if (M.showToast) M.showToast(summary, _currentRun.errors > 0 ? 'warning' : 'success');
 
         emit('exec:done', {
@@ -383,6 +958,7 @@
 
         _running = false;
         _abortRequested = false;
+        M._execAborted = false;
         _currentRun = null;
         updateRunAllButton(false);
         hideProgress();
@@ -423,6 +999,8 @@
     function abort() {
         if (!_running) return;
         _abortRequested = true;
+        M._execAborted = true; // expose for cross-module abort checks
+        console.log('[RunAll] ⏹ Stop requested by user');
         if (M.showToast) M.showToast('⏹ Stopping execution...', 'info');
     }
 

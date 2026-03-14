@@ -3,11 +3,19 @@
 // Runs textagent/Kokoro-82M-v1.1-zh-ONNX via kokoro-js
 // off the main thread for jank-free speech synthesis.
 // Supports English + Chinese with voice auto-selection.
+//
+// NOTE: We bypass KokoroTTS.from_pretrained() because it internally
+// calls StyleTextToSpeech2Model.from_pretrained() which requires
+// preprocessor_config.json — a file that doesn't exist in any
+// Kokoro ONNX repo (textagent, onnx-community, or upstream hexgrad).
+// Instead we load model + tokenizer separately and construct
+// KokoroTTS(model, tokenizer) directly.
 // ============================================
-import { env } from '@huggingface/transformers';
+import { env, StyleTextToSpeech2Model, AutoTokenizer } from '@huggingface/transformers';
 
 // Model host — downloads ONNX models from textagent HuggingFace org
 const MODEL_HOST = 'https://huggingface.co';
+const MODEL_ORG_FALLBACK = 'onnx-community';
 env.remoteHost = MODEL_HOST;
 
 import { KokoroTTS } from 'kokoro-js';
@@ -29,6 +37,22 @@ const VOICE_MAP = {
     'chinese (mandarin)': 'zf_xiaobei',
 };
 
+/**
+ * Load model + tokenizer separately, then construct KokoroTTS directly.
+ * This avoids the preprocessor_config.json fetch that fails in
+ * KokoroTTS.from_pretrained() → StyleTextToSpeech2Model.from_pretrained().
+ */
+async function loadKokoroManual(modelId, progressCb) {
+    const model = await StyleTextToSpeech2Model.from_pretrained(modelId, {
+        dtype: 'q8',
+        progress_callback: progressCb,
+    });
+    const tokenizer = await AutoTokenizer.from_pretrained(modelId, {
+        progress_callback: progressCb,
+    });
+    return new KokoroTTS(model, tokenizer);
+}
+
 self.addEventListener('message', async (e) => {
     const { type, text, voice, lang } = e.data;
 
@@ -40,42 +64,50 @@ self.addEventListener('message', async (e) => {
                 message: '🔊 Downloading Kokoro TTS model (~80 MB)…',
             });
 
-            const fromPretrainedOpts = {
-                dtype: 'q8',  // Best quality-to-size ratio
-                progress_callback: (progress) => {
-                    if (progress.status === 'progress') {
-                        self.postMessage({
-                            type: 'progress',
-                            file: progress.file,
-                            loaded: progress.loaded,
-                            total: progress.total,
-                            percent: Math.round((progress.loaded / progress.total) * 100),
-                            source: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
-                        });
-                    } else if (progress.status === 'initiate') {
-                        self.postMessage({
-                            type: 'status',
-                            status: 'loading',
-                            message: `Loading ${progress.file || 'model'}...`,
-                            source: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
-                            loadingPhase: 'initiate',
-                        });
-                    } else if (progress.status === 'done') {
-                        self.postMessage({
-                            type: 'status',
-                            status: 'loading',
-                            message: `Loaded ${progress.file || 'model'} ✓`,
-                            source: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
-                            loadingPhase: 'done',
-                        });
-                    }
-                },
+            let modelId = 'textagent/Kokoro-82M-v1.1-zh-ONNX';
+
+            const progressCb = (progress) => {
+                if (progress.status === 'progress') {
+                    self.postMessage({
+                        type: 'progress',
+                        file: progress.file,
+                        loaded: progress.loaded,
+                        total: progress.total,
+                        percent: Math.round((progress.loaded / progress.total) * 100),
+                        source: modelId,
+                    });
+                } else if (progress.status === 'initiate') {
+                    self.postMessage({
+                        type: 'status',
+                        status: 'loading',
+                        message: `Loading ${progress.file || 'model'}...`,
+                        source: modelId,
+                        loadingPhase: 'initiate',
+                    });
+                } else if (progress.status === 'done') {
+                    self.postMessage({
+                        type: 'status',
+                        status: 'loading',
+                        message: `Loaded ${progress.file || 'model'} ✓`,
+                        source: modelId,
+                        loadingPhase: 'done',
+                    });
+                }
             };
 
-            tts = await KokoroTTS.from_pretrained(
-                'textagent/Kokoro-82M-v1.1-zh-ONNX',
-                fromPretrainedOpts,
-            );
+            // Try textagent org first, fall back to onnx-community
+            try {
+                tts = await loadKokoroManual(modelId, progressCb);
+            } catch (primaryErr) {
+                console.warn(`textagent model failed: ${primaryErr.message}. Falling back to ${MODEL_ORG_FALLBACK}…`);
+                self.postMessage({
+                    type: 'status',
+                    status: 'loading',
+                    message: `⚠️ Falling back to ${MODEL_ORG_FALLBACK} models…`,
+                });
+                modelId = modelId.replace('textagent/', MODEL_ORG_FALLBACK + '/');
+                tts = await loadKokoroManual(modelId, progressCb);
+            }
 
             // Get available voices
             let voices = [];

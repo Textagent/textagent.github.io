@@ -160,6 +160,56 @@
             }
         }
 
+        // Variable Flow Graph — lifecycle info from the compiler
+        if (M.compileRequirements && M.markdownEditor) {
+            try {
+                var compiled = M.compileRequirements(M.markdownEditor.value);
+                var varGraph = compiled.vars || {};
+                var graphKeys = Object.keys(varGraph);
+                if (graphKeys.length > 0) {
+                    html += '<div class="dv-divider"></div>';
+                    html += '<div class="dv-section-header" style="color:#bd93f9">' +
+                        '<i class="bi bi-diagram-3"></i> Variable Flow ' +
+                        '<span class="dv-section-badge">' + graphKeys.length + '</span></div>';
+
+                    for (var g = 0; g < graphKeys.length; g++) {
+                        var vName = graphKeys[g];
+                        var vInfo = varGraph[vName];
+                        var hasValue = allVars[vName] && allVars[vName].layer !== 'declared';
+                        var statusPill = hasValue
+                            ? '<span style="color:#3fb950;font-size:0.75rem">🟢 Ready</span>'
+                            : '<span style="color:#d29922;font-size:0.75rem">🟡 Pending</span>';
+
+                        html += '<div class="dv-var-row" style="flex-wrap:wrap;gap:4px">' +
+                            '<span class="dv-var-name" style="min-width:80px">$(' + escapeHtml(vName) + ')</span>' +
+                            statusPill +
+                            '<span style="font-size:0.72rem;color:#8b949e">' +
+                                '← Block #' + vInfo.producer;
+                        if (vInfo.consumers.length > 0) {
+                            html += ' → #' + vInfo.consumers.join(', #');
+                        }
+                        html += '</span></div>';
+                    }
+
+                    // Show errors/warnings if any
+                    if (compiled.errors.length > 0) {
+                        html += '<div style="margin-top:8px">';
+                        for (var ei = 0; ei < compiled.errors.length; ei++) {
+                            html += '<div style="color:#f85149;font-size:0.78rem;padding:2px 0">✖ ' +
+                                escapeHtml(compiled.errors[ei].message) + '</div>';
+                        }
+                        html += '</div>';
+                    }
+                    if (compiled.warnings.length > 0) {
+                        for (var wi = 0; wi < compiled.warnings.length; wi++) {
+                            html += '<div style="color:#d29922;font-size:0.78rem;padding:2px 0">⚠ ' +
+                                escapeHtml(compiled.warnings[wi].message) + '</div>';
+                        }
+                    }
+                }
+            } catch (_) { /* compiler not available or error — skip */ }
+        }
+
         body.innerHTML = html;
 
         // Wire copy buttons
@@ -258,7 +308,95 @@
         existingVarsBtn.parentNode.insertBefore(panelBtn, existingVarsBtn.nextSibling);
     }
 
+    // ========================================
+    // Select text → Assign to Variable
+    // ========================================
+
+    /**
+     * Show an inline modal to name and save selected text as a variable.
+     */
+    function assignSelectionToVar(selectedText) {
+        if (!selectedText || !selectedText.trim()) {
+            if (M.showToast) M.showToast('Select some text in the editor first.', 'warning');
+            return;
+        }
+
+        var text = selectedText.trim();
+        var preview = text.length > 80 ? text.substring(0, 80) + '…' : text;
+
+        // Build inline modal
+        var modal = document.createElement('div');
+        modal.className = 'preflight-overlay';
+        modal.innerHTML =
+            '<div style="background:var(--color-canvas-default,#0d1117);border:1px solid var(--color-border-default,#30363d);' +
+                'border-radius:12px;padding:20px;width:380px;max-width:92%;box-shadow:0 8px 32px rgba(0,0,0,0.5)">' +
+                '<div style="font-weight:600;font-size:1rem;color:var(--color-fg-default,#e6edf3);margin-bottom:12px;display:flex;align-items:center;gap:8px">' +
+                    '<i class="bi bi-pin-angle-fill" style="color:var(--color-accent-fg,#58a6ff)"></i> Assign to Variable</div>' +
+                '<div style="color:var(--color-fg-muted,#8b949e);font-size:0.8rem;margin-bottom:10px;padding:8px;' +
+                    'background:rgba(255,255,255,0.04);border-radius:6px;max-height:60px;overflow:hidden;font-family:monospace">' +
+                    escapeHtml(preview) + '</div>' +
+                '<label style="font-size:0.8rem;color:var(--color-fg-muted,#8b949e);margin-bottom:4px;display:block">Variable name</label>' +
+                '<input id="dv-assign-input" type="text" placeholder="e.g. story" ' +
+                    'style="width:100%;box-sizing:border-box;padding:8px 12px;border-radius:8px;border:1px solid var(--color-border-default,#30363d);' +
+                    'background:var(--color-canvas-subtle,#161b22);color:var(--color-fg-default,#e6edf3);font-size:0.9rem;outline:none;margin-bottom:14px" />' +
+                '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+                    '<button id="dv-assign-cancel" class="preflight-btn preflight-btn-cancel">Cancel</button>' +
+                    '<button id="dv-assign-ok" class="preflight-btn preflight-btn-run"><i class="bi bi-check-lg"></i> Save</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+
+        var input = modal.querySelector('#dv-assign-input');
+        input.focus();
+
+        function closeModal() {
+            modal.remove();
+        }
+
+        function save() {
+            var name = input.value.trim().replace(/[^a-zA-Z0-9_]/g, '_');
+            if (!name) { input.focus(); return; }
+            M._vars.setManual(name, text);
+            if (M.showToast) M.showToast('✅ $(' + name + ') saved (' + text.length + ' chars)', 'success');
+            if (isOpen) refresh();
+            closeModal();
+        }
+
+        modal.querySelector('#dv-assign-cancel').addEventListener('click', closeModal);
+        modal.querySelector('#dv-assign-ok').addEventListener('click', save);
+        modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); save(); }
+            if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
+        });
+    }
+
+    // Right-click on selected text → assign to variable
+    if (M.markdownEditor) {
+        M.markdownEditor.addEventListener('contextmenu', function (e) {
+            var sel = M.markdownEditor.value.substring(
+                M.markdownEditor.selectionStart,
+                M.markdownEditor.selectionEnd
+            );
+            if (!sel || !sel.trim()) return;
+            e.preventDefault();
+            assignSelectionToVar(sel);
+        });
+
+        // Keyboard shortcut: Cmd/Ctrl+Shift+V → assign selection to variable
+        M.markdownEditor.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'V') {
+                e.preventDefault();
+                var sel = M.markdownEditor.value.substring(
+                    M.markdownEditor.selectionStart,
+                    M.markdownEditor.selectionEnd
+                );
+                assignSelectionToVar(sel);
+            }
+        });
+    }
+
     // Expose
-    M._varsPanel = { open: open, close: close, toggle: toggle, refresh: refresh };
+    M._varsPanel = { open: open, close: close, toggle: toggle, refresh: refresh, assignSelection: assignSelectionToVar };
 
 })(window.MDView);

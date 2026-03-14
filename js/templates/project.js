@@ -276,7 +276,9 @@ gantt
 
 ## Competitive Analysis
 
-{{Think: Compare this product to 3 competitors. Create a comparison table with features, pricing, and unique advantages. Highlight where our product wins.}}
+{{@AI:
+  @think: yes
+  @prompt: Compare this product to 3 competitors. Create a comparison table with features, pricing, and unique advantages. Highlight where our product wins.}}
 
 ## Pricing
 

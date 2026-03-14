@@ -30,7 +30,9 @@ window.__MDV_TEMPLATES_AI = [
 
 ## Problem Statement
 
-{{Think: Analyze the core business problem that the client is facing. Consider market trends, competitive pressures, and operational inefficiencies. Present the problem in a way that creates urgency and sets up the solution.}}
+{{@AI:
+  @think: yes
+  @prompt: Analyze the core business problem that the client is facing. Consider market trends, competitive pressures, and operational inefficiencies. Present the problem in a way that creates urgency and sets up the solution.}}
 
 ---
 
@@ -121,7 +123,9 @@ gantt
 
 ## 2. Literature Review
 
-{{Think: Conduct a thorough analysis of the existing literature on [your topic]. Identify 5-6 major themes or research streams. For each theme, discuss key findings from prior research, methodological approaches used, and gaps that remain. Organize chronologically or thematically.}}
+{{@AI:
+  @think: yes
+  @prompt: Conduct a thorough analysis of the existing literature on [your topic]. Identify 5-6 major themes or research streams. For each theme, discuss key findings from prior research, methodological approaches used, and gaps that remain. Organize chronologically or thematically.}}
 
 ---
 
@@ -152,7 +156,9 @@ Present findings objectively without interpretation.}}
 
 ## 5. Discussion
 
-{{Think: Analyze and interpret the research findings from the results section. Compare with existing literature from the literature review. Discuss:
+{{@AI:
+  @think: yes
+  @prompt: Analyze and interpret the research findings from the results section. Compare with existing literature from the literature review. Discuss:
 1. How findings answer the research question
 2. Alignment or divergence from prior studies
 3. Theoretical implications
@@ -198,7 +204,9 @@ Present findings objectively without interpretation.}}
 [One-sentence description of what this product will achieve]
 
 ### Problem Statement
-{{Think: Analyze the problem this product solves. Consider who is affected, how frequently the problem occurs, what current workarounds exist, and what happens if the problem is not solved. Be specific and data-driven.}}
+{{@AI:
+  @think: yes
+  @prompt: Analyze the problem this product solves. Consider who is affected, how frequently the problem occurs, what current workarounds exist, and what happens if the problem is not solved. Be specific and data-driven.}}
 
 ---
 
@@ -445,7 +453,9 @@ Format as a categorized checklist.}}
 
 ## Differentiation
 
-{{Think: Analyze how to differentiate this lesson for three groups:
+{{@AI:
+  @think: yes
+  @prompt: Analyze how to differentiate this lesson for three groups:
 1. **Advanced learners** — extension activities and higher-order challenges
 2. **On-level learners** — standard expectations with support scaffolds
 3. **Struggling learners** — modified tasks, visual supports, peer tutoring
@@ -486,7 +496,9 @@ Provide specific, actionable strategies for each group.}}
 
 ## Motivation
 
-{{Think: Analyze the motivation behind this technical change. Consider:
+{{@AI:
+  @think: yes
+  @prompt: Analyze the motivation behind this technical change. Consider:
 1. What problem does this solve? Be specific with metrics or user pain points.
 2. Why now? What has changed that makes this important?
 3. What happens if we don't do this?
@@ -540,7 +552,9 @@ Format using code blocks with JSON examples.}}
 
 ## Alternatives Considered
 
-{{Think: Evaluate 3 alternative approaches to solving this problem. For each alternative:
+{{@AI:
+  @think: yes
+  @prompt: Evaluate 3 alternative approaches to solving this problem. For each alternative:
 1. Describe the approach
 2. List pros and cons
 3. Explain why it was not chosen
@@ -715,7 +729,9 @@ Use sub-sections for each strength.}}
 
 ### ⚠️ Weaknesses
 
-{{Think: Critically analyze the top 3 weaknesses. For each, consider:
+{{@AI:
+  @think: yes
+  @prompt: Critically analyze the top 3 weaknesses. For each, consider:
 - Root cause analysis — why does this weakness exist?
 - Impact assessment — how much does it affect performance?
 - Mitigation strategies — specific actions to address it
@@ -735,7 +751,9 @@ Prioritize by potential impact.}}
 
 ### 🛡️ Threats
 
-{{Think: Analyze the top 3 threats in depth. For each, evaluate:
+{{@AI:
+  @think: yes
+  @prompt: Analyze the top 3 threats in depth. For each, evaluate:
 - Probability of occurring (High / Medium / Low)
 - Potential impact severity (High / Medium / Low)
 - Early warning signs to monitor
@@ -938,7 +956,9 @@ Present segment data as a markdown table and include a brief analysis paragraph.
 
 ## SWOT Analysis
 
-{{Think: Perform a detailed SWOT analysis for [Company Name] as a stock investment:
+{{@AI:
+  @think: yes
+  @prompt: Perform a detailed SWOT analysis for [Company Name] as a stock investment:
 
 **Strengths** — What gives this company a durable competitive advantage?
 **Weaknesses** — What internal challenges could impact future performance?
@@ -977,7 +997,9 @@ Format as a table with columns: Risk Factor, Description, Probability, Impact.}}
 
 ## Analyst Verdict
 
-{{Think: Synthesize all the analysis above into a final investment verdict for [Company Name]. Address:
+{{@AI:
+  @think: yes
+  @prompt: Synthesize all the analysis above into a final investment verdict for [Company Name]. Address:
 1. Is the stock fairly valued, overvalued, or undervalued?
 2. What is the key catalyst that could move the stock?
 3. What would change your thesis (bull case killer / bear case killer)?
@@ -1074,7 +1096,9 @@ Use realistic values and provide a brief assessment for each.}}
 
 ## Trend Analysis
 
-{{Think: Analyze the 3-5 year financial trends for [Company Name]:
+{{@AI:
+  @think: yes
+  @prompt: Analyze the 3-5 year financial trends for [Company Name]:
 1. Revenue growth trajectory — accelerating or decelerating?
 2. Margin expansion or compression — what's driving it?
 3. Cash flow quality — is FCF growing in line with earnings?
@@ -1147,7 +1171,9 @@ Include arguments around: market opportunity, competitive advantages, growth cat
 
 ## The Bear Case 🐻
 
-{{Think: Present the bear case for [Company Name] with 5 counter-arguments. Be genuinely critical — challenge every bull case assumption:
+{{@AI:
+  @think: yes
+  @prompt: Present the bear case for [Company Name] with 5 counter-arguments. Be genuinely critical — challenge every bull case assumption:
 - What could go wrong with the growth story?
 - What are the competitive threats that bulls are underestimating?
 - Is the valuation actually justified?
@@ -1220,7 +1246,9 @@ Format as a table with columns: KPI, Current, Bull Signal, Bear Signal.}}
 
 ## Bottom Line
 
-{{Think: In 3-4 sentences, state your final verdict. Would you put your own money into this stock today? At what price would you become more interested? What's the single most important factor to watch? Be direct and honest.}}
+{{@AI:
+  @think: yes
+  @prompt: In 3-4 sentences, state your final verdict. Would you put your own money into this stock today? At what price would you become more interested? What's the single most important factor to watch? Be direct and honest.}}
 
 ---
 
@@ -1292,7 +1320,9 @@ Add a brief paragraph on performance attribution — what drove returns and what
 
 ## Risk Assessment
 
-{{Think: Analyze the portfolio's risk profile. Evaluate:
+{{@AI:
+  @think: yes
+  @prompt: Analyze the portfolio's risk profile. Evaluate:
 
 1. **Concentration Risk** — Are any positions too large? Any sector overexposure?
 2. **Correlation Risk** — Do multiple holdings tend to move together?
@@ -1560,7 +1590,7 @@ Models use ONNX format for efficient browser inference via [Transformers.js](htt
     {
         name: 'AI Global Briefing Generator',
         category: 'ai',
-    displayTag: 'AI · Think · Translate · TTS · Agent',
+    displayTag: 'AI · Translate · TTS · Agent',
         icon: 'bi-globe-americas',
         description: 'Zero-input tag chain — AI researches a country, Think analyzes, Translate phrases, TTS speaks them, Image generates visuals, Agent builds a report. Just click Run All.',
         variables: [
@@ -1595,9 +1625,10 @@ Be specific with numbers and real names — no generic advice.}}
 
 ---
 
-## 🧠 Step 2 — Strategic Analysis (Think)
+## 🧠 Step 2 — Strategic Analysis (AI + Think)
 
-{{Think:
+{{@AI:
+  @think: yes
   @input: country_overview
   @var: deep_analysis
   @prompt: Analyze this $(country) briefing for someone on a $(purpose):

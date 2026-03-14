@@ -643,6 +643,21 @@
     if (ls.worker) return;
 
     const cfg = _models[modelId];
+
+    // TTS and STT models have their own dedicated workers (tts-worker.js,
+    // speech-worker.js, voxtral-worker.js) managed by textToSpeech.js and
+    // speechToText.js respectively. Don't load them through the generic
+    // AI worker pipeline — that would send them to ai-worker.js which
+    // tries AutoProcessor.from_pretrained() and fails on models that
+    // lack preprocessor_config.json (e.g. Kokoro TTS).
+    if (cfg && (cfg.isTtsModel || cfg.isSttModel)) {
+      console.log(`⏩ Skipping initAiWorker for ${modelId} (${cfg.isTtsModel ? 'TTS' : 'STT'} model — uses its own dedicated worker)`);
+      ls.loaded = true;
+      const readyLabel = cfg.statusReady || cfg.label || modelId;
+      addAiStatusBar('ready', readyLabel);
+      return;
+    }
+
     const localModelOnnxId = (cfg && cfg.localModelId) || 'textagent/Qwen3.5-0.8B-ONNX';
     const modelLabel = (cfg && cfg.label) || 'Qwen 3.5';
 

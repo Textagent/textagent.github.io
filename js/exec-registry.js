@@ -153,7 +153,18 @@
                 status: 'pending',
                 result: null,
                 _blockIndex: i, // index for existing DOM lookup
-                _fullMatch: db.fullMatch
+                _fullMatch: db.fullMatch,
+                // Enriched metadata for compiler + adapters
+                varName: db.varName || null,
+                inputVars: db.inputVars || [],
+                model: db.model || null,
+                targetLang: db.targetLang || null,
+                think: db.think || db.type === 'Think' || false,
+                search: db.search || [],
+                useMemory: db.useMemory || [],
+                blockLabel: db.label || db.prompt && db.prompt.substring(0, 40) || runtimeKey,
+                ocrMode: db.ocrMode || null,
+                steps: db.steps || null
             });
         }
     }

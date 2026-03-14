@@ -87,6 +87,93 @@
         return false;
     }
 
+    /**
+     * Async version that auto-triggers model loading and waits for ready.
+     * Checks M._execAborted each iteration so the Stop button works.
+     * Fails fast if model is not actually loading.
+     */
+    async function ensureModelReadyAsync(perCardModel, timeoutMs) {
+        timeoutMs = timeoutMs || 60000; // 60s default
+        var currentModel = perCardModel || (M.getCurrentAiModel ? M.getCurrentAiModel() : null);
+
+        // No model selected — show setup popup
+        if (!currentModel) {
+            var selectedModelId = await showAiSetupPopup();
+            if (!selectedModelId) throw new Error('No AI model selected. Generation cancelled.');
+            currentModel = selectedModelId;
+        }
+
+        // Already ready — fast path
+        if (M.isCurrentModelReady && M.isCurrentModelReady()) return true;
+
+        // Local model — auto-trigger loading
+        if (M._ai && M._ai.isLocalModel && M._ai.isLocalModel(currentModel)) {
+            var ls = M._ai.getLocalState(currentModel);
+            var consentKey = M.KEYS.AI_CONSENTED_PREFIX + currentModel;
+            var hasConsent = localStorage.getItem(consentKey)
+                || (currentModel === 'qwen-local' && localStorage.getItem(M.KEYS.AI_CONSENTED));
+
+            if (!ls.loaded && !ls.worker) {
+                if (hasConsent) {
+                    M._ai.initAiWorker(currentModel);
+                    console.log('[RunAll] ⏳ Auto-loading local model:', currentModel);
+                    M.showToast('⏳ Auto-loading AI model — please wait…', 'info');
+                } else {
+                    // No consent — can't auto-load, show popup and fail fast
+                    if (M.showModelDownloadPopup) M.showModelDownloadPopup(currentModel);
+                    throw new Error('AI model needs to be downloaded first. Please accept the download and try again.');
+                }
+            }
+        }
+
+        // Cloud model — auto-init worker
+        var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+        var cloudProvider = providers[currentModel];
+        if (cloudProvider) {
+            if (!cloudProvider.getKey()) {
+                M.showApiKeyModal(currentModel);
+                throw new Error('API key required for ' + currentModel + '. Please enter your key and try again.');
+            }
+            if (!cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
+                M.initCloudWorker(currentModel);
+                console.log('[RunAll] ⏳ Connecting to cloud model:', currentModel);
+            }
+        }
+
+        // Poll until ready, abort, or timeout
+        var start = Date.now();
+        var pollCount = 0;
+        while (Date.now() - start < timeoutMs) {
+            // Check abort flag each iteration
+            if (M._execAborted) {
+                console.log('[RunAll] ⏹ Model loading aborted by user');
+                throw new Error('Execution stopped by user.');
+            }
+
+            if (M.isCurrentModelReady && M.isCurrentModelReady()) {
+                console.log('[RunAll] ✅ Model ready after ' + ((Date.now() - start) / 1000).toFixed(1) + 's');
+                M.showToast('✅ AI model ready!', 'success');
+                return true;
+            }
+            if (M._ai && M._ai.getLocalState) {
+                var lsNow = M._ai.getLocalState(currentModel);
+                if (lsNow && lsNow.loaded) {
+                    console.log('[RunAll] ✅ Model ready after ' + ((Date.now() - start) / 1000).toFixed(1) + 's');
+                    M.showToast('✅ AI model ready!', 'success');
+                    return true;
+                }
+                // If no worker started after 5s, fail fast (nothing is loading)
+                if (!lsNow.worker && pollCount > 5) {
+                    throw new Error('AI model failed to start loading. Please check model configuration.');
+                }
+            }
+            pollCount++;
+            await new Promise(function (r) { setTimeout(r, 1000); });
+        }
+
+        throw new Error('AI model did not become ready within ' + (timeoutMs / 1000) + 's. Please try again.');
+    }
+
     // ==============================================
     // PROMPT BUILDING
     // ==============================================
@@ -1161,153 +1248,332 @@
     M.openModelSelector = showAiSetupPopup;
 
     // --- Register runtime adapters for exec-controller (auto-accept mode) ---
+
+    // Shared helper: find the parsed block matching a scanned block descriptor
+    function findParsedBlock(block) {
+        var text = M.markdownEditor.value;
+        var parsedBlocks = M.parseDocgenBlocks(text);
+        for (var i = 0; i < parsedBlocks.length; i++) {
+            if (parsedBlocks[i].fullMatch === block._fullMatch) {
+                return parsedBlocks[i];
+            }
+        }
+        return null;
+    }
+
+    // Shared helper: resolve @input vars for a block
+    function resolveInputVars(parsedBlock) {
+        if (!parsedBlock.inputVars || !M._vars) return '';
+        if (parsedBlock.inputVars.indexOf('none') !== -1) return '';
+        return M._vars.formatForPrompt(parsedBlock.inputVars) || '';
+    }
+
+    // Shared helper: resolve @use memory context for a block
+    async function resolveMemoryContext(parsedBlock, text) {
+        if (!M._memory) return '';
+        var hasOptOut = parsedBlock.useMemory && parsedBlock.useMemory.indexOf('none') !== -1;
+        if (hasOptOut) return '';
+        var sources = (parsedBlock.useMemory && parsedBlock.useMemory.length > 0)
+            ? parsedBlock.useMemory
+            : discoverMemorySources(text);
+        if (sources.length === 0) return '';
+        try {
+            var chunks = await M._memory.search(sources, parsedBlock.prompt, 5);
+            return M._memory.formatForContext(chunks) || '';
+        } catch (_) { return ''; }
+    }
+
+    // Shared helper: resolve @search web search for a block
+    async function resolveSearchContext(parsedBlock) {
+        if (!M.webSearch) return '';
+        var providers = parsedBlock.search || [];
+        if (providers.length === 0) return '';
+        try {
+            var results = await M.webSearch.performMultiSearch(parsedBlock.prompt, 5, providers);
+            return M.webSearch.formatResultsForLLM(results) || '';
+        } catch (_) { return ''; }
+    }
+
+    // ── docgen-ai adapter — AI / Think blocks ──
     var docgenAiAdapter = {
-        execute: function (source, block) {
-            var self = this;
-            function doExecute() {
-                var text = M.markdownEditor.value;
-                var blockStart = block.position || 0;
-                var prevContent = text.substring(0, blockStart);
+        execute: async function (source, block) {
+            await ensureModelReadyAsync();
 
-                // Build prompt from the parsed block data
-                var parsedBlocks = M.parseDocgenBlocks(text);
-                var parsedBlock = null;
-                for (var i = 0; i < parsedBlocks.length; i++) {
-                    if (parsedBlocks[i].fullMatch === block._fullMatch) {
-                        parsedBlock = parsedBlocks[i];
-                        break;
-                    }
-                }
-                if (!parsedBlock) parsedBlock = { type: 'AI', prompt: source };
+            var text = M.markdownEditor.value;
+            var blockStart = block.position || 0;
+            var prevContent = text.substring(0, blockStart);
+            var parsedBlock = findParsedBlock(block);
+            if (!parsedBlock) parsedBlock = { type: 'AI', prompt: source };
 
-                return M.requestAiTask({
+            // Resolve @input, @use, @search
+            var varsContext = resolveInputVars(parsedBlock);
+            var memoryContext = await resolveMemoryContext(parsedBlock, text);
+            var searchContext = await resolveSearchContext(parsedBlock);
+
+            var userPrompt = buildPrompt(parsedBlock, prevContent, memoryContext, false, varsContext);
+            if (searchContext) {
+                userPrompt = 'Web research results:\n' + searchContext
+                    + '\n\nUse the above search results to inform your response. Cite sources when relevant.\n\n'
+                    + userPrompt;
+            }
+
+            var useThinking = parsedBlock.type === 'Think' || parsedBlock.think;
+            var result = await M.requestAiTask({
+                taskType: 'generate',
+                context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
+                userPrompt: userPrompt,
+                enableThinking: useThinking,
+                silent: true
+            });
+
+            // Think refinement pass
+            if (useThinking) {
+                var draft = cleanGeneratedOutput(result);
+                var refinePrompt = 'Here is a draft response:\n\n' + draft + '\n\n'
+                    + 'Improve this content by adding important details, examples, or missing information. '
+                    + 'Keep the same structure and tone. Output the complete improved version.';
+                result = await M.requestAiTask({
                     taskType: 'generate',
-                    context: prevContent.substring(Math.max(0, prevContent.length - 3000)),
-                    userPrompt: buildPrompt(parsedBlock, prevContent, '', false),
-                    enableThinking: parsedBlock.think || false,
-                    silent: true
-                }).then(function (result) {
-                    var cleaned = cleanGeneratedOutput(result);
-                    // Auto-accept: replace tag with generated content
-                    if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
-                    return cleaned;
+                    context: draft.substring(0, 2000),
+                    userPrompt: refinePrompt,
+                    enableThinking: false,
+                    silent: true,
+                    attachments: []
                 });
             }
 
-            if (!ensureModelReady()) {
-                // Show model selector popup and retry after user picks a model
-                return showAiSetupPopup().then(function (selectedModelId) {
-                    if (!selectedModelId) {
-                        return Promise.reject(new Error('No AI model selected. Generation cancelled.'));
-                    }
-                    // Wait a moment for the model to initialize
-                    return new Promise(function (resolve) { setTimeout(resolve, 500); });
-                }).then(function () {
-                    if (!ensureModelReady()) {
-                        return Promise.reject(new Error('AI model is still loading. Please wait and try again.'));
-                    }
-                    return doExecute();
-                });
-            }
-            return doExecute();
+            var cleaned = cleanGeneratedOutput(result);
+            if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
+            return cleaned;
         }
     };
 
+    // ── docgen-image adapter — Image generation ──
     var docgenImageAdapter = {
         execute: function (source, block) {
-            var parsedBlocks = M.parseDocgenBlocks(M.markdownEditor.value);
-            var parsedBlock = null;
-            for (var i = 0; i < parsedBlocks.length; i++) {
-                if (parsedBlocks[i].fullMatch === block._fullMatch) {
-                    parsedBlock = parsedBlocks[i];
-                    break;
-                }
-            }
+            var parsedBlock = findParsedBlock(block);
             if (!parsedBlock) parsedBlock = { type: 'Image', prompt: source };
 
             return generateImageForBlock(parsedBlock).then(function (result) {
-                // Auto-accept: replace tag with image markdown
                 if (block._fullMatch) replaceBlockByTag(block._fullMatch, result);
                 return result;
             });
         }
     };
 
+    // ── docgen-agent adapter — Agent multi-step flow (full parity) ──
     var docgenAgentAdapter = {
-        execute: function (source, block) {
-            function doExecute() {
-                var text = M.markdownEditor.value;
-                var parsedBlocks = M.parseDocgenBlocks(text);
-                var parsedBlock = null;
-                for (var i = 0; i < parsedBlocks.length; i++) {
-                    if (parsedBlocks[i].fullMatch === block._fullMatch) {
-                        parsedBlock = parsedBlocks[i];
-                        break;
-                    }
-                }
-                if (!parsedBlock || !parsedBlock.steps || parsedBlock.steps.length === 0) {
-                    return Promise.reject(new Error('No agent steps found'));
-                }
+        execute: async function (source, block) {
+            await ensureModelReadyAsync();
 
-                var steps = parsedBlock.steps;
-                var docContext = text.substring(0, parsedBlock.start);
-                var accumulatedContext = '';
-                var allResults = [];
-
-                // Sequential step execution
-                var promise = Promise.resolve();
-                for (var s = 0; s < steps.length; s++) {
-                    (function (stepIdx) {
-                        promise = promise.then(function () {
-                            var stepPrompt = 'You are an expert writer. This is step ' + steps[stepIdx].number
-                                + ' of ' + steps.length + ' in a multi-step writing flow.\n\n'
-                                + 'Task: ' + steps[stepIdx].description + '\n\n';
-                            if (accumulatedContext) {
-                                stepPrompt += 'Previous steps produced:\n' + accumulatedContext.substring(0, 3000) + '\n\n';
-                            }
-                            if (docContext) {
-                                stepPrompt += 'Document context:\n' + docContext.substring(Math.max(0, docContext.length - 2000)) + '\n\n';
-                            }
-                            stepPrompt += 'Write ONLY the markdown content for this step. Do not include meta-commentary.';
-
-                            return M.requestAiTask({
-                                taskType: 'generate',
-                                context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
-                                userPrompt: stepPrompt,
-                                enableThinking: false,
-                                silent: true
-                            }).then(function (result) {
-                                var cleaned = cleanGeneratedOutput(result);
-                                accumulatedContext += '\n\n' + cleaned;
-                                allResults.push(cleaned);
-                            });
-                        });
-                    })(s);
-                }
-
-                return promise.then(function () {
-                    var combinedResult = allResults.join('\n\n');
-                    // Auto-accept: replace tag with combined agent output
-                    if (block._fullMatch) replaceBlockByTag(block._fullMatch, combinedResult);
-                    return combinedResult;
-                });
+            var text = M.markdownEditor.value;
+            var parsedBlock = findParsedBlock(block);
+            if (!parsedBlock || !parsedBlock.steps || parsedBlock.steps.length === 0) {
+                throw new Error('No agent steps found');
             }
 
-            if (!ensureModelReady()) {
-                // Show model selector popup and retry after user picks a model
-                return showAiSetupPopup().then(function (selectedModelId) {
-                    if (!selectedModelId) {
-                        return Promise.reject(new Error('No AI model selected. Generation cancelled.'));
-                    }
-                    return new Promise(function (resolve) { setTimeout(resolve, 500); });
-                }).then(function () {
-                    if (!ensureModelReady()) {
-                        return Promise.reject(new Error('AI model is still loading. Please wait and try again.'));
-                    }
-                    return doExecute();
+            var steps = parsedBlock.steps;
+            var docContext = text.substring(0, parsedBlock.start);
+            var accumulatedContext = '';
+            var allResults = [];
+            var useThinking = parsedBlock.think || parsedBlock.type === 'Think';
+
+            for (var s = 0; s < steps.length; s++) {
+                var stepPrompt = 'You are an expert writer. This is step ' + steps[s].number
+                    + ' of ' + steps.length + ' in a multi-step writing flow.\n\n';
+
+                // @search: web search per step
+                var stepSearchCtx = await resolveSearchContext(parsedBlock);
+                if (stepSearchCtx) {
+                    stepPrompt += 'Web research results:\n' + stepSearchCtx + '\n\n';
+                }
+
+                stepPrompt += 'Task: ' + steps[s].description + '\n\n';
+
+                // @input: resolve vars
+                var stepVarsCtx = resolveInputVars(parsedBlock);
+                if (stepVarsCtx) stepPrompt += stepVarsCtx + '\n';
+
+                // @use: memory context
+                var stepMemCtx = await resolveMemoryContext(parsedBlock, text);
+                if (stepMemCtx) {
+                    stepPrompt += '### RELEVANT CONTEXT FROM ATTACHED DOCUMENTS ###\n' + stepMemCtx + '\n---\n\n';
+                }
+
+                if (accumulatedContext) {
+                    stepPrompt += 'Previous steps produced:\n' + accumulatedContext.substring(0, 3000) + '\n\n';
+                }
+                if (docContext) {
+                    stepPrompt += 'Document context:\n' + docContext.substring(Math.max(0, docContext.length - 2000)) + '\n\n';
+                }
+                stepPrompt += 'Write ONLY the markdown content for this step. Do not include meta-commentary.';
+
+                var stepResult = await M.requestAiTask({
+                    taskType: 'generate',
+                    context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
+                    userPrompt: stepPrompt,
+                    enableThinking: useThinking,
+                    silent: true
                 });
+
+                // Think refinement pass per step
+                if (useThinking) {
+                    var draft = cleanGeneratedOutput(stepResult);
+                    var refinePrompt = 'Here is a draft for step ' + steps[s].number + ':\n\n' + draft + '\n\n'
+                        + 'Improve this content by adding important details, examples, or missing information. '
+                        + 'Keep the same structure and tone. Output the complete improved version.';
+                    stepResult = await M.requestAiTask({
+                        taskType: 'generate',
+                        context: draft.substring(0, 2000),
+                        userPrompt: refinePrompt,
+                        enableThinking: false,
+                        silent: true,
+                        attachments: []
+                    });
+                }
+
+                var cleaned = cleanGeneratedOutput(stepResult);
+                accumulatedContext += '\n\n' + cleaned;
+                allResults.push(cleaned);
             }
-            return doExecute();
+
+            var combinedResult = allResults.join('\n\n');
+            if (block._fullMatch) replaceBlockByTag(block._fullMatch, combinedResult);
+            return combinedResult;
+        }
+    };
+
+    // ── docgen-translate adapter — AI translation ──
+    var docgenTranslateAdapter = {
+        execute: async function (source, block) {
+            await ensureModelReadyAsync();
+
+            var parsedBlock = findParsedBlock(block);
+            if (!parsedBlock) parsedBlock = { type: 'Translate', prompt: source };
+
+            // Resolve @input vars (the text to translate may come from a previous block)
+            if (parsedBlock.inputVars && M._vars) {
+                var hasOptOut = parsedBlock.inputVars.indexOf('none') !== -1;
+                if (!hasOptOut) {
+                    // Replace $(varName) in the prompt
+                    parsedBlock.prompt = M._vars.resolveText(parsedBlock.prompt || '');
+                }
+            }
+
+            var result = await M.requestAiTask({
+                taskType: 'generate',
+                context: '',
+                userPrompt: buildTranslatePrompt(parsedBlock),
+                enableThinking: false,
+                silent: true
+            });
+
+            var cleaned = cleanGeneratedOutput(result);
+
+            // Store @var if declared
+            if (parsedBlock.varName && M._vars) {
+                // Extract clean text for var (strip markdown formatting)
+                var ttsLines = cleaned.split('\n').map(function (l) {
+                    return l.trim()
+                        .replace(/^\*\*[^*]+\*\*[：:]?\s*/g, '')
+                        .replace(/\([^)]*\)/g, '')
+                        .trim();
+                }).filter(function (l) {
+                    return l.length >= 2 && !/^-{3,}$/.test(l) && !/^\*{3,}$/.test(l);
+                });
+                var cleanText = ttsLines.length > 0 ? ttsLines[0] : cleaned.trim();
+                M._vars.setRuntime(parsedBlock.varName, cleanText);
+                console.log('[DocGen RunAll] Set $(' + parsedBlock.varName + ') from Translate');
+            }
+
+            if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
+            return cleaned;
+        }
+    };
+
+    // ── docgen-tts adapter — Text-to-Speech playback ──
+    var docgenTtsAdapter = {
+        execute: async function (source, block) {
+            var parsedBlock = findParsedBlock(block);
+            if (!parsedBlock) parsedBlock = { type: 'TTS', prompt: source };
+
+            var ttsText = parsedBlock.prompt || '';
+            // Resolve $(varName) references
+            ttsText = M._vars ? M._vars.resolveText(ttsText) : ttsText;
+            ttsText = ttsText.trim();
+
+            if (!ttsText) {
+                console.log('[DocGen RunAll] TTS skipped — no text to speak');
+                return '(TTS: no text to speak)';
+            }
+
+            var lang = (parsedBlock.targetLang || 'English').toLowerCase();
+
+            if (M.tts && M.tts.speakAsync) {
+                console.log('[DocGen RunAll] TTS playing: "' + ttsText.substring(0, 60) + '…" lang=' + lang);
+                await M.tts.speakAsync(ttsText, null, lang);
+                return '🔊 TTS: "' + ttsText.substring(0, 60) + '…"';
+            } else if (M.tts && M.tts.speak) {
+                // Fallback: fire-and-forget
+                M.tts.speak(ttsText, null, lang);
+                await new Promise(function (r) { setTimeout(r, 2000); }); // wait a bit
+                return '🔊 TTS: "' + ttsText.substring(0, 60) + '…"';
+            }
+
+            return '⚠ TTS engine not loaded';
+        }
+    };
+
+    // ── docgen-ocr adapter — Image OCR recognition ──
+    var docgenOcrAdapter = {
+        execute: async function (source, block) {
+            await ensureModelReadyAsync();
+
+            var parsedBlock = findParsedBlock(block);
+            if (!parsedBlock) parsedBlock = { type: 'OCR', prompt: source };
+
+            // Check for attached images
+            var blockIdx = block._blockIndex;
+            var uploads = _dg.blockUploads.get(blockIdx) || [];
+            if (uploads.length === 0) {
+                throw new Error('OCR requires at least one image. Attach an image to the OCR block first.');
+            }
+
+            var attachments = uploads.map(function (u) {
+                return { type: 'image', data: u.data, mimeType: u.mimeType, name: u.name };
+            });
+
+            // Check if current model is a doc model
+            var currentModelId = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+            var modelsCfg = window.AI_MODELS || {};
+            var isDocModel = currentModelId && modelsCfg[currentModelId] && modelsCfg[currentModelId].isDocModel;
+
+            var result = await M.requestAiTask({
+                taskType: 'generate',
+                context: isDocModel ? (parsedBlock.ocrMode || 'text') : '',
+                userPrompt: buildOcrPrompt(parsedBlock),
+                enableThinking: false,
+                silent: true,
+                attachments: attachments
+            });
+
+            var cleaned = cleanGeneratedOutput(result);
+
+            // SVG mode: ensure output is in an svg code fence
+            if (parsedBlock.ocrMode === 'svg' && cleaned && !cleaned.includes('```svg')) {
+                if (cleaned.trim().startsWith('<svg') || cleaned.trim().startsWith('<?xml')) {
+                    cleaned = '```svg\n' + cleaned.trim() + '\n```';
+                }
+            }
+
+            // Store @var if declared
+            if (parsedBlock.varName && M._vars) {
+                M._vars.setRuntime(parsedBlock.varName, cleaned);
+                console.log('[DocGen RunAll] Set $(' + parsedBlock.varName + ') from OCR');
+            }
+
+            if (block._fullMatch) replaceBlockByTag(block._fullMatch, cleaned);
+            return cleaned;
         }
     };
 
@@ -1315,11 +1581,18 @@
         M._execRegistry.registerRuntime('docgen-ai', docgenAiAdapter);
         M._execRegistry.registerRuntime('docgen-image', docgenImageAdapter);
         M._execRegistry.registerRuntime('docgen-agent', docgenAgentAdapter);
+        M._execRegistry.registerRuntime('docgen-translate', docgenTranslateAdapter);
+        M._execRegistry.registerRuntime('docgen-tts', docgenTtsAdapter);
+        M._execRegistry.registerRuntime('docgen-ocr', docgenOcrAdapter);
     } else {
         if (!M._pendingRuntimeAdapters) M._pendingRuntimeAdapters = [];
         M._pendingRuntimeAdapters.push({ key: 'docgen-ai', adapter: docgenAiAdapter });
         M._pendingRuntimeAdapters.push({ key: 'docgen-image', adapter: docgenImageAdapter });
         M._pendingRuntimeAdapters.push({ key: 'docgen-agent', adapter: docgenAgentAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'docgen-translate', adapter: docgenTranslateAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'docgen-tts', adapter: docgenTtsAdapter });
+        M._pendingRuntimeAdapters.push({ key: 'docgen-ocr', adapter: docgenOcrAdapter });
     }
 
 })(window.MDView);
+

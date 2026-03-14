@@ -37,6 +37,7 @@
     let pendingSpeak = null;   // Queue speak request during model loading
     let webSpeechUtterance = null; // Track Web Speech API utterance for stop()
     let lastAudioData = null;  // Store last Kokoro audio for download
+    let _generateOnly = false; // When true, generate audio without auto-playing
 
     // ── Worker Initialization ────────────────────
     function initWorker() {
@@ -76,7 +77,10 @@
 
             if (type === 'audio') {
                 lastAudioData = { data: e.data.data, sampleRate: e.data.sampleRate };
-                playAudio(e.data.data, e.data.sampleRate);
+                if (!_generateOnly) {
+                    playAudio(e.data.data, e.data.sampleRate);
+                }
+                _generateOnly = false; // reset flag after generation
             }
 
             if (type === 'error') {
@@ -284,6 +288,27 @@
         stopAudio();
     }
 
+    /**
+     * Generate audio only — synthesize and store, but do NOT auto-play.
+     * Use playLastAudio() afterwards to play the result.
+     */
+    function generate(text, voice, lang) {
+        _generateOnly = true;
+        lastAudioData = null;
+        speak(text, voice, lang);
+    }
+
+    /**
+     * Replay the last generated Kokoro audio (without re-synthesizing).
+     */
+    function playLastAudio() {
+        if (lastAudioData) {
+            playAudio(lastAudioData.data, lastAudioData.sampleRate);
+        } else {
+            M.showToast && M.showToast('⚠️ No audio generated yet. Click Run first.', 'warning');
+        }
+    }
+
     function isReady() {
         return modelReady || ('speechSynthesis' in window);
     }
@@ -306,10 +331,83 @@
     M.tts = {
         speak,
         stop,
+        generate,
+        playLastAudio,
         isReady,
         isSpeaking,
         downloadAudio,
         hasAudio,
+        isKokoroReady: function () { return modelReady; },
+        isKokoroLoading: function () { return modelLoading; },
+        initKokoro: initWorker,
+        /**
+         * Promise-based speak — resolves when audio finishes playing.
+         * Used by the docgen-tts runtime adapter for sequential Run All execution.
+         */
+        speakAsync: function(text, voice, lang) {
+            return new Promise(function(resolve, reject) {
+                if (!text || text.trim().length === 0) {
+                    resolve();
+                    return;
+                }
+
+                const langKey = (lang || 'en').toLowerCase();
+
+                if (KOKORO_LANGS.has(langKey)) {
+                    // Kokoro path — intercept the audio message from worker
+                    if (!worker) {
+                        initWorker();
+                        modelLoading = true;
+                        pendingSpeak = { text, voice, lang };
+                        worker.postMessage({ type: 'init' });
+                    }
+
+                    // Listen for the next audio event to resolve
+                    const onMessage = (e) => {
+                        if (e.data.type === 'audio') {
+                            worker.removeEventListener('message', onMessage);
+                            // Wait for playback to finish via source.onended
+                            const checkDone = setInterval(() => {
+                                if (!currentSource) {
+                                    clearInterval(checkDone);
+                                    resolve();
+                                }
+                            }, 200);
+                        } else if (e.data.type === 'error') {
+                            worker.removeEventListener('message', onMessage);
+                            reject(new Error(e.data.message || 'TTS error'));
+                        }
+                    };
+                    if (worker) worker.addEventListener('message', onMessage);
+
+                    if (modelReady) {
+                        worker.postMessage({ type: 'speak', text, voice, lang });
+                    }
+                    // If not ready, pendingSpeak will trigger it when model loads
+                } else {
+                    // Web Speech API path
+                    if (!('speechSynthesis' in window)) {
+                        reject(new Error('Web Speech not supported'));
+                        return;
+                    }
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    const bcp47Lang = WEB_SPEECH_LANG_MAP[langKey] || lang;
+                    utterance.lang = bcp47Lang;
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    const voices = window.speechSynthesis.getVoices();
+                    const langPrefix = bcp47Lang.split('-')[0];
+                    const matchingVoice = voices.find(v => v.lang === bcp47Lang)
+                        || voices.find(v => v.lang.startsWith(langPrefix));
+                    if (matchingVoice) utterance.voice = matchingVoice;
+                    utterance.onend = () => resolve();
+                    utterance.onerror = (e) => reject(new Error('Web Speech error: ' + e.error));
+                    webSpeechUtterance = utterance;
+                    window.speechSynthesis.speak(utterance);
+                }
+            });
+        },
     };
 
     console.log('🔊 textToSpeech module loaded (Hybrid: Kokoro + Web Speech API)');

@@ -282,7 +282,9 @@ Brief description of what this PR does.
 
 ## Introduction
 
-{{Think: Write an introduction that establishes the context, states the problem, and outlines the approach. The topic is [your topic]. Include relevant background and why this investigation matters.}}
+{{@AI:
+  @think: yes
+  @prompt: Write an introduction that establishes the context, states the problem, and outlines the approach. The topic is [your topic]. Include relevant background and why this investigation matters.}}
 
 ## Methodology
 
@@ -294,7 +296,9 @@ Brief description of what this PR does.
 
 ## Analysis
 
-{{Think: Provide a deep analysis of the findings. Compare with expected outcomes, identify patterns, discuss implications, and note any anomalies or limitations.}}
+{{@AI:
+  @think: yes
+  @prompt: Provide a deep analysis of the findings. Compare with expected outcomes, identify patterns, discuss implications, and note any anomalies or limitations.}}
 
 ## Recommendations
 

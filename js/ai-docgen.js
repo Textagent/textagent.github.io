@@ -154,7 +154,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -169,11 +169,7 @@
                 if (block.type === 'Agent') {
                     block.steps = parseAgentSteps(block.prompt);
                 }
-                // Backward compat: treat {{Think:}} as {{AI:}} with @think: yes
-                if (block.type === 'Think') {
-                    block.type = 'AI';
-                    block.think = true;
-                }
+
                 // Parse @mode: field for OCR blocks
                 if (block.type === 'OCR') {
                     var modeMatch = block.prompt.match(/^\s*(?:@mode|Mode):\s*(text|svg)$/mi);
@@ -367,7 +363,7 @@
         // Auto-rename duplicate Memory names in editor + input
         markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Think|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -437,10 +433,8 @@
 
             var type = match[1];
             var prompt = match[2].trim();
-            // Backward compat: treat Think as AI with @think: yes
-            if (type === 'Think') type = 'AI';
             var thinkFieldMatch = prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
-            var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : (match[1] === 'Think');
+            var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : false;
             var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
 
@@ -738,7 +732,8 @@
                     + '<span class="ai-tts-model-badge">Kokoro TTS</span>'
                     + '<div class="ai-placeholder-actions">'
                     + ttsLangHtml
-                    + '<button class="ai-placeholder-btn ai-fill-one ai-tts-play" data-ai-index="' + blockIndex + '" title="Play audio">▶ Play</button>'
+                    + '<button class="ai-placeholder-btn ai-fill-one ai-tts-run" data-ai-index="' + blockIndex + '" title="Generate audio">▶ Run</button>'
+                    + '<button class="ai-placeholder-btn ai-tts-play-stored" data-ai-index="' + blockIndex + '" title="Play last generated audio">▷ Play</button>'
                     + '<button class="ai-placeholder-btn ai-tts-stop" data-ai-index="' + blockIndex + '" title="Stop" style="display:none">■ Stop</button>'
                     + '<button class="ai-placeholder-btn ai-tts-download" data-ai-index="' + blockIndex + '" title="Download audio as WAV">⬇ Save</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
@@ -939,15 +934,13 @@
                 if (card && card.dataset.aiType === 'Agent') {
                     M._docgen.generateAgentFlow(idx);
                 } else if (card && card.dataset.aiType === 'TTS') {
-                    // TTS: play directly — don't go through AI generation
+                    // TTS Run: generate audio without playing
                     var ttsBlocks = M.parseDocgenBlocks(M.markdownEditor.value);
                     if (idx < ttsBlocks.length) {
                         var ttsBlock = ttsBlocks[idx];
                         var ttsText = ttsBlock.prompt || '';
-                        // Resolve $(varName) references from the Vars system
                         ttsText = M._vars ? M._vars.resolveText(ttsText) : ttsText;
                         ttsText = ttsText.trim();
-                        // Also check card textarea for latest user edits
                         var ttsPromptArea = card.querySelector('.ai-card-prompt-input');
                         if (ttsPromptArea && ttsPromptArea.value.trim()) {
                             var resolvedPrompt = M._vars
@@ -957,18 +950,11 @@
                         }
                         var ttsLangSel = card.querySelector('.ai-tts-lang-select');
                         var ttsLangName = ttsLangSel ? ttsLangSel.value : 'English';
-                        console.log('[TTS Play] text="' + ttsText.substring(0, 80) + '", lang=' + ttsLangName);
-                        // Pass the language name directly — worker VOICE_MAP accepts both codes and names
                         var ttsLangCode = ttsLangName.toLowerCase();
-                        if (ttsText && M.tts && M.tts.speak) {
-                            // Show stop button
-                            var playBtn = card.querySelector('.ai-tts-play');
-                            var stopBtn = card.querySelector('.ai-tts-stop');
-                            if (playBtn) playBtn.style.display = 'none';
-                            if (stopBtn) stopBtn.style.display = '';
-                            card.classList.add('ai-tts-speaking');
-                            M.tts.speak(ttsText, null, ttsLangCode);
-                            M.showToast('🔊 Playing: "' + ttsText.substring(0, 40) + '…"', 'info');
+                        console.log('[TTS Run] Generating audio for: "' + ttsText.substring(0, 80) + '", lang=' + ttsLangName);
+                        if (ttsText && M.tts && M.tts.generate) {
+                            M.tts.generate(ttsText, null, ttsLangCode);
+                            M.showToast('🔧 Generating audio…', 'info');
                         } else if (!ttsText) {
                             M.showToast('⚠️ No text to speak — make sure the prompt has content.', 'warning');
                         } else if (!M.tts) {
@@ -990,6 +976,23 @@
             });
         });
 
+        // TTS play-stored button — replay last generated audio
+        container.querySelectorAll('.ai-tts-play-stored').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (M.tts && M.tts.playLastAudio) {
+                    M.tts.playLastAudio();
+                    var card = this.closest('.ai-tts-card');
+                    if (card) {
+                        var stopBtn = card.querySelector('.ai-tts-stop');
+                        if (stopBtn) stopBtn.style.display = '';
+                        card.classList.add('ai-tts-speaking');
+                    }
+                }
+            });
+        });
+
         // TTS stop button — stop audio playback
         container.querySelectorAll('.ai-tts-stop').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
@@ -999,8 +1002,6 @@
                 var card = this.closest('.ai-tts-card');
                 if (card) {
                     card.classList.remove('ai-tts-speaking');
-                    var playBtn = card.querySelector('.ai-tts-play');
-                    if (playBtn) playBtn.style.display = '';
                     this.style.display = 'none';
                 }
             });

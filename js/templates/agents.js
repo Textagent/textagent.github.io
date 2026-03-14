@@ -330,7 +330,9 @@ ORDER BY category, revenue DESC;
 
 ## 4. Performance Optimization
 
-{{Think: Analyze the SQL queries above and recommend performance optimizations. Consider:
+{{@AI:
+  @think: yes
+  @prompt: Analyze the SQL queries above and recommend performance optimizations. Consider:
 1. Query execution plans and potential bottlenecks
 2. Missing indexes that could improve performance
 3. Query rewriting opportunities (e.g., CTEs, materialized views)
@@ -517,7 +519,9 @@ flowchart TD
 
 ## 1. Literature Review
 
-{{Think: Conduct a comprehensive literature review on $(researchTopic). Analyze:
+{{@AI:
+  @think: yes
+  @prompt: Conduct a comprehensive literature review on $(researchTopic). Analyze:
 1. Foundational papers and their key contributions
 2. Recent advances (2023-2024) and emerging trends
 3. Identified gaps in current research
@@ -898,7 +902,7 @@ Use formal academic language and reference the specific metrics from the benchma
             '\n' +
             '## Analysis\n' +
             '\n' +
-            '{{Think: Analyze the model evaluation results above. Consider:\n' +
+            '{{@AI:\\n  @think: yes\\n  @prompt: Analyze the model evaluation results above. Consider:\\n' +
             '1. Which model offers the best trade-off between performance and training time?\n' +
             '2. Is the class imbalance (30% positive) a concern?\n' +
             '3. The precision-recall trade-off — which metric matters more for churn prediction?\n' +
@@ -1197,7 +1201,7 @@ Use formal academic language and reference the specific metrics from the benchma
             '\n' +
             '## Strategic Recommendations\n' +
             '\n' +
-            '{{Think: Based on the competitive intelligence data above, develop a competitive strategy for $(productName). Analyze:\n' +
+            '{{@AI:\\n  @think: yes\\n  @prompt: Based on the competitive intelligence data above, develop a competitive strategy for $(productName). Analyze:\\n' +
             '\n' +
             '1. **Market Entry Strategy** — How to grow from 8.5% to 15% market share\n' +
             '2. **Competitive Moats** — Which advantages are sustainable\n' +

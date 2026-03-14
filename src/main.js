@@ -39,6 +39,7 @@ import '../css/tts.css';
 import '../css/doc-vars-panel.css';
 import '../css/game-docgen.css';
 import '../css/git-docgen.css';
+import '../css/run-preflight.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -107,6 +108,7 @@ async function loadModules() {
     // 3b-ext2: Execution Engine (depends on all runtimes for adapter registration)
     await import('../js/exec-registry.js');
     await import('../js/exec-controller.js');
+    await import('../js/run-requirements.js');
 
     // 3c: Templates (parallel — all independent data modules)
     await Promise.all([

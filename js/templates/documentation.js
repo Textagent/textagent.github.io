@@ -192,7 +192,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| Tag | Purpose | Example |\n' +
       '|:----|:--------|:--------|\n' +
       '| `{{AI: prompt}}` | Generate text content | Marketing copy, PRD sections, summaries |\n' +
-      '| `{{Think: prompt}}` | Deep reasoning / analysis | Comparisons, evaluations, strategic analysis |\n' +
+      '| `{{@AI: @think: yes}}` | Deep reasoning / analysis | Comparisons, evaluations, strategic analysis |\\n' +
       '| `{{Image: prompt}}` | Generate images (Gemini Imagen) | Product mockups, illustrations, diagrams |\n' +
       '| `{{Memory: Name: id}}` | Attach local context | Workspace files, external folders |\n\n' +
       '**Key metadata fields:** `@model:` persists selected model per card · `@upload:` attaches images/PDFs for multimodal analysis · `@use: workspace, my-docs` auto-retrieves relevant context from indexed memory sources · `@prompt:` editable AI instruction (bare text = static label) · `@engine:` / `@lang:` / `@prebuilt:` for specialized tags.\n\n' +
@@ -879,7 +879,9 @@ Paste or type your rough notes here — as messy as you want:
 
 ## Follow-Up
 
-{{Think: Based on the meeting content, suggest 2-3 follow-up items or topics that should be address in the next meeting. Explain why each is important.}}
+{{@AI:
+  @think: yes
+  @prompt: Based on the meeting content, suggest 2-3 follow-up items or topics that should be address in the next meeting. Explain why each is important.}}
 
 ---
 
