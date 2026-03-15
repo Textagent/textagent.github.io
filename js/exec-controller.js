@@ -693,9 +693,12 @@
         emit('exec:start', { total: blocks.length });
         updateRunAllButton(true);
         showProgress(0, blocks.length);
+        appendLog('⚡', 'Starting execution — ' + blocks.length + ' blocks');
+        appendLog('🕐', 'Start time: ' + new Date().toLocaleTimeString());
 
         var currentModelId = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
         console.log('[RunAll] 🤖 Current AI model:', currentModelId || '(none)');
+        appendLog('🤖', 'Current AI model: ' + (currentModelId || '(none)'));
 
         // ── Pre-execution: ensure all required models are ready ──
         var requiredModels = {};
@@ -706,6 +709,7 @@
         }
         var modelIds = Object.keys(requiredModels);
         console.log('[RunAll] 📦 Required models:', modelIds.join(', '));
+        appendLog('📦', 'Required models: ' + modelIds.join(', '));
 
         for (var mi = 0; mi < modelIds.length; mi++) {
             var modelId = modelIds[mi];
@@ -715,10 +719,12 @@
             if (modelId === 'kokoro-tts') {
                 if (M.tts && M.tts.isKokoroReady && M.tts.isKokoroReady()) {
                     console.log('[RunAll] ✅ Kokoro TTS ready');
+                    appendLog('✅', 'Kokoro TTS ready');
                     continue;
                 }
                 // Trigger Kokoro loading
                 console.log('[RunAll] ⏳ Loading Kokoro TTS (121 MB)…');
+                appendLog('⏳', 'Loading Kokoro TTS (121 MB)…');
                 if (M.tts && M.tts.initKokoro) M.tts.initKokoro();
                 M.showToast('⏳ Loading Kokoro TTS — please wait…', 'info');
                 // Wait up to 3 min for TTS model download
@@ -727,6 +733,7 @@
                     if (_abortRequested) break;
                     if (M.tts && M.tts.isKokoroReady && M.tts.isKokoroReady()) {
                         console.log('[RunAll] ✅ Kokoro TTS ready (' + ((Date.now() - ttsStart) / 1000).toFixed(1) + 's)');
+                        appendLog('✅', 'Kokoro TTS ready (' + ((Date.now() - ttsStart) / 1000).toFixed(1) + 's)', 'success');
                         M.showToast('✅ Kokoro TTS ready!', 'success');
                         break;
                     }
@@ -752,11 +759,13 @@
             }
             if (isReady) {
                 console.log('[RunAll] ✅ Model ready:', modelId);
+                appendLog('✅', 'Model ready: ' + modelId, 'success');
                 continue;
             }
 
             // Model not ready — auto-trigger loading
             console.log('[RunAll] ⏳ Model not ready, triggering load:', modelId);
+            appendLog('⏳', 'Loading model: ' + modelId + '…');
 
             if (M._ai && M._ai.isLocalModel && M._ai.isLocalModel(modelId)) {
                 var mls2 = M._ai.getLocalState(modelId);
@@ -789,6 +798,7 @@
                     var mlsCheck = M._ai.getLocalState(modelId);
                     if (mlsCheck && mlsCheck.loaded) {
                         console.log('[RunAll] ✅ Model loaded:', modelId, '(' + ((Date.now() - mStart) / 1000).toFixed(1) + 's)');
+                        appendLog('✅', 'Model loaded: ' + modelId + ' (' + ((Date.now() - mStart) / 1000).toFixed(1) + 's)', 'success');
                         M.showToast('✅ ' + modelId + ' ready!', 'success');
                         break;
                     }
@@ -835,6 +845,7 @@
             // Skip blocks without a registered runtime
             if (!M._execRegistry.getRuntime(block.runtimeKey)) {
                 console.log('[RunAll] ⏭ Block #' + (i + 1) + ' skipped — no runtime for: ' + block.runtimeKey);
+                appendLog('⏭', 'Block #' + (i + 1) + ' skipped — no runtime for: ' + block.runtimeKey, 'warn');
                 _blockTimings.push({ index: i + 1, status: 'skipped', elapsed: '—' });
                 continue;
             }
@@ -852,6 +863,7 @@
             var blockType = block._displayType || block.runtimeKey;
             var blockLabel = (block.blockLabel || block.source || '').substring(0, 60);
             console.group('[RunAll] ▶ Block #' + (i + 1) + '/' + blocks.length + ' — ' + blockType);
+            appendLog('▶', 'Block #' + (i + 1) + '/' + blocks.length + ' — ' + blockType + (blockLabel ? ' — ' + blockLabel : ''));
             console.log('  📝 Label:', blockLabel);
             console.log('  🔧 Runtime:', block.runtimeKey);
             console.log('  🤖 Model:', block._effectiveModel || '(default)');
@@ -884,6 +896,7 @@
                 var blockElapsed = ((Date.now() - blockStart) / 1000).toFixed(2);
 
                 console.log('  ✅ Done in ' + blockElapsed + 's');
+                appendLog('✅', 'Block #' + (i + 1) + ' done in ' + blockElapsed + 's' + (block.varName ? ' → $(' + block.varName + ')' : ''), 'success');
                 if (block.varName && M._vars && M._vars.get) {
                     var stored = M._vars.get(block.varName);
                     console.log('  📤 $(' + block.varName + ') = ' + (stored ? String(stored).substring(0, 120) + (String(stored).length > 120 ? '…' : '') : '(empty)'));
@@ -909,6 +922,7 @@
                 var blockElapsed2 = ((Date.now() - blockStart) / 1000).toFixed(2);
 
                 console.error('  ❌ Error after ' + blockElapsed2 + 's:', err.message || err);
+                appendLog('❌', 'Block #' + (i + 1) + ' error: ' + (err.message || String(err)).substring(0, 120), 'error');
                 console.error('  Stack:', err.stack || '(no stack)');
                 console.groupEnd(); // close block group
 
@@ -935,6 +949,7 @@
         // ── Final summary log ──
         console.group('[RunAll] 🏁 Execution complete');
         console.log('[RunAll] ' + summary);
+        appendLog('🏁', summary, _currentRun.errors > 0 ? 'warn' : 'success');
         console.log('[RunAll] 🕐 End time:', new Date().toLocaleTimeString());
         console.table(_blockTimings);
         if (M._vars && M._vars.list) {
@@ -959,9 +974,9 @@
         _running = false;
         _abortRequested = false;
         M._execAborted = false;
-        _currentRun = null;
         updateRunAllButton(false);
         hideProgress();
+        _currentRun = null;
     }
 
     // ========================================
@@ -1005,23 +1020,104 @@
     }
 
     // ========================================
-    // Progress UI
+    // Progress UI + Log Panel
     // ========================================
 
     var _progressEl = null;
+    var _logEntries = [];
+    var _logStartTime = 0;
+    var _logPanelOpen = false;
+
+    /**
+     * Append a log entry to the in-memory buffer and, if the panel is open, to the DOM.
+     * @param {string} icon  — emoji icon
+     * @param {string} msg   — log message text
+     * @param {string} [cls] — 'success' | 'error' | 'warn' (optional CSS class)
+     */
+    function appendLog(icon, msg, cls) {
+        var elapsed = _logStartTime ? ((Date.now() - _logStartTime) / 1000).toFixed(1) : '0.0';
+        var entry = { icon: icon, msg: msg, cls: cls || '', ts: '+' + elapsed + 's' };
+        _logEntries.push(entry);
+
+        // Update the log count badge
+        if (_progressEl) {
+            var countEl = _progressEl.querySelector('.exec-log-count');
+            if (countEl) countEl.textContent = _logEntries.length;
+        }
+
+        // If panel is visible, append DOM node
+        if (_logPanelOpen && _progressEl) {
+            var scroll = _progressEl.querySelector('.exec-log-scroll');
+            if (scroll) {
+                scroll.appendChild(buildLogEntryEl(entry));
+                scroll.scrollTop = scroll.scrollHeight;
+            }
+        }
+    }
+
+    function buildLogEntryEl(entry) {
+        var div = document.createElement('div');
+        div.className = 'exec-log-entry' + (entry.cls ? ' ' + entry.cls : '');
+        div.innerHTML = '<span class="exec-log-ts">' + escapeHtml(entry.ts) + '</span>'
+            + '<span class="exec-log-icon">' + entry.icon + '</span>'
+            + '<span class="exec-log-msg">' + escapeHtml(entry.msg) + '</span>';
+        return div;
+    }
+
+    function toggleLogPanel() {
+        if (!_progressEl) return;
+        var panel = _progressEl.querySelector('.exec-log-panel');
+        var toggle = _progressEl.querySelector('.exec-log-toggle');
+        if (!panel) return;
+
+        _logPanelOpen = !_logPanelOpen;
+
+        if (_logPanelOpen) {
+            // Populate panel with all entries
+            var scroll = panel.querySelector('.exec-log-scroll');
+            if (scroll) {
+                scroll.innerHTML = '';
+                for (var i = 0; i < _logEntries.length; i++) {
+                    scroll.appendChild(buildLogEntryEl(_logEntries[i]));
+                }
+                // Scroll to bottom after DOM update
+                requestAnimationFrame(function () { scroll.scrollTop = scroll.scrollHeight; });
+            }
+            panel.classList.add('open');
+            if (toggle) toggle.classList.add('open');
+        } else {
+            panel.classList.remove('open');
+            if (toggle) toggle.classList.remove('open');
+        }
+    }
 
     function showProgress(current, total, block) {
         if (!_progressEl) {
+            _logStartTime = Date.now();
+            _logEntries = [];
+            _logPanelOpen = false;
+
             _progressEl = document.createElement('div');
             _progressEl.className = 'exec-progress-bar';
-            _progressEl.innerHTML = '<div class="exec-progress-text"></div><div class="exec-progress-track"><div class="exec-progress-fill"></div></div><button class="exec-abort-btn" title="Stop execution">⏹</button>';
+            _progressEl.innerHTML = ''
+                + '<div class="exec-log-panel"><div class="exec-log-scroll"></div></div>'
+                + '<div class="exec-progress-row">'
+                +   '<div class="exec-progress-text"></div>'
+                +   '<div class="exec-progress-track"><div class="exec-progress-fill"></div></div>'
+                +   '<button class="exec-log-toggle" title="Show execution logs">Logs <span class="exec-log-count">0</span></button>'
+                +   '<button class="exec-abort-btn" title="Stop execution">⏹</button>'
+                + '</div>';
             _progressEl.querySelector('.exec-abort-btn').addEventListener('click', abort);
+            _progressEl.querySelector('.exec-log-toggle').addEventListener('click', toggleLogPanel);
             document.body.appendChild(_progressEl);
         }
 
         var pct = total > 0 ? Math.round((current / total) * 100) : 0;
         var text = '⚡ Running ' + current + ' of ' + total;
-        if (block) text += ' — ' + block.runtimeKey;
+        if (block) {
+            var label = block._displayType || block.runtimeKey;
+            text += ' — ' + label;
+        }
 
         _progressEl.querySelector('.exec-progress-text').textContent = text;
         _progressEl.querySelector('.exec-progress-fill').style.width = pct + '%';
@@ -1030,9 +1126,24 @@
 
     function hideProgress() {
         if (_progressEl) {
+            // Show completion state briefly
+            var textEl = _progressEl.querySelector('.exec-progress-text');
+            var fillEl = _progressEl.querySelector('.exec-progress-fill');
+            if (textEl && _currentRun) {
+                var doneText = '✅ Done — ' + _currentRun.completed + '/' + _currentRun.total + ' blocks';
+                if (_currentRun.errors > 0) doneText = '⚠ Done — ' + _currentRun.errors + ' error(s)';
+                textEl.textContent = doneText;
+            }
+            if (fillEl) fillEl.style.width = '100%';
+
             setTimeout(function () {
-                if (_progressEl) _progressEl.style.display = 'none';
-            }, 2000);
+                if (_progressEl) {
+                    _progressEl.style.display = 'none';
+                    _progressEl.remove();
+                    _progressEl = null;
+                    _logPanelOpen = false;
+                }
+            }, 4000);
         }
     }
 
