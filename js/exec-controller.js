@@ -1019,6 +1019,17 @@
         if (M.showToast) M.showToast('⏹ Stopping execution...', 'info');
     }
 
+    /**
+     * Hard-reset all execution state. Used when switching files so
+     * the stale running state from the previous file doesn't persist.
+     */
+    function forceReset() {
+        _abortRequested = true;
+        M._execAborted = true;
+        _running = false;
+        _currentRun = null;
+    }
+
     // ========================================
     // Progress UI + Log Panel
     // ========================================
@@ -1176,6 +1187,7 @@
         runAll: runAll,
         runSingle: runSingle,
         abort: abort,
+        forceReset: forceReset,
         isRunning: function () { return _running; },
         on: on,
         off: off

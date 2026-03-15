@@ -29,6 +29,46 @@
         return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
     }
 
+    /**
+     * Reset execution and variable state when switching files.
+     * Fixes: Run All button staying in "Stop" mode across files,
+     *        and variables from previous file leaking into new file.
+     */
+    function resetFileSessionState() {
+        // Abort any running execution and force-reset internal state
+        if (M._execController) {
+            if (M._execController.isRunning()) M._execController.abort();
+            if (M._execController.forceReset) M._execController.forceReset();
+        }
+
+        // Reset the Run All button to default state
+        var runAllBtn = document.getElementById('run-all-btn');
+        if (runAllBtn) {
+            runAllBtn.classList.remove('fmt-run-active');
+            runAllBtn.innerHTML = '<i class="bi bi-play-circle"></i> <span>Run All</span>';
+            runAllBtn.title = 'Run all executable blocks in document order';
+            runAllBtn.onclick = null;
+        }
+
+        // Remove progress bar if visible
+        var progressEl = document.querySelector('.exec-progress-bar');
+        if (progressEl) {
+            progressEl.remove();
+        }
+
+        // Clear document variables (runtime + manual)
+        if (M._vars) {
+            if (M._vars.clearRuntime) M._vars.clearRuntime();
+            if (M._vars.clearManual) M._vars.clearManual();
+        }
+
+        // Clear legacy __API_VARS
+        if (window.__API_VARS) window.__API_VARS = {};
+
+        // Clear SQLite exec context
+        if (M._execContext && M._execContext.clear) M._execContext.clear();
+    }
+
     function saveWorkspace() {
         try {
             localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
@@ -345,6 +385,8 @@
         else if (M.resetCloudForFileSwitch) M.resetCloudForFileSwitch();
         // Save current file
         M.wsSaveCurrent();
+        // Reset execution state & variables for new file
+        resetFileSessionState();
 
         // Check if this file is already in the workspace manifest
         var wsFile = findFileByName(entry.path) || findFileByName(entry.name);
@@ -590,6 +632,8 @@
         else if (M.resetCloudForFileSwitch) M.resetCloudForFileSwitch();
         // Save current
         M.wsSaveCurrent();
+        // Reset execution state & variables for new file
+        resetFileSessionState();
         // Switch
         workspace.activeFileId = id;
         M.wsActiveFileId = id;
