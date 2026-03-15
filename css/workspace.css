@@ -382,6 +382,42 @@
     padding: 0;
 }
 
+/* --- Reconnect Notice (persistent sidebar banner) --- */
+.ws-reconnect-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(234, 179, 8, 0.1);
+    border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+    font-size: 12px;
+    color: var(--text-color);
+    flex-shrink: 0;
+}
+.ws-reconnect-notice i {
+    color: #eab308;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.ws-reconnect-btn {
+    background: rgba(234, 179, 8, 0.2);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    color: #eab308;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-left: auto;
+    white-space: nowrap;
+    font-family: inherit;
+}
+.ws-reconnect-btn:hover {
+    background: rgba(234, 179, 8, 0.35);
+    border-color: #eab308;
+}
+
 /* Folder label in header */
 #ws-folder-label {
     overflow: hidden;

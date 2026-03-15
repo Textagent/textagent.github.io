@@ -61,7 +61,8 @@
     function getFileContentAsync(id) {
         if (diskMode && M._disk && M._disk.isConnected()) {
             var file = findFileById(id);
-            if (file) return M._disk.readFile(file.name);
+            // Use readFileFromPath so subdirectory files (e.g. "notes/ideas.md") resolve correctly
+            if (file) return M._disk.readFileFromPath(file.name);
         }
         return Promise.resolve(getFileContent(id));
     }
@@ -69,12 +70,15 @@
     function setFileContent(id, content) {
         try {
             localStorage.setItem(FILE_PREFIX + id, content);
-        } catch (e) { console.warn('File save failed:', e); }
+        } catch (e) {
+            console.warn('File save failed:', e);
+            if (M.showToast) M.showToast('⚠️ Save failed — browser storage is full. Free space or connect a folder.', 'error');
+        }
         // Also write to disk when in disk mode
         if (diskMode && M._disk && M._disk.isConnected()) {
             var file = findFileById(id);
             if (file) {
-                M._disk.writeFile(file.name, content).catch(function (e) {
+                M._disk.writeFileToPath(file.name, content).catch(function (e) {
                     console.warn('Disk file write failed:', e);
                 });
             }
@@ -86,7 +90,7 @@
         if (diskMode && M._disk && M._disk.isConnected()) {
             var file = findFileById(id);
             if (file) {
-                M._disk.deleteFile(file.name).catch(function (e) {
+                M._disk.deleteFileFromPath(file.name).catch(function (e) {
                     console.warn('Disk file delete failed:', e);
                 });
             }
@@ -335,6 +339,10 @@
     function openDiskFile(entry) {
         if (!M._disk || !M._disk.isConnected()) return;
 
+        // If we were viewing a shared doc, break out of that session
+        if (M.isViewingSharedDoc) M.clearCloudSession();
+        // Reset cloud doc binding so each file gets its own cloud doc
+        else if (M.resetCloudForFileSwitch) M.resetCloudForFileSwitch();
         // Save current file
         M.wsSaveCurrent();
 
@@ -535,6 +543,10 @@
     M.wsDiskMode = false;
 
     M.wsCreateFile = function (name) {
+        // If we were viewing a shared doc, break out of that session
+        if (M.isViewingSharedDoc) M.clearCloudSession();
+        // Reset cloud doc binding so new file gets its own cloud doc
+        else if (M.resetCloudForFileSwitch) M.resetCloudForFileSwitch();
         // Save current document first
         M.wsSaveCurrent();
         var id = generateId();
@@ -572,6 +584,10 @@
         if (id === workspace.activeFileId) return;
         var file = findFileById(id);
         if (!file) return;
+        // If we were viewing a shared doc, break out of that session
+        if (M.isViewingSharedDoc) M.clearCloudSession();
+        // Reset cloud doc binding so each file gets its own cloud doc
+        else if (M.resetCloudForFileSwitch) M.resetCloudForFileSwitch();
         // Save current
         M.wsSaveCurrent();
         // Switch
@@ -802,7 +818,7 @@
             // Load active file content
             var activeFile = findFileById(workspace.activeFileId);
             if (activeFile) {
-                var content = await M._disk.readFile(activeFile.name);
+                var content = await M._disk.readFileFromPath(activeFile.name);
                 M.markdownEditor.value = content;
                 // Cache in localStorage
                 localStorage.setItem(FILE_PREFIX + workspace.activeFileId, content);
@@ -829,6 +845,8 @@
         if (!M._disk) return;
         // Save current to localStorage before disconnecting
         M.wsSaveCurrent();
+        // Stop cloud auto-save timer so it doesn't create unwanted cloud docs
+        if (M.clearCloudSession) M.clearCloudSession();
         await M._disk.disconnect();
         diskMode = false;
         M.wsDiskMode = false;
@@ -874,7 +892,7 @@
             // Reload active file content from disk
             var activeFile = findFileById(workspace.activeFileId);
             if (activeFile) {
-                var content = await M._disk.readFile(activeFile.name);
+                var content = await M._disk.readFileFromPath(activeFile.name);
                 M.markdownEditor.value = content;
                 localStorage.setItem(FILE_PREFIX + workspace.activeFileId, content);
                 M.renderMarkdown();
@@ -918,7 +936,7 @@
             saveWorkspace();
             var activeFile = findFileById(workspace.activeFileId);
             if (activeFile) {
-                var content = await M._disk.readFile(activeFile.name);
+                var content = await M._disk.readFileFromPath(activeFile.name);
                 M.markdownEditor.value = content;
                 localStorage.setItem(FILE_PREFIX + workspace.activeFileId, content);
                 M.renderMarkdown();

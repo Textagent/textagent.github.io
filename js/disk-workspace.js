@@ -379,7 +379,27 @@
                 // Successfully reconnected — load workspace from disk
                 if (M.wsReconnectFolder) M.wsReconnectFolder();
             } else if (result === 'needs-permission') {
-                M.showToast('Folder reconnection needs permission. Use the folder button to reconnect.', 'info');
+                // Show a persistent notice in the sidebar instead of a transient toast
+                var sidebar = document.getElementById('workspace-sidebar');
+                if (sidebar) {
+                    var notice = document.createElement('div');
+                    notice.className = 'ws-reconnect-notice';
+                    notice.innerHTML =
+                        '<i class="bi bi-folder-symlink"></i> ' +
+                        '<span>Folder access expired. </span>' +
+                        '<button id="ws-reconnect-btn" class="ws-reconnect-btn">Reconnect</button>';
+                    sidebar.insertBefore(notice, sidebar.querySelector('.ws-file-list'));
+                    document.getElementById('ws-reconnect-btn').addEventListener('click', function () {
+                        disk.requestPermission().then(function (granted) {
+                            if (granted) {
+                                notice.remove();
+                                if (M.wsReconnectFolder) M.wsReconnectFolder();
+                            } else {
+                                M.showToast('Permission denied. Try using Open Folder instead.', 'warning');
+                            }
+                        });
+                    });
+                }
             }
         });
     }

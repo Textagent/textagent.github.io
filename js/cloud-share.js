@@ -115,7 +115,7 @@
             if (M.wsDiskMode && M._disk && M._disk.isConnected() && M.wsActiveFileId) {
                 var file = M._wsFindFileById ? M._wsFindFileById(M.wsActiveFileId) : null;
                 if (file) {
-                    M._disk.writeFile(file.name, M.markdownEditor.value).then(function () {
+                    M._disk.writeFileToPath(file.name, M.markdownEditor.value).then(function () {
                         showAutosaveIndicator('💾 Saved to disk');
                     }).catch(function (e) {
                         console.warn('Disk autosave failed:', e);
@@ -185,6 +185,7 @@
         var content = M.markdownEditor.value;
         if (!content.trim() || content === lastCloudContent) { cloudSaveDirty = false; return; }
         if (M.markdownEditor.readOnly) return;
+        // Don't auto-save if we're on someone else's shared URL and haven't established our own cloud doc
         var hash = window.location.hash;
         if (hash && (hash.includes('id=') || hash.includes('d=')) && !localStorage.getItem(CLOUD_DOC_KEY)) return;
         try {
@@ -382,6 +383,24 @@
         lastCloudContent = '';
     }
     M.clearCloudSession = clearCloudSession;
+
+    /**
+     * Reset cloud state for file switching (lighter than clearCloudSession).
+     * Each workspace file should get its own cloud doc — clear the current
+     * cloud doc binding so the next auto-save creates a fresh one.
+     */
+    function resetCloudForFileSwitch() {
+        localStorage.removeItem(CLOUD_DOC_KEY);
+        localStorage.removeItem(CLOUD_KEY_KEY);
+        localStorage.removeItem(CLOUD_WT_KEY);
+        lastCloudContent = '';
+        cloudSaveDirty = false;
+        // Clear hash so it doesn't show stale cloud doc URL
+        if (window.location.hash) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+    M.resetCloudForFileSwitch = resetCloudForFileSwitch;
 
     document.getElementById('shared-banner-edit').addEventListener('click', function () {
         clearCloudSession();
@@ -692,14 +711,18 @@
     }
 
     // --- Restore Auto-Saved Content or Load Default ---
-    var wasRestored = restoreFromLocalStorage();
-    if (wasRestored) {
-        M.renderMarkdown();
-    } else if (!window.location.hash || (!window.location.hash.includes('d=') && !window.location.hash.includes('id='))) {
-        // No autosave and no share link — load Feature Showcase as default
-        if (M.getDefaultContent) {
-            M.markdownEditor.value = M.getDefaultContent();
+    // Only restore if we are NOT loading a shared link (which will overwrite the editor anyway)
+    var hasShareHash = window.location.hash && (window.location.hash.includes('d=') || window.location.hash.includes('id='));
+    if (!hasShareHash) {
+        var wasRestored = restoreFromLocalStorage();
+        if (wasRestored) {
             M.renderMarkdown();
+        } else {
+            // No autosave and no share link — load Feature Showcase as default
+            if (M.getDefaultContent) {
+                M.markdownEditor.value = M.getDefaultContent();
+                M.renderMarkdown();
+            }
         }
     }
 
