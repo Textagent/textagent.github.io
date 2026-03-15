@@ -1,7 +1,7 @@
 // ============================================
 // textToSpeech.js — Hybrid TTS Controller
-// Kokoro TTS for English & Chinese (high quality, local ONNX)
-// Web Speech API for Japanese & other languages (browser-native)
+// Kokoro TTS for 9 languages (high quality, local ONNX)
+// Web Speech API for Korean, German & other languages (browser-native)
 // ============================================
 (function () {
     'use strict';
@@ -9,24 +9,26 @@
     const M = window.MDView;
     if (!M) return;
 
-    // ── Kokoro languages (have ONNX voices in v1.1-zh) ──
+    // ── Kokoro languages (have ONNX voices in v1.0) ──
+    // Note: Japanese, Chinese, and Hindi are excluded because Kokoro's espeak-ng
+    // WASM phonemizer cannot handle CJK/Devanagari scripts (outputs descriptions
+    // instead of phonemes). These languages route to Web Speech API instead.
     const KOKORO_LANGS = new Set([
         'en', 'en-us', 'en-gb', 'english', 'english (us)', 'english (uk)',
-        'zh', 'zh-cn', 'chinese', 'chinese (mandarin)',
+        'es', 'spanish',
+        'fr', 'french',
+        'it', 'italian',
+        'pt', 'pt-br', 'portuguese',
     ]);
 
-    // ── Web Speech API language code mapping ──
+    // ── Web Speech API language code mapping (for languages Kokoro can't phonemize) ──
     const WEB_SPEECH_LANG_MAP = {
         'ja': 'ja-JP', 'japanese': 'ja-JP',
-        'ko': 'ko-KR', 'korean': 'ko-KR',
-        'fr': 'fr-FR', 'french': 'fr-FR',
-        'de': 'de-DE', 'german': 'de-DE',
-        'it': 'it-IT', 'italian': 'it-IT',
-        'es': 'es-ES', 'spanish': 'es-ES',
-        'pt': 'pt-BR', 'portuguese': 'pt-BR',
+        'zh': 'zh-CN', 'zh-cn': 'zh-CN', 'chinese': 'zh-CN', 'chinese (mandarin)': 'zh-CN',
         'hi': 'hi-IN', 'hindi': 'hi-IN',
+        'ko': 'ko-KR', 'korean': 'ko-KR',
+        'de': 'de-DE', 'german': 'de-DE',
         'en': 'en-US', 'english': 'en-US',
-        'zh': 'zh-CN', 'chinese': 'zh-CN', 'chinese (mandarin)': 'zh-CN',
     };
 
     let worker = null;
@@ -38,6 +40,15 @@
     let webSpeechUtterance = null; // Track Web Speech API utterance for stop()
     let lastAudioData = null;  // Store last Kokoro audio for download
     let _generateOnly = false; // When true, generate audio without auto-playing
+    let _isGenerating = false; // True while audio synthesis is in progress
+    let _generateCallback = null; // One-shot callback when generation completes
+    let _generateStartTime = 0; // Timestamp for measuring generation duration
+    const _pageLoadTime = Date.now(); // For elapsed-time logging
+
+    /** Returns a formatted timestamp prefix for console logs: [TTS +12.3s] */
+    function _ttsT() {
+        return `🔊 [TTS +${((Date.now() - _pageLoadTime) / 1000).toFixed(1)}s]`;
+    }
 
     // ── Worker Initialization ────────────────────
     function initWorker() {
@@ -50,18 +61,33 @@
 
             if (type === 'status') {
                 if (e.data.status === 'loading') {
-                    modelLoading = true;
-                    modelReady = false;
+                    const phase = e.data.loadingPhase || '';
+                    const src = e.data.source || '';
+                    // Don't reset modelReady when it's a synthesis progress update
+                    if (phase !== 'synthesizing') {
+                        modelLoading = true;
+                        modelReady = false;
+                    }
+                    if (phase === 'initiate') {
+                        console.log(`${_ttsT()} ⬇ Downloading: ${e.data.message}${src ? ' from ' + src : ''}`);
+                    } else if (phase === 'done') {
+                        console.log(`${_ttsT()} ✅ ${e.data.message}`);
+                    } else if (phase === 'synthesizing') {
+                        console.log(`${_ttsT()} ⏳ ${e.data.message}`);
+                    } else {
+                        console.log(`${_ttsT()} Loading: ${e.data.message}`);
+                    }
                     M.showToast && M.showToast(e.data.message, 'info');
                 } else if (e.data.status === 'ready') {
                     modelLoading = false;
                     modelReady = true;
-                    console.log('🔊 Kokoro TTS ready');
+                    console.log(`${_ttsT()} ✅ Kokoro TTS model loaded and ready`);
                     M.showToast && M.showToast('🔊 Text-to-Speech ready', 'success');
 
                     // If there was a pending speak request, execute it now
                     if (pendingSpeak) {
                         const { text, voice, lang } = pendingSpeak;
+                        console.log(`${_ttsT()} Executing pending speak request: "${text.substring(0, 50)}…" lang=${lang || 'default'}`);
                         pendingSpeak = null;
                         speak(text, voice, lang);
                     }
@@ -70,24 +96,48 @@
 
             if (type === 'progress') {
                 const percent = e.data.percent || 0;
+                const file = e.data.file || 'model';
                 const loadedMB = e.data.loaded ? (e.data.loaded / 1024 / 1024).toFixed(1) : '?';
                 const totalMB = e.data.total ? (e.data.total / 1024 / 1024).toFixed(1) : '?';
-                console.log(`🔊 TTS download: ${loadedMB}/${totalMB} MB (${percent}%)`);
+                console.log(`${_ttsT()} ⬇ ${file}: ${loadedMB}/${totalMB} MB (${percent}%)`);
             }
 
             if (type === 'audio') {
+                const duration = e.data.data.length / (e.data.sampleRate || 24000);
+                const elapsed = _generateStartTime ? ((Date.now() - _generateStartTime) / 1000).toFixed(1) : '?';
+                console.log(`${_ttsT()} ✅ Audio generated — ${duration.toFixed(1)}s of audio, ${e.data.sampleRate || 24000} Hz, synthesized in ${elapsed}s`);
+
                 lastAudioData = { data: e.data.data, sampleRate: e.data.sampleRate };
+                _isGenerating = false;
+
                 if (!_generateOnly) {
                     playAudio(e.data.data, e.data.sampleRate);
+                } else {
+                    console.log(`${_ttsT()} Audio stored (generate-only mode). Use Play to listen.`);
                 }
                 _generateOnly = false; // reset flag after generation
+
+                // Fire one-shot generate callback
+                if (_generateCallback) {
+                    const cb = _generateCallback;
+                    _generateCallback = null;
+                    cb({ duration, sampleRate: e.data.sampleRate, dataLength: e.data.data.length });
+                }
             }
 
             if (type === 'error') {
-                console.warn('🔊 TTS error:', e.data.message);
+                console.error(`${_ttsT()} ❌ Error:`, e.data.message);
+                _isGenerating = false;
+                _generateOnly = false;
                 if (modelLoading) {
                     modelLoading = false;
                     M.showToast && M.showToast('TTS model failed: ' + e.data.message, 'error');
+                }
+                // Fire callback with error
+                if (_generateCallback) {
+                    const cb = _generateCallback;
+                    _generateCallback = null;
+                    cb(null, e.data.message);
                 }
             }
         });
@@ -105,6 +155,9 @@
             audioCtx.resume();
         }
 
+        const duration = float32Data.length / sampleRate;
+        console.log(`${_ttsT()} ▶ Playing audio — ${duration.toFixed(1)}s at ${sampleRate} Hz`);
+
         const buffer = audioCtx.createBuffer(1, float32Data.length, sampleRate);
         buffer.copyToChannel(float32Data, 0);
 
@@ -112,6 +165,7 @@
         source.buffer = buffer;
         source.connect(audioCtx.destination);
         source.onended = () => {
+            console.log(`${_ttsT()} ⏹ Playback finished`);
             currentSource = null;
             document.querySelectorAll('.tts-speak-btn.speaking').forEach(btn => {
                 btn.classList.remove('speaking');
@@ -159,17 +213,19 @@
 
         webSpeechUtterance = utterance;
         window.speechSynthesis.speak(utterance);
-        console.log(`🔊 Web Speech: speaking "${text.substring(0, 40)}…" in ${bcp47Lang}`);
+        console.log(`${_ttsT()} ▶ Web Speech speaking: "${text.substring(0, 50)}…" in ${bcp47Lang}`);
     }
 
     function stopAudio() {
         // Stop Kokoro audio
         if (currentSource) {
+            console.log(`${_ttsT()} ⏹ Stopping Kokoro audio playback`);
             try { currentSource.stop(); } catch (_) { /* already stopped */ }
             currentSource = null;
         }
         // Stop Web Speech
         if (webSpeechUtterance || ('speechSynthesis' in window && window.speechSynthesis.speaking)) {
+            console.log(`${_ttsT()} ⏹ Stopping Web Speech playback`);
             window.speechSynthesis.cancel();
             webSpeechUtterance = null;
         }
@@ -240,26 +296,32 @@
 
     /**
      * Speak the given text using the best available TTS engine.
-     * - English/Chinese → Kokoro TTS (local ONNX, high quality)
-     * - Japanese & others → Web Speech API (browser-native)
+     * - English/Chinese/Japanese/Spanish/French/Hindi/Italian/Portuguese → Kokoro TTS (local ONNX)
+     * - Korean, German & others → Web Speech API (browser-native)
      * @param {string} text - Text to synthesize
      * @param {string} [voice] - Voice ID (e.g., 'af_bella'). Auto-selected by lang if omitted.
      * @param {string} [lang] - Language code or name (e.g., 'en', 'ja', 'japanese').
      */
     function speak(text, voice, lang) {
-        if (!text || text.trim().length === 0) return;
+        if (!text || text.trim().length === 0) {
+            console.log(`${_ttsT()} Skipped — empty text`);
+            return;
+        }
 
         const langKey = (lang || 'en').toLowerCase();
+        console.log(`${_ttsT()} speak() called — lang="${langKey}", text="${text.substring(0, 60)}…" (${text.length} chars)`);
 
         // Route: Kokoro for English/Chinese, Web Speech for everything else
         if (KOKORO_LANGS.has(langKey)) {
             // ── Kokoro Path ──
             const maxLen = 1000;
             if (text.length > maxLen) {
+                console.log(`${_ttsT()} Text truncated from ${text.length} to ${maxLen} chars (Kokoro limit)`);
                 text = text.substring(0, maxLen);
             }
 
             if (!worker) {
+                console.log(`${_ttsT()} Worker not initialized — starting init + queuing speak request`);
                 initWorker();
                 modelLoading = true;
                 pendingSpeak = { text, voice, lang };
@@ -268,6 +330,7 @@
             }
 
             if (!modelReady) {
+                console.log(`${_ttsT()} Model not ready (modelReady=${modelReady}, modelLoading=${modelLoading}) — queuing speak request`);
                 pendingSpeak = { text, voice, lang };
                 if (!modelLoading) {
                     modelLoading = true;
@@ -276,10 +339,12 @@
                 return;
             }
 
+            console.log(`${_ttsT()} Sending text to Kokoro worker for synthesis…`);
+            _generateStartTime = Date.now();
             worker.postMessage({ type: 'speak', text, voice, lang });
         } else {
             // ── Web Speech API Path ──
-            console.log(`🔊 Language "${langKey}" → using Web Speech API`);
+            console.log(`${_ttsT()} Language "${langKey}" → routing to Web Speech API (not a Kokoro language)`);
             speakWithWebSpeech(text, langKey);
         }
     }
@@ -293,7 +358,36 @@
      * Use playLastAudio() afterwards to play the result.
      */
     function generate(text, voice, lang) {
+        const langKey = (lang || 'en').toLowerCase();
+
+        // Web Speech API doesn't produce downloadable audio — play directly instead
+        if (!KOKORO_LANGS.has(langKey)) {
+            console.log(`${_ttsT()} generate() called for Web Speech API language "${langKey}" — playing directly (no downloadable audio)`);
+            _isGenerating = true;
+
+            // Use speakWithWebSpeech directly and fire callback when done
+            speakWithWebSpeech(text, langKey);
+
+            // Poll for Web Speech to finish, then fire callback
+            var checkDone = setInterval(function () {
+                if (!window.speechSynthesis.speaking) {
+                    clearInterval(checkDone);
+                    _isGenerating = false;
+                    console.log(`${_ttsT()} Web Speech playback complete`);
+                    if (_generateCallback) {
+                        var cb = _generateCallback;
+                        _generateCallback = null;
+                        cb({ duration: 0, sampleRate: 0, dataLength: 0, webSpeech: true });
+                    }
+                }
+            }, 200);
+            return;
+        }
+
+        console.log(`${_ttsT()} generate() called — synthesize without playing`);
         _generateOnly = true;
+        _isGenerating = true;
+        _generateStartTime = Date.now();
         lastAudioData = null;
         speak(text, voice, lang);
     }
@@ -303,8 +397,10 @@
      */
     function playLastAudio() {
         if (lastAudioData) {
+            console.log(`${_ttsT()} Playing stored audio`);
             playAudio(lastAudioData.data, lastAudioData.sampleRate);
         } else {
+            console.log(`${_ttsT()} No stored audio available — need to Run first`);
             M.showToast && M.showToast('⚠️ No audio generated yet. Click Run first.', 'warning');
         }
     }
@@ -337,9 +433,15 @@
         isSpeaking,
         downloadAudio,
         hasAudio,
+        isGenerating: function () { return _isGenerating; },
         isKokoroReady: function () { return modelReady; },
         isKokoroLoading: function () { return modelLoading; },
         initKokoro: initWorker,
+        /**
+         * Register a one-shot callback for when generate() completes.
+         * Callback receives (result, error). result = { duration, sampleRate, dataLength } or null on error.
+         */
+        onGenerateComplete: function (cb) { _generateCallback = cb; },
         /**
          * Promise-based speak — resolves when audio finishes playing.
          * Used by the docgen-tts runtime adapter for sequential Run All execution.
@@ -410,5 +512,5 @@
         },
     };
 
-    console.log('🔊 textToSpeech module loaded (Hybrid: Kokoro + Web Speech API)');
+    console.log(`${_ttsT()} Module loaded (Hybrid: Kokoro 9-lang ONNX + Web Speech API fallback)`);
 })();

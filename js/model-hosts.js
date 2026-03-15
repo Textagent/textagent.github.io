@@ -8,7 +8,7 @@
  *
  * HuggingFace repo structure:
  *   textagent/Qwen3.5-0.8B-ONNX/resolve/main/config.json
- *   textagent/Kokoro-82M-v1.1-zh-ONNX/resolve/main/onnx/model_q8.onnx
+ *   textagent/Kokoro-82M-v1.0-ONNX/resolve/main/onnx/model_q8.onnx
  *   ...
  */
 

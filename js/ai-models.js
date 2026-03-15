@@ -337,11 +337,11 @@
             icon: 'bi bi-volume-up',
             statusReady: 'Kokoro 82M TTS · Local',
             dropdownName: 'Kokoro TTS (82M)',
-            dropdownDesc: 'Local · Text-to-Speech · English + Chinese + Web Speech fallback · ~80 MB',
+            dropdownDesc: 'Local · Text-to-Speech · 9 Languages · ~80 MB',
             isLocal: true,
             category: 'local-speech',
             isTtsModel: true,
-            localModelId: 'textagent/Kokoro-82M-v1.1-zh-ONNX',
+            localModelId: 'textagent/Kokoro-82M-v1.0-ONNX',
             downloadSize: '~80 MB',
         },
 

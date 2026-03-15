@@ -112,30 +112,36 @@
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
 }
 
-/* Play / Stop buttons */
-.ai-tts-play,
-.ai-tts-stop {
+/* Play/Stop toggle button */
+.ai-tts-play-toggle {
     font-weight: 600;
     font-size: 0.72rem;
     letter-spacing: 0.02em;
-}
-
-.ai-tts-play {
     color: #8b5cf6 !important;
     border-color: rgba(139, 92, 246, 0.3) !important;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.ai-tts-play:hover {
+.ai-tts-play-toggle:hover:not(:disabled) {
     background: rgba(139, 92, 246, 0.12) !important;
 }
 
-.ai-tts-stop {
+/* Playing state — red Stop */
+.ai-tts-play-toggle.ai-tts-playing {
     color: #ef4444 !important;
     border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
-.ai-tts-stop:hover {
+.ai-tts-play-toggle.ai-tts-playing:hover:not(:disabled) {
     background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Run button */
+.ai-tts-run {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s ease;
 }
 
 /* Speaking state — pulse animation */
@@ -147,6 +153,33 @@
 @keyframes tts-card-pulse {
     0%, 100% { box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15); }
     50% { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25); }
+}
+
+/* Generating state — pulsing border while synthesizing */
+.ai-tts-generating {
+    border-left-color: #f59e0b !important;
+    animation: tts-generating-pulse 1s ease-in-out infinite;
+}
+
+@keyframes tts-generating-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15); }
+    50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3); }
+}
+
+/* Disabled buttons during generation */
+.ai-tts-card .ai-placeholder-btn:disabled,
+.ai-tts-card select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.ai-tts-card .ai-tts-run:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    pointer-events: none;
+    color: #f59e0b !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
 }
 
 /* Toolbar TTS button accent */
@@ -169,12 +202,16 @@
     border-color: rgba(167, 139, 250, 0.3);
 }
 
-[data-theme="dark"] .ai-tts-play {
+[data-theme="dark"] .ai-tts-play-toggle {
     color: #a78bfa !important;
 }
 
-[data-theme="dark"] .ai-tts-stop {
+[data-theme="dark"] .ai-tts-play-toggle.ai-tts-playing {
     color: #f87171 !important;
+}
+
+[data-theme="dark"] .ai-tts-run:disabled {
+    color: #fbbf24 !important;
 }
 
 /* ============================================

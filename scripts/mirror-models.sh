@@ -133,14 +133,14 @@ for f in onnx/encoder_model_q8.onnx \
     dl "$MODEL" "$f"
 done
 
-# ── Kokoro 82M v1.1-zh TTS (q8 + voices) ────────
-echo -e "\n${GREEN}═══ Kokoro 82M v1.1-zh TTS ONNX ═══${NC}"
-MODEL="textagent/Kokoro-82M-v1.1-zh-ONNX"
+# ── Kokoro 82M v1.0 TTS (q8 + voices, 9 languages) ─
+echo -e "\n${GREEN}═══ Kokoro 82M v1.0 TTS ONNX ═══${NC}"
+MODEL="textagent/Kokoro-82M-v1.0-ONNX"
 for f in config.json tokenizer.json tokenizer_config.json; do
     dl "$MODEL" "$f"
 done
 dl "$MODEL" "onnx/model_q8.onnx"
-# Download voice files used by TextAgent
+# Download voice files for all 9 supported languages
 for voice in af_bella bf_emma jf_alpha zf_xiaobei ff_siwis if_sara ef_dora pf_dora hf_alpha; do
     dl "$MODEL" "voices/${voice}.bin"
 done

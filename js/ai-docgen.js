@@ -703,7 +703,7 @@
                 var ttsLangMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
                 var ttsCurrentLang = ttsLangMatch ? ttsLangMatch[1].trim() : 'English';
 
-                // Language dropdown — Kokoro for EN/ZH, Web Speech API for rest
+                // Language dropdown — Kokoro for 9 languages, Web Speech API for Korean/German
                 var ttsLangOptions = [
                     { code: 'en', name: 'English' },
                     { code: 'en-us', name: 'English (US)' },
@@ -733,8 +733,7 @@
                     + '<div class="ai-placeholder-actions">'
                     + ttsLangHtml
                     + '<button class="ai-placeholder-btn ai-fill-one ai-tts-run" data-ai-index="' + blockIndex + '" title="Generate audio">▶ Run</button>'
-                    + '<button class="ai-placeholder-btn ai-tts-play-stored" data-ai-index="' + blockIndex + '" title="Play last generated audio">▷ Play</button>'
-                    + '<button class="ai-placeholder-btn ai-tts-stop" data-ai-index="' + blockIndex + '" title="Stop" style="display:none">■ Stop</button>'
+                    + '<button class="ai-placeholder-btn ai-tts-play-toggle" data-ai-index="' + blockIndex + '" title="Play / Stop audio">▷ Play</button>'
                     + '<button class="ai-placeholder-btn ai-tts-download" data-ai-index="' + blockIndex + '" title="Download audio as WAV">⬇ Save</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
@@ -951,14 +950,53 @@
                         var ttsLangSel = card.querySelector('.ai-tts-lang-select');
                         var ttsLangName = ttsLangSel ? ttsLangSel.value : 'English';
                         var ttsLangCode = ttsLangName.toLowerCase();
-                        console.log('[TTS Run] Generating audio for: "' + ttsText.substring(0, 80) + '", lang=' + ttsLangName);
-                        if (ttsText && M.tts && M.tts.generate) {
-                            M.tts.generate(ttsText, null, ttsLangCode);
-                            M.showToast('🔧 Generating audio…', 'info');
-                        } else if (!ttsText) {
+
+                        if (!ttsText) {
+                            console.warn('[TTS] ⚠ Run clicked but no text to speak');
                             M.showToast('⚠️ No text to speak — make sure the prompt has content.', 'warning');
                         } else if (!M.tts) {
+                            console.warn('[TTS] ⚠ TTS engine not loaded yet');
                             M.showToast('🔊 TTS engine loading — please try again in a moment.', 'info');
+                        } else if (M.tts && M.tts.generate) {
+                            console.log('[TTS] ▶ Run clicked — generating audio for: "' + ttsText.substring(0, 80) + '…" (' + ttsText.length + ' chars), lang=' + ttsLangName);
+
+                            // — Enter generating state: disable all card buttons —
+                            var runBtn = card.querySelector('.ai-tts-run');
+                            var playBtn = card.querySelector('.ai-tts-play-toggle');
+                            var saveBtn = card.querySelector('.ai-tts-download');
+                            var langSel = card.querySelector('.ai-tts-lang-select');
+                            var removeBtn = card.querySelector('.ai-remove-tag');
+
+                            if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ Generating…'; }
+                            if (playBtn) playBtn.disabled = true;
+                            if (saveBtn) saveBtn.disabled = true;
+                            if (langSel) langSel.disabled = true;
+                            if (removeBtn) removeBtn.disabled = true;
+                            card.classList.add('ai-tts-generating');
+
+                            // Register callback to restore buttons when done
+                            M.tts.onGenerateComplete(function (result, error) {
+                                if (runBtn) { runBtn.disabled = false; runBtn.textContent = '▶ Run'; }
+                                if (playBtn) playBtn.disabled = false;
+                                if (saveBtn) saveBtn.disabled = false;
+                                if (langSel) langSel.disabled = false;
+                                if (removeBtn) removeBtn.disabled = false;
+                                card.classList.remove('ai-tts-generating');
+
+                                if (error) {
+                                    console.error('[TTS] ❌ Generation failed:', error);
+                                    M.showToast('❌ TTS generation failed: ' + error, 'error');
+                                } else if (result && result.webSpeech) {
+                                    console.log('[TTS] ✅ Web Speech API playback complete');
+                                    M.showToast('✅ Spoken via Web Speech API (no downloadable audio for this language)', 'success');
+                                } else {
+                                    console.log('[TTS] ✅ Generation complete — ' + result.duration.toFixed(1) + 's of audio at ' + result.sampleRate + ' Hz');
+                                    M.showToast('✅ Audio generated! Click Play to listen.', 'success');
+                                }
+                            });
+
+                            M.tts.generate(ttsText, null, ttsLangCode);
+                            M.showToast('🔧 Generating audio…', 'info');
                         }
                     }
                 } else {
@@ -976,33 +1014,50 @@
             });
         });
 
-        // TTS play-stored button — replay last generated audio
-        container.querySelectorAll('.ai-tts-play-stored').forEach(function (btn) {
+        // TTS Play/Stop toggle button — single button that switches between Play and Stop
+        container.querySelectorAll('.ai-tts-play-toggle').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                if (M.tts && M.tts.playLastAudio) {
-                    M.tts.playLastAudio();
-                    var card = this.closest('.ai-tts-card');
-                    if (card) {
-                        var stopBtn = card.querySelector('.ai-tts-stop');
-                        if (stopBtn) stopBtn.style.display = '';
-                        card.classList.add('ai-tts-speaking');
-                    }
-                }
-            });
-        });
-
-        // TTS stop button — stop audio playback
-        container.querySelectorAll('.ai-tts-stop').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (M.tts && M.tts.stop) M.tts.stop();
                 var card = this.closest('.ai-tts-card');
-                if (card) {
-                    card.classList.remove('ai-tts-speaking');
-                    this.style.display = 'none';
+                var isPlaying = this.classList.contains('ai-tts-playing');
+
+                if (isPlaying) {
+                    // Currently playing → Stop
+                    console.log('[TTS] ⏹ Stop clicked — stopping audio playback');
+                    if (M.tts && M.tts.stop) M.tts.stop();
+                    this.classList.remove('ai-tts-playing');
+                    this.textContent = '▷ Play';
+                    this.title = 'Play audio';
+                    if (card) card.classList.remove('ai-tts-speaking');
+                } else {
+                    // Not playing → Play (if audio exists)
+                    if (!M.tts || !M.tts.hasAudio || !M.tts.hasAudio()) {
+                        console.log('[TTS] ⚠ Play clicked but no audio generated yet');
+                        M.showToast && M.showToast('⚠️ No audio generated yet. Click Run first.', 'warning');
+                        return;
+                    }
+                    console.log('[TTS] ▶ Play clicked — playing stored audio');
+                    if (M.tts && M.tts.playLastAudio) {
+                        M.tts.playLastAudio();
+                    }
+                    this.classList.add('ai-tts-playing');
+                    this.textContent = '■ Stop';
+                    this.title = 'Stop audio';
+                    if (card) card.classList.add('ai-tts-speaking');
+
+                    // Auto-reset to Play state when audio finishes naturally
+                    var toggleBtn = this;
+                    var checkFinished = setInterval(function () {
+                        if (!M.tts || !M.tts.isSpeaking || !M.tts.isSpeaking()) {
+                            clearInterval(checkFinished);
+                            toggleBtn.classList.remove('ai-tts-playing');
+                            toggleBtn.textContent = '▷ Play';
+                            toggleBtn.title = 'Play audio';
+                            if (card) card.classList.remove('ai-tts-speaking');
+                            console.log('[TTS] ⏹ Playback finished — button reset to Play');
+                        }
+                    }, 300);
                 }
             });
         });
