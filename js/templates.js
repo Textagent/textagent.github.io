@@ -19,7 +19,8 @@
     window.__MDV_TEMPLATES_AI || [],
     window.__MDV_TEMPLATES_AGENTS || [],
     window.__MDV_TEMPLATES_FINANCE || [],
-    window.__MDV_TEMPLATES_GAMES || []
+    window.__MDV_TEMPLATES_GAMES || [],
+    window.__MDV_TEMPLATES_SKILLS || []
   );
 
 
@@ -49,6 +50,7 @@
       case 'ai': return 'creative';
       case 'finance': return 'project';
       case 'games': return 'creative';
+      case 'skills': return 'doc';
       default: return 'doc';
     }
   }
@@ -67,6 +69,7 @@
       case 'ai': return 'bi-robot';
       case 'finance': return 'bi-graph-up-arrow';
       case 'games': return 'bi-controller';
+      case 'skills': return 'bi-book';
       default: return 'bi-file-earmark';
     }
   }
@@ -503,6 +506,7 @@
       templateCategories.querySelectorAll('.template-cat-btn').forEach(b => {
         b.classList.toggle('active', b === btn);
       });
+
       filterTemplates();
     });
   }

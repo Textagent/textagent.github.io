@@ -125,6 +125,7 @@ async function loadModules() {
         import('../js/templates/agents.js'),
         import('../js/templates/finance.js'),
         import('../js/templates/games.js'),
+        import('../js/templates/skills.js'),
     ]);
     await import('../js/templates.js');
 

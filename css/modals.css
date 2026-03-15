@@ -1302,6 +1302,9 @@
 .template-categories {
   display: flex;
   padding: 16px 24px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
 }
 
 .template-cat-pills {
@@ -1311,6 +1314,16 @@
   border: 1.5px solid #c0c0cc;
   border-radius: 10px;
   padding: 3px;
+  flex-shrink: 0;
+}
+
+/* Hide scrollbar but keep scrolling */
+.template-categories::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+.template-categories {
+  scrollbar-width: none;
 }
 
 [data-theme="dark"] .template-cat-pills {

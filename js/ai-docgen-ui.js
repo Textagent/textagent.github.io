@@ -62,7 +62,7 @@
         var blocks = M.parseDocgenBlocks(text);
 
         if (blocks.length === 0) {
-            showToast('No {{AI:}}, {{Think:}}, {{Image:}}, or {{Agent:}} blocks found. Tag sections first.', 'warning');
+            showToast('No {{AI:}}, {{Image:}}, or {{Agent:}} blocks found. Tag sections first.', 'warning');
             return;
         }
 

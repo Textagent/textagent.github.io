@@ -237,7 +237,7 @@
         },
         '[data-action="think-tag"]': {
             name: 'AI Think Tag',
-            desc: 'Wrap text in {{Think: ...}} — AI uses deep reasoning mode to analyze and respond with step-by-step thinking.',
+            desc: 'Wrap text in {{AI: @think: Yes ...}} — AI uses deep reasoning mode to analyze and respond with step-by-step thinking.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
@@ -346,7 +346,7 @@
         },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
-            desc: 'Process all {{AI:}}, {{Think:}}, {{Image:}}, {{Agent:}}, and {{API:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
+            desc: 'Process all {{AI:}}, {{Image:}}, {{Agent:}}, and {{API:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
