@@ -33,23 +33,23 @@ let MODEL_LABEL = "Qwen 3.5";
 let MODEL_ARCH = "qwen3_5";      // 'qwen3_5' or 'qwen3'
 let MODEL_DTYPE = "q4";           // 'q4' or 'q4f16'
 
-// Task-specific token limits to keep responses fast
+// Task-specific token limits — industry standard (Qwen 3.5 supports 32K output natively)
 const TOKEN_LIMITS = {
-    summarize: 256,
-    expand: 512,
-    rephrase: 384,
-    grammar: 384,
-    polish: 384,
-    formalize: 384,
-    elaborate: 512,
-    shorten: 256,
-    autocomplete: 128,
-    generate: 512,
-    markdown: 512,
-    explain: 384,
-    simplify: 384,
-    qa: 384,
-    chat: 512,
+    summarize: 2048,
+    expand: 4096,
+    rephrase: 2048,
+    grammar: 2048,
+    polish: 2048,
+    formalize: 2048,
+    elaborate: 4096,
+    shorten: 1024,
+    autocomplete: 512,
+    generate: 8192,
+    markdown: 8192,
+    explain: 4096,
+    simplify: 2048,
+    qa: 4096,
+    chat: 8192,
 };
 
 let processor = null;
@@ -459,18 +459,18 @@ function buildMessages(taskType, context, userPrompt, chatHistory) {
     // Inject conversation history for conversational task types
     if (chatHistory && chatHistory.length > 0 &&
         ['generate', 'qa', 'chat', 'explain', 'markdown'].includes(taskType)) {
-        const recent = chatHistory.slice(-10);
+        const recent = chatHistory.slice(-30);
         recent.forEach(function (m) {
             messages.push({
                 role: m.role,
-                content: m.content.substring(0, 500)
+                content: m.content.substring(0, 4000)
             });
         });
     }
 
-    // Limit context size based on task — shorter context = faster inference
+    // Limit context size — Qwen 3.5 supports 256K context; send generous document context
     const contextLimit =
-        taskType === "summarize" || taskType === "grammar" ? 1500 : 2500;
+        taskType === "summarize" || taskType === "grammar" ? 16000 : 32000;
 
     // Detect if context contains web search results
     const hasSearchResults = context && context.indexOf('[Web Search Results') !== -1;

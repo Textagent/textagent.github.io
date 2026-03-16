@@ -10,10 +10,10 @@ const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const TOKEN_LIMITS = {
-    summarize: 256, expand: 512, rephrase: 384, grammar: 384,
-    polish: 384, formalize: 384, elaborate: 512, shorten: 256,
-    autocomplete: 128, generate: 512, markdown: 512, explain: 384,
-    simplify: 384, qa: 384, chat: 512,
+    summarize: 2048, expand: 4096, rephrase: 2048, grammar: 2048,
+    polish: 2048, formalize: 2048, elaborate: 4096, shorten: 1024,
+    autocomplete: 512, generate: 8192, markdown: 8192, explain: 4096,
+    simplify: 2048, qa: 4096, chat: 8192,
 };
 
 let apiKey = null;
@@ -159,16 +159,16 @@ function buildMessages(taskType, context, userPrompt, chatHistory) {
     };
     const systemMessage = systemPrompts[taskType] || systemPrompts.chat;
     const messages = [{ role: 'system', content: systemMessage }];
-    const contextLimit = taskType === 'summarize' || taskType === 'grammar' ? 4000 : 8000;
+    const contextLimit = taskType === 'summarize' || taskType === 'grammar' ? 16000 : 32000;
 
     // Inject conversation history for conversational task types
     if (chatHistory && chatHistory.length > 0 &&
         ['generate', 'qa', 'chat', 'explain', 'markdown'].includes(taskType)) {
-        const recent = chatHistory.slice(-10);
+        const recent = chatHistory.slice(-30);
         recent.forEach(function (m) {
             messages.push({
                 role: m.role,
-                content: m.content.substring(0, 500)
+                content: m.content.substring(0, 4000)
             });
         });
     }

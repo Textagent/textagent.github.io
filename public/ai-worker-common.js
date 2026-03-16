@@ -5,23 +5,23 @@
  * Each worker imports from this module and passes its own contextLimit override.
  */
 
-// Task-specific token limits to keep responses fast
+// Task-specific token limits — industry standard
 export const TOKEN_LIMITS = {
-    summarize: 256,
-    expand: 512,
-    rephrase: 384,
-    grammar: 384,
-    polish: 384,
-    formalize: 384,
-    elaborate: 512,
-    shorten: 256,
-    autocomplete: 128,
-    generate: 512,
-    markdown: 512,
-    explain: 384,
-    simplify: 384,
-    qa: 384,
-    chat: 512,
+    summarize: 2048,
+    expand: 4096,
+    rephrase: 2048,
+    grammar: 2048,
+    polish: 2048,
+    formalize: 2048,
+    elaborate: 4096,
+    shorten: 1024,
+    autocomplete: 512,
+    generate: 8192,
+    markdown: 8192,
+    explain: 4096,
+    simplify: 2048,
+    qa: 4096,
+    chat: 8192,
 };
 
 // System prompts for each task type
@@ -70,7 +70,7 @@ const SYSTEM_PROMPTS = {
  */
 export function buildMessages(taskType, context, userPrompt, opts = {}) {
     const contextLimit = opts.contextLimit ||
-        (taskType === 'summarize' || taskType === 'grammar' ? 1500 : 2500);
+        (taskType === 'summarize' || taskType === 'grammar' ? 16000 : 32000);
     const autocompleteLimit = opts.autocompleteLimit || 800;
 
     const systemMessage = SYSTEM_PROMPTS[taskType] || SYSTEM_PROMPTS.chat;
@@ -80,12 +80,12 @@ export function buildMessages(taskType, context, userPrompt, opts = {}) {
     const chatHistory = opts.chatHistory;
     if (chatHistory && chatHistory.length > 0 &&
         ['generate', 'qa', 'chat', 'explain', 'markdown'].includes(taskType)) {
-        // Add up to 10 recent history messages, trimming each to 500 chars
-        const recent = chatHistory.slice(-10);
+        // Add up to 30 recent history messages, trimming each to 4000 chars
+        const recent = chatHistory.slice(-30);
         recent.forEach(function (m) {
             messages.push({
                 role: m.role,
-                content: m.content.substring(0, 500)
+                content: m.content.substring(0, 4000)
             });
         });
     }
