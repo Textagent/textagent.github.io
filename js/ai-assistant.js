@@ -1171,7 +1171,7 @@
   // ===========================================================
   // Public AI Request API — for non-chat modules (e.g. ai-docgen)
   // ===========================================================
-  M.requestAiTask = function ({ taskType, context, userPrompt, enableThinking, onToken, silent, attachments }) {
+  M.requestAiTask = function ({ taskType, context, userPrompt, enableThinking, onToken, silent, attachments, maxTokensOverride }) {
     return new Promise(function (resolve, reject) {
       // Block if another generation is in progress
       if (aiIsGenerating) {
@@ -1233,7 +1233,8 @@
         userPrompt: userPrompt || '',
         messageId: messageId,
         enableThinking: !!enableThinking,
-        attachments: attachments || []
+        attachments: attachments || [],
+        maxTokensOverride: maxTokensOverride || 0
       });
     });
   };

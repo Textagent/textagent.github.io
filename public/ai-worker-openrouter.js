@@ -44,14 +44,14 @@ async function validateApiKey() {
     }
 }
 
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = []) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = [], maxTokensOverride = 0) {
     if (!apiKey) {
         self.postMessage({ type: 'error', message: 'API key not set.', messageId });
         return;
     }
     try {
         const messages = buildMessages(taskType, context, userPrompt, chatHistory);
-        let maxTokens = TOKEN_LIMITS[taskType] || 512;
+        let maxTokens = maxTokensOverride || TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
         // If there are image attachments, convert the last user message to multipart content
@@ -140,7 +140,7 @@ self.addEventListener('message', async (event) => {
         case 'setApiKey': apiKey = event.data.apiKey; break;
         case 'setModelId': modelId = event.data.modelId; break;
         case 'load': await validateApiKey(); break;
-        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory); break;
+        case 'generate': await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory, event.data.maxTokensOverride || 0); break;
         case 'ping': self.postMessage({ type: 'pong' }); break;
     }
 });

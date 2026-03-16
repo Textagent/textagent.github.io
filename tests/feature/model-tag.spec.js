@@ -60,11 +60,11 @@ test.describe('@model Tag Field', () => {
         expect(val).toMatch(/@model:\s*\S+/);
     });
 
-    test('Image tag includes @model: imagen-ultra', async ({ page }) => {
+    test('Image tag includes @model: hf-sdxl', async ({ page }) => {
         await clickAction(page, 'image-tag');
         const val = await editorValue(page);
         expect(val).toContain('{{@Image:');
-        expect(val).toMatch(/@model:\s*imagen-ultra/);
+        expect(val).toMatch(/@model:\s*hf-sdxl/);
     });
 
     test('Agent tag includes @model: field', async ({ page }) => {

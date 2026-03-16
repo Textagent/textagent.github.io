@@ -90,12 +90,12 @@
                 } else if (b.lang === 'ocr') {
                     b._effectiveModel = b.model || 'granite-docling';
                 } else if (b.lang === 'image') {
-                    b._effectiveModel = b.model || 'imagen-ultra';
+                    b._effectiveModel = b.model || 'hf-sdxl';
                 } else {
                     // For AI/Agent/Translate — need a text model, not TTS/OCR/STT/Image
                     var fallbackModel = currentModel;
                     // If current model is a specialized non-text model, fall back to qwen-local
-                    var specializedModels = ['kokoro-tts', 'voxtral-stt', 'whisper-stt', 'granite-docling', 'florence-ocr', 'imagen-ultra'];
+                    var specializedModels = ['kokoro-tts', 'voxtral-stt', 'whisper-stt', 'granite-docling', 'florence-ocr', 'imagen-ultra', 'hf-sdxl', 'hf-flux'];
                     if (specializedModels.indexOf(fallbackModel) !== -1) {
                         fallbackModel = 'qwen-local';
                     }

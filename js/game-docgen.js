@@ -23,6 +23,61 @@
         p5js: 'P5.js'
     };
 
+    // Built-in game skills — detailed AI guidance for better game generation
+    var GAME_SKILLS = {
+        'physics': {
+            name: 'Physics & Collision',
+            icon: '⚡',
+            desc: 'Proper collision detection (AABB, circle), gravity, velocity, acceleration, bounce, and friction. Makes games feel physically realistic.',
+            content: 'SKILL — Physics & Collision Engine:\n- Implement axis-aligned bounding box (AABB) collision detection for rectangular objects\n- Use circle-to-circle and circle-to-rect collision for round entities\n- Apply realistic gravity (9.8 m/s² scaled to pixels) with terminal velocity capping\n- Use velocity and acceleration vectors (vx, vy, ax, ay) for all moving objects\n- Add bounce coefficient (0.0-1.0) for wall/floor rebounds\n- Implement friction for ground surfaces that decelerates horizontal movement\n- Use delta-time (dt) based movement so physics runs consistently across frame rates\n- Separate collision response from detection: detect first, then resolve overlap by pushing objects apart\n- Add spatial partitioning (grid) if more than 20 objects need collision checks'
+        },
+        'sprite-anim': {
+            name: 'Sprite Animation',
+            icon: '🎬',
+            desc: 'Frame-based animations with sprite sheets, state machines, and smooth transitions. Brings characters to life.',
+            content: 'SKILL — Sprite Animation System:\n- Create an animation state machine with states like idle, run, jump, attack, die\n- Each state maps to a sequence of frames with configurable frame duration (e.g., 100ms per frame)\n- Use sprite sheet approach: draw sub-rectangles from a single image, or draw shapes with canvas transforms for each frame\n- Implement smooth transitions between states (e.g., jump → fall → land → idle)\n- Add squash-and-stretch on landing: scale Y down briefly, then restore\n- Use canvas save/restore and translate/rotate for character facing direction (flip horizontally)\n- Add interpolation between key poses for smoother motion\n- Include attack animations with hit-frame timing (damage applies on specific frame)\n- Death animation should play once and freeze on last frame'
+        },
+        'platformer': {
+            name: 'Platformer Mechanics',
+            icon: '🏃',
+            desc: 'Coyote time, jump buffering, variable jump height, wall sliding, and camera follow. Professional-feeling controls.',
+            content: 'SKILL — Platformer Mechanics (Game Feel):\n- Implement coyote time: allow jumping for 80-120ms after walking off a ledge\n- Add jump buffering: register jump input 100ms before landing and execute on ground contact\n- Variable jump height: short press = low jump (cut velocity by 50% on release), hold = full jump\n- Wall sliding: reduce fall speed to 30% when pressing against a wall while airborne\n- Wall jump: launch at 45° angle away from wall with full jump force\n- Use separate acceleration for ground (fast) and air (slower, ~60% of ground) for responsive but floaty air control\n- Camera should smooth-follow the player with lerp (camera.x += (target.x - camera.x) * 0.08)\n- Look-ahead: offset camera in the direction the player is moving\n- Add screen shake on hard landing (fall distance > threshold)\n- Implement one-way platforms: player passes through from below, lands on top\n- Snap to ground on small slopes to prevent bouncing'
+        },
+        'touch-controls': {
+            name: 'Mobile Touch Controls',
+            icon: '📱',
+            desc: 'On-screen D-pad, virtual joystick, swipe gestures, and tap zones. Makes games playable on phones and tablets.',
+            content: 'SKILL — Mobile Touch Controls:\n- Create a virtual joystick: fixed position (bottom-left) with a base circle and draggable thumb\n- Calculate joystick vector: normalize (dx, dy) within the base radius for direction and magnitude\n- Add action buttons (bottom-right): primary action (large, semi-transparent) and secondary (smaller)\n- Use touchstart/touchmove/touchend events (NOT click/mousedown for mobile)\n- Set passive: false on touchmove handlers that call preventDefault()\n- Support multi-touch: track each touch by its identifier for simultaneous joystick + button\n- Add swipe detection: record touch start position, calculate distance and direction on touchend\n- Minimum swipe distance threshold: 30px; detect 4 directions or 8 with diagonals\n- Draw controls with 40% opacity so they don\'t obscure gameplay\n- Auto-detect touch device: show virtual controls only on touch screens, hide on desktop\n- Set viewport meta tag: width=device-width, user-scalable=no to prevent pinch zoom'
+        },
+        'score-system': {
+            name: 'Score & Progression',
+            icon: '🏆',
+            desc: 'Score tracking, combos, multipliers, level progression, high scores with localStorage. Keeps players engaged.',
+            content: 'SKILL — Score & Progression System:\n- Track score as integer, display with leading zeros or comma formatting (12,450)\n- Implement combo system: consecutive hits/collections within 2 seconds increment a combo counter\n- Combo multiplier: score × combo_count (cap at 10x), reset on miss or timeout\n- Show floating score popups (+100, +200) that drift upward and fade out over 800ms\n- Level/wave progression: increase difficulty every N points or after clearing all enemies\n- Difficulty scaling: enemy speed +10%, spawn rate +15%, fewer power-ups per level\n- High score persistence: save top 5 scores to localStorage with player initials\n- Display current score, high score, combo counter, and level number in the HUD\n- Add star rating per level: 1-3 stars based on score thresholds\n- Show end-of-level summary: score breakdown, time bonus, combo bonus, stars earned\n- Add visual feedback on milestones: screen flash, particle burst at 1000-point intervals'
+        },
+        'sound-effects': {
+            name: 'Sound Effects',
+            icon: '🔊',
+            desc: 'Procedural audio using Web Audio API oscillators. Jump, hit, coin, explosion, and powerup sounds without any files.',
+            content: 'SKILL — Procedural Sound Effects (Web Audio API):\n- Create an AudioContext (handle user gesture requirement: resume() on first click)\n- Jump sound: short sine wave sweep from 300Hz to 600Hz over 150ms with quick decay\n- Coin/collect: two-note chime — 800Hz for 80ms then 1200Hz for 80ms, sine wave\n- Hit/damage: white noise burst (50ms) mixed with low square wave (100Hz, 100ms)\n- Explosion: white noise (300ms) with bandpass filter sweeping from 400Hz to 50Hz\n- Powerup: ascending arpeggio — 400, 500, 600, 800Hz, each 60ms, sine wave\n- Menu select: short click — 1000Hz square wave for 30ms\n- Game over: descending tones — 400, 300, 200, 150Hz, each 200ms, triangle wave\n- Use GainNode for volume envelope: attack → sustain → release\n- Keep max 8 simultaneous sounds to prevent audio glitching\n- Add a mute toggle button in the game UI'
+        },
+        'particle-fx': {
+            name: 'Particle Effects',
+            icon: '✨',
+            desc: 'Particle emitters for explosions, trails, sparks, smoke, and ambient effects. Adds visual polish.',
+            content: 'SKILL — Particle Effects System:\n- Create a Particle class: {x, y, vx, vy, life, maxLife, size, color, alpha}\n- Particle pool: pre-allocate 500 particles, reuse dead ones instead of creating new objects\n- Explosion emitter: spawn 15-30 particles in random directions (full 360°), speed 2-6, life 0.5-1s\n- Trail emitter: spawn 1-3 particles per frame at entity position, low speed (0.5), short life (0.3s)\n- Smoke: large particles (8-15px), slow upward drift, grow in size over lifetime, fade alpha\n- Sparks: tiny particles (2-3px), high initial speed (8-12), strong gravity, bounce off ground\n- Update loop: move by velocity, apply gravity if needed, reduce life by dt, fade alpha = life/maxLife\n- Render: use fillRect for square particles, arc for circles; set globalAlpha for fade\n- Color variation: use HSL with slight hue randomization (±15°) for each particle\n- Support burst mode (all at once) and continuous mode (N per frame)\n- Clean up dead particles: filter array or swap with last element for O(1) removal'
+        },
+        'ai-enemies': {
+            name: 'AI Enemy Behavior',
+            icon: '👾',
+            desc: 'Patrol patterns, chase logic, state machines, pathfinding, and attack patterns. Creates challenging opponents.',
+            content: 'SKILL — AI Enemy Behavior System:\n- Use a finite state machine per enemy: IDLE, PATROL, CHASE, ATTACK, RETREAT, DEAD\n- PATROL: move between waypoints (2-3 points), pause 1-2s at each, reverse direction\n- Detection: calculate distance to player; if within detection radius (150-250px), switch to CHASE\n- CHASE: move toward player position at 70-80% of player speed; add slight prediction of player velocity\n- Line of sight: cast a ray from enemy to player; if blocked by wall, lose interest after 3s and return to PATROL\n- ATTACK: when within attack range (30-50px), stop moving, play attack animation, deal damage on hit frame\n- Attack cooldown: 1-2 seconds between attacks to give player reaction time\n- RETREAT: if health below 25%, move away from player toward nearest health pickup or safe zone\n- Enemy types: create 2-3 variants with different speeds, health, detection ranges, and attack patterns\n  - Melee rusher: fast, low HP, close range\n  - Ranged shooter: slow, medium HP, fires projectiles every 2s\n  - Tank: very slow, high HP, high damage, large detection radius\n- Spawn system: wave-based spawning with increasing count and tougher enemy mix per wave\n- Add brief invulnerability flash (100ms blink) when enemy takes damage'
+        }
+    };
+
+    // Store for uploaded custom skill files (survives re-renders)
+    var uploadedSkills = new Map();
+
     // ==============================================
     // HELPERS
     // ==============================================
@@ -116,7 +171,45 @@
                 generatedGames.set(blockIndex, prebuilts[prebuiltId]);
             }
 
+            // Check for @skill: field (comma-separated skill IDs)
+            var skillMatch = prompt.match(new RegExp('(?:^|\\s)(?:@skill|Skill):\\s*([^@}]+)', 'mi'));
+            var selectedSkillIds = [];
+            if (skillMatch) {
+                selectedSkillIds = skillMatch[1].split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+            }
+
             var cardModelOpts = buildModelOpts(blockModelId);
+
+            // Build skills picker options
+            var skillOptsHtml = '<option value="">🧩 Add Skill…</option>';
+            Object.keys(GAME_SKILLS).forEach(function (sid) {
+                var sk = GAME_SKILLS[sid];
+                var sel = selectedSkillIds.indexOf(sid) >= 0 ? ' selected' : '';
+                skillOptsHtml += '<option value="' + sid + '"' + sel + ' title="' + escapeHtml(sk.desc) + '">' + sk.icon + ' ' + escapeHtml(sk.name) + '</option>';
+            });
+            // Add uploaded skills
+            uploadedSkills.forEach(function (content, cid) {
+                var sel = selectedSkillIds.indexOf(cid) >= 0 ? ' selected' : '';
+                var label = cid.replace('custom-', '').replace(/-/g, ' ');
+                skillOptsHtml += '<option value="' + escapeHtml(cid) + '"' + sel + '>📄 ' + escapeHtml(label) + '</option>';
+            });
+            skillOptsHtml += '<option value="__upload__">📂 Upload .md file…</option>';
+
+            // Build skill pills for currently attached skills
+            var skillPillsHtml = '';
+            if (selectedSkillIds.length > 0) {
+                skillPillsHtml = '<div class="ai-game-skill-pills" data-game-index="' + blockIndex + '">';
+                selectedSkillIds.forEach(function (sid) {
+                    var sk = GAME_SKILLS[sid] || (uploadedSkills.has(sid) ? { icon: '📄', name: sid.replace('custom-', '').replace(/-/g, ' '), desc: 'Custom uploaded skill' } : null);
+                    if (sk) {
+                        skillPillsHtml += '<span class="ai-game-skill-pill" data-skill="' + escapeHtml(sid) + '" data-game-index="' + blockIndex + '" title="' + escapeHtml(sk.desc || '') + '">'
+                            + sk.icon + ' ' + escapeHtml(sk.name)
+                            + '<button class="ai-game-skill-pill-remove" data-skill="' + escapeHtml(sid) + '" data-game-index="' + blockIndex + '" title="Remove skill">✕</button>'
+                            + '</span>';
+                    }
+                });
+                skillPillsHtml += '</div>';
+            }
 
             // Strip metadata from display
             var displayText = prompt;
@@ -124,6 +217,7 @@
             displayText = displayText.replace(new RegExp('(?:^|\\s)(?:@model|Model):\\s*\\S+' + fieldEnd, 'mi'), '').trim();
             displayText = displayText.replace(new RegExp('(?:^|\\s)(?:@var|Var):\\s*\\S+' + fieldEnd, 'mi'), '').trim();
             displayText = displayText.replace(new RegExp('(?:^|\\s)(?:@prebuilt|Prebuilt):\\s*\\S+' + fieldEnd, 'mi'), '').trim();
+            displayText = displayText.replace(new RegExp('(?:^|\\s)(?:@skill|Skill):\\s*[^@}]+', 'mi'), '').trim();
 
             var hasPromptField = /(?:^|\s)(?:@prompt|Prompt):\s*/m.test(displayText);
             var promptFieldMatch = displayText.match(/(?:^|\s)(?:@prompt|Prompt):\s*(.*?)$/m);
@@ -151,6 +245,7 @@
                 + '<span class="ai-game-engine-badge">' + ENGINE_LABELS[gameEngine] + '</span>'
                 + '<div class="ai-game-actions">'
                 + '<select class="ai-game-model-select" data-game-index="' + blockIndex + '" title="Model for game generation">' + cardModelOpts + '</select>'
+                + '<select class="ai-game-skill-select" data-game-index="' + blockIndex + '" title="Attach a skill to improve game quality">' + skillOptsHtml + '</select>'
                 + '<button class="ai-game-btn ai-game-generate" data-game-index="' + blockIndex + '" title="Generate game with AI">▶ Generate</button>'
                 + '<button class="ai-game-btn ai-game-play" data-game-index="' + blockIndex + '" title="Play generated game"' + (hasGame ? '' : ' style="display:none"') + '>▶ Play</button>'
                 + '<button class="ai-game-btn ai-game-export" data-game-index="' + blockIndex + '" title="Download as standalone HTML"' + (hasGame ? '' : ' style="display:none"') + '>📥 Export</button>'
@@ -159,6 +254,7 @@
                 + '<button class="ai-game-btn ai-game-remove" data-game-index="' + blockIndex + '" title="Remove tag">✕</button>'
                 + '</div></div>'
                 + pillsHtml
+                + skillPillsHtml
                 + (descText ? '<div class="ai-game-desc">' + escapeHtml(descText) + '</div>' : '')
                 + (hasPromptField
                     ? '<div class="ai-game-prompt"><textarea class="ai-game-prompt-input" data-game-index="' + blockIndex + '" placeholder="Describe the game you want to build\u2026" rows="3">' + escapeHtml(promptVal) + '</textarea></div>'
@@ -306,6 +402,72 @@
             });
         });
 
+        // Skill select — attach/upload skills
+        container.querySelectorAll('.ai-game-skill-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var skillId = this.value;
+                var idx = parseInt(this.dataset.gameIndex, 10);
+                this.value = ''; // Reset dropdown to placeholder
+
+                if (skillId === '__upload__') {
+                    // Trigger file upload for custom .md skill
+                    var fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = '.md,.txt,.markdown';
+                    fileInput.style.display = 'none';
+                    document.body.appendChild(fileInput);
+                    fileInput.addEventListener('change', function () {
+                        var file = this.files[0];
+                        if (!file) { fileInput.remove(); return; }
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            var customId = 'custom-' + file.name.replace(/\.[^.]+$/, '').replace(/\s+/g, '-').toLowerCase();
+                            uploadedSkills.set(customId, e.target.result);
+                            addSkillToCard(idx, customId, container);
+                            M.showToast && M.showToast('📄 Skill "' + file.name + '" uploaded!', 'success');
+                            fileInput.remove();
+                        };
+                        reader.readAsText(file);
+                    });
+                    fileInput.click();
+                    return;
+                }
+
+                if (!skillId) return;
+                addSkillToCard(idx, skillId, container);
+            });
+        });
+
+        // Skill pill remove buttons
+        container.querySelectorAll('.ai-game-skill-pill-remove').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.gameIndex, 10);
+                var skillId = this.dataset.skill;
+                removeSkillFromCard(idx, skillId);
+            });
+        });
+
+        // Skill pill hover — show info tooltip
+        container.querySelectorAll('.ai-game-skill-pill').forEach(function (pill) {
+            pill.addEventListener('mouseenter', function () {
+                var sid = this.dataset.skill;
+                var sk = GAME_SKILLS[sid];
+                if (!sk) return;
+                // Show tooltip
+                var tip = document.createElement('div');
+                tip.className = 'ai-game-skill-tooltip';
+                tip.textContent = sk.desc;
+                this.appendChild(tip);
+                requestAnimationFrame(function () { tip.classList.add('visible'); });
+            });
+            pill.addEventListener('mouseleave', function () {
+                var tip = this.querySelector('.ai-game-skill-tooltip');
+                if (tip) tip.remove();
+            });
+        });
+
         // Prompt input sync
         container.querySelectorAll('.ai-game-prompt-input').forEach(function (ta) {
             var timer = null;
@@ -374,12 +536,15 @@
         var promptArea = card ? card.querySelector('.ai-game-prompt-input') : null;
         var userPrompt = promptArea ? promptArea.value.trim() : '';
         if (!userPrompt) {
-            // Fallback to parsed prompt
+            // Fallback to parsed prompt — use regexes that work for both
+            // multi-line and single-line tags (no $ anchor)
             userPrompt = block.prompt
-                .replace(/^\s*(?:@engine|Engine):\s*\S+$/mi, '')
-                .replace(/^\s*(?:@model|Model):\s*\S+$/mi, '')
-                .replace(/^\s*(?:@var|Var):\s*\S+$/mi, '')
-                .replace(/^\s*(?:@prompt|Prompt):\s*/mi, '')
+                .replace(/(?:^|\s)(?:@engine|Engine):\s*[^@}\s]+/mi, '')
+                .replace(/(?:^|\s)(?:@model|Model):\s*[^@}\s]+/mi, '')
+                .replace(/(?:^|\s)(?:@var|Var):\s*[^@}\s]+/mi, '')
+                .replace(/(?:^|\s)(?:@prebuilt|Prebuilt):\s*[^@}\s]+/mi, '')
+                .replace(/(?:^|\s)(?:@skill|Skill):\s*[^@}]+/mi, '')
+                .replace(/(?:^|\s)(?:@prompt|Prompt):\s*/mi, '')
                 .trim();
         }
 
@@ -399,7 +564,29 @@
         if (card) card.classList.add('ai-game-loading');
 
         var systemPrompt = GAME_SYSTEM_PROMPTS[engine] || GAME_SYSTEM_PROMPTS.threejs;
-        var fullPrompt = systemPrompt + '\n\nUser\'s game description:\n' + userPrompt;
+
+        // Inject attached skills into the prompt
+        var skillSelect = card ? card.querySelector('.ai-game-skill-select') : null;
+        var skillPills = card ? card.querySelectorAll('.ai-game-skill-pill') : [];
+        var attachedSkillIds = [];
+        skillPills.forEach(function (pill) {
+            var sid = pill.dataset.skill;
+            if (sid) attachedSkillIds.push(sid);
+        });
+
+        var skillsContext = '';
+        attachedSkillIds.forEach(function (sid) {
+            var sk = GAME_SKILLS[sid];
+            if (sk) {
+                skillsContext += '\n\n' + sk.content;
+            } else if (uploadedSkills.has(sid)) {
+                skillsContext += '\n\nCUSTOM SKILL:\n' + uploadedSkills.get(sid);
+            }
+        });
+
+        var fullPrompt = systemPrompt + (skillsContext ? '\n\n--- ATTACHED SKILLS (follow these guidelines) ---' + skillsContext + '\n\n--- END SKILLS ---' : '') + '\n\nUser\'s game description:\n' + userPrompt;
+
+        console.log('🎮 [Game Generation] INPUT PROMPT:\n', fullPrompt);
 
         try {
             var result = await M.requestAiTask({
@@ -407,13 +594,16 @@
                 context: '',
                 userPrompt: fullPrompt,
                 enableThinking: false,
-                silent: true
+                silent: true,
+                maxTokensOverride: 4096
             });
 
+            console.log('🎮 [Game Generation] RAW OUTPUT (' + result.length + ' chars):\n', result.substring(0, 500) + (result.length > 500 ? '\n... [truncated]' : ''));
             // Clean: strip markdown fences if present
             var cleaned = result;
-            var fenceMatch = cleaned.match(/```(?:html)?\s*\n([\s\S]*?)```/);
-            if (fenceMatch) cleaned = fenceMatch[1];
+            // Handle ```html ... ```, ```HTML ... ```, or unclosed fences
+            var fenceMatch = cleaned.match(/```(?:html|HTML|htm)?\s*\n?([\s\S]*?)(?:```|$)/);
+            if (fenceMatch && fenceMatch[1].trim().length > 50) cleaned = fenceMatch[1];
             cleaned = cleaned.trim();
 
             // Validate — must contain <html or <!DOCTYPE
@@ -431,6 +621,7 @@
             }
 
             // Store and show Play/Export buttons
+            console.log('🎮 [Game Generation] CLEANED HTML (' + cleaned.length + ' chars):\\n', cleaned.substring(0, 300) + (cleaned.length > 300 ? '\n... [truncated]' : ''));
             generatedGames.set(blockIndex, cleaned);
 
             var playBtn = card ? card.querySelector('.ai-game-play') : null;
@@ -543,7 +734,7 @@
         if (blockIndex >= blocks.length) return;
         var block = blocks[blockIndex];
         var tagContent = block.content;
-        var engineRe = /^(\s*)(?:@engine|Engine):\s*\S+$/mi;
+        var engineRe = /([ \t]*)(?:@engine|Engine):\s*[^@}\s]+/mi;
         var newTag;
         if (engineRe.test(tagContent)) {
             newTag = tagContent.replace(engineRe, '$1@engine: ' + newEngine);
@@ -562,7 +753,7 @@
         if (blockIndex >= blocks.length) return;
         var block = blocks[blockIndex];
         var tagContent = block.content;
-        var modelRe = /^(\s*)(?:@model|Model):\s*\S+$/mi;
+        var modelRe = /([ \t]*)(?:@model|Model):\s*[^@}\s]+/mi;
         var newTag;
         if (modelRe.test(tagContent)) {
             newTag = tagContent.replace(modelRe, '$1@model: ' + modelId);
@@ -581,7 +772,8 @@
         if (blockIndex >= blocks.length) return;
         var block = blocks[blockIndex];
         var tagContent = block.content;
-        var promptRe = /^(\s*)(?:@prompt|Prompt):\s*(.*)$/mi;
+        // Match @prompt: value — stop before next @field, or }}
+        var promptRe = /([ \t]*)(?:@prompt|Prompt):\s*([^@}]*)/mi;
         var newTag;
         if (promptRe.test(tagContent)) {
             newTag = tagContent.replace(promptRe, '$1@prompt: ' + newPrompt.trim());
@@ -593,6 +785,68 @@
                 + tagContent.substring(closingIdx);
         }
         M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+    }
+
+    function syncSkillToEditor(blockIndex, skillIds) {
+        var text = M.markdownEditor ? M.markdownEditor.value : '';
+        var blocks = getGameBlocks(text);
+        if (blockIndex >= blocks.length) return;
+        var block = blocks[blockIndex];
+        var tagContent = block.content;
+        var skillRe = /^(\s*)(?:@skill|Skill):\s*[^@}]+/mi;
+        var skillVal = skillIds.join(', ');
+        var newTag;
+        if (skillRe.test(tagContent)) {
+            if (skillVal) {
+                newTag = tagContent.replace(skillRe, '$1@skill: ' + skillVal);
+            } else {
+                // Remove @skill: line if no skills
+                newTag = tagContent.replace(/^\s*(?:@skill|Skill):\s*[^@}]+\n?/mi, '');
+            }
+        } else if (skillVal) {
+            // Insert before closing }}
+            var closingIdx = tagContent.lastIndexOf('}}');
+            newTag = tagContent.substring(0, closingIdx)
+                + '  @skill: ' + skillVal + '\n'
+                + tagContent.substring(closingIdx);
+        } else {
+            return; // No skills and no existing field
+        }
+        M.markdownEditor.value = text.substring(0, block.start) + newTag + text.substring(block.end);
+    }
+
+    // Helper: add a skill to a card and sync to editor
+    function addSkillToCard(blockIndex, skillId, container) {
+        // Read current skills from pills (source of truth)
+        var card = container ? container.querySelector('.ai-game-card[data-game-index="' + blockIndex + '"]') : null;
+        var currentIds = [];
+        if (card) {
+            card.querySelectorAll('.ai-game-skill-pill').forEach(function (p) {
+                currentIds.push(p.dataset.skill);
+            });
+        }
+        if (currentIds.indexOf(skillId) >= 0) return; // Already attached
+        currentIds.push(skillId);
+        syncSkillToEditor(blockIndex, currentIds);
+        // Re-render to show updated pills
+        if (M.markdownEditor) M.markdownEditor.dispatchEvent(new Event('input'));
+    }
+
+    // Helper: remove a skill from a card and sync to editor
+    function removeSkillFromCard(blockIndex, skillId) {
+        var text = M.markdownEditor ? M.markdownEditor.value : '';
+        var blocks = getGameBlocks(text);
+        if (blockIndex >= blocks.length) return;
+        // Parse current skill IDs from the tag
+        var block = blocks[blockIndex];
+        var skillMatch = block.inner.match(/(?:^|\s)(?:@skill|Skill):\s*([^@}]+)/mi);
+        var currentIds = [];
+        if (skillMatch) {
+            currentIds = skillMatch[1].split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+        }
+        currentIds = currentIds.filter(function (id) { return id !== skillId; });
+        syncSkillToEditor(blockIndex, currentIds);
+        if (M.markdownEditor) M.markdownEditor.dispatchEvent(new Event('input'));
     }
 
     // ==============================================

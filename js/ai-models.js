@@ -172,6 +172,48 @@
             category: 'cloud-image',
         },
 
+        // ── Cloud: Stable Diffusion XL (HuggingFace) ──────────
+        'hf-sdxl': {
+            label: 'SDXL · HuggingFace',
+            badge: 'SDXL',
+            icon: 'bi bi-brush',
+            isImageModel: true,
+            statusReady: 'Stable Diffusion XL · HuggingFace',
+            workerFile: 'ai-worker-hf-image.js',
+            workerModelId: 'stabilityai/stable-diffusion-xl-base-1.0',
+            keyStorageKey: window.MDView.KEYS.API_KEY_HF,
+            dialogTitle: 'Connect to HuggingFace',
+            dialogDesc: 'Enter your free HuggingFace token to use <strong>Stable Diffusion XL</strong> image generation',
+            dialogPlaceholder: 'hf_xxxxxxxxxxxxxxxxxxxx',
+            dialogLink: 'https://huggingface.co/settings/tokens',
+            dialogLinkText: 'huggingface.co/settings/tokens',
+            dialogIcon: 'bi bi-brush',
+            dropdownName: 'Stable Diffusion XL',
+            dropdownDesc: 'HuggingFace · Free tier · Stability AI',
+            category: 'cloud-image',
+        },
+
+        // ── Cloud: FLUX.1 Schnell (HuggingFace) ──────────────
+        'hf-flux': {
+            label: 'FLUX.1 Schnell · HuggingFace',
+            badge: 'FLUX.1',
+            icon: 'bi bi-palette2',
+            isImageModel: true,
+            statusReady: 'FLUX.1 Schnell · HuggingFace',
+            workerFile: 'ai-worker-hf-image.js',
+            workerModelId: 'black-forest-labs/FLUX.1-schnell',
+            keyStorageKey: window.MDView.KEYS.API_KEY_HF,
+            dialogTitle: 'Connect to HuggingFace',
+            dialogDesc: 'Enter your free HuggingFace token to use <strong>FLUX.1 Schnell</strong> image generation',
+            dialogPlaceholder: 'hf_xxxxxxxxxxxxxxxxxxxx',
+            dialogLink: 'https://huggingface.co/settings/tokens',
+            dialogLinkText: 'huggingface.co/settings/tokens',
+            dialogIcon: 'bi bi-palette2',
+            dropdownName: 'FLUX.1 Schnell',
+            dropdownDesc: 'HuggingFace · Free tier · Black Forest Labs',
+            category: 'cloud-image',
+        },
+
         // ── Cloud: Grok 4.1 Fast via OpenRouter ───────────────
         'openrouter-grok': {
             label: 'Grok 4.1 Fast · xAI',

@@ -100,7 +100,14 @@
         if (M.isVimeoUrl && M.isVimeoUrl(href)) {
             return M.buildVimeoEmbedHtml(href, text || title);
         }
-        // Default image rendering
+        // Default image rendering — resolve gen-img: references first
+        if (href && href.startsWith('gen-img:')) {
+            var genId = href.substring(8); // strip "gen-img:"
+            var registry = window.MDView && window.MDView._genImages;
+            if (registry && registry[genId]) {
+                href = registry[genId];
+            }
+        }
         var out = `<img src="${href}" alt="${text || ''}"` +
             (title ? ` title="${title}"` : '') + '>';
         return out;

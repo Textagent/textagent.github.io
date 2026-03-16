@@ -204,7 +204,7 @@ function updateCache(cache, outputs) {
 /**
  * Generate text based on a prompt with system instructions
  */
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = []) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = [], maxTokensOverride = 0) {
     if (!session || !tokenizer) {
         self.postMessage({
             type: "error",
@@ -226,7 +226,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         const messages = buildMessages(taskType, context, augmentedPrompt || userPrompt, chatHistory);
 
         // Use task-specific token limit; thinking mode gets more
-        let maxTokens = TOKEN_LIMITS[taskType] || 512;
+        let maxTokens = maxTokensOverride || TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
         // Apply chat template and tokenize
@@ -337,7 +337,7 @@ self.addEventListener("message", async (event) => {
             await loadModel();
             break;
         case "generate":
-            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory);
+            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory, event.data.maxTokensOverride || 0);
             break;
         case "ping":
             self.postMessage({ type: "pong" });

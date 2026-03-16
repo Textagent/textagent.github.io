@@ -429,3 +429,135 @@
 .dark-mode .ai-game-import-hint {
     color: #9ca3af;
 }
+
+/* ─── Skills Picker Dropdown ─── */
+.ai-game-skill-select {
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    background: transparent;
+    color: inherit;
+    max-width: 150px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.ai-game-skill-select:hover {
+    border-color: #10b981;
+}
+.ai-game-skill-select:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+/* ─── Skill Pills ─── */
+.ai-game-skill-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(16, 185, 129, 0.04);
+    border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.ai-game-skill-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 14px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: default;
+    transition: all 0.15s;
+    position: relative;
+    user-select: none;
+}
+.ai-game-skill-pill:hover {
+    background: rgba(16, 185, 129, 0.18);
+}
+
+.ai-game-skill-pill-remove {
+    border: none;
+    background: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 0.65rem;
+    padding: 0 2px;
+    line-height: 1;
+    border-radius: 50%;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 2px;
+}
+.ai-game-skill-pill-remove:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Skill Tooltip ─── */
+.ai-game-skill-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    min-width: 200px;
+    max-width: 300px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.ai-game-skill-tooltip.visible {
+    opacity: 1;
+}
+.ai-game-skill-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1f2937;
+}
+
+/* ─── Dark Mode: Skills ─── */
+[data-theme="dark"] .ai-game-skill-select,
+.dark-mode .ai-game-skill-select {
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="dark"] .ai-game-skill-pills,
+.dark-mode .ai-game-skill-pills {
+    background: rgba(16, 185, 129, 0.06);
+    border-bottom-color: rgba(16, 185, 129, 0.15);
+}
+
+[data-theme="dark"] .ai-game-skill-pill,
+.dark-mode .ai-game-skill-pill {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+[data-theme="dark"] .ai-game-skill-pill:hover,
+.dark-mode .ai-game-skill-pill:hover {
+    background: rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="dark"] .ai-game-skill-pill-remove,
+.dark-mode .ai-game-skill-pill-remove {
+    color: #6b7280;
+}

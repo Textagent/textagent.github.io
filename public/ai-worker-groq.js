@@ -67,7 +67,7 @@ async function validateApiKey() {
 /**
  * Generate text via Groq API with SSE streaming
  */
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = []) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = [], maxTokensOverride = 0) {
     if (!apiKey) {
         self.postMessage({
             type: 'error',
@@ -99,7 +99,7 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             }
         }
 
-        let maxTokens = TOKEN_LIMITS[taskType] || 512;
+        let maxTokens = maxTokensOverride || TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
         const response = await fetch(GROQ_API_URL, {
@@ -210,7 +210,7 @@ self.addEventListener('message', async (event) => {
             await validateApiKey();
             break;
         case 'generate':
-            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory);
+            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory, event.data.maxTokensOverride || 0);
             break;
         case 'ping':
             self.postMessage({ type: 'pong' });

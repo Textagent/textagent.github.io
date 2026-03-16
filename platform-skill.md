@@ -276,8 +276,9 @@ Creates playable HTML games — either pre-built or AI-generated. Supports Impor
 |-------|----------|-------------|
 | `@engine:` | No | `canvas2d`, `threejs`, or `p5js` (default: threejs) |
 | `@model:` | No | AI model for generation |
-| `@prebuilt:` | No | Pre-built game: `chess`, `snake`, `shooter`, `pong`, `breakout`, `maths` |
+| `@prebuilt:` | No | Pre-built game: `chess`, `snake`, `shooter`, `pong`, `breakout`, `maths`, `flappy`, `runner` |
 | `@prompt:` | No | Game description for AI generation |
+| `@skill:` | No | Comma-separated skill IDs to enhance AI game generation. Built-in: `physics`, `sprite-anim`, `platformer`, `touch-controls`, `score-system`, `sound-effects`, `particle-fx`, `ai-enemies`. Also supports uploaded `.md` files. |
 
 **Example — pre-built game:**
 ```
@@ -290,6 +291,16 @@ Creates playable HTML games — either pre-built or AI-generated. Supports Impor
   @engine: threejs
   @model: gemini-flash
   @prompt: Build a 3D maze runner game where the player navigates through procedurally generated corridors
+}}
+```
+
+**Example — AI-generated with skills for better quality:**
+```
+{{@Game:
+  @engine: canvas2d
+  @model: gemini-flash
+  @skill: physics, platformer, score-system
+  @prompt: Build a side-scrolling platformer with collectible coins and enemies
 }}
 ```
 

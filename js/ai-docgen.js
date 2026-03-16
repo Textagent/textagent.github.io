@@ -118,7 +118,7 @@
             var aiDefaultModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : '') || '';
             M.wrapSelectionWith('{{@AI:\n  @model: ' + (aiDefaultModel || 'qwen-local') + '\n  @prompt: ', '\n}}', placeholder);
         } else if (type === 'Image') {
-            M.wrapSelectionWith('{{@Image:\n  @model: imagen-ultra\n  @prompt: ', '\n}}', placeholder);
+            M.wrapSelectionWith('{{@Image:\n  @model: hf-sdxl\n  @prompt: ', '\n}}', placeholder);
         } else {
             M.wrapSelectionWith('{{@' + type + ': ', '}}', placeholder);
         }

@@ -360,7 +360,7 @@
 
     // Generate image for an {{Image:}} block via the image worker
     async function generateImageForBlock(block, modelId) {
-        var imageModelId = modelId || 'imagen-ultra';
+        var imageModelId = modelId || 'hf-sdxl';
         var providers = M.getCloudProviders ? M.getCloudProviders() : {};
         var provider = providers[imageModelId];
 
@@ -389,7 +389,12 @@
                 if (data.type === 'image-complete') {
                     worker.removeEventListener('message', onMessage);
                     var mime = data.mimeType || 'image/png';
-                    var md = '![' + block.prompt.substring(0, 60) + '](data:' + mime + ';base64,' + data.imageBase64 + ')';
+                    // Store image in registry with short ID for clean editor text
+                    var dataUri = 'data:' + mime + ';base64,' + data.imageBase64;
+                    if (!M._genImages) M._genImages = {};
+                    var genId = Math.random().toString(36).substring(2, 10);
+                    M._genImages[genId] = dataUri;
+                    var md = '![' + block.prompt.substring(0, 60) + '](gen-img:' + genId + ')';
                     resolve(md);
                 } else if (data.type === 'image-error') {
                     worker.removeEventListener('message', onMessage);

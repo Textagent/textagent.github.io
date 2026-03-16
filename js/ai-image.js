@@ -59,7 +59,7 @@
     function getImagenWorker() {
         if (imagenWorker && imagenWorkerReady) return imagenWorker;
 
-        var imagenConfig = window.AI_MODELS?.['imagen-ultra'];
+        var imagenConfig = window.AI_MODELS?.['hf-sdxl'];
         if (!imagenConfig) return null;
 
         var geminiKey = localStorage.getItem(imagenConfig.keyStorageKey);
@@ -104,7 +104,12 @@
         if (welcome) welcome.remove();
 
         var dataUri = 'data:' + (mimeType || 'image/png') + ';base64,' + imageBase64;
-        var mdText = '![' + prompt + '](' + dataUri + ')';
+
+        // Store image in registry with short ID for clean editor text
+        if (!M._genImages) M._genImages = {};
+        var genId = Math.random().toString(36).substring(2, 10);
+        M._genImages[genId] = dataUri;
+        var mdText = '![' + prompt + '](gen-img:' + genId + ')';
 
         var msg = document.createElement('div');
         msg.className = 'ai-message ai-message-ai';
@@ -120,6 +125,9 @@
             '        </button>\n' +
             '        <button class="ai-msg-action-btn ai-img-copy-btn" title="Copy markdown">\n' +
             '          <i class="bi bi-clipboard"></i> Copy MD\n' +
+            '        </button>\n' +
+            '        <button class="ai-msg-action-btn ai-img-save-btn" title="Download image as PNG">\n' +
+            '          <i class="bi bi-download"></i> Save\n' +
             '        </button>\n' +
             '      </div>\n';
         aiChatArea.appendChild(msg);
@@ -145,13 +153,33 @@
                 setTimeout(function () { self.innerHTML = '<i class="bi bi-clipboard"></i> Copy MD'; }, 1500);
             });
         });
+
+        // Wire up Save button — downloads the image as a PNG file
+        msg.querySelector('.ai-img-save-btn').addEventListener('click', function () {
+            var self = this;
+            try {
+                var a = document.createElement('a');
+                a.href = dataUri;
+                // Generate a safe filename from the prompt
+                var safeName = prompt.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_').substring(0, 40) || 'generated_image';
+                var ext = (mimeType || 'image/png').split('/')[1] || 'png';
+                a.download = safeName + '.' + ext;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                self.innerHTML = '<i class="bi bi-check-lg"></i> Saved';
+                setTimeout(function () { self.innerHTML = '<i class="bi bi-download"></i> Save'; }, 1500);
+            } catch (err) {
+                M.showToast('Failed to save image: ' + err.message, 'error');
+            }
+        });
     }
 
     // --- Generate image from prompt ---
     function generateImage(prompt, aspectRatio) {
         var currentModel = _ai.currentModel;
         var currentModelCfg = _ai.models[currentModel];
-        var imageModelId = (currentModelCfg && currentModelCfg.isImageModel) ? currentModel : 'imagen-ultra';
+        var imageModelId = (currentModelCfg && currentModelCfg.isImageModel) ? currentModel : 'hf-sdxl';
         var provider = _ai.CLOUD_PROVIDERS[imageModelId];
 
         if (!provider) {
@@ -227,13 +255,13 @@
     var imageChip = document.getElementById('ai-image-chip');
     if (imageChip) {
         imageChip.addEventListener('click', function () {
-            var imagenConfig = window.AI_MODELS?.['imagen-ultra'];
+            var imagenConfig = window.AI_MODELS?.['hf-sdxl'];
             if (!imagenConfig) return;
 
             var geminiKey = localStorage.getItem(imagenConfig.keyStorageKey);
             if (!geminiKey) {
                 if (!_ai.panelOpen) M.openAiPanel();
-                _ai.showApiKeyModal('imagen-ultra');
+                _ai.showApiKeyModal('hf-sdxl');
                 return;
             }
             showImageModal();
