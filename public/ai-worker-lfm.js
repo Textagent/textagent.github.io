@@ -18,7 +18,7 @@ import { TOKEN_LIMITS, buildMessages as _buildMessages } from './ai-worker-commo
 
 // CDN URLs
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
-const ORT_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.webgpu.min.mjs";
+const ORT_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/ort.webgpu.min.mjs";
 
 // Model host
 const MODEL_HOST = "https://huggingface.co";
@@ -35,8 +35,8 @@ let MODEL_DTYPE = "q4";  // 'q4', 'q8', or 'fp16'
 
 // LFM architecture constants (from config.json)
 const HIDDEN_SIZE = 2048;
-const NUM_KV_HEADS = 8;
-const HEAD_DIM = 256;
+const NUM_KV_HEADS = 8;       // num_key_value_heads
+const HEAD_DIM = 64;           // hidden_size / num_attention_heads = 2048 / 32
 
 // Runtime state
 let tokenizer = null;
@@ -127,9 +127,11 @@ async function loadModel() {
             const dataPath = `${modelBase}/onnx/${onnxFile}_data`;
 
             // Report download progress for the main model file
+            // Note: ONNX Runtime downloads the external data (~600 MB+) internally
+            // without a progress callback, so we show an informative status message.
             self.postMessage({
                 type: "status",
-                message: `Downloading ${onnxFile}...`,
+                message: `Downloading ${MODEL_LABEL} weights — this may take a few minutes...`,
             });
 
             session = await ort.InferenceSession.create(onnxPath, {
@@ -142,7 +144,9 @@ async function loadModel() {
             await loadFromHost(MODEL_ID);
         } catch (primaryErr) {
             // Fallback to LiquidAI org
-            console.warn(`textagent model failed: ${primaryErr.message}. Falling back to ${MODEL_ORG_FALLBACK}…`);
+            const errMsg = (primaryErr && primaryErr.message) || String(primaryErr);
+            console.warn(`textagent model failed: ${errMsg}. Falling back to ${MODEL_ORG_FALLBACK}…`);
+            console.error('Primary load error:', primaryErr);
             self.postMessage({ type: "status", message: `Falling back to ${MODEL_ORG_FALLBACK} models…` });
             MODEL_ID = MODEL_ID.replace('textagent/', MODEL_ORG_FALLBACK + '/');
             tokenizer = null;
@@ -152,12 +156,14 @@ async function loadModel() {
 
         self.postMessage({ type: "loaded", device: "webgpu" });
     } catch (error) {
-        const hint = error.message.includes("Failed to fetch") || error.message.includes("NetworkError")
+        const errMsg = (error && error.message) || String(error);
+        const hint = errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError")
             ? " (Check your internet connection and ensure the model host is not blocked)"
             : "";
+        console.error('LFM load error:', error);
         self.postMessage({
             type: "error",
-            message: `Failed to load LFM model: ${error.message}${hint}`,
+            message: `Failed to load LFM model: ${errMsg}${hint}`,
         });
     }
 }
@@ -222,12 +228,17 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             augmentedPrompt += '\n\n[Attached File: ' + (att.name || 'file') + ']\n' + att.textContent;
         });
 
-        // Build messages
-        const messages = buildMessages(taskType, context, augmentedPrompt || userPrompt, chatHistory);
+        // Build messages — append detail hint since LFM Thinking tends to be terse
+        // after its reasoning phase
+        const detailHint = (taskType === 'generate' || taskType === 'chat' || taskType === 'qa' || taskType === 'explain')
+            ? '\n\nProvide a detailed, comprehensive response with explanations.' : '';
+        const messages = buildMessages(taskType, context, (augmentedPrompt || userPrompt) + detailHint, chatHistory);
 
-        // Use task-specific token limit; thinking mode gets more
-        let maxTokens = maxTokensOverride || TOKEN_LIMITS[taskType] || 512;
-        if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
+        // LFM is a Thinking model — it always generates <think>...</think> reasoning
+        // before the answer, consuming significant tokens. Use higher minimums.
+        let maxTokens = maxTokensOverride || TOKEN_LIMITS[taskType] || 2048;
+        maxTokens = Math.max(maxTokens, 2048); // ensure thinking has room
+        if (enableThinking) maxTokens = Math.max(maxTokens * 2, 4096);
 
         // Apply chat template and tokenize
         const prompt = tokenizer.apply_chat_template(messages, {
@@ -261,18 +272,42 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                 ...cache,
             });
 
-            // Greedy decode: argmax of last token logits
+            // Temperature sampling with top-k for better response quality
+            // (greedy argmax causes small models to produce very short answers)
             const logits = outputs.logits;
             const vocabSize = logits.dims[2];
             const lastLogits = logits.data.slice((logits.dims[1] - 1) * vocabSize);
 
-            let nextToken = 0;
-            let maxVal = -Infinity;
+            const temperature = enableThinking ? 0.6 : 0.7;
+            const topK = 40;
+
+            // Apply temperature scaling
+            const scaled = new Float32Array(lastLogits.length);
             for (let i = 0; i < lastLogits.length; i++) {
-                if (lastLogits[i] > maxVal) {
-                    maxVal = lastLogits[i];
-                    nextToken = i;
-                }
+                scaled[i] = lastLogits[i] / temperature;
+            }
+
+            // Top-k filtering: find top-k indices
+            const indices = Array.from({ length: scaled.length }, (_, i) => i);
+            indices.sort((a, b) => scaled[b] - scaled[a]);
+            const topKIndices = indices.slice(0, topK);
+
+            // Softmax over top-k
+            let maxLogit = scaled[topKIndices[0]];
+            let sumExp = 0;
+            const probs = new Float32Array(topK);
+            for (let i = 0; i < topK; i++) {
+                probs[i] = Math.exp(scaled[topKIndices[i]] - maxLogit);
+                sumExp += probs[i];
+            }
+            for (let i = 0; i < topK; i++) probs[i] /= sumExp;
+
+            // Sample from the distribution
+            let r = Math.random();
+            let nextToken = topKIndices[0]; // fallback
+            for (let i = 0; i < topK; i++) {
+                r -= probs[i];
+                if (r <= 0) { nextToken = topKIndices[i]; break; }
             }
 
             generatedTokens.push(nextToken);

@@ -787,7 +787,14 @@
           break;
 
         case 'complete':
-          M._ai.handleAiResponse(msg.text, msg.messageId);
+          // Use handleGroqComplete (not handleAiResponse) because this worker
+          // also streams tokens. handleGroqComplete reuses the existing streaming
+          // bubble; handleAiResponse would create a duplicate.
+          M._ai.handleGroqComplete(msg.text, msg.messageId);
+          break;
+
+        case 'token':
+          M._ai.handleStreamingToken(msg.token, msg.messageId);
           break;
 
         case 'error':
