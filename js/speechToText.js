@@ -74,6 +74,11 @@
     // AI refinement
     let aiRefineEnabled = true;  // Auto-punctuation/capitalization via LLM (on by default)
 
+    // Card mode — when recording from an STT card, route text to callbacks instead of editor
+    let cardModeOnText = null;     // callback(text) for final transcription
+    let cardModeOnInterim = null;  // callback(text) for interim/live text
+    let cardModeActive = false;
+
     // ── Supported Languages (Web Speech API) ──────
     const LANGUAGES = [
         { code: 'en-US', label: 'English (US)', short: 'EN' },
@@ -189,6 +194,24 @@
         // Reject if excessive non-ASCII characters (garbage multilingual output)
         const nonAsciiRatio = (text.replace(/[\x20-\x7E]/g, '').length) / text.length;
         if (text.length > 20 && nonAsciiRatio > 0.3) return true;
+
+        // Reject AI model hallucination patterns (Voxtral sometimes generates LLM-like responses)
+        const lc = text.toLowerCase();
+        const aiPatterns = [
+            "i'm an ai", "i am an ai", "as an ai", "i'm a language model",
+            "i can't assist", "i cannot assist", "i don't have real-time",
+            "could you please provide more context", "could you please repeat",
+            "could you repeat that", "please repeat that",
+            "i'm sorry, but i", "i'm sorry, could you", "i'm sorry, i",
+            "i apologize, but", "i don't have personal",
+            "i can provide information based on", "trained on up until",
+            "thanks for watching", "like and subscribe", "don't forget to subscribe",
+            "please subscribe", "click the bell",
+            "how can i help", "how may i assist", "is there anything else",
+        ];
+        for (const pat of aiPatterns) {
+            if (lc.includes(pat)) return true;
+        }
 
         const bad = new Set([
             'you', 'the', 'a', 'i', 'uh', 'um', 'ah', 'oh',
@@ -400,7 +423,9 @@
 
             // Show interim text immediately (fast feedback)
             wsaInterimText = interim;
-            if (interimText && interim) {
+            if (cardModeActive && cardModeOnInterim && interim) {
+                cardModeOnInterim(interim);
+            } else if (interimText && interim) {
                 interimText.textContent = interim;
             }
 
@@ -511,8 +536,12 @@
             // Streaming partial results — show as interim text for real-time feedback
             if (type === 'partial') {
                 const partialText = (e.data.text || '').trim();
-                if (partialText && interimText) {
-                    interimText.textContent = '🧠 ' + partialText;
+                if (partialText) {
+                    if (cardModeActive && cardModeOnInterim) {
+                        cardModeOnInterim(partialText);
+                    } else if (interimText) {
+                        interimText.textContent = '🧠 ' + partialText;
+                    }
                 }
             }
         });
@@ -679,6 +708,8 @@
     function resolveConsensus() {
         const wsaResult = pendingWSA ? pendingWSA.text : null;
         const moonResult = pendingWhisper ? pendingWhisper.text : null;
+        const wsaTime = pendingWSA ? pendingWSA.timestamp : 0;
+        const moonTime = pendingWhisper ? pendingWhisper.timestamp : 0;
 
         // Clear pending
         pendingWSA = null;
@@ -687,9 +718,20 @@
         let bestText = '';
 
         if (wsaResult && moonResult) {
-            // Both available — pick best
-            bestText = pickBestResult(wsaResult, moonResult);
-            console.log('🎯 Consensus (both):', JSON.stringify(bestText));
+            // Check staleness — if results are >1.5s apart, they likely represent
+            // different speech segments (Voxtral processes async, often returns stale)
+            const timeDiff = Math.abs(wsaTime - moonTime);
+            if (timeDiff > 1500) {
+                // Take the fresher result (more likely to be current speech)
+                const fresher = wsaTime > moonTime ? wsaResult : moonResult;
+                const staleSource = wsaTime > moonTime ? 'Whisper' : 'WSA';
+                console.log(`🎯 Consensus (stale ${staleSource} by ${timeDiff}ms, taking fresher):`, JSON.stringify(fresher));
+                bestText = fresher;
+            } else {
+                // Both recent — pick best via scoring
+                bestText = pickBestResult(wsaResult, moonResult);
+                console.log('🎯 Consensus (both):', JSON.stringify(bestText));
+            }
         } else if (wsaResult) {
             bestText = wsaResult;
             console.log('🎯 Consensus (WSA only):', JSON.stringify(bestText));
@@ -715,9 +757,9 @@
 
         console.log(`🎯 WSA score: ${wsaScore} | Whisper score: ${moonScore}`);
 
-        // If scores are close (within 2 points), prefer Web Speech API
-        // because it has native language support and better real-time quality
-        if (Math.abs(wsaScore - moonScore) <= 2) return wsaText;
+        // Strongly prefer Web Speech API when scores are close
+        // WSA has native real-time streaming and is more reliable for current speech
+        if (Math.abs(wsaScore - moonScore) <= 5) return wsaText;
 
         return wsaScore >= moonScore ? wsaText : moonText;
     }
@@ -755,9 +797,15 @@
         let finalText = rawText;
         console.log('📝 processAndInsert called with:', JSON.stringify(rawText));
 
+        // Capture card mode state NOW (before any async operations can change it)
+        const isCardMode = cardModeActive;
+        const cardTextCb = cardModeOnText;
+        const cardInterimCb = cardModeOnInterim;
+
         try {
-            // Try AI refinement if enabled and LLM is ready
-            if (aiRefineEnabled && M.requestAiTask && M.isCurrentModelReady && M.isCurrentModelReady()) {
+            // Skip AI refinement in card mode — just use basic punctuation
+            // (AI refinement can hallucinate responses instead of cleaning text)
+            if (!isCardMode && aiRefineEnabled && M.requestAiTask && M.isCurrentModelReady && M.isCurrentModelReady()) {
                 try {
                     if (interimText) interimText.textContent = '✨ AI refining…';
                     // Race AI refinement against a 5-second timeout to prevent blocking
@@ -782,7 +830,7 @@
                     finalText = addBasicPunctuation(rawText);
                 }
             } else {
-                // Fallback: built-in punctuation when no LLM available
+                // Fallback: built-in punctuation when no LLM available or in card mode
                 finalText = addBasicPunctuation(rawText);
             }
         } catch (outerErr) {
@@ -794,10 +842,24 @@
         // Apply voice commands and insert — this MUST always execute
         let processed = applyMarkdownCommands(finalText);
         processed = autoCapitalize(processed);
-        console.log('📝 Inserting into editor:', JSON.stringify(processed));
-        insertAtCursor(processed + ' ');
+
+        if (isCardMode && cardTextCb) {
+            // Card mode — route to card callback instead of editor
+            console.log('📝 Routing to card:', JSON.stringify(processed));
+            cardTextCb(processed);
+        } else if (isCardMode) {
+            // Card mode but callbacks cleared (after Stop) — silently discard
+            console.log('📝 Discarding late result:', JSON.stringify(processed));
+        } else {
+            console.log('📝 Inserting into editor:', JSON.stringify(processed));
+            insertAtCursor(processed + ' ');
+        }
         lastInsertTime = Date.now();
-        if (interimText) interimText.textContent = '🎤 Listening…';
+        if (isCardMode && cardInterimCb) {
+            cardInterimCb('');
+        } else if (interimText) {
+            interimText.textContent = '🎤 Listening…';
+        }
     }
 
     /**
@@ -824,6 +886,8 @@
         stopPauseDetection();
         pauseTimer = setInterval(() => {
             if (!isListening) { stopPauseDetection(); return; }
+            // Skip auto-paragraph in card mode — text goes to card, not editor
+            if (cardModeActive) return;
             const elapsed = Date.now() - lastInsertTime;
             if (elapsed >= PAUSE_THRESHOLD) {
                 const editor = M.markdownEditor;
@@ -922,7 +986,10 @@
         pendingWSA = null;
         pendingWhisper = null;
 
-        updateUI(true);
+        // Only show toolbar UI (status bar, cheat sheet) when NOT in card mode
+        if (!cardModeActive) {
+            updateUI(true);
+        }
         startPauseDetection();
 
         // Start Engine 1: Web Speech API
@@ -953,7 +1020,7 @@
 
         updateEngineIndicator();
 
-        if (interimText) interimText.textContent = '🎤 Listening…';
+        if (!cardModeActive && interimText) interimText.textContent = '🎤 Listening…';
     }
 
     function stopListening() {
@@ -973,7 +1040,7 @@
         }
 
         updateUI(false);
-        if (interimText) interimText.textContent = '';
+        if (!cardModeActive && interimText) interimText.textContent = '';
     }
 
     function toggleListening() {
@@ -1049,6 +1116,32 @@
             webGPU: hasWebGPU,
             aiRefine: aiRefineEnabled,
         }),
+        /** Start recording in card mode — text routes to callbacks instead of editor */
+        startForCard: (onText, onInterim) => {
+            // Force-stop any active session first (allows re-recording after Clear)
+            if (isListening) {
+                stopListening();
+            }
+            cardModeActive = true;
+            cardModeOnText = onText || null;
+            cardModeOnInterim = onInterim || null;
+            startListening();
+        },
+        /** Stop recording in card mode and clear callbacks */
+        stopForCard: () => {
+            // Clear callbacks first so any in-flight results are silently discarded
+            cardModeOnText = null;
+            cardModeOnInterim = null;
+            stopListening();
+            // Clear any pending consensus so late Worker results can't trigger new processing
+            pendingWSA = null;
+            pendingWhisper = null;
+            if (consensusTimer) { clearTimeout(consensusTimer); consensusTimer = null; }
+            // Keep cardModeActive true briefly so late Voxtral results don't leak to editor
+            setTimeout(() => {
+                cardModeActive = false;
+            }, 3000);
+        },
     };
 
     console.log(`🎤 speechToText loaded — Dual Engine [Web Speech: ${hasWebSpeech ? '✓' : '✗'}, STT: detecting WebGPU…]`);

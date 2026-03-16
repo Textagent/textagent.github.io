@@ -419,3 +419,15 @@
 [data-theme="dark"] .ai-stt-result-text {
     color: var(--text-color, #e6edf3);
 }
+
+/* STT interim/live transcription text */
+.stt-interim {
+    color: #9ca3af;
+    font-style: italic;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+[data-theme="dark"] .stt-interim {
+    color: #6b7280;
+}

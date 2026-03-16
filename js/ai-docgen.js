@@ -1062,7 +1062,7 @@
             });
         });
 
-        // STT record button — start recording via mic
+        // STT record button — start recording via mic (card mode)
         container.querySelectorAll('.ai-stt-record').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1079,9 +1079,6 @@
                     return;
                 }
 
-                // Start the STT engine
-                M.speechToText.start();
-
                 // Switch button state
                 this.style.display = 'none';
                 var stopBtn = card.querySelector('.ai-stt-stop');
@@ -1092,13 +1089,58 @@
                 var resultDiv = card.querySelector('.ai-stt-result');
                 var resultText = card.querySelector('.ai-stt-result-text');
                 if (resultDiv) resultDiv.style.display = '';
-                if (resultText) resultText.textContent = '🎤 Listening… speak now';
+                if (resultText) {
+                    resultText.innerHTML = '<span class="stt-interim">Listening… speak now</span>';
+                }
+
+                // Accumulated transcription for this recording session
+                var accumulated = '';
+                var lastChunkNorm = ''; // normalized last chunk for dedup
+
+                // Start in card mode — text routes to the card, not the editor
+                M.speechToText.startForCard(
+                    // onText — final transcription chunk (deduped across engines)
+                    function (text) {
+                        if (!text || !text.trim()) return;
+                        var chunk = text.trim();
+
+                        // Dedup: only skip if one text contains the other (same speech from 2nd engine)
+                        var normalizedChunk = chunk.toLowerCase().replace(/[^\w\s]/g, '').trim();
+                        if (lastChunkNorm && normalizedChunk) {
+                            if (lastChunkNorm.includes(normalizedChunk) || normalizedChunk.includes(lastChunkNorm)) {
+                                console.log('🎤 STT card: skipping duplicate chunk', JSON.stringify(chunk));
+                                return;
+                            }
+                        }
+
+                        lastChunkNorm = normalizedChunk;
+                        accumulated += (accumulated ? ' ' : '') + chunk;
+                        if (resultText) {
+                            resultText.textContent = accumulated;
+                        }
+                    },
+                    // onInterim — live interim/partial text
+                    function (interim) {
+                        if (!resultText) return;
+                        if (!interim) {
+                            // Interim cleared — show accumulated or listening status
+                            resultText.innerHTML = accumulated
+                                ? accumulated
+                                : '<span class="stt-interim">Listening… speak now</span>';
+                        } else {
+                            // Show accumulated + current interim preview
+                            resultText.innerHTML = accumulated
+                                ? accumulated + ' <span class="stt-interim">' + escapeHtml(interim) + '</span>'
+                                : '<span class="stt-interim">' + escapeHtml(interim) + '</span>';
+                        }
+                    }
+                );
 
                 M.showToast && M.showToast('🎤 Recording started — speak now', 'info');
             });
         });
 
-        // STT stop button — stop recording and capture transcription
+        // STT stop button — stop recording (card mode)
         container.querySelectorAll('.ai-stt-stop').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1106,9 +1148,9 @@
                 var card = this.closest('.ai-stt-card');
                 if (!card) return;
 
-                // Stop the STT engine
+                // Stop the STT engine in card mode
                 if (M.speechToText && M.speechToText.isListening()) {
-                    M.speechToText.stop();
+                    M.speechToText.stopForCard();
                 }
 
                 // Switch button state
@@ -1117,17 +1159,18 @@
                 if (recordBtn) recordBtn.style.display = '';
                 card.classList.remove('ai-stt-recording');
 
-                // Grab whatever was transcribed from the editor
-                // The STT engine inserts text at cursor — read the latest editor content
+                // Finalize the result area
                 var resultText = card.querySelector('.ai-stt-result-text');
-                if (resultText && resultText.textContent === '🎤 Listening… speak now') {
-                    resultText.textContent = '⏳ Processing transcription…';
-                    // Give a moment for final STT result to arrive
-                    setTimeout(function () {
-                        if (resultText.textContent === '⏳ Processing transcription…') {
-                            resultText.textContent = '(No speech detected — try again)';
-                        }
-                    }, 3000);
+                if (resultText) {
+                    // Strip any remaining interim spans to reveal final text
+                    var interimSpans = resultText.querySelectorAll('.stt-interim');
+                    interimSpans.forEach(function (s) { s.remove(); });
+                    var finalText = resultText.textContent.trim();
+                    if (!finalText) {
+                        resultText.textContent = '(No speech detected — try again)';
+                    } else {
+                        resultText.textContent = finalText;
+                    }
                 }
 
                 M.showToast && M.showToast('🎤 Recording stopped', 'info');
