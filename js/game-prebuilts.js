@@ -781,7 +781,7 @@ for(var j=0;j<items.length;j++){var it=items[j];ctx.fillStyle=it.isCorrect?'#ff0
 if(state!=='playing'){ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,H);ctx.fillStyle=state==='win'?'#0f0':'#f00';ctx.font='bold 72px sans-serif';ctx.textBaseline='middle';ctx.fillText(state==='win'?'WIN!':'LOSE',W/2,H/2);ctx.font='bold 36px sans-serif';ctx.fillStyle='#fff';ctx.fillText('Click/Space Restart',W/2,H/2+100)}ctx.textAlign='left';ctx.textBaseline='alphabetic'}
 var last=0;function loop(t){var dt=Math.min(0.05,(t-last)/1000);last=t;if(state==='playing')update(dt);draw();requestAnimationFrame(loop)}
 updateCurrent();requestAnimationFrame(loop);
-<\\/script></body></html>`;
+<\/script></body></html>`;
 
 // ─── Kana Master (Full 46 Hiragana) ───
 window.__GAME_PREBUILTS.kanamaster = `<!DOCTYPE html>
@@ -825,11 +825,11 @@ for(var j=0;j<items.length;j++){var it=items[j];ctx.fillStyle=it.col;roundRect(c
 ctx.shadowColor='#818cf8';ctx.shadowBlur=20;var grd=ctx.createLinearGradient(pad.x,pad.y,pad.x+pad.w,pad.y+pad.h);grd.addColorStop(0,'#6366f1');grd.addColorStop(1,'#a78bfa');ctx.fillStyle=grd;roundRect(ctx,pad.x,pad.y,pad.w,pad.h,8);ctx.fill();ctx.shadowBlur=0;
 for(var p=0;p<particles.length;p++){var pt=particles[p];var a=1-pt.t/pt.life;ctx.globalAlpha=a;ctx.fillStyle=pt.col;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.r*a,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
 ctx.textAlign='left';ctx.textBaseline='top';ctx.font='bold 20px sans-serif';ctx.fillStyle='#34d399';ctx.fillText('Score: '+score+'/46',20,H-50);ctx.fillStyle='#fbbf24';ctx.fillText('Combo: '+combo,20,H-25);
-ctx.fillStyle='#f87171';ctx.textAlign='right';var hearts='';for(var h=0;h<lives;h++)hearts+='\\u2665 ';ctx.fillText(hearts,W-20,H-50);ctx.fillStyle='#60a5fa';ctx.fillText('Lv '+level,W-20,H-25);
+ctx.fillStyle='#f87171';ctx.textAlign='right';var hearts='';for(var h=0;h<lives;h++)hearts+='♥ ';ctx.fillText(hearts,W-20,H-50);ctx.fillStyle='#60a5fa';ctx.fillText('Lv '+level,W-20,H-25);
 var tb=qTimer/Math.max(5,10-level*0.5);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(0,0,W,4);ctx.fillStyle=tb>0.3?'#6366f1':'#f87171';ctx.fillRect(0,0,W*tb,4);
 ctx.restore();
 if(state!=='playing'){ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.textBaseline='middle';
-if(state==='win'){ctx.fillStyle='#34d399';ctx.font='bold 64px sans-serif';ctx.fillText('\\ud83c\\udf8c COMPLETE!',W/2,H/2-60);ctx.fillStyle='#e0e7ff';ctx.font='28px sans-serif';ctx.fillText('You mastered all 46 hiragana!',W/2,H/2);ctx.fillText('Max Combo: '+maxCombo,W/2,H/2+40)}
+if(state==='win'){ctx.fillStyle='#34d399';ctx.font='bold 64px sans-serif';ctx.fillText('🎌 COMPLETE!',W/2,H/2-60);ctx.fillStyle='#e0e7ff';ctx.font='28px sans-serif';ctx.fillText('You mastered all 46 hiragana!',W/2,H/2);ctx.fillText('Max Combo: '+maxCombo,W/2,H/2+40)}
 else{ctx.fillStyle='#f87171';ctx.font='bold 64px sans-serif';ctx.fillText('GAME OVER',W/2,H/2-60);ctx.fillStyle='#e0e7ff';ctx.font='28px sans-serif';ctx.fillText('Score: '+score+'/46 | Max Combo: '+maxCombo,W/2,H/2);ctx.fillText('Level reached: '+level,W/2,H/2+40)}
 ctx.fillStyle='#a5b4fc';ctx.font='22px sans-serif';ctx.fillText('Click or Press Space to Restart',W/2,H/2+100)}}
 var last=0;function loop(t){var dt=Math.min(0.05,(t-last)/1000);last=t;if(state==='playing')update(dt);draw();requestAnimationFrame(loop)}
