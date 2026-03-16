@@ -152,4 +152,127 @@ window.__MDV_TEMPLATES_FINANCE = [
             '> Add or remove `idx` rows to customize your index watchlist.\n' +
             '> Examples: `SPX`, `IXIC`, `DJI`, `FTSE`, `NI225`, `HSI`, `DAX`, `NIFTY`.\n'
     },
+    {
+        name: 'NSE India Dashboard',
+        category: 'finance',
+        icon: 'bi-bank',
+        description: 'Live NSE India dashboard — FII/DII flows, market indices, and institutional activity tracker',
+        variables: [
+            { name: 'dashboardTitle', value: 'NSE India Dashboard', desc: 'Dashboard heading' },
+        ],
+        content: '# 🇮🇳 $(dashboardTitle)\n' +
+            '\n' +
+            '**Last updated:** $(date) · $(time)\n' +
+            '\n' +
+            '---\n' +
+            '\n' +
+            '## 🏦 FII / DII Activity — Today\n' +
+            '\n' +
+            'FII (Foreign Institutional Investors) and DII (Domestic Institutional Investors) daily buy/sell/net data from NSE.\n' +
+            '\n' +
+            '{{API:\n' +
+            '  URL: https://corsproxy.io/?https://www.nseindia.com/api/fiidiiTradeReact\n' +
+            '  Method: GET\n' +
+            '  Variable: fiiDiiData\n' +
+            '}}\n' +
+            '\n' +
+            '> [!TIP]\n' +
+            '> Click the **▶** button above to fetch today\'s FII/DII data from NSE, then **Run** the code block below to see the formatted table.\n' +
+            '> Data is published daily after market close (~5:30 PM IST).\n' +
+            '\n' +
+            '```javascript\n' +
+            '// 📊 Parse FII/DII — run after clicking ▶ above\n' +
+            'if (typeof api_fiiDiiData === "undefined") { console.log("⚠️ Click ▶ on the API card above first, then Run this block."); }\n' +
+            'else {\n' +
+            '  var rows = Array.isArray(api_fiiDiiData) ? api_fiiDiiData : [api_fiiDiiData];\n' +
+            '  var fii = {}, dii = {}, date = "";\n' +
+            '  rows.forEach(function(r) {\n' +
+            '    var cat = (r.category || "").toUpperCase();\n' +
+            '    if (cat.indexOf("FII") >= 0 || cat.indexOf("FPI") >= 0) {\n' +
+            '      fii = r; date = r.date || "";\n' +
+            '    } else if (cat.indexOf("DII") >= 0) { dii = r; }\n' +
+            '  });\n' +
+            '  var fmt = function(v) { v = parseFloat(v||0); return v < 0 ? v.toLocaleString("en-IN") : "+" + v.toLocaleString("en-IN"); };\n' +
+            '  var n = function(v) { return parseFloat(v||0).toLocaleString("en-IN"); };\n' +
+            '  console.log("🏦 FII / DII Activity — " + date);\n' +
+            '  console.log("");\n' +
+            '  console.log("| Metric | FII/FPI (₹ Cr) | DII (₹ Cr) |");\n' +
+            '  console.log("|--------|----------------|------------|");\n' +
+            '  console.log("| Buy Value | " + n(fii.buyValue) + " | " + n(dii.buyValue) + " |");\n' +
+            '  console.log("| Sell Value | " + n(fii.sellValue) + " | " + n(dii.sellValue) + " |");\n' +
+            '  console.log("| Net Value | " + fmt(fii.netValue) + " | " + fmt(dii.netValue) + " |");\n' +
+            '}\n' +
+            '```\n' +
+            '\n' +
+            '---\n' +
+            '\n' +
+            '## 📈 NSE Market Indices\n' +
+            '\n' +
+            'All NSE indices with current values, changes, advances/declines.\n' +
+            '\n' +
+            '{{API:\n' +
+            '  URL: https://corsproxy.io/?https://www.nseindia.com/api/allIndices\n' +
+            '  Method: GET\n' +
+            '  Variable: nseIndices\n' +
+            '}}\n' +
+            '\n' +
+            '> [!WARNING]\n' +
+            '> NSE APIs require session cookies. The CORS proxy may return a **403** or empty response.\n' +
+            '> If this happens, try again in a few minutes or use the FII/DII API which tends to be more reliable.\n' +
+            '\n' +
+            '---\n' +
+            '\n' +
+            '## 🟢 Market Status\n' +
+            '\n' +
+            '{{API:\n' +
+            '  URL: https://corsproxy.io/?https://www.nseindia.com/api/marketStatus\n' +
+            '  Method: GET\n' +
+            '  Variable: marketStatus\n' +
+            '}}\n' +
+            '\n' +
+            '---\n' +
+            '\n' +
+            '## 📋 NSE API Quick Reference\n' +
+            '\n' +
+            'These are NSE India\'s undocumented public APIs. To use them in TextAgent, prefix with `https://corsproxy.io/?`.\n' +
+            '\n' +
+            '### Market Data\n' +
+            '| Endpoint | Description |\n' +
+            '|----------|-------------|\n' +
+            '| `/api/fiidiiTradeReact` | FII/DII daily buy/sell/net |\n' +
+            '| `/api/marketStatus` | Market open/closed status |\n' +
+            '| `/api/allIndices` | All indices with current values |\n' +
+            '| `/api/market-data-pre-open?key=NIFTY` | Pre-open market data |\n' +
+            '\n' +
+            '### Stock / Equity\n' +
+            '| Endpoint | Description |\n' +
+            '|----------|-------------|\n' +
+            '| `/api/quote-equity?symbol=RELIANCE` | Full stock quote |\n' +
+            '| `/api/equity-stockIndices?index=NIFTY 50` | NIFTY 50 constituents |\n' +
+            '| `/api/equity-stockIndices?index=NIFTY BANK` | Bank Nifty constituents |\n' +
+            '\n' +
+            '### Derivatives (F&O)\n' +
+            '| Endpoint | Description |\n' +
+            '|----------|-------------|\n' +
+            '| `/api/option-chain-indices?symbol=NIFTY` | NIFTY option chain |\n' +
+            '| `/api/option-chain-indices?symbol=BANKNIFTY` | Bank Nifty option chain |\n' +
+            '| `/api/option-chain-equities?symbol=RELIANCE` | Stock option chain |\n' +
+            '\n' +
+            '### Analysis\n' +
+            '| Endpoint | Description |\n' +
+            '|----------|-------------|\n' +
+            '| `/api/live-analysis-variations?index=gainers` | Top gainers |\n' +
+            '| `/api/live-analysis-variations?index=losers` | Top losers |\n' +
+            '| `/api/live-analysis-most-active-securities?index=volume` | Most active by volume |\n' +
+            '| `/api/live-analysis-52Week?index=high` | 52-week highs |\n' +
+            '| `/api/live-analysis-52Week?index=low` | 52-week lows |\n' +
+            '\n' +
+            '> [!IMPORTANT]\n' +
+            '> **CORS Proxy required**: NSE blocks cross-origin browser requests. Wrap any URL above with `https://corsproxy.io/?` to fetch from TextAgent.\n' +
+            '> **Rate limiting**: Don\'t spam these — NSE will block your IP. Use sparingly.\n' +
+            '\n' +
+            '---\n' +
+            '\n' +
+            '*Data sourced from [NSE India](https://www.nseindia.com) and [MrChartist/fii-dii-data](https://github.com/MrChartist/fii-dii-data)*\n'
+    },
 ];
