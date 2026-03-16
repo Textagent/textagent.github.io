@@ -4,7 +4,9 @@
 (function (M) {
     'use strict';
 
-    var SHARE_BASE_URL = 'https://textagent.github.io/';
+    var SHARE_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? window.location.origin + '/'
+        : 'https://textagent.github.io/';
     M.SHARE_BASE_URL = SHARE_BASE_URL;
 
     // --- Firebase Config ---
@@ -351,19 +353,88 @@
         }
     }
 
-    // --- Shared View Banner ---
+    // --- Shared View Banner (auto-dismiss + pill) ---
+    var bannerAutoHideTimer = null;
+    var bannerReShowTimer = null;
+
     function showSharedBanner() {
         var banner = document.getElementById('shared-view-banner');
+        var pill = document.getElementById('shared-view-pill');
         banner.style.display = 'block';
+        banner.classList.remove('banner-hidden');
         document.body.classList.add('shared-view-active');
+        document.body.classList.remove('banner-collapsed');
         M.markdownEditor.readOnly = true;
+
+        // Auto-collapse banner → pill after 4 seconds
+        clearTimeout(bannerAutoHideTimer);
+        bannerAutoHideTimer = setTimeout(function () {
+            collapseBannerToPill();
+        }, 4000);
     }
+
+    /** Slide the full banner up and show the pill */
+    function collapseBannerToPill() {
+        var banner = document.getElementById('shared-view-banner');
+        var pill = document.getElementById('shared-view-pill');
+        banner.classList.add('banner-hidden');
+        document.body.classList.add('banner-collapsed');
+        // Show pill after banner slides away
+        setTimeout(function () {
+            pill.style.display = 'flex';
+            requestAnimationFrame(function () {
+                pill.classList.add('pill-visible');
+            });
+        }, 200);
+    }
+
+    /** Expand the pill back to the full banner (e.g. on click or editor focus) */
+    function expandPillToBanner() {
+        var banner = document.getElementById('shared-view-banner');
+        var pill = document.getElementById('shared-view-pill');
+        // Hide pill
+        pill.classList.remove('pill-visible');
+        setTimeout(function () { pill.style.display = 'none'; }, 300);
+        // Show banner
+        banner.classList.remove('banner-hidden');
+        document.body.classList.remove('banner-collapsed');
+        // Auto-collapse again after 5 seconds
+        clearTimeout(bannerAutoHideTimer);
+        clearTimeout(bannerReShowTimer);
+        bannerAutoHideTimer = setTimeout(function () {
+            if (M.isViewingSharedDoc) collapseBannerToPill();
+        }, 5000);
+    }
+
     function hideSharedBanner() {
         var banner = document.getElementById('shared-view-banner');
+        var pill = document.getElementById('shared-view-pill');
         banner.style.display = 'none';
-        document.body.classList.remove('shared-view-active');
+        banner.classList.remove('banner-hidden');
+        pill.classList.remove('pill-visible');
+        pill.style.display = 'none';
+        document.body.classList.remove('shared-view-active', 'banner-collapsed');
         M.markdownEditor.readOnly = false;
+        clearTimeout(bannerAutoHideTimer);
+        clearTimeout(bannerReShowTimer);
     }
+
+    // Clicking the pill expands back to full banner
+    document.getElementById('shared-view-pill').addEventListener('click', function () {
+        expandPillToBanner();
+    });
+
+    // Clicking/focusing the editor while read-only → re-show banner
+    M.markdownEditor.addEventListener('focus', function () {
+        if (M.isViewingSharedDoc && M.markdownEditor.readOnly) {
+            expandPillToBanner();
+        }
+    });
+    M.markdownEditor.addEventListener('click', function () {
+        if (M.isViewingSharedDoc && M.markdownEditor.readOnly) {
+            expandPillToBanner();
+        }
+    });
 
     /**
      * Clear all cloud/shared-doc session state so subsequent edits create a

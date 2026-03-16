@@ -5,7 +5,7 @@
 (function () {
     'use strict';
 
-    const modalHTML = `    <!-- Shared View Banner -->
+    const modalHTML = `    <!-- Shared View Banner (full bar — auto-hides after 4s) -->
     <div id="shared-view-banner" class="shared-view-banner" style="display: none;">
         <div class="shared-banner-content">
             <i class="bi bi-lock-fill me-2"></i>
@@ -17,6 +17,12 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
+    </div>
+
+    <!-- Shared View Pill (collapsed indicator — always visible while viewing shared doc) -->
+    <div id="shared-view-pill" class="shared-view-pill" style="display: none;" title="Viewing shared document (read-only) — click to edit">
+        <i class="bi bi-lock-fill"></i>
+        <span>Read-only</span>
     </div>
 
 
