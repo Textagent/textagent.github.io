@@ -44,6 +44,9 @@ async function validateApiKey() {
     }
 }
 
+const MAX_RETRIES = 2;
+const RETRY_STATUS_CODES = [500, 502, 503, 429];
+
 async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = [], maxTokensOverride = 0) {
     if (!apiKey) {
         self.postMessage({ type: 'error', message: 'API key not set.', messageId });
@@ -72,28 +75,65 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                 lastUserMsg.content = parts;
             }
         }
-        const response = await fetch(OPENROUTER_API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://textagent.github.io',
-                'X-Title': 'TextAgent',
-            },
-            body: JSON.stringify({
-                model: modelId,
-                messages,
-                max_tokens: maxTokens,
-                stream: true,
-                temperature: 0.7,
-            }),
+
+        const requestBody = JSON.stringify({
+            model: modelId,
+            messages,
+            max_tokens: maxTokens,
+            stream: true,
+            temperature: 0.7,
         });
 
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            if (response.status === 429) throw new Error('Rate limit reached. Please wait.');
-            if (response.status === 401) throw new Error('Invalid API key.');
-            throw new Error(err.error?.message || `HTTP ${response.status}`);
+        // Retry loop for transient errors
+        let response;
+        let lastError;
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                response = await fetch(OPENROUTER_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': 'https://textagent.github.io',
+                        'X-Title': 'TextAgent',
+                    },
+                    body: requestBody,
+                });
+
+                if (response.ok) break; // Success — exit retry loop
+
+                const err = await response.json().catch(() => ({}));
+                const errMsg = err.error?.message || response.statusText || `HTTP ${response.status}`;
+
+                // Non-retryable errors — fail immediately
+                if (response.status === 401) throw new Error(`Invalid API key for ${modelId}.`);
+                if (!RETRY_STATUS_CODES.includes(response.status)) {
+                    throw new Error(`${modelId}: ${errMsg} (HTTP ${response.status})`);
+                }
+
+                // Retryable error — log and backoff
+                lastError = new Error(`${modelId}: ${errMsg} (HTTP ${response.status})`);
+                if (attempt < MAX_RETRIES) {
+                    const delayMs = (attempt + 1) * 1000; // 1s, 2s
+                    console.warn(`[OpenRouter] ${modelId} returned ${response.status}, retrying in ${delayMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                    await new Promise(r => setTimeout(r, delayMs));
+                }
+            } catch (fetchErr) {
+                // Network errors are also retryable
+                if (fetchErr.message?.includes('Invalid API key')) throw fetchErr;
+                if (fetchErr.message?.includes(modelId)) throw fetchErr; // Already formatted
+                lastError = fetchErr;
+                if (attempt < MAX_RETRIES) {
+                    const delayMs = (attempt + 1) * 1000;
+                    console.warn(`[OpenRouter] Network error for ${modelId}, retrying in ${delayMs}ms (attempt ${attempt + 1}/${MAX_RETRIES}):`, fetchErr.message);
+                    await new Promise(r => setTimeout(r, delayMs));
+                }
+            }
+        }
+
+        // If we exhausted retries without a successful response
+        if (!response || !response.ok) {
+            throw lastError || new Error(`${modelId}: Server error after ${MAX_RETRIES + 1} attempts. Try a different model.`);
         }
 
         const reader = response.body.getReader();

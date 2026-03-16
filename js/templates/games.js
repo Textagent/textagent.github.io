@@ -6,7 +6,7 @@ window.__MDV_TEMPLATES_GAMES = [
     name: 'Games for Kids',
     category: 'games',
     icon: 'bi-controller',
-    description: 'Pre-built games collection — Maths Quiz, Chess, Snake, Shooter, Pong, Breakout',
+    description: 'Pre-built games collection — Maths Quiz, Chess, Snake, Shooter, Pong, Breakout, Hiragana Quiz, Kana Master',
     content: `# 🎮 Games Collection
 
 > All games below are **pre-built** and play instantly using the \\\`@prebuilt:\\\` field in the \\\`{{@Game:}}\\\` tag. You can also write your own \\\`@prompt:\\\` and click **▶ Generate** to create custom games with AI, or click **📋 Import** to paste your own HTML code.
@@ -49,6 +49,18 @@ window.__MDV_TEMPLATES_GAMES = [
 
 ---
 
+## 🇯🇵 Hiragana Quiz
+
+{{@Game: @engine: canvas2d @prebuilt: hiragana @prompt: Hiragana quiz game}}
+
+---
+
+## 🎌 Kana Master
+
+{{@Game: @engine: canvas2d @prebuilt: kanamaster @prompt: Full 46 hiragana quiz game}}
+
+---
+
 ## 🛠 How to create your own
 
 **Pre-built game** (instant):
@@ -73,7 +85,7 @@ window.__MDV_TEMPLATES_GAMES = [
 | Field | Required | Description |
 |-------|----------|-------------|
 | \\\`@engine:\\\` | No | \\\`canvas2d\\\`, \\\`threejs\\\`, or \\\`p5js\\\` (default: threejs) |
-| \\\`@prebuilt:\\\` | No | Pre-built game: \\\`chess\\\`, \\\`snake\\\`, \\\`shooter\\\`, \\\`pong\\\`, \\\`breakout\\\`, \\\`maths\\\` |
+| \\\`@prebuilt:\\\` | No | Pre-built game: \\\`chess\\\`, \\\`snake\\\`, \\\`shooter\\\`, \\\`pong\\\`, \\\`breakout\\\`, \\\`maths\\\`, \\\`hiragana\\\`, \\\`kanamaster\\\` |
 | \\\`@model:\\\` | No | AI model to use for generation |
 | \\\`@prompt:\\\` | No | Game description for AI generation |
 `

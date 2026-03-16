@@ -747,3 +747,91 @@ loop();
 <\/script>
 </body>
 </html>`;
+
+// ─── Hiragana Quiz (Simple) ───
+window.__GAME_PREBUILTS.hiragana = `<!DOCTYPE html>
+<html><head><title>Hiragana Quiz</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<style>*{margin:0;padding:0}body{background:#222;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif}canvas{border:1px solid #fff;max-width:100%;max-height:100%;background:#000;touch-action:none;cursor:none}</style>
+</head><body><canvas id="c"></canvas>
+<script>
+var c=document.getElementById('c'),ctx=c.getContext('2d');var W=innerWidth,H=innerHeight;c.width=W;c.height=H;
+window.addEventListener('resize',function(){W=innerWidth;H=innerHeight;c.width=W;c.height=H;player.y=H-100;player.x=Math.max(0,Math.min(W-player.w,player.x))});
+var data=[{r:'a',k:'あ'},{r:'i',k:'い'},{r:'u',k:'う'},{r:'e',k:'え'},{r:'o',k:'お'},{r:'ka',k:'か'},{r:'ki',k:'き'},{r:'ku',k:'く'},{r:'ke',k:'け'},{r:'ko',k:'こ'},{r:'sa',k:'さ'},{r:'shi',k:'し'}];
+var state='playing',score=0,lives=3,curR='a',curK='あ',qTimer=8,sTimer=1.5,items=[];
+var player={x:W*0.5-50,y:H-100,w:100,h:40,vx:0};
+var keys={},mouseX=0;
+window.addEventListener('keydown',function(e){if(state!=='playing'&&e.code==='Space'){restart();return}if(e.code==='ArrowLeft')keys.left=true;if(e.code==='ArrowRight')keys.right=true;e.preventDefault()});
+window.addEventListener('keyup',function(e){if(e.code==='ArrowLeft')keys.left=false;if(e.code==='ArrowRight')keys.right=false});
+c.addEventListener('mousemove',function(e){mouseX=e.clientX});
+c.addEventListener('touchmove',function(e){e.preventDefault();mouseX=e.touches[0].clientX},{passive:false});
+c.addEventListener('click',function(){if(state!=='playing')restart()});
+function aabb(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function spawn(){var it={x:Math.random()*(W-60),y:-60,w:60,h:60,vy:0,text:'',isCorrect:false};if(Math.random()<0.25){it.text=curK;it.isCorrect=true}else{var wk;do{wk=data[Math.floor(Math.random()*12)].k}while(wk===curK);it.text=wk}items.push(it)}
+function updateCurrent(){var i=Math.floor(Math.random()*12);curR=data[i].r;curK=data[i].k;qTimer=8}
+function restart(){score=0;lives=3;items=[];state='playing';player.x=W*0.5-50;updateCurrent();sTimer=1.5}
+function update(dt){qTimer-=dt;if(qTimer<=0)updateCurrent();sTimer-=dt;if(sTimer<=0){spawn();sTimer=Math.max(0.5,1.5-score*0.005)}
+player.vx+=(keys.left?-400:keys.right?400:0)*dt;var tx=mouseX-player.w*0.5;player.vx+=(tx-player.x)*10*dt;player.vx*=0.92;player.x+=player.vx*dt;player.x=Math.max(0,Math.min(W-player.w,player.x));
+for(var i=items.length-1;i>=0;i--){var it=items[i];it.vy=Math.min(it.vy+800*dt,600);it.y+=it.vy*dt;if(it.y>H){items.splice(i,1);continue}
+if(aabb(player,it)){if(it.isCorrect){score++;if(score>=10)state='win'}else{lives--;if(lives<=0)state='lose'}items.splice(i,1)}}}
+function draw(){ctx.fillStyle='black';ctx.fillRect(0,0,W,H);ctx.fillStyle='white';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(curR.toUpperCase(),W/2,40);
+ctx.font='bold 36px sans-serif';ctx.textBaseline='top';ctx.fillText('Score: '+score,80,H-60);ctx.fillText('Lives: '+lives,W-180,H-60);
+ctx.fillStyle='#0f0';ctx.fillRect(player.x,player.y,player.w,player.h);ctx.fillStyle='white';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 40px sans-serif';
+for(var j=0;j<items.length;j++){var it=items[j];ctx.fillStyle=it.isCorrect?'#ff0':'white';ctx.fillRect(it.x,it.y,it.w,it.h);ctx.fillStyle='#000';ctx.fillText(it.text,it.x+30,it.y+30)}
+if(state!=='playing'){ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,H);ctx.fillStyle=state==='win'?'#0f0':'#f00';ctx.font='bold 72px sans-serif';ctx.textBaseline='middle';ctx.fillText(state==='win'?'WIN!':'LOSE',W/2,H/2);ctx.font='bold 36px sans-serif';ctx.fillStyle='#fff';ctx.fillText('Click/Space Restart',W/2,H/2+100)}ctx.textAlign='left';ctx.textBaseline='alphabetic'}
+var last=0;function loop(t){var dt=Math.min(0.05,(t-last)/1000);last=t;if(state==='playing')update(dt);draw();requestAnimationFrame(loop)}
+updateCurrent();requestAnimationFrame(loop);
+<\\/script></body></html>`;
+
+// ─── Kana Master (Full 46 Hiragana) ───
+window.__GAME_PREBUILTS.kanamaster = `<!DOCTYPE html>
+<html><head><title>Kana Master</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<style>*{margin:0;padding:0}body{background:#111;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;overflow:hidden}canvas{border:1px solid #333;max-width:100%;max-height:100%;background:#0a0a1a;touch-action:none;cursor:none}</style>
+</head><body><canvas id="c"></canvas>
+<script>
+var c=document.getElementById('c'),ctx=c.getContext('2d');var W=innerWidth,H=innerHeight;c.width=W;c.height=H;
+window.addEventListener('resize',function(){W=innerWidth;H=innerHeight;c.width=W;c.height=H;pad.y=H-80;pad.x=Math.max(0,Math.min(W-pad.w,pad.x))});
+var data=[{r:'a',k:'あ'},{r:'i',k:'い'},{r:'u',k:'う'},{r:'e',k:'え'},{r:'o',k:'お'},{r:'ka',k:'か'},{r:'ki',k:'き'},{r:'ku',k:'く'},{r:'ke',k:'け'},{r:'ko',k:'こ'},{r:'sa',k:'さ'},{r:'shi',k:'し'},{r:'su',k:'す'},{r:'se',k:'せ'},{r:'so',k:'そ'},{r:'ta',k:'た'},{r:'chi',k:'ち'},{r:'tsu',k:'つ'},{r:'te',k:'て'},{r:'to',k:'と'},{r:'na',k:'な'},{r:'ni',k:'に'},{r:'nu',k:'ぬ'},{r:'ne',k:'ね'},{r:'no',k:'の'},{r:'ha',k:'は'},{r:'hi',k:'ひ'},{r:'fu',k:'ふ'},{r:'he',k:'へ'},{r:'ho',k:'ほ'},{r:'ma',k:'ま'},{r:'mi',k:'み'},{r:'mu',k:'む'},{r:'me',k:'め'},{r:'mo',k:'も'},{r:'ya',k:'や'},{r:'yu',k:'ゆ'},{r:'yo',k:'よ'},{r:'ra',k:'ら'},{r:'ri',k:'り'},{r:'ru',k:'る'},{r:'re',k:'れ'},{r:'ro',k:'ろ'},{r:'wa',k:'わ'},{r:'wo',k:'を'},{r:'n',k:'ん'}];
+var state='playing',score=0,lives=5,level=1,combo=0,maxCombo=0;
+var curR='',curK='',qTimer=10,sTimer=2,items=[],particles=[],shakeT=0;
+var pad={x:W/2-60,y:H-80,w:120,h:30,vx:0};
+var keys={},mouseX=W/2,useKeys=false;
+var colors=['#ff6b9d','#c084fc','#60a5fa','#34d399','#fbbf24','#f87171','#38bdf8','#a78bfa'];
+function pickColor(){return colors[Math.floor(Math.random()*colors.length)]}
+function aabb(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function spawnParts(x,y,col,n){for(var i=0;i<n;i++)particles.push({x:x,y:y,vx:(Math.random()-0.5)*300,vy:(Math.random()-1)*250,life:0.6+Math.random()*0.4,t:0,col:col,r:2+Math.random()*3})}
+function updateCurrent(){var i=Math.floor(Math.random()*data.length);curR=data[i].r;curK=data[i].k;qTimer=Math.max(5,10-level*0.5)}
+function spawn(){var sz=50+Math.floor(Math.random()*10);var it={x:Math.random()*(W-sz),y:-sz,w:sz,h:sz,vy:0,text:'',isCorrect:false,col:pickColor()};if(Math.random()<0.3){it.text=curK;it.isCorrect=true}else{var wk;do{wk=data[Math.floor(Math.random()*data.length)].k}while(wk===curK);it.text=wk}items.push(it)}
+function restart(){score=0;lives=5;level=1;combo=0;maxCombo=0;items=[];particles=[];state='playing';pad.x=W/2-60;updateCurrent();sTimer=2}
+window.addEventListener('keydown',function(e){if(state!=='playing'&&(e.code==='Space'||e.code==='Enter')){restart();return}if(e.code==='ArrowLeft'){keys.left=true;useKeys=true}if(e.code==='ArrowRight'){keys.right=true;useKeys=true}e.preventDefault()});
+window.addEventListener('keyup',function(e){if(e.code==='ArrowLeft')keys.left=false;if(e.code==='ArrowRight')keys.right=false});
+c.addEventListener('mousemove',function(e){mouseX=e.clientX;useKeys=false});
+c.addEventListener('touchmove',function(e){e.preventDefault();mouseX=e.touches[0].clientX;useKeys=false},{passive:false});
+c.addEventListener('click',function(){if(state!=='playing')restart()});
+function update(dt){qTimer-=dt;if(qTimer<=0)updateCurrent();sTimer-=dt;if(sTimer<=0){spawn();sTimer=Math.max(0.6,2-level*0.1-score*0.01)}
+if(useKeys){pad.vx+=(keys.left?-600:keys.right?600:0)*dt}else{pad.vx+=(mouseX-pad.w/2-pad.x)*12*dt}
+pad.vx*=0.88;pad.x+=pad.vx*dt;pad.x=Math.max(0,Math.min(W-pad.w,pad.x));if(shakeT>0)shakeT-=dt;
+for(var i=items.length-1;i>=0;i--){var it=items[i];it.vy=Math.min(it.vy+500*dt,400);it.y+=it.vy*dt;
+if(it.y>H){if(it.isCorrect){lives--;combo=0;shakeT=0.3;if(lives<=0)state='lose'}items.splice(i,1);continue}
+if(aabb(pad,it)){if(it.isCorrect){score++;combo++;if(combo>maxCombo)maxCombo=combo;spawnParts(it.x+it.w/2,it.y+it.h/2,'#34d399',15);level=1+Math.floor(score/5);updateCurrent();if(score>=46)state='win'}else{lives--;combo=0;shakeT=0.3;spawnParts(it.x+it.w/2,it.y+it.h/2,'#f87171',10);if(lives<=0)state='lose'}items.splice(i,1)}}
+for(var j=particles.length-1;j>=0;j--){var p=particles[j];p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;if(p.t>=p.life)particles.splice(j,1)}}
+function roundRect(cx,x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.lineTo(x+w-r,y);cx.quadraticCurveTo(x+w,y,x+w,y+r);cx.lineTo(x+w,y+h-r);cx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);cx.lineTo(x+r,y+h);cx.quadraticCurveTo(x,y+h,x,y+h-r);cx.lineTo(x,y+r);cx.quadraticCurveTo(x,y,x+r,y)}
+function draw(){ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);var sx=0,sy=0;if(shakeT>0){sx=(Math.random()-0.5)*8;sy=(Math.random()-0.5)*8}ctx.save();ctx.translate(sx,sy);
+ctx.fillStyle='rgba(255,255,255,0.3)';for(var i=0;i<50;i++){ctx.fillRect((i*137.5)%W,(i*97.3)%H,1.5,1.5)}
+var pw=Math.max(200,curR.length*60+80);ctx.fillStyle='rgba(99,102,241,0.2)';roundRect(ctx,W/2-pw/2,15,pw,70,12);ctx.fill();ctx.strokeStyle='rgba(99,102,241,0.5)';roundRect(ctx,W/2-pw/2,15,pw,70,12);ctx.stroke();
+ctx.fillStyle='#e0e7ff';ctx.font='bold 42px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(curR.toUpperCase(),W/2,50);
+for(var j=0;j<items.length;j++){var it=items[j];ctx.fillStyle=it.col;roundRect(ctx,it.x,it.y,it.w,it.h,10);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 32px sans-serif';ctx.fillText(it.text,it.x+it.w/2,it.y+it.h/2)}
+ctx.shadowColor='#818cf8';ctx.shadowBlur=20;var grd=ctx.createLinearGradient(pad.x,pad.y,pad.x+pad.w,pad.y+pad.h);grd.addColorStop(0,'#6366f1');grd.addColorStop(1,'#a78bfa');ctx.fillStyle=grd;roundRect(ctx,pad.x,pad.y,pad.w,pad.h,8);ctx.fill();ctx.shadowBlur=0;
+for(var p=0;p<particles.length;p++){var pt=particles[p];var a=1-pt.t/pt.life;ctx.globalAlpha=a;ctx.fillStyle=pt.col;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.r*a,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+ctx.textAlign='left';ctx.textBaseline='top';ctx.font='bold 20px sans-serif';ctx.fillStyle='#34d399';ctx.fillText('Score: '+score+'/46',20,H-50);ctx.fillStyle='#fbbf24';ctx.fillText('Combo: '+combo,20,H-25);
+ctx.fillStyle='#f87171';ctx.textAlign='right';var hearts='';for(var h=0;h<lives;h++)hearts+='\\u2665 ';ctx.fillText(hearts,W-20,H-50);ctx.fillStyle='#60a5fa';ctx.fillText('Lv '+level,W-20,H-25);
+var tb=qTimer/Math.max(5,10-level*0.5);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(0,0,W,4);ctx.fillStyle=tb>0.3?'#6366f1':'#f87171';ctx.fillRect(0,0,W*tb,4);
+ctx.restore();
+if(state!=='playing'){ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.textBaseline='middle';
+if(state==='win'){ctx.fillStyle='#34d399';ctx.font='bold 64px sans-serif';ctx.fillText('\\ud83c\\udf8c COMPLETE!',W/2,H/2-60);ctx.fillStyle='#e0e7ff';ctx.font='28px sans-serif';ctx.fillText('You mastered all 46 hiragana!',W/2,H/2);ctx.fillText('Max Combo: '+maxCombo,W/2,H/2+40)}
+else{ctx.fillStyle='#f87171';ctx.font='bold 64px sans-serif';ctx.fillText('GAME OVER',W/2,H/2-60);ctx.fillStyle='#e0e7ff';ctx.font='28px sans-serif';ctx.fillText('Score: '+score+'/46 | Max Combo: '+maxCombo,W/2,H/2);ctx.fillText('Level reached: '+level,W/2,H/2+40)}
+ctx.fillStyle='#a5b4fc';ctx.font='22px sans-serif';ctx.fillText('Click or Press Space to Restart',W/2,H/2+100)}}
+var last=0;function loop(t){var dt=Math.min(0.05,(t-last)/1000);last=t;if(state==='playing')update(dt);draw();requestAnimationFrame(loop)}
+updateCurrent();requestAnimationFrame(loop);
+<\/script></body></html>`;

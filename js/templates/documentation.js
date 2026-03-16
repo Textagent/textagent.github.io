@@ -32,7 +32,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links · ✉️ Email to Self |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
-      '| **🎮 Game Builder** | `{{@Game:}}` tag — AI-generated games (Canvas 2D / Three.js / P5.js) or pre-built via `@prebuilt:` (chess, snake, shooter, pong, breakout, maths quiz) · 📋 Import HTML · 📥 Export standalone · ⛶ Fullscreen |\n' +
+      '| **🎮 Game Builder** | `{{@Game:}}` tag — AI-generated games (Canvas 2D / Three.js / P5.js) or pre-built via `@prebuilt:` (chess, snake, shooter, pong, breakout, maths quiz, hiragana, kana master) · 📋 Import HTML · 📥 Export standalone · ⛶ Fullscreen |\n' +
       '| **📈 Finance Dashboard** | Stock/crypto/index templates with live TradingView charts · Dynamic grid via `data-var-prefix` · Configurable chart range, interval, EMA period · Interactive toggle buttons |\n' +
       '| **❓ Help Mode** | Interactive learning — click ❓ Help to highlight all buttons · Click any for description + shortcut + ▶ Watch Demo · 50% screen demo panel with fullscreen expand · 16 demo videos |\n' +
       '| **💾 Disk Workspace** | Folder-backed storage via File System Access API · .md files read/written to disk · Autosave with 💾 indicator · Refresh from disk · Auto-reconnect on reload |\n' +
@@ -585,10 +585,10 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       'Build and play games directly in your markdown with the `{{@Game:}}` tag:\n\n' +
       '**Two modes:**\n' +
       '1. **AI-generated** — describe a game and pick an engine (Canvas 2D / Three.js / P5.js)\n' +
-      '2. **Pre-built** — use `@prebuilt:` for instant games: chess, snake, shooter, pong, breakout, maths quiz\n\n' +
+      '2. **Pre-built** — use `@prebuilt:` for instant games: chess, snake, shooter, pong, breakout, maths quiz, hiragana, kana master\n\n' +
       '**Features:** 📋 Import button for pasting/uploading external HTML game code · 📥 Export as standalone HTML · ⛶ Fullscreen mode · Per-card model picker\n\n' +
       '> [!TIP]\n' +
-      '> Check out the **Games** category in Templates for 6 playable pre-built games!\n\n' +
+      '> Check out the **Games** category in Templates for 8 playable pre-built games!\n\n' +
       '---\n\n' +
       '## 📈 Finance Dashboard\n\n' +
       'Create live stock, crypto, and market dashboards with **TradingView charts**:\n\n' +
