@@ -477,7 +477,7 @@
         preview.innerHTML = '';
         var iframe = document.createElement('iframe');
         iframe.className = 'ai-game-iframe';
-        iframe.sandbox = 'allow-scripts';
+        iframe.sandbox = 'allow-scripts allow-same-origin';
         iframe.setAttribute('allowfullscreen', '');
         iframe.srcdoc = html;
         preview.appendChild(iframe);

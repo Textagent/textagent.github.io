@@ -73,8 +73,8 @@
         if (mode === M.currentViewMode) return;
         var previousMode = M.currentViewMode;
         M.currentViewMode = mode;
-        M.contentContainer.classList.remove('view-editor-only', 'view-preview-only', 'view-split', 'view-ppt');
-        var classMap = { editor: 'view-editor-only', preview: 'view-preview-only', split: 'view-split', ppt: 'view-ppt' };
+        M.contentContainer.classList.remove('view-editor-only', 'view-preview-only', 'view-split', 'view-ppt', 'view-page');
+        var classMap = { editor: 'view-editor-only', preview: 'view-preview-only', split: 'view-split', ppt: 'view-ppt', page: 'view-page' };
         M.contentContainer.classList.add(classMap[mode] || 'view-split');
         M.viewModeButtons.forEach(function (btn) {
             var btnMode = btn.getAttribute('data-mode');
@@ -94,10 +94,18 @@
         if (mode === 'ppt') {
             if (M.enterPptMode) M.enterPptMode();
         }
+        // Page view mode: reflow content into A4 pages
+        if (mode === 'page') {
+            if (M.enterPageMode) M.enterPageMode();
+        }
         // Exiting PPT mode: hide slide container
         if (previousMode === 'ppt' && mode !== 'ppt') {
             var sc = document.getElementById('slide-container');
             if (sc) { sc.style.display = 'none'; sc.classList.remove('slide-fullscreen'); }
+        }
+        // Exiting page mode: hide page container
+        if (previousMode === 'page' && mode !== 'page') {
+            if (M.exitPageMode) M.exitPageMode();
         }
     };
 

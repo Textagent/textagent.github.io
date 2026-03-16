@@ -23,6 +23,7 @@ import '../css/formatting.css';
 import '../css/toc.css';
 import '../css/features.css';
 import '../css/slides.css';
+import '../css/page-view.css';
 import '../css/ai-panel.css';
 import '../css/speech.css';
 import '../css/table-tools.css';
@@ -86,6 +87,7 @@ async function loadModules() {
         import('../js/help-mode.js'),
         import('../js/stock-widget.js'),
         import('../js/video-player.js'),
+        import('../js/page-view.js'),
     ]);
 
     // 3b-pre: Document Variables façade (must load before exec-sandbox, templates, ai-docgen, api-docgen)

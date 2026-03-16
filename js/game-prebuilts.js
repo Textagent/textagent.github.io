@@ -29,16 +29,16 @@ button:hover{background:#c73e54;transform:translateY(-1px)}
 </style>
 </head>
 <body>
-<h1>&#9823; Chess</h1>
+<h1>♟ Chess</h1>
 <div id="status">White's turn — click a piece</div>
 <div id="board"></div>
 <div id="cap"><div>White: <span class="cap-p" id="cw"></span></div><div>Black: <span class="cap-p" id="cb"></span></div></div>
-<button onclick="R()">&#8634; New Game</button>
+<button onclick="R()">↺ New Game</button>
 <script>
-var P={K:"\\u2654",Q:"\\u2655",R:"\\u2656",B:"\\u2657",N:"\\u2658",P:"\\u2659",k:"\\u265a",q:"\\u265b",r:"\\u265c",b:"\\u265d",n:"\\u265e",p:"\\u265f"};
+var P={K:"♔",Q:"♕",R:"♖",B:"♗",N:"♘",P:"♙",k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 var I="rnbqkbnr pppppppp ........ ........ ........ ........ PPPPPPPP RNBQKBNR".split(" ");
 var b,t,s,v,lf,lt,cw,cb;
-function R(){b=I.map(function(r){return r.split("")});t="w";s=null;v=[];lf=lt=null;cw=[];cb=[];D();document.getElementById("status").textContent="White's turn \\u2014 click a piece"}
+function R(){b=I.map(function(r){return r.split("")});t="w";s=null;v=[];lf=lt=null;cw=[];cb=[];D();document.getElementById("status").textContent="White's turn — click a piece"}
 function W(p){return p>="A"&&p<="Z"}function isB(p){return p>="a"&&p<="z"}
 function O(p){return t==="w"?W(p):isB(p)}function E(p){return t==="w"?isB(p):W(p)}
 function ib(r,c){return r>=0&&r<8&&c>=0&&c<8}
@@ -49,7 +49,7 @@ if(u==="B"||u==="Q"){[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(function(d){for(var i
 if(u==="N"){[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(function(d){var nr=r+d[0],nc=c+d[1];if(ib(nr,nc)&&!O(b[nr][nc]))m.push([nr,nc])})}
 if(u==="K"){[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(function(d){var nr=r+d[0],nc=c+d[1];if(ib(nr,nc)&&!O(b[nr][nc]))m.push([nr,nc])})}
 return m}
-function mm(fr,fc,tr,tc){var cap=b[tr][tc];if(cap!=="."){if(W(cap))cb.push(cap);else cw.push(cap)}b[tr][tc]=b[fr][fc];b[fr][fc]=".";if(b[tr][tc]==="P"&&tr===0)b[tr][tc]="Q";if(b[tr][tc]==="p"&&tr===7)b[tr][tc]="q";lf=[fr,fc];lt=[tr,tc];t=t==="w"?"b":"w";var st=document.getElementById("status");st.textContent=(t==="w"?"White":"Black")+"'s turn";var wK=false,bK=false;for(var i=0;i<8;i++)for(var j=0;j<8;j++){if(b[i][j]==="K")wK=true;if(b[i][j]==="k")bK=true}if(!wK)st.textContent="\\ud83c\\udfc6 Black wins!";if(!bK)st.textContent="\\ud83c\\udfc6 White wins!"}
+function mm(fr,fc,tr,tc){var cap=b[tr][tc];if(cap!=="."){if(W(cap))cb.push(cap);else cw.push(cap)}b[tr][tc]=b[fr][fc];b[fr][fc]=".";if(b[tr][tc]==="P"&&tr===0)b[tr][tc]="Q";if(b[tr][tc]==="p"&&tr===7)b[tr][tc]="q";lf=[fr,fc];lt=[tr,tc];t=t==="w"?"b":"w";var st=document.getElementById("status");st.textContent=(t==="w"?"White":"Black")+"'s turn";var wK=false,bK=false;for(var i=0;i<8;i++)for(var j=0;j<8;j++){if(b[i][j]==="K")wK=true;if(b[i][j]==="k")bK=true}if(!wK)st.textContent="🏆 Black wins!";if(!bK)st.textContent="🏆 White wins!"}
 function cc(r,c){if(s){if(v.some(function(m){return m[0]===r&&m[1]===c})){mm(s[0],s[1],r,c);s=null;v=[];D();return}}if(b[r][c]!=="."&&O(b[r][c])){s=[r,c];v=gm(r,c)}else{s=null;v=[]}D()}
 function D(){var el=document.getElementById("board");el.innerHTML="";for(var r=0;r<8;r++)for(var c=0;c<8;c++){var d=document.createElement("div");d.className="cell "+((r+c)%2===0?"light":"dark");if(s&&s[0]===r&&s[1]===c)d.classList.add("selected");if(v.some(function(m){return m[0]===r&&m[1]===c}))d.classList.add("valid-move");if((lf&&lf[0]===r&&lf[1]===c)||(lt&&lt[0]===r&&lt[1]===c))d.classList.add("last-move");var p=b[r][c];if(p!==".")d.textContent=P[p]||p;(function(row,col){d.addEventListener("click",function(){cc(row,col)})})(r,c);el.appendChild(d)}document.getElementById("cw").textContent=cw.map(function(p){return P[p]}).join("");document.getElementById("cb").textContent=cb.map(function(p){return P[p]}).join("")}
 R();
@@ -75,19 +75,20 @@ button{background:#10b981;color:#fff;border:none;padding:6px 16px;border-radius:
 </style>
 </head>
 <body>
-<h1>&#128013; Snake</h1>
+<h1>🐍 Snake</h1>
 <div id="hud"><span>Score: <span id="sc">0</span></span><span>Best: <span id="hi">0</span></span></div>
 <canvas id="c"></canvas>
-<div id="msg"><h2>&#128013; Snake</h2><p>Arrow keys or WASD to move</p><small>Press any key or tap to start</small></div>
+<div id="msg"><h2>🐍 Snake</h2><p>Arrow keys or WASD to move</p><small>Press any key or tap to start</small></div>
 <script>
 var c=document.getElementById("c"),x=c.getContext("2d"),G=20,W,H,cols,rows;
-var snake,dir,ndir,food,score,best=parseInt(localStorage.getItem("snakeBest"))||0,running=false,dead=false,speed,timer;
+var snake,dir,ndir,food,score,best=0,running=false,dead=false,speed,timer;
+try{best=parseInt(localStorage.getItem("snakeBest"))||0}catch(e){}
 document.getElementById("hi").textContent=best;
 function sz(){var s=Math.min(innerWidth-20,innerHeight-100,500);W=H=s;c.width=W;c.height=H;cols=Math.floor(W/G);rows=Math.floor(H/G)}
 sz();addEventListener("resize",sz);
 function init(){snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};ndir={x:1,y:0};score=0;speed=120;dead=false;document.getElementById("sc").textContent=0;placeFood();if(timer)clearInterval(timer);timer=setInterval(tick,speed)}
 function placeFood(){do{food={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}while(snake.some(function(s){return s.x===food.x&&s.y===food.y}))}
-function tick(){if(dead)return;dir=ndir;var h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(h.x<0||h.x>=cols||h.y<0||h.y>=rows||snake.some(function(s){return s.x===h.x&&s.y===h.y})){dead=true;if(score>best){best=score;localStorage.setItem("snakeBest",best);document.getElementById("hi").textContent=best}document.getElementById("msg").style.display="";document.getElementById("msg").innerHTML="<h2>Game Over</h2><p>Score: "+score+"</p><button onclick='start()'>Play Again</button>";return}snake.unshift(h);if(h.x===food.x&&h.y===food.y){score++;document.getElementById("sc").textContent=score;placeFood();if(speed>50){speed-=2;clearInterval(timer);timer=setInterval(tick,speed)}}else{snake.pop()}draw()}
+function tick(){if(dead)return;dir=ndir;var h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(h.x<0||h.x>=cols||h.y<0||h.y>=rows||snake.some(function(s){return s.x===h.x&&s.y===h.y})){dead=true;if(score>best){best=score;try{localStorage.setItem("snakeBest",best)}catch(e){}document.getElementById("hi").textContent=best}document.getElementById("msg").style.display="";document.getElementById("msg").innerHTML="<h2>Game Over</h2><p>Score: "+score+"</p><button onclick='start()'>Play Again</button>";return}snake.unshift(h);if(h.x===food.x&&h.y===food.y){score++;document.getElementById("sc").textContent=score;placeFood();if(speed>50){speed-=2;clearInterval(timer);timer=setInterval(tick,speed)}}else{snake.pop()}draw()}
 function draw(){x.fillStyle="#0a0a2e";x.fillRect(0,0,W,H);x.strokeStyle="rgba(16,185,129,0.08)";for(var i=0;i<cols;i++){x.beginPath();x.moveTo(i*G,0);x.lineTo(i*G,H);x.stroke()}for(var j=0;j<rows;j++){x.beginPath();x.moveTo(0,j*G);x.lineTo(W,j*G);x.stroke()}snake.forEach(function(s,i){var g=Math.max(0,1-i/snake.length*0.6);x.fillStyle="hsl(160,70%,"+(30+g*40)+"%)";x.shadowColor="#10b981";x.shadowBlur=i===0?12:4;x.beginPath();x.roundRect(s.x*G+1,s.y*G+1,G-2,G-2,4);x.fill();x.shadowBlur=0});x.fillStyle="#ef4444";x.shadowColor="#ef4444";x.shadowBlur=12;x.beginPath();x.arc(food.x*G+G/2,food.y*G+G/2,G/2-2,0,Math.PI*2);x.fill();x.shadowBlur=0}
 function setDir(dx,dy){if(dx!==-dir.x||dy!==-dir.y){ndir={x:dx,y:dy}}}
 addEventListener("keydown",function(e){if(!running){start();return}var k=e.key.toLowerCase();if(k==="arrowup"||k==="w")setDir(0,-1);else if(k==="arrowdown"||k==="s")setDir(0,1);else if(k==="arrowleft"||k==="a")setDir(-1,0);else if(k==="arrowright"||k==="d")setDir(1,0)});
@@ -117,7 +118,7 @@ canvas{display:block}
 </head>
 <body>
 <div id="hud"><span>Score: <span id="score">0</span></span><span>Lives: <span id="lives">3</span></span></div>
-<div id="ins">&#9650; Arrow keys to move &middot; Space to shoot<br><small>Click or press any key to start</small></div>
+<div id="ins">▲ Arrow keys to move · Space to shoot<br><small>Click or press any key to start</small></div>
 <canvas id="c"></canvas>
 <script>
 var c=document.getElementById("c"),ctx=c.getContext("2d"),W,H,sc=0,lives=3,go=false,started=false;
@@ -172,7 +173,7 @@ button:hover,button.active{background:#0f0;color:#111}
 <body>
 <canvas id="c"></canvas>
 <div id="mode"><button id="b1p" class="active" onclick="setMode(true)">1 Player (AI)</button><button id="b2p" onclick="setMode(false)">2 Players</button></div>
-<div id="info">P1: W/S &middot; P2: &#8593;/&#8595; &middot; First to 11 wins</div>
+<div id="info">P1: W/S · P2: ↑/↓ · First to 11 wins</div>
 <script>
 var c=document.getElementById("c"),x=c.getContext("2d"),W=600,H=400,ai=true;
 c.width=W;c.height=H;
@@ -222,7 +223,7 @@ canvas{display:block;border-radius:8px;box-shadow:0 0 40px rgba(255,100,100,.15)
 <body>
 <div id="hud"><span>Score: <span id="sc">0</span></span><span>Lives: <span id="lv">3</span></span></div>
 <canvas id="c"></canvas>
-<div id="msg"><h2>&#129521; Breakout</h2><p>Move mouse to control paddle</p><p><small>Click to launch ball</small></p></div>
+<div id="msg"><h2>🧱 Breakout</h2><p>Move mouse to control paddle</p><p><small>Click to launch ball</small></p></div>
 <script>
 var c=document.getElementById("c"),x=c.getContext("2d"),W=500,H=600;c.width=W;c.height=H;
 var cols=10,rows=5,bw=W/cols-4,bh=18,pad=2;
@@ -233,7 +234,9 @@ var colors=["#ef4444","#f97316","#eab308","#22c55e","#3b82f6"];
 function initBricks(){bricks=[];for(var r=0;r<rows;r++)for(var cl=0;cl<cols;cl++)bricks.push({x:cl*(bw+pad*2)+pad+2,y:r*(bh+pad*2)+pad+40,w:bw,h:bh,col:colors[r],pts:(rows-r)*10,alive:true})}
 initBricks();
 c.addEventListener("mousemove",function(e){var r=c.getBoundingClientRect();paddle.x=e.clientX-r.left});
+c.addEventListener("touchmove",function(e){e.preventDefault();var r=c.getBoundingClientRect();paddle.x=e.touches[0].clientX-r.left},{passive:false});
 c.addEventListener("click",function(){if(!ball.launched){ball.launched=true;ball.vx=3*(Math.random()-.5);ball.vy=-5;document.getElementById("msg").style.display="none"}});
+c.addEventListener("touchstart",function(){if(!ball.launched){ball.launched=true;ball.vx=3*(Math.random()-.5);ball.vy=-5;document.getElementById("msg").style.display="none"}},{passive:true});
 function burst(bx,by,col){for(var i=0;i<8;i++){var a=Math.random()*Math.PI*2;particles.push({x:bx,y:by,vx:Math.cos(a)*3,vy:Math.sin(a)*3,life:1,col:col})}}
 function upd(){if(!ball.launched){ball.x=paddle.x;ball.y=H-40;return}
 ball.x+=ball.vx;ball.y+=ball.vy;
@@ -244,7 +247,7 @@ var px=paddle.x-paddle.w/2,py=H-24;
 if(ball.y+ball.r>=py&&ball.y-ball.r<=py+paddle.h&&ball.x>=px&&ball.x<=px+paddle.w){ball.vy=-Math.abs(ball.vy)*1.02;ball.vx+=(ball.x-paddle.x)*0.08}
 var allDead=true;
 bricks.forEach(function(b){if(!b.alive)return;allDead=false;if(ball.x+ball.r>b.x&&ball.x-ball.r<b.x+b.w&&ball.y+ball.r>b.y&&ball.y-ball.r<b.y+b.h){b.alive=false;ball.vy*=-1;score+=b.pts;document.getElementById("sc").textContent=score;burst(b.x+b.w/2,b.y+b.h/2,b.col)}});
-if(allDead){document.getElementById("msg").style.display="";document.getElementById("msg").innerHTML="<h2>&#127942; You Win!</h2><p>Score: "+score+"</p><button onclick='restart()' style=\"background:#22c55e;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;margin-top:8px\">Play Again</button>"}
+if(allDead){document.getElementById("msg").style.display="";document.getElementById("msg").innerHTML="<h2>🏆 You Win!</h2><p>Score: "+score+"</p><button onclick='restart()' style=\"background:#22c55e;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;margin-top:8px\">Play Again</button>"}
 particles.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.life-=.04});particles=particles.filter(function(p){return p.life>0})}
 function drw(){x.clearRect(0,0,W,H);
 bricks.forEach(function(b){if(!b.alive)return;x.fillStyle=b.col;x.shadowColor=b.col;x.shadowBlur=6;x.beginPath();x.roundRect(b.x,b.y,b.w,b.h,4);x.fill();x.shadowBlur=0});
@@ -252,7 +255,7 @@ x.fillStyle="#fff";x.shadowColor="#fff";x.shadowBlur=10;x.beginPath();x.roundRec
 x.beginPath();x.arc(ball.x,ball.y,ball.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
 particles.forEach(function(p){x.globalAlpha=p.life;x.fillStyle=p.col;x.fillRect(p.x-2,p.y-2,4,4);x.globalAlpha=1})}
 function lp(){upd();drw();requestAnimationFrame(lp)}
-function restart(){score=0;lives=3;document.getElementById("sc").textContent=0;document.getElementById("lv").textContent=3;ball.launched=false;ball.vx=0;ball.vy=0;initBricks();document.getElementById("msg").style.display="";document.getElementById("msg").innerHTML="<h2>&#129521; Breakout</h2><p>Move mouse to control paddle</p><p><small>Click to launch ball</small></p>"}
+function restart(){score=0;lives=3;document.getElementById("sc").textContent=0;document.getElementById("lv").textContent=3;ball.launched=false;ball.vx=0;ball.vy=0;initBricks();document.getElementById("msg").style.display="";document.getElementById("msg").innerHTML="<h2>🧱 Breakout</h2><p>Move mouse to control paddle</p><p><small>Click to launch ball</small></p>"}
 lp();
 <\/script>
 </body>
@@ -297,43 +300,52 @@ h1{font-size:28px;margin-bottom:4px}
 <div class="card" id="card"></div>
 <script>
 var score=0,total=0,streak=0,bestStreak=0,level=1,diff="easy",tmr=null,timeLeft=100,playing=false;
-var opSets={easy:["+","-"],medium:["+","-","\\u00d7"],hard:["+","-","\\u00d7","\\u00f7"]};
+var opSets={easy:["+","-"],medium:["+","-","×"],hard:["+","-","×","÷"]};
 var rngs={easy:[1,10],medium:[1,20],hard:[1,50]};
 var tpq={easy:120,medium:100,hard:70};
 function showMenu(){
-document.getElementById("card").innerHTML='<h1>\\ud83e\\udde0 Maths Quiz</h1><p class="sub">Fun maths for children!</p><p style="font-size:48px;margin:16px 0">\\ud83d\\udcda</p><p style="font-size:14px;margin-bottom:8px">Choose difficulty:</p><div class="diff-pills"><button class="pill'+(diff==="easy"?" active":"")+'" onclick="setD(\\'easy\\')">Easy<\\/button><button class="pill'+(diff==="medium"?" active":"")+'" onclick="setD(\\'medium\\')">Medium<\\/button><button class="pill'+(diff==="hard"?" active":"")+'" onclick="setD(\\'hard\\')">Hard<\\/button><\\/div><button class="start-btn" onclick="go()">\\u25b6 Start!<\\/button>'}
+var h='<h1>🧠 Maths Quiz</h1><p class="sub">Fun maths for children!</p>';
+h+='<p style="font-size:48px;margin:16px 0">📚</p>';
+h+='<p style="font-size:14px;margin-bottom:8px">Choose difficulty:</p>';
+h+='<div class="diff-pills">';
+h+='<button class="pill'+(diff==="easy"?" active":"")+'" onclick="setD(\'easy\')">Easy</button>';
+h+='<button class="pill'+(diff==="medium"?" active":"")+'" onclick="setD(\'medium\')">Medium</button>';
+h+='<button class="pill'+(diff==="hard"?" active":"")+'" onclick="setD(\'hard\')">Hard</button>';
+h+='</div>';
+h+='<button class="start-btn" onclick="go()">▶ Start!</button>';
+document.getElementById("card").innerHTML=h}
 function setD(d){diff=d;showMenu()}
 function go(){score=0;total=0;streak=0;bestStreak=0;level=1;playing=true;nxt()}
 function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
 function genQ(){var r=rngs[diff],o=opSets[diff][ri(0,opSets[diff].length-1)],a,b,ans;
 if(o==="+"){a=ri(r[0],r[1]+level*2);b=ri(r[0],r[1]+level*2);ans=a+b}
 else if(o==="-"){a=ri(r[0],r[1]+level*2);b=ri(r[0],a);ans=a-b}
-else if(o==="\\u00d7"){a=ri(1,Math.min(12,r[1]));b=ri(1,Math.min(12,r[1]));ans=a*b}
-else{b=ri(1,Math.min(12,r[1]));ans=ri(1,Math.min(12,r[1]));a=b*ans;o="\\u00f7"}
+else if(o==="×"){a=ri(1,Math.min(12,r[1]));b=ri(1,Math.min(12,r[1]));ans=a*b}
+else{b=ri(1,Math.min(12,r[1]));ans=ri(1,Math.min(12,r[1]));a=b*ans;o="÷"}
 return{a:a,b:b,op:o,ans:ans}}
 function genC(ans){var c=[ans];while(c.length<4){var off=ri(1,Math.max(5,Math.abs(ans)));var v=Math.random()>.5?ans+off:ans-off;if(v<0)v=ans+off;if(c.indexOf(v)===-1)c.push(v)}for(var i=c.length-1;i>0;i--){var j=ri(0,i);var t=c[i];c[i]=c[j];c[j]=t}return c}
 var cq=null;
 function nxt(){if(tmr)clearInterval(tmr);cq=genQ();var ch=genC(cq.ans);timeLeft=tpq[diff];total++;level=Math.floor(score/5)+1;
-var h='<h1>\\ud83e\\udde0 Maths Quiz<\\/h1><div class="stats"><div class="stat"><b>'+score+'<\\/b>Score<\\/div><div class="stat"><b>'+total+'<\\/b>Question<\\/div><div class="stat"><b>'+streak+'\\ud83d\\udd25<\\/b>Streak<\\/div><\\/div><div class="question">'+cq.a+' '+cq.op+' '+cq.b+' = ?<\\/div><div class="choices">';
-ch.forEach(function(v,i){h+='<button class="choice" id="c'+i+'" onclick="pick('+v+',this)">'+v+'<\\/button>'});
-h+='<\\/div><div class="feedback" id="fb"><\\/div><div class="timer-bar"><div class="timer-fill" id="tf" style="width:100%"><\\/div><\\/div><div class="level">Level '+level+' \\u2022 '+diff.charAt(0).toUpperCase()+diff.slice(1)+'<\\/div>';
+var h='<h1>🧠 Maths Quiz</h1><div class="stats"><div class="stat"><b>'+score+'</b>Score</div><div class="stat"><b>'+total+'</b>Question</div><div class="stat"><b>'+streak+'🔥</b>Streak</div></div><div class="question">'+cq.a+' '+cq.op+' '+cq.b+' = ?</div><div class="choices">';
+ch.forEach(function(v,i){h+='<button class="choice" id="c'+i+'" onclick="pick('+v+',this)">'+v+'</button>'});
+h+='</div><div class="feedback" id="fb"></div><div class="timer-bar"><div class="timer-fill" id="tf" style="width:100%"></div></div><div class="level">Level '+level+' • '+diff.charAt(0).toUpperCase()+diff.slice(1)+'</div>';
 document.getElementById("card").innerHTML=h;
 tmr=setInterval(function(){timeLeft--;var p=Math.max(0,timeLeft/tpq[diff]*100);var tf=document.getElementById("tf");if(tf)tf.style.width=p+"%";if(timeLeft<=0){clearInterval(tmr);tout()}},100)}
 function pick(v,btn){if(!playing)return;clearInterval(tmr);
 document.querySelectorAll(".choice").forEach(function(b){b.style.pointerEvents="none"});
 if(v===cq.ans){btn.classList.add("correct");score++;streak++;if(streak>bestStreak)bestStreak=streak;
-var ms=["\\ud83c\\udf1f Great!","\\ud83d\\ude80 Amazing!","\\u2b50 Super!","\\ud83c\\udf89 Yes!","\\ud83d\\udc4f Wow!","\\ud83e\\udde0 Smart!"];
+var ms=["🌟 Great!","🚀 Amazing!","⭐ Super!","🎉 Yes!","👏 Wow!","🧠 Smart!"];
 document.getElementById("fb").textContent=ms[ri(0,ms.length-1)]}else{btn.classList.add("wrong");streak=0;
 document.querySelectorAll(".choice").forEach(function(b){if(parseInt(b.textContent)===cq.ans)b.classList.add("correct")});
-document.getElementById("fb").textContent="\\u274c It was "+cq.ans}
+document.getElementById("fb").textContent="❌ It was "+cq.ans}
 setTimeout(function(){if(total>=20)fin();else nxt()},1200)}
-function tout(){streak=0;document.getElementById("fb").textContent="\\u23f0 Time up! Answer: "+cq.ans;
+function tout(){streak=0;document.getElementById("fb").textContent="⏰ Time up! Answer: "+cq.ans;
 document.querySelectorAll(".choice").forEach(function(b){b.style.pointerEvents="none";if(parseInt(b.textContent)===cq.ans)b.classList.add("correct")});
 setTimeout(function(){if(total>=20)fin();else nxt()},1500)}
 function fin(){playing=false;var pct=Math.round(score/20*100);
-var em=pct>=90?"\\ud83c\\udfc6":pct>=70?"\\ud83c\\udf1f":pct>=50?"\\ud83d\\ude0a":"\\ud83d\\udcaa";
+var em=pct>=90?"🏆":pct>=70?"🌟":pct>=50?"😊":"💪";
 var mg=pct>=90?"Outstanding!":pct>=70?"Great job!":pct>=50?"Good effort!":"Keep practising!";
-document.getElementById("card").innerHTML='<div style="text-align:center"><p style="font-size:64px;margin-bottom:12px">'+em+'<\\/p><h2 style="font-size:32px;margin-bottom:8px">'+mg+'<\\/h2><p style="font-size:18px;margin:8px 0">'+score+' / 20 correct ('+pct+'%)<\\/p><p style="font-size:14px;opacity:0.8">Best streak: '+bestStreak+' \\ud83d\\udd25<\\/p><button class="start-btn" onclick="showMenu()" style="margin-top:16px">\\ud83d\\udd01 Play Again<\\/button><\\/div>'}
+document.getElementById("card").innerHTML='<div style="text-align:center"><p style="font-size:64px;margin-bottom:12px">'+em+'</p><h2 style="font-size:32px;margin-bottom:8px">'+mg+'</h2><p style="font-size:18px;margin:8px 0">'+score+' / 20 correct ('+pct+'%)</p><p style="font-size:14px;opacity:0.8">Best streak: '+bestStreak+' 🔥</p><button class="start-btn" onclick="showMenu()" style="margin-top:16px">🔁 Play Again</button></div>'}
 showMenu();
 <\/script>
 </body>

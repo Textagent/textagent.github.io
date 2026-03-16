@@ -1873,5 +1873,2570 @@ Use formal academic language and reference the specific metrics from the benchma
             '\n\n## 🔗 Agent Pipeline — Extended Analysis\n\n{{Agent:\n  Step 1: Analyze experimental data and simulation results above. Calculate mean absolute error between measured and predicted ranges. Identify systematic vs random error.\n  Step 2: Develop a corrected model accounting for air resistance using a drag coefficient. Derive the modified equations of motion.\n  Step 3: Write a Python simulation of the air-resistance model from Step 2. Compare predictions against both ideal model and experimental data in a results table.\n}}\n\n' +
             '> 💡 **How to use:** Evaluate the math blocks, run the Python simulation, review the data table, then click **✨ Fill** for the AI analysis.\n' +
             ''
+    },
+
+    // ============================================
+    // Agent Templates — Specialized AI Agents
+    // These use category: 'agents' for the Agents tab
+    // ============================================
+    {
+        name: 'Plan a Feature',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-kanban',
+        description: 'Full ECC-style planner — phased implementation, dependency graphs, red flags, risk analysis, and testing strategy',
+        variables: [
+            { name: 'featureName', value: 'User Authentication with OAuth', desc: 'Feature to plan' },
+            { name: 'techStack', value: 'React, Node.js, PostgreSQL', desc: 'Tech stack (helps tailor the plan)' },
+            { name: 'projectContext', value: 'Existing web app with REST API', desc: 'Brief project context' },
+        ],
+        content: `# 📋 Feature Planner — $(featureName)
+
+**Date:** $(date)
+**Status:** 🟡 Planning — awaiting review
+**Stack:** $(techStack)
+**Context:** $(projectContext)
+
+---
+
+## 1. Implementation Plan
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior software architect and implementation planner. Create a detailed, actionable implementation plan for the following feature.
+
+**Feature:** $(featureName)
+**Tech Stack:** $(techStack)
+**Project Context:** $(projectContext)
+
+Follow this EXACT output format:
+
+---
+
+### Overview
+[2-3 sentence summary of what this feature does and why it matters]
+
+### Requirements
+- [Requirement 1 — be specific, not vague]
+- [Requirement 2]
+- [Assumption 1]
+- [Constraint 1]
+
+### Architecture Changes
+For each affected file/component:
+- **[NEW/MODIFY]** \`path/to/file\` — what changes and why
+
+### Implementation Steps
+
+#### Phase 1: Minimum Viable (smallest slice that provides value)
+1. **[Step Name]** (File: \`path/to/file\`)
+   - **Action:** Specific action to take
+   - **Why:** Reason this step is needed
+   - **Dependencies:** None / Requires step X
+   - **Risk:** Low / Medium / High
+   - **Estimated effort:** X hours
+
+2. **[Step Name]** (File: \`path/to/file\`)
+   ...
+
+#### Phase 2: Core Experience (complete happy path)
+...
+
+#### Phase 3: Edge Cases & Error Handling
+...
+
+#### Phase 4: Optimization & Polish
+...
+
+**CRITICAL: Each phase MUST be independently deliverable and testable. Never require all phases to complete before anything works.**
+
+### Testing Strategy
+- **Unit tests:** [specific functions/files to test]
+- **Integration tests:** [specific flows to test]
+- **E2E tests:** [specific user journeys to test]
+
+### Risks & Mitigations
+For each risk:
+- **Risk:** [What could go wrong]
+  - **Impact:** High / Medium / Low
+  - **Mitigation:** [Specific action to prevent or handle]
+  - **Fallback:** [What to do if mitigation fails]
+
+### Red Flags Checklist
+Before implementation, verify NONE of these apply:
+- [ ] Functions longer than 50 lines
+- [ ] Nesting deeper than 4 levels
+- [ ] Duplicated code across files
+- [ ] Missing error handling for network/DB calls
+- [ ] Hardcoded values that should be config
+- [ ] Missing input validation at boundaries
+- [ ] No testing strategy for a phase
+- [ ] Steps without specific file paths
+- [ ] Phases that can't be delivered independently
+
+### Success Criteria
+- [ ] [Specific, verifiable outcome 1]
+- [ ] [Specific, verifiable outcome 2]
+- [ ] All tests pass
+- [ ] No red flags from checklist above
+
+### Complexity Estimate
+- **Overall:** Low / Medium / High
+- **Backend:** X hours
+- **Frontend:** X hours
+- **Testing:** X hours
+- **Total:** X-Y hours
+
+---
+
+Rules:
+1. **Be specific** — Use exact file paths, function names, variable names. Never say "update the component" without naming it.
+2. **Minimize changes** — Prefer extending existing code over rewriting. Follow existing project patterns.
+3. **Think incrementally** — Each step should be verifiable on its own.
+4. **Document WHY** — Every step explains its rationale, not just what to do.
+5. **Consider failure** — What happens when the network is down? When input is null? When the DB is slow?}}
+
+---
+
+## 2. Dependency Graph
+
+{{@AI:
+  @think: yes
+  @prompt: Based on the implementation plan above, create a Mermaid flowchart diagram showing the dependency graph between ALL implementation steps. Use this format:
+
+\\\`\\\`\\\`mermaid
+flowchart TD
+    S1[Step 1: Name] --> S2[Step 2: Name]
+    S1 --> S3[Step 3: Name]
+    S2 --> S4[Step 4: Name]
+    S3 --> S4
+    ...
+\\\`\\\`\\\`
+
+Color-code by phase:
+- Phase 1 steps: default
+- Phase 2 steps: use a different style
+- Phase 3 steps: use a different style
+- Phase 4 steps: use a different style
+
+Also show which steps can be parallelized (no dependencies between them).
+
+After the diagram, provide:
+1. **Critical path** — The longest chain of dependent steps (this determines minimum timeline)
+2. **Parallelizable groups** — Steps that can be worked on simultaneously
+3. **Suggested implementation order** — Optimal order considering dependencies, risk, and context switching}}
+
+---
+
+## 3. Testing Checklist
+
+{{Agent:
+  Step 1: From the implementation plan, extract every testable behavior. For each phase, create a specific testing checklist with test case name, input, expected output, and priority (P0/P1/P2). Include edge cases like null inputs, empty states, concurrent access, network timeouts, and invalid data.
+  Step 2: Identify the 3 highest-risk items in the plan. For each, propose a specific mitigation strategy with: preventive action, detection mechanism, and recovery procedure. Consider failure modes like data corruption, race conditions, backwards compatibility, and deployment rollback.
+  Step 3: Generate a sprint/task breakdown suitable for project management. Group steps into logical work units of 2-4 hours each. For each task include: description, acceptance criteria, dependencies, and estimated hours. Present as a markdown table.
+}}
+
+> 💡 **How to use:** Set your feature name, tech stack, and project context in the variables. Click **▶ Run All** to generate the full plan with dependency graph and testing checklist.
+`
+    },
+    {
+        name: 'Review My Code',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-search',
+        description: 'ECC-style code review — confidence-filtered findings, framework-specific checks, BAD→GOOD examples, and summary verdict',
+        variables: [
+            { name: 'language', value: 'JavaScript', desc: 'Programming language' },
+            { name: 'framework', value: 'React / Node.js', desc: 'Framework (React, Vue, Express, Django, etc.)' },
+            { name: 'codeToReview', value: 'Paste your code here', desc: 'Code to review' },
+        ],
+        content: `# 🔍 Code Review — $(language)
+
+**Date:** $(date)
+**Language:** $(language)
+**Framework:** $(framework)
+**Reviewer:** AI Code Review Agent
+
+---
+
+## Code Under Review
+
+\\\`\\\`\\\`
+$(codeToReview)
+\\\`\\\`\\\`
+
+---
+
+## Review Results
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior code reviewer with deep expertise in $(language) and $(framework). Perform a thorough code review.
+
+\\\`\\\`\\\`
+$(codeToReview)
+\\\`\\\`\\\`
+
+**CONFIDENCE FILTER — IMPORTANT:**
+- ONLY report issues you are >80% confident are real problems
+- SKIP stylistic nitpicks unless they violate $(language) conventions
+- CONSOLIDATE similar issues (e.g., "5 functions missing error handling" not 5 separate findings)
+- PRIORITIZE issues that could cause bugs, security vulnerabilities, or data loss
+
+Work through each category in order (CRITICAL → LOW):
+
+---
+
+### 🔴 CRITICAL — Security
+These MUST be flagged — they cause real damage:
+- Hardcoded credentials (API keys, passwords, tokens in source)
+- SQL/NoSQL injection (string concatenation in queries)
+- XSS vulnerabilities (unescaped user input in HTML/JSX)
+- Path traversal (user-controlled file paths without sanitization)
+- CSRF on state-changing endpoints
+- Authentication bypasses (missing auth checks on protected routes)
+- Exposed secrets in logs (logging tokens, passwords, PII)
+- Insecure dependencies with known CVEs
+
+### 🟠 HIGH — Code Quality
+- Functions >50 lines → split into focused helpers
+- Files >800 lines → extract modules by responsibility
+- Deep nesting >4 levels → use early returns, extract helpers
+- Missing error handling (unhandled promise rejections, empty catch blocks)
+- Mutation patterns → prefer immutable (spread, map, filter)
+- Console.log / debug statements left in
+- Missing tests for new code paths
+- Dead code (commented-out code, unused imports, unreachable branches)
+
+### 🟠 HIGH — Framework-Specific ($(framework))
+Check patterns specific to $(framework):
+- React: missing useEffect dependency arrays, state updates in render, index as key, prop drilling >3 levels, missing loading/error states, stale closures
+- Node.js: unvalidated request body, missing rate limiting, unbounded SELECT *, N+1 queries, missing timeouts on HTTP calls, error message leakage to clients, CORS misconfiguration
+- General: missing input validation at boundaries, no schema validation
+
+### 🟡 MEDIUM — Performance
+- Inefficient algorithms (O(n²) when O(n log n) possible)
+- Unnecessary re-renders / re-computations
+- Large bundle imports (full library when tree-shakeable exists)
+- Missing caching for expensive computations
+- Synchronous I/O in async context
+- Unoptimized images without lazy loading
+
+### 🟢 LOW — Best Practices
+- TODO/FIXME without issue numbers
+- Missing JSDoc/docstrings on public APIs
+- Poor naming (single-letter variables in non-trivial context)
+- Magic numbers without named constants
+- Inconsistent formatting
+
+---
+
+**OUTPUT FORMAT — For each finding, use this EXACT structure:**
+
+\\\`\\\`\\\`
+[SEVERITY] Issue Title
+Line: [line number or range]
+Issue: [What's wrong and why it matters]
+Fix: [Exact corrected code]
+
+  // BAD (current)
+  [problematic code]
+
+  // GOOD (fixed)
+  [corrected code]
+\\\`\\\`\\\`
+
+---
+
+**End with this EXACT summary:**
+
+## Review Summary
+
+| Severity | Count | Status |
+|----------|-------|--------|
+| CRITICAL | ? | pass/fail |
+| HIGH | ? | pass/warn |
+| MEDIUM | ? | info |
+| LOW | ? | note |
+
+**Verdict:** [one of]
+- ✅ **APPROVE** — No CRITICAL or HIGH issues. Ready to ship.
+- ⚠️ **WARNING** — HIGH issues found. Can merge with caution after fixing noted items.
+- ❌ **BLOCK** — CRITICAL issues found. Must fix before merge.}}
+
+---
+
+## De-Sloppify Pass
+
+{{@AI:
+  @think: yes
+  @prompt: You are a code cleanup specialist. Perform a "de-sloppify" pass on this code — a focused cleanup that removes noise without changing behavior.
+
+\\\`\\\`\\\`
+$(codeToReview)
+\\\`\\\`\\\`
+
+This is SEPARATE from the review above. Focus only on:
+1. Remove console.log / print debugging statements
+2. Remove commented-out code (it belongs in git, not in files)
+3. Remove unused imports and variables
+4. Replace magic numbers with named constants
+5. Flatten deep nesting with early returns / guard clauses
+6. Simplify overly defensive checks for impossible states
+
+Output the cleaned version of the code as a drop-in replacement. Then list every change you made with a one-line rationale.
+
+RULE: The cleaned code MUST have identical behavior. Never change business logic.}}
+
+> 💡 **How to use:** Set language, framework, and paste your code. Click **▶ Run All** for the review + cleaned version.
+`
+    },
+    {
+        name: 'Security Scan',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-shield-lock',
+        description: 'Multi-layer security audit — OWASP Top 10, red-team attack simulation, remediation plan, and pre-deployment checklist',
+        variables: [
+            { name: 'codeToScan', value: 'Paste your code here', desc: 'Code to scan for vulnerabilities' },
+            { name: 'language', value: 'JavaScript', desc: 'Programming language (JavaScript, Python, Go, etc.)' },
+            { name: 'framework', value: 'Node.js / Express', desc: 'Framework (React, Express, Django, Flask, etc.)' },
+            { name: 'scanDepth', value: 'Standard', desc: 'Scan depth: Quick (top issues only), Standard (full OWASP), Deep (+ attack simulation)' },
+        ],
+        content: `# 🛡️ Security Scan — $(language) / $(framework)
+
+**Date:** $(date)
+**Scanner:** AI Security Audit Agent
+**Language:** $(language)
+**Framework:** $(framework)
+**Depth:** $(scanDepth)
+
+---
+
+## Code Under Scan
+
+\\\`\\\`\\\`
+$(codeToScan)
+\\\`\\\`\\\`
+
+---
+
+## 1. Vulnerability Scan
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior security auditor specializing in $(language) and $(framework). Perform a thorough OWASP Top 10 security audit on the code below.
+
+\\\`\\\`\\\`
+$(codeToScan)
+\\\`\\\`\\\`
+
+**CONFIDENCE FILTER — IMPORTANT:**
+- ONLY report issues you are >80% confident are real vulnerabilities
+- SKIP stylistic preferences unless they have security implications
+- CONSOLIDATE similar issues (e.g., "5 endpoints missing auth" not 5 separate findings)
+- PRIORITIZE issues that could lead to data breach, unauthorized access, or service compromise
+
+Scan the code systematically through each OWASP category:
+
+---
+
+### 🔴 CRITICAL — Immediate Threats
+
+**A01: Broken Access Control**
+- Missing authentication checks on protected routes
+- IDOR (Insecure Direct Object References) — user can access other users' data by changing IDs
+- Privilege escalation — regular user can perform admin actions
+- Missing authorization after authentication
+
+**A02: Cryptographic Failures**
+- Hardcoded API keys, passwords, tokens, or secrets in source code
+- Weak hashing (MD5, SHA1 for passwords — use bcrypt/argon2)
+- Plaintext storage of sensitive data
+- Insecure random number generation for security-critical values
+
+**A03: Injection**
+- SQL injection via string concatenation in queries
+- NoSQL injection (MongoDB operator injection)
+- Command injection (user input in shell commands)
+- XSS via unescaped user input in HTML/JSX
+- LDAP injection, template injection
+
+---
+
+### 🟠 HIGH — Must Fix Before Production
+
+**A04: Insecure Design**
+- Missing rate limiting on login, API endpoints, expensive operations
+- No input validation or schema validation (use Zod, Joi, etc.)
+- Missing bounds checking on pagination, file sizes, request bodies
+
+**A05: Security Misconfiguration**
+- Debug mode enabled in production
+- Default credentials or unchanged secrets
+- Verbose error messages exposing internals (stack traces, SQL errors)
+- Missing security headers (CSP, X-Frame-Options, HSTS)
+- CORS misconfiguration (overly permissive origins)
+
+**A07: Authentication Failures**
+- Tokens in localStorage (vulnerable to XSS — use httpOnly cookies)
+- Missing session expiration or token rotation
+- No account lockout after failed login attempts
+- Weak password policies
+
+---
+
+### 🟡 MEDIUM — Address Before Release
+
+**A06: Vulnerable Components** — Known CVEs in dependencies
+**A08: Data Integrity** — Unsafe deserialization, unsigned updates
+**A09: Logging Failures** — Logging passwords/tokens, missing audit trail
+**A10: SSRF** — Unvalidated user-provided URLs, internal resource access
+
+---
+
+### Framework-Specific Checks ($(framework))
+
+Check patterns specific to $(framework):
+- **Express/Node.js**: Missing helmet(), no express-rate-limit, unvalidated req.body, unbounded queries (SELECT *), missing timeouts on HTTP calls, error messages leaking to clients
+- **React/Next.js**: dangerouslySetInnerHTML without DOMPurify, missing CSP, API routes without auth middleware, exposed server-side secrets in client bundle
+- **Django/Flask**: DEBUG=True in production, CSRF disabled, raw SQL queries, SECRET_KEY hardcoded
+- **General**: Missing CSRF protection on state-changing endpoints, unsafe file uploads (no type/size validation)
+
+---
+
+**OUTPUT FORMAT — For each finding, use EXACTLY this structure:**
+
+**[SEVERITY] Finding Title**
+- **Category:** OWASP A01-A10
+- **Line:** [line number or range]
+- **Issue:** What's vulnerable and why it matters
+- **Exploit:** How an attacker would abuse this (specific attack scenario)
+- **Confidence:** High / Medium
+
+\\\`\\\`\\\`
+// ❌ BAD (current)
+[the vulnerable code]
+
+// ✅ GOOD (fixed)
+[the corrected code with explanation]
+\\\`\\\`\\\`
+
+---
+
+**End with this EXACT summary:**
+
+## Scan Summary
+
+| Severity | Count | Status |
+|----------|-------|--------|
+| 🔴 CRITICAL | ? | ❌ BLOCK — must fix |
+| 🟠 HIGH | ? | ⚠️ WARN — fix before prod |
+| 🟡 MEDIUM | ? | 📝 NOTE — address soon |
+| 🟢 LOW | ? | ℹ️ INFO — awareness |
+
+**Security Grade:** [A through F]
+
+| Grade | Score | Meaning |
+|-------|-------|---------|
+| A | 90-100 | Secure — no critical or high issues |
+| B | 75-89 | Good — minor issues only |
+| C | 60-74 | Needs attention — high-severity findings |
+| D | 40-59 | Significant risk — multiple high/critical |
+| F | 0-39 | Critical — immediate remediation required |
+
+**Top 3 priorities to fix immediately:**
+1. [Most critical finding]
+2. [Second most critical]
+3. [Third most critical]}}
+
+---
+
+## 2. Attack Simulation (Red Team)
+
+{{@AI:
+  @think: yes
+  @prompt: You are a penetration tester and red-team operator. You've just reviewed the security audit above. Now think like an attacker targeting this $(language)/$(framework) application.
+
+\\\`\\\`\\\`
+$(codeToScan)
+\\\`\\\`\\\`
+
+Your task is to find **exploit chains** — sequences of vulnerabilities that, when combined, lead to critical compromise.
+
+### Attack Surface Analysis
+1. **Entry points** — List every way an attacker can interact with this code (API endpoints, form inputs, file uploads, URL params, headers, websockets)
+2. **Trust boundaries** — Where does the code trust data it shouldn't? (user input, third-party APIs, browser storage)
+3. **Data flows** — Trace how user-controlled data flows through the system. Where does it reach dangerous sinks (DB queries, HTML output, file system, shell commands)?
+
+### Exploit Scenarios
+For the top 3 most dangerous attack paths, provide:
+
+**Attack [N]: [Name]**
+- **Target:** What the attacker is after (data theft, account takeover, privilege escalation, service disruption)
+- **Prerequisites:** What the attacker needs (authenticated? specific role? network access?)
+- **Steps:**
+  1. [First action the attacker takes]
+  2. [How they exploit the vulnerability]
+  3. [What they achieve]
+- **Impact:** What damage results (data breach scope, affected users, financial impact)
+- **Difficulty:** Easy / Medium / Hard
+- **Proof of Concept:** Describe (do NOT provide executable exploit code) the request/payload that would trigger the vulnerability
+
+### Attack Chain Diagram
+Create a Mermaid diagram showing how vulnerabilities chain together:
+\\\`\\\`\\\`mermaid
+flowchart TD
+    A[Entry Point] --> B[Vulnerability 1]
+    B --> C[Escalation]
+    C --> D[Impact]
+\\\`\\\`\\\`
+
+### Defense Gaps
+- What defenses are MISSING that would stop these attacks?
+- What monitoring would detect these attacks in progress?}}
+
+---
+
+## 3. Remediation Plan & Pre-Deployment Checklist
+
+{{Agent:
+  Step 1: Based on the vulnerability scan and attack simulation above, create a PRIORITIZED remediation plan. For each finding, provide: priority (P0 = fix now, P1 = fix this sprint, P2 = fix next sprint), the specific code fix as a drop-in replacement, estimated effort (minutes/hours), and which attack scenarios it blocks. Group fixes by category and order by impact. Present as a markdown table with columns: Priority, Finding, Fix Summary, Effort, Blocks Attack.
+
+  Step 2: Generate security test cases that verify each fix works. For each critical and high finding, write a test description covering: test name, what it validates, input (the attack payload), expected behavior (the fix blocks it), and the test type (unit/integration/E2E). Also include regression tests to ensure fixes don't break existing functionality. Present as a numbered list with code examples where helpful.
+
+  Step 3: Generate a pre-deployment security checklist tailored to $(language)/$(framework). Include these categories with specific checkboxes:
+
+**Secrets & Configuration**
+- [ ] No hardcoded API keys, tokens, or passwords in source
+- [ ] All secrets loaded from environment variables
+- [ ] .env files in .gitignore
+- [ ] Debug mode disabled in production config
+- [ ] Production secrets stored in hosting platform (not repo)
+
+**Input & Data**
+- [ ] All user inputs validated with schema validation
+- [ ] File uploads restricted (size, type, extension)
+- [ ] SQL queries parameterized (no string concatenation)
+- [ ] User-provided HTML sanitized (DOMPurify or equivalent)
+
+**Authentication & Authorization**
+- [ ] Auth checks on every protected route
+- [ ] Tokens in httpOnly cookies (not localStorage)
+- [ ] Session expiration and token rotation configured
+- [ ] Role-based access control verified
+- [ ] CSRF protection on all state-changing endpoints
+
+**Network & Headers**
+- [ ] HTTPS enforced in production
+- [ ] Security headers set (CSP, X-Frame-Options, HSTS, X-Content-Type-Options)
+- [ ] CORS properly scoped (not wildcard *)
+- [ ] Rate limiting on all API endpoints (stricter on auth endpoints)
+
+**Monitoring & Response**
+- [ ] Security events logged (failed logins, permission denials, suspicious patterns)
+- [ ] No sensitive data in logs (passwords, tokens, PII)
+- [ ] Error messages generic for users (detailed only in server logs)
+- [ ] Dependency audit clean (npm audit / pip audit / go vet)
+
+End with an overall security readiness verdict: ✅ READY / ⚠️ CONDITIONAL (list blockers) / ❌ NOT READY (list critical gaps).
+}}
+
+> 💡 **How to use:** Set your language, framework, and scan depth. Paste your code, then click **▶ Run All** for the full 3-step security audit: vulnerability scan → attack simulation → remediation plan.
+`
+    },
+    {
+        name: 'Clean Up Code',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-eraser',
+        description: 'ECC-style refactor — risk-categorized dead code removal, batch processing, duplicate consolidation, and safety verification',
+        variables: [
+            { name: 'codeToClean', value: 'Paste your code here', desc: 'Code to clean up' },
+            { name: 'language', value: 'JavaScript', desc: 'Programming language' },
+        ],
+        content: `# 🧹 Code Cleanup — De-Sloppify
+
+**Date:** $(date)
+**Language:** $(language)
+**Agent:** Refactor & Dead Code Cleaner
+
+---
+
+## Original Code
+
+\\\`\\\`\\\`
+$(codeToClean)
+\\\`\\\`\\\`
+
+---
+
+## Phase 1: Dead Code Analysis
+
+{{@AI:
+  @think: yes
+  @prompt: You are an expert refactoring specialist focused on code cleanup and consolidation. Analyze this $(language) code for dead code, unused elements, and cleanup opportunities.
+
+\\\`\\\`\\\`
+$(codeToClean)
+\\\`\\\`\\\`
+
+**Step 1 — Categorize every finding by removal risk:**
+
+### 🟢 SAFE — Remove immediately
+Items with zero risk of breaking anything:
+- Unused imports / require statements
+- Unused local variables
+- Commented-out code blocks (belongs in git, not in files)
+- Console.log / print / debug statements
+- Unused eslint-disable directives
+- Empty catch blocks with no purpose
+- Redundant type assertions the type system already enforces
+
+### 🟡 CAREFUL — Verify before removing
+Items that MIGHT be used dynamically or externally:
+- Unused exported functions (could be used by other modules)
+- Unused function parameters (could be required by interface contracts)
+- Functions called only via dynamic imports / string patterns
+- Config values that might be read at runtime
+- CSS classes that might be applied dynamically
+
+### 🔴 RISKY — Do NOT remove without full project search
+Items that could break other code:
+- Public API exports
+- Shared utilities imported by other files
+- Event handler registrations
+- Database migration code
+- Anything accessed via reflection or string-based lookups
+
+**Step 2 — For the SAFE items, list each one in this format:**
+
+\\\`\\\`\\\`
+[SAFE] Description
+Line: [line number]
+Type: import / variable / function / statement / comment
+Action: Remove / Replace with X
+\\\`\\\`\\\`
+
+**Step 3 — Structural improvements (SAFE only):**
+- Magic numbers → named constants
+- Deep nesting (>4 levels) → flatten with early returns / guard clauses
+- Long functions (>50 lines) → split into focused helpers
+- Mutation patterns → immutable alternatives (spread, map, filter)
+- Overly defensive guards for impossible states → simplify
+
+**Step 4 — Summary table:**
+
+| Category | Count | Risk | Action |
+|----------|-------|------|--------|
+| Unused imports | ? | 🟢 SAFE | Remove |
+| Unused variables | ? | 🟢 SAFE | Remove |
+| Debug statements | ? | 🟢 SAFE | Remove |
+| Commented-out code | ? | 🟢 SAFE | Remove |
+| Dead functions | ? | 🟡 CAREFUL | Verify |
+| Structural issues | ? | 🟢 SAFE | Refactor |
+| **Total lines removable** | **?** | | |
+
+**CRITICAL SAFETY RULES:**
+1. ONLY recommend removing items in the 🟢 SAFE category
+2. Flag 🟡 CAREFUL items but do NOT remove them — ask for verification
+3. Never touch 🔴 RISKY items
+4. Never change business logic
+5. Start with deps → imports → variables → functions → statements (this order)}}
+
+---
+
+## Phase 2: Duplicate Detection
+
+{{@AI:
+  @think: yes
+  @prompt: Analyze this $(language) code for duplicate and near-duplicate patterns. Your goal is to consolidate repeated logic into reusable functions.
+
+\\\`\\\`\\\`
+$(codeToClean)
+\\\`\\\`\\\`
+
+Look for:
+
+1. **Exact duplicates** — Identical code blocks in multiple places
+2. **Near duplicates** — Code blocks that differ by only 1-2 lines (parameterize the difference)
+3. **Repeated patterns** — Same sequence of operations done in multiple functions
+4. **Copy-paste artifacts** — Similar error handling, validation, or data transformation repeated
+
+For each duplicate found:
+
+| Location A | Location B | Similarity | Suggested Consolidation |
+|-----------|-----------|------------|------------------------|
+| Lines X-Y | Lines X-Y | 90% | Extract to \`helperName()\` |
+
+Then for the top 3 most impactful consolidations, show:
+1. The repeated code (before)
+2. The extracted helper function
+3. The call sites after consolidation (after)
+4. Lines saved
+
+Pick the **most complete, best-tested** version when choosing which implementation to keep.}}
+
+---
+
+## Phase 3: Cleaned Code
+
+{{Agent:
+  Step 1: Apply ALL 🟢 SAFE removals from Phase 1 and consolidate the top duplicates from Phase 2. Output the COMPLETE cleaned code as a drop-in replacement. The cleaned code MUST have identical behavior — never change business logic, API contracts, or observable outputs.
+  Step 2: Generate a detailed changelog of every change made. For each change list: what was removed/changed, which line, and a one-line rationale. End with a metrics summary — lines before, lines after, lines removed, percentage reduction, and a confidence rating (High/Medium/Low) that behavior is preserved.
+  Step 3: Generate a safety verification checklist. List specific things to test after applying this cleanup to ensure nothing broke. Include: function calls to verify, edge cases to re-test, and any 🟡 CAREFUL items that need manual verification before the next cleanup pass.
+}}
+
+> ⚠️ **When NOT to clean:** During active feature development, right before deploys, without test coverage, or on code you don't fully understand.
+
+> 💡 **How to use:** Paste your code and set the language. Click **▶ Run All** for risk-categorized analysis → duplicate detection → cleaned code with safety checklist.
+`
+    },
+    {
+        name: 'Generate Docs',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-file-earmark-text',
+        description: 'ECC-style doc generator — codemap, README, API reference, inline JSDoc, and quality-validated examples',
+        variables: [
+            { name: 'codeToDocument', value: 'Paste your code here', desc: 'Code to generate documentation for' },
+            { name: 'language', value: 'JavaScript', desc: 'Programming language' },
+            { name: 'docType', value: 'Full (README + API + Inline)', desc: 'Scope: Full, README only, API only, Inline only, or Codemap only' },
+        ],
+        content: `# 📝 Documentation Generator
+
+**Date:** $(date)
+**Language:** $(language)
+**Scope:** $(docType)
+
+---
+
+## Source Code
+
+\\\`\\\`\\\`
+$(codeToDocument)
+\\\`\\\`\\\`
+
+---
+
+## Phase 1: Architecture Codemap
+
+{{@AI:
+  @think: yes
+  @prompt: You are a documentation specialist focused on generating codemaps from source code. Analyze this $(language) code and produce an architectural codemap.
+
+\\\`\\\`\\\`
+$(codeToDocument)
+\\\`\\\`\\\`
+
+Generate this EXACT format:
+
+### Codemap
+
+**Last Updated:** $(date)
+**Language:** $(language)
+
+#### Architecture Overview
+Create an ASCII diagram showing the relationships between all major components, modules, classes, or functions in this code. Show data flow direction with arrows.
+
+\\\`\\\`\\\`
+[Component A] ──▶ [Component B] ──▶ [Component C]
+       │                                    ▲
+       └──────── [Component D] ─────────────┘
+\\\`\\\`\\\`
+
+#### Key Modules
+
+| Module / Function | Purpose | Exports | Dependencies |
+|------------------|---------|---------|-------------|
+| \\\`name\\\` | What it does | What it exposes | What it imports |
+
+#### Data Flow
+Describe how data flows through this code:
+1. Entry point: where data comes in
+2. Processing: what transformations happen
+3. Output: where results go
+
+#### External Dependencies
+List every external package/library used:
+- \\\`package-name\\\` — Purpose, how it's used
+
+**KEY PRINCIPLE: Generate from code only — never invent features that don't exist. Every statement must be verifiable in the source.**}}
+
+---
+
+## Phase 2: README & API Documentation
+
+{{@AI:
+  @think: yes
+  @prompt: You are a documentation specialist. Generate developer-facing documentation from this $(language) code. Scope: $(docType).
+
+\\\`\\\`\\\`
+$(codeToDocument)
+\\\`\\\`\\\`
+
+Generate ALL sections that apply:
+
+### Overview
+What this code does in 2-3 sentences. Be specific — name the actual functions and what they accomplish.
+
+### Installation & Setup
+- Prerequisites (language version, dependencies)
+- Install command
+- Environment variables needed (with descriptions and example values)
+- Configuration options with defaults
+
+### Quick Start
+A minimal working example that a developer can copy-paste and run immediately:
+\\\`\\\`\\\`
+// This example MUST actually work with the code above
+\\\`\\\`\\\`
+
+### API Reference
+For EVERY exported function, class, and constant:
+
+#### \\\`functionName(param1, param2)\\\`
+- **Description:** What it does
+- **Parameters:**
+  - \\\`param1\\\` (\\\`type\\\`) — description, default value if any
+  - \\\`param2\\\` (\\\`type\\\`, optional) — description
+- **Returns:** \\\`type\\\` — what the return value represents
+- **Throws:** \\\`ErrorType\\\` — when and why
+- **Example:**
+\\\`\\\`\\\`
+// Working example with expected output
+const result = functionName('input');
+// => expected output
+\\\`\\\`\\\`
+
+### Configuration
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| \\\`option\\\` | \\\`type\\\` | \\\`default\\\` | What it controls |
+
+### Error Handling
+- What errors can occur
+- How to handle them
+- Common troubleshooting steps
+
+### Gotchas & Limitations
+- Non-obvious behavior
+- Known limitations
+- Performance considerations
+- Edge cases to watch for
+
+**RULES:**
+1. **Single source of truth** — Generate from code only, don't invent features
+2. **Every example must work** — Code examples must be copy-pasteable and correct
+3. **Use the code's naming** — Match the exact function names, parameter names, and conventions
+4. **Document the WHY** — Explain rationale, not just what each function does
+5. **Include freshness timestamps** — Always show when docs were generated}}
+
+---
+
+## Phase 3: Inline Documentation & Validation
+
+{{Agent:
+  Step 1: Generate complete inline documentation for the source code. Add JSDoc/docstring to EVERY function with: description, @param (name, type, description), @returns (type, description), @throws (when and why), and @example (working code snippet). Also add brief comments for any non-obvious logic, complex algorithms, or "why" explanations. Output the complete code with all documentation added as a drop-in replacement.
+
+  Step 2: Validate the generated documentation against this quality checklist. For each item, mark ✅ pass or ❌ fail:
+  - [ ] Every exported function has JSDoc/docstring with params, returns, and example
+  - [ ] All code examples are syntactically correct and would work
+  - [ ] No references to functions or features that don't exist in the code
+  - [ ] All parameter types match the actual code
+  - [ ] Return types match the actual code
+  - [ ] Configuration options match actual defaults
+  - [ ] No obsolete or stale references
+  - [ ] Freshness timestamp included
+  If any items fail, list the specific corrections needed.
+
+  Step 3: Generate a documentation maintenance guide: When should these docs be updated? List the types of code changes that would require a doc update (new exports, API changes, new dependencies, config changes, architecture changes) vs changes that don't need doc updates (internal refactoring, bug fixes, cosmetic changes). This helps keep docs in sync with reality.
+}}
+
+> 💡 **How to use:** Paste your code, set the language and scope. Click **▶ Run All** for codemap → README/API docs → validated inline documentation.
+`
+    },
+    {
+        name: 'Python Review',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-filetype-py',
+        description: 'Python-specific code review — PEP 8, type hints, Pythonic patterns, and security checks',
+        variables: [
+            { name: 'pythonCode', value: 'Paste your Python code here', desc: 'Python code to review' },
+        ],
+        content: `# 🐍 Python Code Review
+
+**Date:** $(date)
+**Reviewer:** Python Review Agent
+
+---
+
+## Code Under Review
+
+\`\`\`python
+$(pythonCode)
+\`\`\`
+
+---
+
+## Python Review Results
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior Python developer. Review this Python code for idiomatic style, correctness, and security.
+
+\`\`\`python
+$(pythonCode)
+\`\`\`
+
+Evaluate against:
+
+### PEP 8 & Style
+- Naming conventions (snake_case for functions, PascalCase for classes)
+- Line length (88 or 120 chars)
+- Import ordering (stdlib, third-party, local)
+- Docstrings (Google or NumPy style)
+
+### Pythonic Patterns
+- List comprehensions vs loops where appropriate
+- Context managers (with statements) for resources
+- f-strings instead of format() or %
+- Proper use of generators for large datasets
+- Unpacking, enumerate, zip usage
+- Dataclasses vs plain dicts for structured data
+
+### Type Hints
+- Missing type annotations on function signatures
+- Return types
+- Optional, Union, or modern X | Y syntax
+- Generic types for collections
+
+### Security
+- eval() or exec() usage
+- SQL string formatting (use parameterized queries)
+- Pickle usage with untrusted data
+- os.system or subprocess without shell=False
+- Input validation
+
+### Performance
+- Unnecessary copies of large data
+- String concatenation in loops (use join)
+- Global variable lookups in hot paths
+- Missing __slots__ for many-instance classes
+
+For each finding, show:
+- **Issue**: What's wrong
+- **Current**: The problematic code
+- **Fixed**: The corrected code
+- **Why**: Brief explanation
+
+End with a summary table of findings by severity.}}
+
+> 💡 **How to use:** Paste your Python code, click **▶ Run All** for an idiomatic review.
+`
+    },
+    {
+        name: 'Design Architecture',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-building',
+        description: 'ECC-style architect — ADRs, pattern catalogs, red flag detection, scalability roadmap, and design checklist',
+        variables: [
+            { name: 'systemDescription', value: 'Real-time chat application with message persistence and push notifications', desc: 'Describe the system to design' },
+            { name: 'scale', value: '10K users, growing to 100K', desc: 'Expected scale (users, requests/sec)' },
+            { name: 'constraints', value: 'Budget: low-medium, Team: 2-3 devs, Timeline: 3 months', desc: 'Constraints (budget, team, timeline)' },
+        ],
+        content: `# 🏗️ Architecture Design — $(systemDescription)
+
+**Date:** $(date)
+**Architect:** AI Architecture Agent
+**Scale target:** $(scale)
+**Constraints:** $(constraints)
+
+---
+
+## Phase 1: Architecture Design
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior systems architect. Design the architecture for the following system using a systematic process.
+
+**System:** $(systemDescription)
+**Scale:** $(scale)
+**Constraints:** $(constraints)
+
+Follow the architecture review process:
+
+---
+
+### 1. Requirements Analysis
+
+#### Functional Requirements
+- List every feature the system needs as user stories
+- Define API contracts (endpoints, methods, request/response)
+- Specify data models and relationships
+
+#### Non-Functional Requirements
+- **Performance:** Target latency (p50, p95, p99), throughput (requests/sec)
+- **Scalability:** Current and future user counts, data growth rate
+- **Availability:** Uptime target (99.9%? 99.99%?)
+- **Security:** Auth model, data sensitivity, compliance requirements
+- **Cost:** Budget constraints, cost-per-user targets
+
+---
+
+### 2. High-Level Architecture
+
+Create a Mermaid flowchart diagram showing ALL major components and their interactions:
+
+\\\`\\\`\\\`mermaid
+flowchart TD
+    Client[Client App] --> LB[Load Balancer]
+    LB --> API[API Server]
+    API --> DB[(Database)]
+    API --> Cache[(Cache)]
+    API --> Queue[Message Queue]
+    Queue --> Worker[Background Worker]
+    ...
+\\\`\\\`\\\`
+
+Identify:
+- Frontend layer
+- Backend / API layer
+- Data layer (database, cache, file storage)
+- External services and integrations
+- Primary data flows (show direction)
+
+---
+
+### 3. Component Breakdown
+
+For EACH component in the diagram:
+
+| Component | Responsibility | Technology | Justification | Data Owned | API Surface |
+|-----------|---------------|------------|---------------|-----------|-------------|
+| [Name] | [Single purpose] | [Tech choice] | [Why this tech] | [Tables/collections] | [Key endpoints] |
+
+---
+
+### 4. Data Model
+
+Create a Mermaid ER diagram showing core entities:
+
+\\\`\\\`\\\`mermaid
+erDiagram
+    USER ||--o{ POST : creates
+    POST ||--o{ COMMENT : has
+    USER ||--o{ COMMENT : writes
+    ...
+\\\`\\\`\\\`
+
+For each entity:
+- Key fields and types
+- Indexes for common query patterns
+- Relationships and constraints
+
+---
+
+### 5. Recommended Patterns
+
+Apply relevant patterns from each layer:
+
+**Frontend Patterns:**
+- Component Composition — build complex UI from simple components
+- Container/Presenter — separate data logic from rendering
+- Custom Hooks — reusable stateful logic
+- Code Splitting — lazy load routes and heavy components
+
+**Backend Patterns:**
+- Repository Pattern — abstract data access
+- Service Layer — business logic separation
+- Middleware — request/response processing pipeline
+- Event-Driven — async operations for non-critical paths
+
+**Data Patterns:**
+- Normalized for writes — reduce redundancy
+- Denormalized for reads — optimize query performance
+- Caching Layers — what to cache, where (CDN, Redis, in-memory), TTL strategy
+- Eventual Consistency — where strict consistency isn't needed
+
+---
+
+### 6. Security Architecture
+
+- **Authentication:** Mechanism (JWT, session, OAuth) and storage (httpOnly cookies vs localStorage)
+- **Authorization:** RBAC, ABAC, or simple role checks
+- **Data Protection:** Encryption at rest and in transit, PII handling
+- **API Security:** Rate limiting, input validation, CORS policy
+- **Secret Management:** How secrets are stored and rotated
+- **Defense in Depth:** Multiple layers, principle of least privilege
+
+---
+
+### 7. Scalability Roadmap
+
+Provide a tiered scaling plan:
+
+| Scale | Architecture | Key Changes | Estimated Cost |
+|-------|-------------|-------------|---------------|
+| 10K users | [Current design] | None needed | $X/mo |
+| 100K users | [What changes] | [Specific additions] | $X/mo |
+| 1M users | [Major shift] | [New components] | $X/mo |
+| 10M users | [Full scale] | [Full redesign areas] | $X/mo |
+
+---
+
+### 8. Red Flags Check
+
+Verify the design does NOT have these anti-patterns:
+- ❌ **Big Ball of Mud** — No clear structure or boundaries
+- ❌ **God Object** — One component doing everything
+- ❌ **Golden Hammer** — Using same solution for everything
+- ❌ **Tight Coupling** — Components too dependent on each other
+- ❌ **Premature Optimization** — Optimizing before measuring
+- ❌ **Not Invented Here** — Rejecting proven existing solutions
+- ❌ **Magic** — Unclear, undocumented behavior
+
+For each red flag, mark ✅ clear or ⚠️ concern with a brief note.}}
+
+---
+
+## Phase 2: Architecture Decision Records (ADRs)
+
+{{@AI:
+  @think: yes
+  @prompt: Based on the architecture design above, create formal Architecture Decision Records for the 5 most significant technology and design choices. Use this EXACT format for each:
+
+\\\`\\\`\\\`markdown
+# ADR-00X: [Decision Title]
+
+## Context
+[Why this decision is needed — the problem being solved]
+
+## Decision
+[What was chosen and the high-level approach]
+
+## Consequences
+
+### Positive
+- [Benefit 1]
+- [Benefit 2]
+
+### Negative
+- [Drawback 1 — and how it's mitigated]
+- [Drawback 2]
+
+### Alternatives Considered
+- **[Alternative 1]:** [Pros] / [Cons] / [Why rejected]
+- **[Alternative 2]:** [Pros] / [Cons] / [Why rejected]
+
+## Status
+Proposed
+
+## Date
+$(date)
+\\\`\\\`\\\`
+
+Create 5 ADRs covering:
+1. Primary database choice
+2. Backend framework / language
+3. Frontend framework / rendering strategy
+4. Authentication / authorization approach
+5. Real-time / messaging / async strategy (if applicable)
+
+For each alternative, provide genuine pros and cons — don't just dismiss alternatives.}}
+
+---
+
+## Phase 3: Design Readiness Checklist
+
+{{Agent:
+  Step 1: Evaluate the architecture against this system design readiness checklist. For each item, mark ✅ addressed, ⚠️ partially addressed (with note), or ❌ missing:
+
+**Functional Requirements**
+- [ ] User stories documented
+- [ ] API contracts defined (endpoints, request/response)
+- [ ] Data models specified with relationships
+- [ ] UI/UX flows identified
+
+**Non-Functional Requirements**
+- [ ] Performance targets defined (latency, throughput)
+- [ ] Scalability requirements specified (user tiers)
+- [ ] Security requirements identified (auth, encryption, compliance)
+- [ ] Availability targets set (uptime %)
+
+**Technical Design**
+- [ ] Architecture diagram created
+- [ ] Component responsibilities defined (single purpose each)
+- [ ] Data flow documented end-to-end
+- [ ] Integration points identified
+- [ ] Error handling strategy defined
+- [ ] Testing strategy planned
+
+**Operations**
+- [ ] Deployment strategy defined (CI/CD, environments)
+- [ ] Monitoring and alerting planned
+- [ ] Backup and recovery strategy
+- [ ] Rollback plan documented
+- [ ] Cost estimation completed
+
+Flag any ❌ items as blockers that must be resolved before implementation.
+
+  Step 2: Generate a technology comparison matrix for the key decisions. Create a table comparing the chosen technology against 2 alternatives across these dimensions: learning curve, community size, performance, scalability ceiling, cost, maturity, and ecosystem. Rate each 1-5 stars. This helps validate the ADR decisions with data.
+
+  Step 3: Generate an implementation roadmap. Break the architecture into buildable milestones:
+  - Milestone 1 (Week 1-2): Foundation — core infrastructure, database, basic API
+  - Milestone 2 (Week 3-4): Core features — main user flows, authentication
+  - Milestone 3 (Week 5-6): Integration — external services, real-time features
+  - Milestone 4 (Week 7-8): Hardening — security, monitoring, performance testing
+  For each milestone, list specific deliverables and success criteria. Present as a timeline table.
+}}
+
+> 💡 **How to use:** Describe your system, set the scale and constraints. Click **▶ Run All** for complete architecture → ADRs → readiness checklist.
+`
+    },
+    {
+        name: 'Debug This Error',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-bug',
+        description: '3-phase debug pipeline — triage & classify → root cause & fix → verify & prevent',
+        variables: [
+            { name: 'errorMessage', value: 'Paste your error message / stack trace here', desc: 'Error message or stack trace' },
+            { name: 'context', value: 'Describe what you were doing when this error occurred', desc: 'Context around the error' },
+            { name: 'language', value: 'JavaScript', desc: 'Language / framework (JS, Python, Go, React, Node, etc.)' },
+            { name: 'codeSnippet', value: '(optional) Paste relevant code here', desc: 'Code around the error (optional)' },
+        ],
+        content: `# 🐛 Debug This Error
+
+**Date:** $(date)
+**Debugger:** AI Debug Agent
+**Language:** $(language)
+
+---
+
+## Error
+
+\\\`\\\`\\\`
+$(errorMessage)
+\\\`\\\`\\\`
+
+## Context
+
+$(context)
+
+## Relevant Code
+
+\\\`\\\`\\\`
+$(codeSnippet)
+\\\`\\\`\\\`
+
+---
+
+## Phase 1: Triage & Classify
+
+{{@AI:
+  @think: yes
+  @prompt: You are a build-error resolution specialist. Your job is to rapidly triage and classify this error, then match it against known fix patterns.
+
+**Error:**
+\\\`\\\`\\\`
+$(errorMessage)
+\\\`\\\`\\\`
+
+**Context:** $(context)
+**Language / Framework:** $(language)
+
+**Code (if provided):**
+\\\`\\\`\\\`
+$(codeSnippet)
+\\\`\\\`\\\`
+
+Produce the following analysis:
+
+### Error Classification
+
+| Property | Value |
+|----------|-------|
+| **Type** | Syntax / Runtime / Type / Dependency / Config / Network / Permission / Logic |
+| **Severity** | 🔴 CRITICAL (app broken) / 🟠 HIGH (feature broken) / 🟡 MEDIUM (degraded) |
+| **Category** | Build error / Type error / Import error / Null reference / API error / DB error / Auth error |
+| **Source** | File and line (from stack trace) or best guess |
+
+### Known-Pattern Match
+
+Check the error against these common patterns and state which one matches (or "No match — requires deep analysis"):
+
+| Error Pattern | Quick Fix |
+|---------------|-----------|
+| \\\`Cannot find module 'X'\\\` | Check import path, \\\`npm install X\\\`, verify tsconfig paths |
+| \\\`X is not a function\\\` | Check typo, verify export name, check default vs named import |
+| \\\`Cannot read properties of null/undefined\\\` | Add optional chaining \\\`?.\\\` or null guard before access |
+| \\\`Type 'X' is not assignable to type 'Y'\\\` | Add type annotation, cast, or fix the source type |
+| \\\`CORS / Access-Control\\\` | Add CORS headers on server, check origin whitelist |
+| \\\`ECONNREFUSED / ETIMEDOUT\\\` | Check if target service is running, verify host:port |
+| \\\`ENOMEM / heap out of memory\\\` | Increase Node \\\`--max-old-space-size\\\`, check for memory leaks |
+| \\\`Permission denied / EACCES\\\` | Check file permissions, run with correct user, avoid sudo |
+| \\\`SyntaxError: Unexpected token\\\` | Check for missing brackets, invalid JSON, wrong file extension |
+| \\\`Module not found / ImportError\\\` | Check virtual env, verify package installed, check Python path |
+| \\\`KeyError / AttributeError\\\` | Check dict key exists, verify object has attribute, use .get() |
+| \\\`FOREIGN KEY constraint failed\\\` | Check referenced record exists, fix insert order |
+| \\\`429 Too Many Requests\\\` | Add rate limiting, implement exponential backoff |
+| \\\`ERR_REQUIRE_ESM\\\` | Switch to \\\`import\\\`, add \\\`"type": "module"\\\` in package.json, or use dynamic import |
+
+If a pattern matches, state the **confidence level** (High / Medium / Low) and the suggested fix. If no pattern matches, state why this requires deeper analysis.}}
+
+---
+
+## Phase 2: Root Cause & Fix
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior debugger. Perform a deep root-cause analysis of this error and produce a precise, minimal fix.
+
+**Error:**
+\\\`\\\`\\\`
+$(errorMessage)
+\\\`\\\`\\\`
+
+**Context:** $(context)
+**Language / Framework:** $(language)
+
+**Code (if provided):**
+\\\`\\\`\\\`
+$(codeSnippet)
+\\\`\\\`\\\`
+
+### 1. Root Cause
+
+Trace the error from the symptom to the source:
+- **Immediate cause:** What triggered the error (the line that threw)
+- **Underlying cause:** Why that line failed (the real bug — often upstream)
+- **Contributing factors:** Config, environment, timing, or data that made this happen
+
+### 2. The Fix
+
+Show the **minimal diff** — the smallest change that resolves the error:
+
+**❌ Before:**
+\\\`\\\`\\\`
+// The problematic code
+\\\`\\\`\\\`
+
+**✅ After:**
+\\\`\\\`\\\`
+// The fixed code
+\\\`\\\`\\\`
+
+**Why this works:** One-sentence explanation of the fix.
+
+### 3. DO and DON'T
+
+| ✅ DO | ❌ DON'T |
+|-------|---------|
+| Add the specific fix shown above | Refactor unrelated code while fixing |
+| Add a null check / type guard at the source | Suppress the error with try-catch without handling it |
+| Fix the import / dependency that's missing | Downgrade packages to "make it work" without understanding why |
+| Test the fix in isolation first | Change architecture to work around the bug |
+| Check if the same pattern exists elsewhere | Ignore the root cause and only fix the symptom |
+
+### 4. Quick Diagnostic Steps
+
+If the root cause isn't 100% certain, provide exact steps to confirm:
+1. Add this \\\`console.log\\\` / \\\`print\\\` at line X: \\\`...\\\`
+2. Check the value of \\\`variable\\\` — it should be \\\`expected\\\`, if it's \\\`something else\\\` then the bug is in \\\`...\\\`
+3. Run this command to verify: \\\`...\\\`
+
+Be direct: state the fix first, explain after.}}
+
+---
+
+## Phase 3: Verify & Prevent
+
+{{Agent:
+  Step 1: Generate verification commands to confirm the fix works. Based on the error type and language ($(language)), provide exact commands the developer should run after applying the fix. Include build commands, test commands, and any sanity checks. Format as a numbered checklist with the actual commands to copy-paste. For example: npm run build, npx tsc --noEmit, npm test, python -m pytest, go build ./..., curl commands for API errors, etc. If the error was a build/type error, the success metric is "command exits with code 0". If it was a runtime error, describe the expected behavior after the fix.
+
+  Step 2: Generate preventive guards to stop this class of error from recurring. Provide concrete code — not advice. This should include: input validation (null checks, type guards, assertions), error handling wrappers, TypeScript strict mode flags or linter rules to enable, test cases that would have caught this bug. Show each guard as a code snippet that can be dropped into the codebase.
+
+  Step 3: Scan for related issues. Based on the error pattern identified in Phase 1, describe 3-5 places where the same bug pattern might hide in a typical $(language) codebase. For each, provide: what to search for (exact grep / search pattern), why it's risky, and a one-line fix. End with a priority-ordered action list: fix this error → add guards → sweep related issues → add tests.
+}}
+
+> 💡 **How to use:** Paste the error, describe the context, set your language. Click **▶ Run All** for triage → root cause → verification.
+`
+    },
+    {
+        name: 'SQL Optimizer',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-database-gear',
+        description: 'ECC-style DB reviewer — EXPLAIN ANALYZE, anti-pattern detection, RLS security, schema typing, and concurrency audit',
+        variables: [
+            { name: 'sqlQueries', value: 'Paste your SQL queries here', desc: 'SQL queries to optimize' },
+            { name: 'dbEngine', value: 'PostgreSQL', desc: 'Database engine: PostgreSQL, MySQL, SQLite, etc.' },
+            { name: 'tableContext', value: 'users (~100K rows), orders (~1M rows), products (~10K rows)', desc: 'Table names and approximate sizes' },
+        ],
+        content: `# 📊 SQL Optimizer — $(dbEngine)
+
+**Date:** $(date)
+**Engine:** $(dbEngine)
+**Tables:** $(tableContext)
+**Optimizer:** AI Database Review Agent
+
+---
+
+## Queries to Optimize
+
+\\\`\\\`\\\`sql
+$(sqlQueries)
+\\\`\\\`\\\`
+
+---
+
+## Phase 1: Performance Audit
+
+{{@AI:
+  @think: yes
+  @prompt: You are an expert $(dbEngine) database specialist focused on query optimization and performance. Analyze these SQL queries in the context of the given table sizes.
+
+\\\`\\\`\\\`sql
+$(sqlQueries)
+\\\`\\\`\\\`
+
+**Table context:** $(tableContext)
+
+---
+
+### 1. Execution Plan Prediction
+
+For each query, predict what EXPLAIN ANALYZE would show:
+- **Scan type:** Seq Scan (⚠️ bad on large tables) vs Index Scan vs Index Only Scan
+- **Join type:** Nested Loop vs Hash Join vs Merge Join
+- **Estimated rows:** How many rows each operation processes
+- **Cost estimate:** Relative cost of each query
+- **Bottleneck:** The most expensive operation and why
+
+Flag every **Seq Scan on tables > 10K rows** as a CRITICAL performance issue.
+
+---
+
+### 2. Index Recommendations
+
+For each missing index, provide:
+
+\\\`\\\`\\\`sql
+-- WHY: [What query benefits and why]
+-- IMPACT: [Before estimate → After estimate]
+CREATE INDEX idx_tablename_column ON tablename (column);
+\\\`\\\`\\\`
+
+Apply these indexing rules:
+- **Foreign keys** — ALWAYS index. No exceptions.
+- **Composite indexes** — Equality columns FIRST, then range columns
+  \\\`\\\`\\\`sql
+  -- GOOD: status (equality) before created_at (range)
+  CREATE INDEX idx_orders_status_date ON orders (status, created_at);
+  -- BAD: range column first
+  CREATE INDEX idx_orders_date_status ON orders (created_at, status);
+  \\\`\\\`\\\`
+- **Partial indexes** — Use WHERE for filtered queries:
+  \\\`\\\`\\\`sql
+  CREATE INDEX idx_active_users ON users (email) WHERE deleted_at IS NULL;
+  \\\`\\\`\\\`
+- **Covering indexes** — Use INCLUDE to avoid table lookups:
+  \\\`\\\`\\\`sql
+  CREATE INDEX idx_orders_user ON orders (user_id) INCLUDE (total, status);
+  \\\`\\\`\\\`
+
+---
+
+### 3. Anti-Pattern Detection
+
+Flag ALL of these if found (with BAD → GOOD examples):
+
+| Anti-Pattern | Severity | Why It's Bad |
+|-------------|----------|-------------|
+| \\\`SELECT *\\\` in production | 🟠 HIGH | Fetches unnecessary data, breaks covering indexes |
+| \\\`OFFSET\\\` pagination on large tables | 🔴 CRITICAL | O(n) — scans and discards rows |
+| \\\`int\\\` for IDs instead of \\\`bigint\\\` | 🟡 MEDIUM | Overflows at 2.1B rows |
+| \\\`varchar(255)\\\` without reason | 🟡 MEDIUM | Use \\\`text\\\` — same performance, no arbitrary limit |
+| \\\`timestamp\\\` without timezone | 🟠 HIGH | Use \\\`timestamptz\\\` — avoids timezone bugs |
+| Random UUIDs as PK | 🟠 HIGH | Fragments B-tree — use UUIDv7 or IDENTITY |
+| String concatenation in queries | 🔴 CRITICAL | SQL injection risk — use parameterized queries |
+| Individual INSERTs in loops | 🟠 HIGH | Use multi-row INSERT or COPY |
+| N+1 query pattern | 🔴 CRITICAL | Fetch related data with JOIN or batch query |
+| Unindexed foreign keys | 🟠 HIGH | Causes Seq Scans on JOINs and cascading deletes |
+
+For each found anti-pattern, show:
+\\\`\\\`\\\`sql
+-- BAD (current)
+SELECT * FROM orders WHERE user_id = 5 LIMIT 10 OFFSET 1000;
+
+-- GOOD (fixed) — cursor-based pagination
+SELECT * FROM orders WHERE user_id = 5 AND id > $last_seen_id
+ORDER BY id LIMIT 10;
+\\\`\\\`\\\`
+
+---
+
+### 4. Performance Summary
+
+| Query | Scan Type | Est. Cost | Bottleneck | Recommended Fix | Improvement |
+|-------|----------|-----------|-----------|----------------|-------------|
+| Q1 | ? | ? | ? | ? | ~?x faster |}}
+
+---
+
+## Phase 2: Schema & Security Review
+
+{{@AI:
+  @think: yes
+  @prompt: Review the schema implied by these $(dbEngine) queries for design issues, security problems, and concurrency risks.
+
+\\\`\\\`\\\`sql
+$(sqlQueries)
+\\\`\\\`\\\`
+
+**Table context:** $(tableContext)
+
+---
+
+### Schema Design Review
+
+Check each table/column mentioned in the queries:
+
+**Type correctness:**
+- IDs → \\\`bigint\\\` (not \\\`int\\\`)
+- Strings → \\\`text\\\` (not \\\`varchar(255)\\\` unless there's a business reason)
+- Timestamps → \\\`timestamptz\\\` (not \\\`timestamp\\\`)
+- Money → \\\`numeric\\\` (not \\\`float\\\` or \\\`double\\\`)
+- Booleans → \\\`boolean\\\` (not \\\`int 0/1\\\`)
+- UUIDs → UUIDv7 or IDENTITY (not random UUID for PKs)
+
+**Constraints:**
+- PRIMARY KEYs defined
+- FOREIGN KEYs with ON DELETE behavior (CASCADE, SET NULL, or RESTRICT)
+- NOT NULL on required columns
+- CHECK constraints for business rules
+- Naming: \\\`lowercase_snake_case\\\` (no quoted mixed-case identifiers)
+
+Provide ALTER TABLE statements for any corrections.
+
+---
+
+### Security Review
+
+- **SQL Injection:** Are all queries parameterized? (String concatenation = 🔴 CRITICAL)
+- **Row Level Security (RLS):** For multi-tenant tables, is RLS enabled?
+  \\\`\\\`\\\`sql
+  -- GOOD: RLS policy with indexed column
+  CREATE POLICY user_access ON orders
+    USING (user_id = (SELECT auth.uid()));
+  \\\`\\\`\\\`
+- **Privilege:** No \\\`GRANT ALL\\\` to application users — use least privilege
+- **Data exposure:** Are sensitive columns (email, SSN, etc.) properly protected?
+
+---
+
+### Concurrency Review
+
+- **Transaction length:** Are transactions kept short? (Never hold locks during external API calls)
+- **Deadlock prevention:** Are rows locked in consistent order? (\\\`ORDER BY id FOR UPDATE\\\`)
+- **Queue patterns:** Use \\\`SKIP LOCKED\\\` for worker queue patterns (10x throughput)
+  \\\`\\\`\\\`sql
+  -- GOOD: Worker queue with SKIP LOCKED
+  SELECT id, payload FROM job_queue
+  WHERE status = 'pending'
+  ORDER BY id
+  FOR UPDATE SKIP LOCKED
+  LIMIT 1;
+  \\\`\\\`\\\`
+- **Batch operations:** Use multi-row INSERT or COPY, not individual inserts in loops}}
+
+---
+
+## Phase 3: Optimized Queries
+
+{{Agent:
+  Step 1: Rewrite every query from the input with all optimizations applied. For each query, show: the original query, the optimized version, a bulleted list of every change made with rationale, and the estimated performance improvement (e.g., 10x faster, from Seq Scan to Index Scan). The rewritten queries must be functionally equivalent — same results, better performance. Consider: CTE vs subquery performance, EXISTS vs IN vs JOIN, window functions vs self-joins, cursor pagination replacing OFFSET, and explicit column lists replacing SELECT *.
+
+  Step 2: Generate all necessary DDL statements to support the optimizations: CREATE INDEX statements (with comments explaining which query they optimize), ALTER TABLE statements for type corrections or constraint additions, and CREATE POLICY statements for RLS if applicable. Group them in the order they should be executed, with a note about which can be run with CREATE INDEX CONCURRENTLY to avoid blocking.
+
+  Step 3: Generate a database health checklist tailored to the queries reviewed. Include diagnostic SQL commands to run for ongoing monitoring:
+  - Top 10 slowest queries (pg_stat_statements)
+  - Unused indexes to drop
+  - Table bloat detection
+  - Index usage statistics
+  - Missing index recommendations from pg_stat_user_tables
+  Present each as a ready-to-run SQL command with explanation of what to look for in the output.
+}}
+
+> 💡 **How to use:** Paste your SQL queries, set the database engine and table sizes. Click **▶ Run All** for performance audit → schema/security review → optimized queries with DDL.
+`
+    },
+    {
+        name: 'TDD Guide',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-check2-circle',
+        description: 'Test-Driven Development workflow — write failing tests first, implement, refactor, and verify coverage',
+        variables: [
+            { name: 'featureDescription', value: 'User registration with email validation and password hashing', desc: 'Feature to implement with TDD' },
+            { name: 'language', value: 'JavaScript', desc: 'Programming language' },
+            { name: 'testFramework', value: 'Jest', desc: 'Test framework (Jest, Pytest, Go testing, Mocha, etc.)' },
+        ],
+        content: `# ✅ TDD Guide — $(featureDescription)
+
+**Date:** $(date)
+**Method:** Test-Driven Development (Red → Green → Refactor)
+**Language:** $(language)
+**Test Framework:** $(testFramework)
+
+---
+
+## Phase 1: RED — Write Failing Tests
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior developer practicing strict TDD. Your task is to write comprehensive failing tests BEFORE any implementation code.
+
+**Feature:** $(featureDescription)
+**Language:** $(language)
+**Framework:** $(testFramework)
+
+Write failing tests covering:
+
+### Core Behavior Tests
+- Happy path — the feature works as expected with valid inputs
+- Each distinct behavior or state transition
+- Return values and side effects
+
+### Edge Case Tests
+- Empty inputs, null, undefined
+- Boundary values (min, max, zero, negative)
+- Large inputs, unicode, special characters
+- Concurrent access (if applicable)
+
+### Error Handling Tests
+- Invalid inputs → appropriate error response
+- Missing required fields
+- Type mismatches
+- Resource not found scenarios
+
+### Integration Points (if applicable)
+- Database interactions (mock or in-memory)
+- External API calls (mocked)
+- Event emissions
+
+**OUTPUT FORMAT:**
+
+\\\`\\\`\\\`$(language)
+// Test file: [filename].test.[ext]
+
+describe('[Feature Name]', () => {
+  // Group 1: Core Behavior
+  test('[specific behavior being tested]', () => {
+    // Arrange — set up test data
+    // Act — call the function/method
+    // Assert — verify the expected outcome
+  });
+
+  // Group 2: Edge Cases
+  // Group 3: Error Handling
+});
+\\\`\\\`\\\`
+
+Rules:
+1. **Tests MUST fail** — don't write implementation, only tests
+2. **One assertion per test** where practical
+3. **Descriptive names** — test name should read like a requirement
+4. **AAA pattern** — Arrange, Act, Assert in every test
+5. **No implementation logic** — tests only define WHAT, not HOW}}
+
+---
+
+## Phase 2: GREEN — Minimal Implementation
+
+{{@AI:
+  @think: yes
+  @prompt: Now implement the MINIMUM code needed to make ALL the tests above pass. You are in the GREEN phase of TDD.
+
+**Feature:** $(featureDescription)
+**Language:** $(language)
+**Tests to satisfy:** [refer to the tests from Phase 1 above]
+
+Rules:
+1. **Minimum viable code** — only write enough to pass the tests, nothing more
+2. **No optimization** — that's for the Refactor phase
+3. **No extra features** — stick to what the tests require
+4. **All tests must pass** — if a test would still fail, fix it
+
+Provide:
+1. **Implementation code** — complete, runnable file(s)
+2. **Test results** — predicted pass/fail for each test
+3. **Any test adjustments** — if a test was poorly written, suggest a fix (but don't skip it)}}
+
+---
+
+## Phase 3: REFACTOR — Improve Without Breaking
+
+{{Agent:
+  Step 1: Review the GREEN implementation above. Identify refactoring opportunities: duplicated logic, unclear naming, long functions (>30 lines), deep nesting, missing type annotations, hardcoded values that should be constants. For each issue, describe what to change and why. Do NOT change behavior — all tests must still pass.
+
+  Step 2: Produce the refactored version of the code. Show a clean, production-ready version that passes all the same tests. After the code, list every change made with a one-line rationale. End with a confidence rating (High/Medium/Low) that all tests still pass.
+
+  Step 3: Analyze test coverage. List: which code paths are tested, which are NOT tested, and suggest 3-5 additional tests that would improve coverage. Present as a checklist:
+- [ ] [Test name] — [what it covers] — [priority: P0/P1/P2]
+
+End with an estimated coverage percentage and whether it meets the 80% minimum threshold.
+}}
+
+> 💡 **How to use:** Describe your feature, set language and test framework, click **▶ Run All** for the full TDD cycle.
+`
+    },
+    {
+        name: 'Database Review',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-database-check',
+        description: 'Database schema & query review — N+1 detection, index analysis, normalization audit, and migration safety',
+        variables: [
+            { name: 'schemaOrQueries', value: 'Paste your schema, queries, or migration files here', desc: 'Database code to review' },
+            { name: 'dbEngine', value: 'PostgreSQL', desc: 'Database engine (PostgreSQL, MySQL, SQLite, MongoDB, etc.)' },
+            { name: 'orm', value: 'None (raw SQL)', desc: 'ORM in use (Prisma, Sequelize, SQLAlchemy, Drizzle, Django ORM, etc.)' },
+        ],
+        content: `# 🗄️ Database Review — $(dbEngine)
+
+**Date:** $(date)
+**Reviewer:** AI Database Agent
+**Engine:** $(dbEngine)
+**ORM:** $(orm)
+
+---
+
+## Code Under Review
+
+\\\`\\\`\\\`sql
+$(schemaOrQueries)
+\\\`\\\`\\\`
+
+---
+
+## Schema & Query Analysis
+
+{{@AI:
+  @think: yes
+  @prompt: You are a database architect and performance specialist for $(dbEngine). Review the schema, queries, and/or migration code below.
+
+\\\`\\\`\\\`
+$(schemaOrQueries)
+\\\`\\\`\\\`
+
+**ORM in use:** $(orm)
+
+Evaluate against these categories:
+
+### 1. Schema Design
+- **Normalization** — Is the schema properly normalized? Any redundant data?
+- **Data types** — Are types appropriate? (e.g., VARCHAR vs TEXT, INT vs BIGINT, TIMESTAMP vs DATE)
+- **Constraints** — Missing NOT NULL, UNIQUE, CHECK, or FOREIGN KEY constraints?
+- **Defaults** — Sensible defaults for optional columns?
+- **Naming** — Consistent naming (snake_case? singular vs plural tables?)
+
+### 2. Performance Issues
+- **N+1 queries** — Loops executing individual queries instead of JOINs or batch loads
+- **Missing indexes** — Columns used in WHERE, JOIN, ORDER BY without indexes
+- **Over-indexing** — Too many indexes slowing writes
+- **Full table scans** — SELECT * or unbounded queries without LIMIT
+- **Expensive JOINs** — Missing indexes on join columns
+
+### 3. Query Patterns
+- **Parameterized queries** — No string concatenation (SQL injection risk)
+- **Pagination** — OFFSET vs cursor-based (cursor is better for large datasets)
+- **Aggregation** — Could benefit from materialized views?
+- **Transaction safety** — Operations that need ACID guarantees
+
+### 4. Migration Safety (if reviewing migrations)
+- **Backwards compatibility** — Will this break running code during deployment?
+- **Data loss risk** — Dropping columns, changing types
+- **Lock duration** — Adding indexes on large tables (use CONCURRENTLY in PostgreSQL)
+- **Rollback plan** — Can this migration be reversed?
+
+### 5. Security
+- **Row-Level Security** (RLS) — Enabled for multi-tenant data?
+- **Privilege separation** — Application user vs admin user permissions
+- **Sensitive data** — PII encrypted at rest? Audit columns present?
+
+For each finding:
+- **Severity:** 🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low
+- **Issue:** What's wrong
+- **Fix:** Exact SQL or ORM code to fix it
+- **Impact:** Performance/security/reliability effect
+
+End with a summary table and overall database health grade (A-F).}}
+
+> 💡 **How to use:** Paste your schema, queries, or migrations. Set the DB engine and ORM, click **▶ Run All** for analysis.
+`
+    },
+    {
+        name: 'Generate E2E Tests',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-play-btn',
+        description: 'User flow → E2E tests — generate Playwright or Cypress test suites from feature descriptions',
+        variables: [
+            { name: 'userFlows', value: '1. User registers with email and password\n2. User logs in with credentials\n3. User creates a new project\n4. User invites a team member', desc: 'User flows to test (numbered list)' },
+            { name: 'testFramework', value: 'Playwright', desc: 'E2E framework: Playwright, Cypress, Puppeteer, etc.' },
+            { name: 'appUrl', value: 'http://localhost:3000', desc: 'Application URL for tests' },
+        ],
+        content: `# 🎭 E2E Test Generator — $(testFramework)
+
+**Date:** $(date)
+**Framework:** $(testFramework)
+**App URL:** $(appUrl)
+
+---
+
+## User Flows to Test
+
+$(userFlows)
+
+---
+
+## Generated E2E Tests
+
+{{Agent:
+  Step 1: Analyze each user flow and break it down into individual test steps. For each flow, identify: preconditions (user state, test data needed), the exact sequence of user actions (click, type, navigate, wait), expected outcomes at each step, and cleanup/teardown needs. Present as a structured outline before writing any test code.
+
+  Step 2: Generate complete, runnable $(testFramework) test code for ALL user flows. Use the Page Object Model pattern for reusability. Include:
+
+**Test structure:**
+- Proper describe/test grouping by flow
+- beforeAll/afterAll for setup and teardown
+- Test isolation — each test should be independent
+
+**For each test step, include:**
+- Navigation actions (goto, click links)
+- Form interactions (fill, select, check)
+- Assertions (visible text, URL, element state)
+- Wait strategies (waitForSelector, waitForResponse, NOT arbitrary timeouts)
+- Screenshot capture on failure
+
+**Best practices:**
+- Use data-testid selectors (not CSS classes or XPath)
+- Generate test data with unique identifiers (timestamps or UUIDs)
+- Handle loading states and async operations
+- Test both happy path and at least 1 error case per flow
+
+  Step 3: Generate a test configuration file and npm scripts to run the tests. Include: $(testFramework) config file with baseURL, timeouts, retries, and screenshot settings. Also provide a CI/CD pipeline snippet (GitHub Actions YAML) to run these tests on every push. End with a test coverage matrix showing which user flows are covered:
+
+| Flow | Happy Path | Error Case | Edge Case | Auth Required |
+|------|-----------|------------|-----------|---------------|
+| ... | ✅/❌ | ✅/❌ | ✅/❌ | Yes/No |
+}}
+
+> 💡 **How to use:** List your user flows, set the test framework and app URL, click **▶ Run All** for complete E2E tests.
+`
+    },
+    {
+        name: 'API Design Review',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-plug',
+        description: 'REST API audit — conventions, error handling, pagination, versioning, and OpenAPI spec generation',
+        variables: [
+            { name: 'apiCode', value: 'Paste your API route handlers or endpoint definitions here', desc: 'API code to review' },
+            { name: 'framework', value: 'Express.js', desc: 'API framework (Express, FastAPI, Django REST, Flask, etc.)' },
+            { name: 'apiStyle', value: 'REST', desc: 'API style: REST, GraphQL, gRPC' },
+        ],
+        content: `# 🔌 API Design Review — $(apiStyle)
+
+**Date:** $(date)
+**Reviewer:** AI API Design Agent
+**Framework:** $(framework)
+**Style:** $(apiStyle)
+
+---
+
+## API Code Under Review
+
+\\\`\\\`\\\`
+$(apiCode)
+\\\`\\\`\\\`
+
+---
+
+## Design Audit
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior API architect specializing in $(apiStyle) APIs built with $(framework). Review the API code below for design quality, security, and developer experience.
+
+\\\`\\\`\\\`
+$(apiCode)
+\\\`\\\`\\\`
+
+Evaluate against these standards:
+
+### 1. REST Conventions (if REST)
+- **HTTP methods** — GET for reads, POST for creates, PUT/PATCH for updates, DELETE for deletes
+- **Status codes** — 200 success, 201 created, 204 no content, 400 bad request, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 422 validation error, 429 rate limited, 500 server error
+- **URL structure** — Nouns not verbs (/users not /getUsers), plural resources, nested for relationships (/users/:id/posts)
+- **Idempotency** — PUT and DELETE should be idempotent
+
+### 2. Error Handling
+- **Consistent error format** — Every error should return the same JSON structure
+- **Error code + message** — Machine-readable code + human-readable message
+- **No stack traces in production** — Internal errors should not leak implementation details
+- **Validation errors** — Field-level error details for 422 responses
+
+Example error format:
+\\\`\\\`\\\`json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request body",
+    "details": [
+      { "field": "email", "message": "Must be a valid email address" }
+    ]
+  }
+}
+\\\`\\\`\\\`
+
+### 3. Pagination
+- **Cursor-based** preferred over offset (avoids page drift with inserts)
+- **Consistent format** — Include total count, next/prev cursors, page size
+- **Max page size** — Enforce an upper limit (e.g., 100)
+
+### 4. Input Validation
+- **Schema validation** on every endpoint (Zod, Joi, Pydantic, etc.)
+- **Type coercion** — Handle string numbers, booleans from query params
+- **Sanitization** — Strip dangerous characters before processing
+
+### 5. Authentication & Authorization
+- **Auth middleware** — Applied consistently to protected routes
+- **RBAC** — Role checks after authentication
+- **API keys** — Sent in headers (not URL params, which get logged)
+
+### 6. Rate Limiting & Performance
+- **Rate limiting** — Per endpoint, stricter on auth routes
+- **Caching headers** — ETag, Cache-Control for GET responses
+- **Response size** — No unbounded queries, always paginate lists
+- **Timeouts** — On external service calls
+
+### 7. Documentation
+- **Self-documenting** — Clear endpoint names and status codes
+- **Missing docs** — Endpoints without JSDoc/docstrings
+
+For each finding, show the problematic code and the corrected version.
+
+End with a summary: API Design Score (A-F) and top 3 improvements.}}
+
+---
+
+## OpenAPI Spec
+
+{{@AI:
+  @think: yes
+  @prompt: Based on the API code above, generate an OpenAPI 3.0 specification (YAML format) documenting all endpoints. Include: paths, HTTP methods, request body schemas, response schemas (success and error), query parameters, path parameters, authentication requirements, and example values. Make it production-ready.}}
+
+> 💡 **How to use:** Paste your API code, set the framework and style, click **▶ Run All** for design audit + OpenAPI spec.
+`
+    },
+    {
+        name: 'Fix Build Errors',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-wrench',
+        description: 'Paste build output or CI logs → get root cause analysis, fix, and prevention strategy',
+        variables: [
+            { name: 'buildOutput', value: 'Paste your build error output / CI logs here', desc: 'Build output or CI/CD error logs' },
+            { name: 'buildTool', value: 'Vite / Webpack', desc: 'Build tool (Vite, Webpack, Rollup, esbuild, tsc, cargo, go build, etc.)' },
+            { name: 'projectContext', value: 'React app with TypeScript', desc: 'Brief project description' },
+        ],
+        content: `# 🔧 Fix Build Errors — $(buildTool)
+
+**Date:** $(date)
+**Build Tool:** $(buildTool)
+**Project:** $(projectContext)
+**Fixer:** AI Build Error Agent
+
+---
+
+## Build Output
+
+\\\`\\\`\\\`
+$(buildOutput)
+\\\`\\\`\\\`
+
+---
+
+## Diagnosis & Fix
+
+{{@AI:
+  @think: yes
+  @prompt: You are a build systems expert. Analyze this build failure and provide an actionable fix.
+
+Build tool: $(buildTool)
+Project: $(projectContext)
+
+Build output:
+\\\`\\\`\\\`
+$(buildOutput)
+\\\`\\\`\\\`
+
+Provide your analysis in this EXACT order (fix first, explain after):
+
+### 1. Quick Fix
+The exact command or code change to resolve this error. Be specific:
+- If it's a dependency issue → exact npm/pip/go command
+- If it's a code error → exact file and line to change
+- If it's a config issue → exact config change needed
+
+### 2. Root Cause
+- **What failed:** The specific build step that errored
+- **Why it failed:** The underlying cause (not just the symptom)
+- **Error chain:** If error A caused error B, trace the chain
+
+### 3. Common Causes
+This type of build error is usually caused by:
+1. [Most common cause and its fix]
+2. [Second most common cause]
+3. [Third most common cause]
+
+### 4. Verification
+After applying the fix, verify with:
+\\\`\\\`\\\`bash
+[exact commands to rebuild and verify]
+\\\`\\\`\\\`
+
+### 5. Prevention
+How to prevent this error from recurring:
+- CI/CD checks to add
+- Configuration changes
+- Development workflow improvements
+- Pre-commit hooks or linting rules
+
+If the build output contains multiple errors, address them in dependency order (fix the root cause first, dependent errors may resolve automatically).}}
+
+> 💡 **How to use:** Paste build output or CI logs, set your build tool, click **▶ Run All** for the fix.
+`
+    },
+    {
+        name: 'Performance Profiler',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-speedometer2',
+        description: 'Paste code → get N+1 detection, memory leak spots, O(n²) loops, bundle impact, and caching recommendations',
+        variables: [
+            { name: 'codeToProfile', value: 'Paste your code here', desc: 'Code to analyze for performance' },
+            { name: 'language', value: 'JavaScript', desc: 'Programming language' },
+            { name: 'context', value: 'Web app / API server / CLI tool / Worker', desc: 'Where this code runs' },
+        ],
+        content: `# ⚡ Performance Profiler
+
+**Date:** $(date)
+**Profiler:** AI Performance Agent
+**Language:** $(language)
+**Runtime:** $(context)
+
+---
+
+## Code Under Analysis
+
+\\\`\\\`\\\`
+$(codeToProfile)
+\\\`\\\`\\\`
+
+---
+
+## Phase 1: Hotspot Detection
+
+{{@AI:
+  @think: yes
+  @prompt: You are a performance engineering specialist. Analyze this $(language) code running as a $(context) for performance bottlenecks.
+
+\\\`\\\`\\\`
+$(codeToProfile)
+\\\`\\\`\\\`
+
+Scan for these categories and report **every** finding:
+
+### 1. Algorithmic Complexity
+- O(n²) or worse loops (nested iterations over the same data)
+- Redundant re-computation (same value calculated multiple times)
+- Unnecessary sorting or searching in hot paths
+- Array/string concatenation in loops (should use join/buffer)
+
+### 2. I/O & Network
+- **N+1 query patterns** — loops making individual DB/API calls instead of batch
+- Sequential async calls that could be parallelized (Promise.all / asyncio.gather)
+- Missing connection pooling
+- Unbounded data fetching (no LIMIT, loading entire collections)
+
+### 3. Memory
+- Memory leaks — event listeners not removed, closures holding references, growing caches without eviction
+- Large object cloning when mutation would suffice
+- Holding entire files in memory instead of streaming
+- Global state accumulation
+
+### 4. Rendering & Frontend (if applicable)
+- Unnecessary re-renders (missing React.memo, useMemo, useCallback)
+- Large DOM manipulation without batching
+- Layout thrashing (read-write-read-write patterns)
+- Unoptimized images or missing lazy loading
+
+For each finding, report:
+
+| # | Category | Severity | Location | Issue | Impact Estimate |
+|---|----------|----------|----------|-------|-----------------|
+| 1 | ... | 🔴 Critical / 🟠 High / 🟡 Medium | Line/function | ... | ~Xms / ~X% slower |
+}}
+
+---
+
+## Phase 2: Optimized Code & Benchmarks
+
+{{Agent:
+  Step 1: For the top 5 most impactful findings from Phase 1, produce optimized versions. For each, show the original code (❌ Before), the optimized code (✅ After), what changed and why it's faster, and an estimated performance improvement. Focus on the highest-impact changes first. Make sure optimizations preserve the exact same behavior.
+
+  Step 2: Generate a caching strategy for this code. Identify: what values can be cached (computed results, API responses, DB queries), where to cache (in-memory, Redis, CDN, browser), recommended TTL for each cache, cache invalidation triggers. Present as a table with concrete implementation snippets.
+
+  Step 3: Create a performance monitoring checklist. List the specific metrics to track (response time p50/p95/p99, memory usage, query count per request, bundle size, Core Web Vitals if frontend), the tools and commands to measure them (e.g., lighthouse, clinic.js, py-spy, pprof, Chrome DevTools), and warning thresholds that indicate regression. Format as an actionable checklist the developer can integrate into CI/CD.
+}}
+
+> 💡 **How to use:** Paste your code, set the language and runtime context. Click **▶ Run All** for hotspot scan → optimizations → monitoring plan.
+`
+    },
+    {
+        name: 'Implementation Planner',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-kanban',
+        description: 'Describe a feature → get a phased plan with task breakdown, dependency order, risk assessment, and effort estimate',
+        variables: [
+            { name: 'featureDescription', value: 'Add user authentication with OAuth (Google, GitHub) and role-based access control', desc: 'Feature to plan' },
+            { name: 'techStack', value: 'Next.js, PostgreSQL, Prisma', desc: 'Technology stack' },
+            { name: 'teamSize', value: '1 developer', desc: 'Team size and composition' },
+        ],
+        content: `# 📋 Implementation Plan — $(featureDescription)
+
+**Date:** $(date)
+**Planner:** AI Planning Agent
+**Stack:** $(techStack)
+**Team:** $(teamSize)
+
+---
+
+## Implementation Blueprint
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior technical lead creating an implementation plan for a development team. Plan the following feature from zero to shipped.
+
+**Feature:** $(featureDescription)
+**Tech Stack:** $(techStack)
+**Team:** $(teamSize)
+
+Generate a complete implementation plan:
+
+### 1. Requirements Analysis
+
+Break the feature into concrete requirements:
+- **Must Have (P0):** Core functionality that defines the feature
+- **Should Have (P1):** Important but not blocking launch
+- **Nice to Have (P2):** Enhancements for later
+
+### 2. Architecture Decisions
+
+For each significant decision, document:
+- **Decision**: What was chosen
+- **Alternatives**: 2-3 other options considered
+- **Rationale**: Why this option wins (trade-offs)
+
+### 3. Task Breakdown
+
+Create a detailed, ordered task list. Each task should be shippable independently:
+
+| # | Task | Depends On | Estimated Effort | Risk |
+|---|------|-----------|-----------------|------|
+| 1 | [Task name] | — | 2h / 4h / 1d / 2d | 🟢 Low / 🟡 Med / 🔴 High |
+| 2 | [Task name] | Task 1 | ... | ... |
+
+Rules for task breakdown:
+- No task should take more than 2 days
+- Each task must be testable in isolation
+- Dependencies must form a DAG (no circular deps)
+- Infrastructure and schema changes go first
+
+### 4. Phased Rollout
+
+Split into phases with clear milestones:
+
+**Phase 1: Foundation (Week 1)**
+- Tasks: 1, 2, 3
+- Milestone: [what's working at the end]
+- Demo: [what you can show]
+
+**Phase 2: Core Logic (Week 2)**
+- ...
+
+**Phase 3: Polish & Ship (Week 3)**
+- ...
+
+### 5. Risk Assessment
+
+| Risk | Probability | Impact | Mitigation |
+|------|------------|--------|------------|
+| [What could go wrong] | Low/Med/High | Low/Med/High | [How to prevent or handle] |
+
+### 6. Definition of Done
+
+- [ ] All P0 requirements implemented
+- [ ] Tests written (unit + integration)
+- [ ] Documentation updated
+- [ ] Code reviewed
+- [ ] Deployed to staging
+- [ ] QA passed
+
+Provide real, specific tasks — not generic placeholders. Reference actual libraries, APIs, and patterns for the $(techStack) stack.}}
+
+> 💡 **How to use:** Describe your feature, set your stack. Click **▶ Run All** for a production-ready implementation plan.
+`
+    },
+    {
+        name: 'Git Commit Reviewer',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-git',
+        description: 'Paste a diff or commit messages → get conventional commit formatting, breaking change detection, and changelog',
+        variables: [
+            { name: 'diffOrCommits', value: 'Paste your git diff, commit messages, or list of changes here', desc: 'Git diff or commit messages to review' },
+            { name: 'project', value: 'my-project', desc: 'Project name for changelog header' },
+        ],
+        content: `# 🔀 Git Commit Reviewer — $(project)
+
+**Date:** $(date)
+**Reviewer:** AI Git Agent
+
+---
+
+## Input
+
+\\\`\\\`\\\`
+$(diffOrCommits)
+\\\`\\\`\\\`
+
+---
+
+## Commit Review & Changelog
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior developer reviewing git changes for commit quality. Analyze the diff or commit messages below and produce professional commit formatting and a changelog.
+
+\\\`\\\`\\\`
+$(diffOrCommits)
+\\\`\\\`\\\`
+
+**Project:** $(project)
+
+### 1. Change Analysis
+
+Categorize every change:
+
+| File / Area | Change Type | Scope | Summary |
+|------------|-------------|-------|---------|
+| [file/module] | feat / fix / refactor / docs / test / chore / perf / ci | [component] | [one-line description] |
+
+### 2. Conventional Commit Messages
+
+Rewrite as proper [Conventional Commits](https://www.conventionalcommits.org/):
+
+\\\`\\\`\\\`
+type(scope): description
+
+[optional body explaining WHAT and WHY, not HOW]
+
+[optional footer: BREAKING CHANGE, Fixes #123, Co-authored-by]
+\\\`\\\`\\\`
+
+Rules:
+- **feat:** New feature (MINOR version bump)
+- **fix:** Bug fix (PATCH version bump)
+- **BREAKING CHANGE:** in footer → MAJOR version bump
+- Keep subject line ≤ 72 characters
+- Use imperative mood ("add" not "added")
+- Body wraps at 80 characters
+- One logical change per commit
+
+If the diff contains multiple logical changes, suggest splitting into separate commits.
+
+### 3. Breaking Change Detection
+
+Scan for breaking changes:
+- [ ] API signature changes (parameters added/removed/renamed)
+- [ ] Return type changes
+- [ ] Removed public functions/methods/exports
+- [ ] Database schema changes (column drops, type changes)
+- [ ] Config format changes
+- [ ] Environment variable changes
+- [ ] Dependency major version bumps
+
+For each breaking change found, provide:
+- **What broke**: Exact change
+- **Who's affected**: Consumers, downstream services, users
+- **Migration steps**: How to update
+
+### 4. Generated Changelog
+
+\\\`\\\`\\\`markdown
+## [version] — $(date)
+
+### ✨ Features
+- description (#PR)
+
+### 🐛 Bug Fixes
+- description (#PR)
+
+### ♻️ Refactoring
+- description
+
+### 📝 Documentation
+- description
+
+### ⚠️ Breaking Changes
+- description — see migration guide
+\\\`\\\`\\\`
+
+### 5. Quality Check
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Commit messages follow conventional format | ✅/❌ | ... |
+| Each commit is a single logical change | ✅/❌ | ... |
+| No sensitive data in diff (keys, passwords) | ✅/❌ | ... |
+| Breaking changes documented | ✅/❌ | ... |
+| Tests updated for changed behavior | ✅/❌ | ... |
+}}
+
+> 💡 **How to use:** Paste your git diff (\\\`git diff\\\`) or commit messages (\\\`git log\\\`). Click **▶ Run All** for formatted commits + changelog.
+`
+    },
+    {
+        name: 'Deployment Checklist',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-rocket-takeoff',
+        description: 'Describe your stack → get CI/CD pipeline, Docker config, health checks, rollback plan, and pre-deploy checklist',
+        variables: [
+            { name: 'stackDescription', value: 'Next.js frontend + Express API + PostgreSQL + Redis, deployed on Vercel (frontend) and Railway (backend)', desc: 'Your full stack and deployment targets' },
+            { name: 'appName', value: 'my-app', desc: 'Application name' },
+        ],
+        content: `# 🚀 Deployment Checklist — $(appName)
+
+**Date:** $(date)
+**Engineer:** AI DevOps Agent
+**Stack:** $(stackDescription)
+
+---
+
+## Deployment Blueprint
+
+{{@AI:
+  @think: yes
+  @prompt: You are a senior DevOps engineer. Generate a complete deployment strategy for the following application.
+
+**App:** $(appName)
+**Stack:** $(stackDescription)
+
+### 1. Pre-Deploy Checklist
+
+Generate a comprehensive checklist. Mark each item as required (🔴) or recommended (🟡):
+
+**Code Quality**
+- 🔴 All tests passing (\\\`npm test\\\` / \\\`pytest\\\` exit 0)
+- 🔴 Build succeeds locally (\\\`npm run build\\\`)
+- 🔴 No console.log / debug statements in production code
+- 🟡 Lint passing with zero warnings
+- 🔴 Environment variables documented and set in target
+
+**Security**
+- 🔴 No hardcoded secrets in codebase (grep check)
+- 🔴 Dependencies audited (\\\`npm audit\\\` / \\\`pip audit\\\`)
+- 🟡 CORS configured for production origins only
+- 🔴 Rate limiting enabled on public endpoints
+- 🟡 CSP headers configured
+
+**Database**
+- 🔴 Migrations tested on staging first
+- 🔴 Backward-compatible schema changes (no column drops without code deploy first)
+- 🟡 Database backup taken before migration
+- 🟡 Rollback migration tested
+
+**Performance**
+- 🟡 Bundle size checked (no regressions)
+- 🟡 API response times within SLA
+- 🟡 Cache strategy verified
+
+### 2. CI/CD Pipeline
+
+Generate a GitHub Actions workflow YAML for this stack:
+- Triggers: push to main, pull requests
+- Jobs: lint, test, build, deploy
+- Environment secrets handling
+- Staged deployment (staging → production)
+- Deployment notifications
+
+### 3. Docker Configuration (if applicable)
+
+Generate optimized Dockerfile(s) for the stack:
+- Multi-stage builds for smaller images
+- Non-root user for security
+- .dockerignore file
+- docker-compose.yml for local development
+- Health check configuration
+
+### 4. Health Checks & Monitoring
+
+- **/health** endpoint: what to check (DB, cache, external APIs)
+- **Uptime monitoring**: recommended service and check interval
+- **Error tracking**: integration setup (Sentry, etc.)
+- **Logging**: structured JSON logging with log levels
+- **Alerts**: what triggers a page (error rate, latency, uptime)
+
+### 5. Rollback Plan
+
+Provide exact rollback procedures for each failure scenario:
+
+| Failure | Detection | Rollback Steps | Recovery Time |
+|---------|-----------|---------------|---------------|
+| Bad deploy (app crashes) | Health check fails | ... | < 5 min |
+| DB migration breaks | Error spike post-deploy | ... | 10-30 min |
+| Performance regression | Latency alerts | ... | < 5 min |
+| Security vulnerability | Audit alert | ... | < 1 hour |
+
+### 6. Post-Deploy Verification
+
+Commands to verify the deployment is healthy:
+- Smoke test endpoints
+- Check logs for errors
+- Verify database state
+- Monitor dashboards for 15 minutes
+
+Provide exact commands and URLs, not generic advice.}}
+
+> 💡 **How to use:** Describe your stack, click **▶ Run All** for a complete deployment playbook.
+`
+    },
+    {
+        name: 'Cost-Aware LLM Pipeline',
+        category: 'agents',
+        displayTag: 'Agent',
+        icon: 'bi-cash-stack',
+        description: 'Describe your AI pipeline → get model routing, budget tracking, cost optimization, and fallback strategies',
+        variables: [
+            { name: 'pipelineDescription', value: 'Customer support chatbot that handles FAQs, escalates complex issues, and generates ticket summaries', desc: 'Describe your LLM pipeline or AI feature' },
+            { name: 'monthlyBudget', value: '$500', desc: 'Monthly budget for LLM API costs' },
+            { name: 'currentModels', value: 'GPT-4o for everything', desc: 'Current model(s) in use' },
+        ],
+        content: `# 💰 Cost-Aware LLM Pipeline — $(pipelineDescription)
+
+**Date:** $(date)
+**Advisor:** AI Cost Optimization Agent
+**Budget:** $(monthlyBudget) / month
+**Current:** $(currentModels)
+
+---
+
+## Pipeline Cost Analysis
+
+{{@AI:
+  @think: yes
+  @prompt: You are an AI infrastructure cost optimization specialist. Analyze this LLM pipeline and design a cost-efficient architecture.
+
+**Pipeline:** $(pipelineDescription)
+**Monthly Budget:** $(monthlyBudget)
+**Current Models:** $(currentModels)
+
+### 1. Task Classification
+
+Break the pipeline into distinct task types and classify each by complexity:
+
+| Task | Complexity | Current Model | Recommended Model | Cost Savings |
+|------|-----------|---------------|-------------------|-------------|
+| [task] | Simple / Medium / Complex | [current] | [cheaper alternative] | ~X% |
+
+Classification guide:
+- **Simple** (use smallest model): Classification, routing, FAQ lookup, template filling, sentiment
+- **Medium** (use mid-tier): Summarization, extraction, moderate generation, translation
+- **Complex** (use premium): Reasoning, multi-step analysis, creative writing, code generation, nuanced judgment
+
+### 2. Model Routing Strategy
+
+Design a smart router that directs requests to the cheapest model that can handle them:
+
+\\\`\\\`\\\`
+Request → Classifier → Route
+                       ├── Simple    → Haiku / GPT-4o-mini / Gemini Flash  ($0.25/1M)
+                       ├── Medium    → Sonnet / GPT-4o / Gemini Pro        ($3/1M)
+                       └── Complex   → Opus / GPT-4.5 / Gemini Ultra       ($15/1M)
+\\\`\\\`\\\`
+
+For each route, specify:
+- Input criteria (keywords, length, topic, user tier)
+- Quality threshold (when to escalate to a bigger model)
+- Fallback behavior (if the small model fails or quality is low)
+
+### 3. Cost Optimization Techniques
+
+Apply these patterns and estimate savings:
+
+| Technique | Description | Estimated Savings |
+|-----------|-------------|------------------|
+| **Prompt caching** | Cache system prompts and few-shot examples | 50-90% on cached tokens |
+| **Response caching** | Cache identical or near-identical queries (hash-based) | 20-40% of total calls |
+| **Batch processing** | Aggregate non-urgent requests into batch API calls | 50% per request |
+| **Streaming + early stop** | Stop generation when answer is complete | 10-30% on output tokens |
+| **Prompt compression** | Remove redundancy, use abbreviations in system prompts | 15-25% on input tokens |
+| **Fine-tuning** | Train a smaller model on your specific task | 80%+ vs large model |
+| **Token budget limits** | Set max_tokens per task type | Prevents runaway costs |
+
+### 4. Budget Breakdown
+
+Given $(monthlyBudget)/month budget:
+
+| Component | % of Budget | Monthly Cost | Daily Limit | Rate (req/day) |
+|-----------|------------|-------------|-------------|----------------|
+| [task type] | X% | $X | $X | ~N requests |
+
+Include a **cost alert threshold** — at what daily spend should alerts fire?
+
+### 5. Fallback & Degradation Strategy
+
+What happens when budget is exhausted or a model is unavailable:
+
+| Scenario | Response |
+|----------|----------|
+| Budget 80% consumed | Switch all Medium tasks to Small models |
+| Budget 95% consumed | Queue non-urgent requests, serve only P0 |
+| Model API down | Fallback to [alternative provider] |
+| Quality regression | Escalate to next tier, log for review |
+| Latency spike | Switch to faster model, cache aggressively |
+
+### 6. Monitoring Dashboard Metrics
+
+Track these costs in real-time:
+- Total spend (daily, weekly, monthly) vs budget
+- Cost per request by task type
+- Model distribution (% requests per model)
+- Cache hit rate
+- Quality score distribution (user feedback, automated eval)
+- Token usage (input vs output, average per request)
+
+Provide specific, actionable recommendations with estimated dollar savings.}}
+
+> 💡 **How to use:** Describe your AI pipeline, set your budget and current models. Click **▶ Run All** for cost-optimized architecture.
+`
     }
 ];

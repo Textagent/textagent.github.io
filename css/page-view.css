@@ -1,0 +1,236 @@
+/* ============================================
+   PAGE VIEW — A4 Document Mode (Split Layout)
+   Editor left + A4 page frames right
+   ============================================ */
+
+/* --- View Mode: Show editor + page container side by side --- */
+.content-container.view-page .preview-pane,
+.content-container.view-page .resize-divider {
+  display: none;
+}
+
+.content-container.view-page .editor-pane {
+  flex: 1 1 50%;
+  border-right: 1px solid var(--border-color);
+}
+
+.content-container.view-page #page-view-container {
+  display: flex !important;
+  flex: 1 1 50%;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* --- Page View Header Bar --- */
+.page-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--header-bg);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.page-view-counter {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.page-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-view-zoom-select {
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.page-view-zoom-select:hover,
+.page-view-zoom-select:focus {
+  border-color: var(--accent-color);
+}
+
+.page-view-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.page-view-export-btn:hover {
+  opacity: 0.85;
+}
+
+/* --- Scrollable Page Area --- */
+.page-view-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 32px 24px;
+  background-color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  /* Subtle grid pattern to distinguish from editor */
+  background-image:
+    radial-gradient(circle, var(--border-color) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+}
+
+[data-theme="dark"] .page-view-scroll {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.03) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+}
+
+/* --- Page Frame (A4) --- */
+.page-frame {
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+  background: #ffffff;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 20mm 15mm;
+  box-sizing: border-box;
+  position: relative;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s ease;
+}
+
+.page-frame:hover {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark mode: page frames stay white-ish for document feel */
+[data-theme="dark"] .page-frame {
+  background: #161b22;
+  border-color: var(--border-color);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Page Content (rendered markdown) --- */
+.page-frame .markdown-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #24292e;
+}
+
+[data-theme="dark"] .page-frame .markdown-body {
+  color: #c9d1d9;
+}
+
+/* --- Page Number --- */
+.page-frame-number {
+  position: absolute;
+  bottom: 8mm;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .page-frame-number {
+  color: #555;
+}
+
+/* --- Page Break Marker (in editor/preview) --- */
+.page-break-marker {
+  border: none;
+  border-top: 2px dashed var(--accent-color);
+  margin: 16px 0;
+  position: relative;
+  opacity: 0.5;
+  height: 0;
+}
+
+.page-break-marker::after {
+  content: '— page break —';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-color);
+  padding: 0 8px;
+  font-size: 10px;
+  color: var(--accent-color);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* --- Zoom Transform --- */
+.page-view-scroll[data-zoom="0.5"] .page-frame { transform: scale(0.5); transform-origin: top center; margin-bottom: -148.5mm; }
+.page-view-scroll[data-zoom="0.75"] .page-frame { transform: scale(0.75); transform-origin: top center; margin-bottom: -74.25mm; }
+.page-view-scroll[data-zoom="1.25"] .page-frame { transform: scale(1.25); transform-origin: top center; margin-bottom: 74.25mm; }
+
+/* --- Responsive: mobile stacks editor above pages --- */
+@media (max-width: 1079px) {
+  .content-container.view-page .editor-pane {
+    flex: 1 1 50%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .content-container.view-page #page-view-container {
+    flex: 1 1 50%;
+    height: 50%;
+  }
+
+  .page-frame {
+    width: 100%;
+    min-height: auto;
+    padding: 10mm 8mm;
+  }
+
+  .page-view-scroll {
+    padding: 16px 12px;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .page-view-header {
+    padding: 4px 10px;
+  }
+
+  .page-view-export-btn span {
+    display: none;
+  }
+}

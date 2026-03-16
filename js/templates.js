@@ -51,6 +51,7 @@
       case 'finance': return 'project';
       case 'games': return 'creative';
       case 'skills': return 'doc';
+      case 'agents': return 'technical';
       default: return 'doc';
     }
   }
@@ -70,6 +71,7 @@
       case 'finance': return 'bi-graph-up-arrow';
       case 'games': return 'bi-controller';
       case 'skills': return 'bi-book';
+      case 'agents': return 'bi-robot';
       default: return 'bi-file-earmark';
     }
   }

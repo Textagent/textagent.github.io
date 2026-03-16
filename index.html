@@ -181,6 +181,10 @@
                         <i class="bi bi-easel"></i>
                         <span>PPT</span>
                     </button>
+                    <button class="view-mode-btn" data-mode="page" aria-pressed="false" title="Page view (A4)">
+                        <i class="bi bi-file-earmark-richtext"></i>
+                        <span>Page</span>
+                    </button>
                 </div>
 
                 <!-- Right section: Toolbar -->
@@ -336,6 +340,11 @@
                                 <i class="bi bi-easel"></i>
                                 <span>PPT</span>
                             </button>
+                            <button class="mobile-view-mode-btn" data-mode="page" aria-pressed="false"
+                                title="Page view (A4)">
+                                <i class="bi bi-file-earmark-richtext"></i>
+                                <span>Page</span>
+                            </button>
                         </div>
 
                         <div class="mobile-stats-container mb-3">
@@ -442,7 +451,10 @@
                 <button class="qab-view-btn" data-mode="ppt" title="Presentation view">
                     <i class="bi bi-easel"></i> PPT
                 </button>
-            </div>
+                <button class="qab-view-btn" data-mode="page" title="Page view (A4)">
+                    <i class="bi bi-file-earmark-richtext"></i> Page
+                </button>
+                </div>
             <span class="qab-separator"></span>
 
             <!-- Find/Replace section (hidden by default, toggles on Search click) -->
@@ -918,6 +930,25 @@
                         <button class="slide-shortcuts-close-btn" id="slide-shortcuts-close">Close</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- Page View Container (A4 Document Mode) -->
+            <div id="page-view-container" style="display:none">
+                <div class="page-view-header">
+                    <span class="page-view-counter" id="page-view-counter">0 pages</span>
+                    <div class="page-view-actions">
+                        <select class="page-view-zoom-select" id="page-view-zoom" title="Zoom">
+                            <option value="0.5">50%</option>
+                            <option value="0.75">75%</option>
+                            <option value="1" selected>100%</option>
+                            <option value="1.25">125%</option>
+                        </select>
+                        <button class="page-view-export-btn" id="page-view-export-btn" title="Export to PDF">
+                            <i class="bi bi-file-earmark-pdf"></i> <span>Export PDF</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="page-view-scroll" id="page-view-scroll"></div>
             </div>
         </div>
     </div>

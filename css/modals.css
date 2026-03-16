@@ -1308,13 +1308,13 @@
 }
 
 .template-cat-pills {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   background: #e8e8f0;
   border: 1.5px solid #c0c0cc;
   border-radius: 10px;
   padding: 3px;
-  flex-shrink: 0;
 }
 
 /* Hide scrollbar but keep scrolling */
