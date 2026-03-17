@@ -145,17 +145,76 @@
     }
 
     // ========================================
+    // THREE-LEVEL HEADER VISIBILITY TOGGLE
+    // Level 0 = Full header (app-header + dropzone visible)
+    // Level 1 = Compact (QAB visible, header hidden)
+    // Level 2 = Hidden (everything hidden, floating pill only)
+    // ========================================
+    var headerLevel = 0;
+    var HEADER_LEVEL_KEY = 'ta-header-level';
+    var restorePill = document.getElementById('header-restore-pill');
+
+    function setHeaderLevel(level) {
+        headerLevel = level;
+        localStorage.setItem(HEADER_LEVEL_KEY, String(level));
+
+        if (level === 0) {
+            // Full header — show header + dropzone, hide QAB, remove hidden class
+            document.body.classList.remove('header-hidden');
+            dropzone.style.display = 'block';
+            if (quickActionBar) quickActionBar.style.display = 'none';
+            if (siteHeader) siteHeader.style.display = '';
+        } else if (level === 1) {
+            // Compact — hide header + dropzone, show QAB
+            document.body.classList.remove('header-hidden');
+            dropzone.style.display = 'none';
+            if (siteHeader) siteHeader.style.display = 'none';
+            if (quickActionBar) quickActionBar.style.display = 'flex';
+            syncQabViewState();
+        } else if (level === 2) {
+            // Hidden — hide everything, show floating restore pill
+            dropzone.style.display = 'none';
+            if (siteHeader) siteHeader.style.display = 'none';
+            if (quickActionBar) quickActionBar.style.display = 'none';
+            document.body.classList.add('header-hidden');
+        }
+    }
+
+    // Collapse header button (in app-header) — level 0 → 1
+    var collapseHeaderBtn = document.getElementById('collapse-header-btn');
+    if (collapseHeaderBtn) collapseHeaderBtn.addEventListener('click', function () {
+        setHeaderLevel(1);
+    });
+
+    // QAB header toggle — level 1 → 2 (hide everything)
+    if (quickActionBar) {
+        var qabHeaderToggle = document.getElementById('qab-header-toggle');
+        if (qabHeaderToggle) {
+            // Update title/icon to indicate it will hide everything
+            qabHeaderToggle.title = 'Hide full header';
+            var qabIcon = qabHeaderToggle.querySelector('i');
+            if (qabIcon) qabIcon.className = 'bi bi-chevron-up';
+            qabHeaderToggle.addEventListener('click', function () {
+                setHeaderLevel(2);
+            });
+        }
+    }
+
+    // Floating restore pill — level 2 → 0 (restore full header)
+    if (restorePill) restorePill.addEventListener('click', function () {
+        setHeaderLevel(0);
+    });
+
+    // Restore saved header level on page load
+    var savedLevel = parseInt(localStorage.getItem(HEADER_LEVEL_KEY), 10);
+    if (savedLevel === 1 || savedLevel === 2) {
+        setHeaderLevel(savedLevel);
+    }
+
+    // ========================================
     // QUICK ACTION BAR WIRING
     // ========================================
     if (quickActionBar) {
-        // Header toggle — restore full header + dropzone view
-        var qabHeaderToggle = document.getElementById('qab-header-toggle');
-        if (qabHeaderToggle) qabHeaderToggle.addEventListener('click', function () {
-            dropzone.style.display = 'block';
-            quickActionBar.style.display = 'none';
-            if (siteHeader) siteHeader.style.display = '';
-        });
-
         // New — delegate to existing new-document button
         var qabNew = document.getElementById('qab-new');
         if (qabNew) qabNew.addEventListener('click', function () {
@@ -350,14 +409,6 @@
             if (btn) btn.click();
         });
     }
-
-    // Collapse header button — hide full header, show QAB
-    var collapseHeaderBtn = document.getElementById('collapse-header-btn');
-    if (collapseHeaderBtn) collapseHeaderBtn.addEventListener('click', function () {
-        dropzone.style.display = 'none';
-        syncQabVisibility();
-        syncQabViewState();
-    });
 
     // ========================================
     // GLOBAL KEYBOARD SHORTCUTS

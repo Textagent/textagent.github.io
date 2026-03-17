@@ -888,3 +888,55 @@ a:focus {
     padding: 4px;
   }
 }
+
+/* ========================================
+   HEADER-HIDDEN STATE (level 2)
+   ======================================== */
+
+body.header-hidden .app-header,
+body.header-hidden .quick-action-bar,
+body.header-hidden .formatting-toolbar,
+body.header-hidden .dropzone {
+  display: none !important;
+}
+
+/* Floating restore pill — small pill at top-center */
+.header-restore-pill {
+  position: fixed;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 14px;
+  background-color: var(--header-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+/* Show the pill when body has header-hidden class */
+body.header-hidden .header-restore-pill {
+  display: inline-flex !important;
+  opacity: 0.35;
+  pointer-events: auto;
+}
+
+body.header-hidden .header-restore-pill:hover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.header-restore-pill i {
+  font-size: 0.8rem;
+}

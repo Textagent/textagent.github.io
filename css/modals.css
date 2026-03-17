@@ -544,7 +544,7 @@
 /* --- Shared View Pill (collapsed indicator) --- */
 .shared-view-pill {
   position: fixed;
-  top: 10px;
+  bottom: 10px;
   right: 16px;
   z-index: 1500;
   display: flex;
@@ -559,7 +559,7 @@
   cursor: pointer;
   box-shadow: 0 2px 12px rgba(26, 127, 55, 0.35);
   opacity: 0;
-  transform: translateY(-10px) scale(0.95);
+  transform: translateY(10px) scale(0.95);
   transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.2s ease;
   pointer-events: none;
   user-select: none;
