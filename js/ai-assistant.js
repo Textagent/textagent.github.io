@@ -587,13 +587,23 @@
     });
   }
 
-  aiConsentDownload.addEventListener('click', () => {
+  aiConsentDownload.addEventListener('click', async () => {
     const targetModel = _consentTargetModel || currentAiModel;
     aiConsentDownload.disabled = true;
     aiConsentDownload.innerHTML = '<span class="ai-status-spinner"></span> Loading...';
     aiProgressSection.style.display = 'block';
     localStorage.setItem(M.KEYS.AI_CONSENTED_PREFIX + targetModel, 'true');
     if (targetModel === 'qwen-local') localStorage.setItem(M.KEYS.AI_CONSENTED, 'true');
+
+    // Request persistent storage so the browser won't auto-evict cached models
+    // under storage pressure. Chrome auto-grants for frequent sites; Firefox prompts.
+    try {
+      if (navigator.storage && navigator.storage.persist) {
+        const granted = await navigator.storage.persist();
+        console.log(granted ? '💾 Persistent storage granted — cached models are safe' : '⚠️ Persistent storage not granted — models may be evicted');
+      }
+    } catch (e) { /* non-critical */ }
+
     initAiWorker(targetModel);
   });
 
