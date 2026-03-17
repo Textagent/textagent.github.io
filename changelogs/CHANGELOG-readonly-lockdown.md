@@ -10,12 +10,14 @@ Enforces true read-only mode when viewing shared documents. Previously only the 
 
 ### styles.css
 - Added `body.editor-readonly` CSS rules targeting all editing buttons (`.fmt-btn`, tag buttons, QAB write controls, find/replace, dropzone)
+- Added `body.editor-readonly #markdown-preview button` to disable ALL interactive buttons in the preview panel (remove-tag, run, preview, fill, open, close, etc.)
 - Disabled buttons show `opacity: 0.35`, `cursor: not-allowed`, and `user-select: none` with `!important`
 
 ### js/cloud-share.js
 - `showSharedBanner()`: adds `editor-readonly` class to `<body>` alongside `readOnly = true`
 - `hideSharedBanner()`: removes `editor-readonly` class alongside `readOnly = false`
 - Added capturing click interceptor for disabled buttons — shows "🔒 Read-only mode — editing is disabled" toast
+- Click interceptor also covers all buttons inside `#markdown-preview`
 
 ### js/editor-features.js
 - Added `if (M.markdownEditor.readOnly) return;` guard to 7 core functions:

@@ -6430,7 +6430,8 @@ body.editor-readonly #replace-one,
 body.editor-readonly #replace-all,
 body.editor-readonly #qab-replace-one,
 body.editor-readonly #qab-replace-all,
-body.editor-readonly .dropzone-wrapper {
+body.editor-readonly .dropzone-wrapper,
+body.editor-readonly #markdown-preview button {
   opacity: 0.35 !important;
   cursor: not-allowed !important;
   user-select: none !important;

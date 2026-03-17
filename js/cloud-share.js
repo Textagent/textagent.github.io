@@ -459,7 +459,9 @@
                     '#qab-copy, .ai-action-chip, .ai-ctx-btn, ' +
                     '#replace-one, #replace-all, #qab-replace-one, #qab-replace-all'
                 );
-                if (target) {
+                // Also block any button inside the preview panel
+                var previewBtn = !target && e.target.closest('#markdown-preview button');
+                if (target || previewBtn) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
                     if (M.showToast) M.showToast('🔒 Read-only mode — editing is disabled', 'warning');
