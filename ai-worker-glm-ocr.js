@@ -12,7 +12,7 @@
  *   ping/pong   → health check
  */
 
-const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.6";
+const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.7";
 
 // Model host — downloads ONNX models from textagent HuggingFace org
 const MODEL_ORG_FALLBACK = "onnx-community";
@@ -23,7 +23,7 @@ let MODEL_LABEL = "GLM-OCR (1.5B)";
 
 // Dynamically loaded modules
 let AutoProcessor = null;
-let AutoModelForVision2Seq = null;
+let AutoModelForImageTextToText = null;
 let load_image = null;
 let TextStreamer = null;
 
@@ -43,7 +43,7 @@ async function loadModel() {
             try {
                 const transformers = await import(TRANSFORMERS_URL);
                 AutoProcessor = transformers.AutoProcessor;
-                AutoModelForVision2Seq = transformers.AutoModelForVision2Seq;
+                AutoModelForImageTextToText = transformers.AutoModelForImageTextToText;
                 load_image = transformers.load_image;
                 TextStreamer = transformers.TextStreamer;
             } catch (importError) {
@@ -97,7 +97,7 @@ async function loadModel() {
             });
 
             self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...` });
-            model = await AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
+            model = await AutoModelForImageTextToText.from_pretrained(MODEL_ID, {
                 dtype: {
                     embed_tokens: "q4f16",
                     vision_encoder: "q4f16",
@@ -184,8 +184,8 @@ async function processDocument({ imageData, outputFormat = 'text', doImageSplitt
 
         // Apply chat template and process inputs
         const text = processor.apply_chat_template(messages, { add_generation_prompt: true });
-        const inputs = await processor(text, [image], {
-            do_image_splitting: doImageSplitting,
+        const inputs = await processor(text, image, {
+            add_special_tokens: false,
         });
 
         // Generate with streaming
