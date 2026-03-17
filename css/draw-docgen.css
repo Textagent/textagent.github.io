@@ -1,0 +1,308 @@
+/* ============================================
+   draw-docgen.css — {{Draw:}} Tag Styles
+   Excalidraw whiteboard integration
+   Standalone — remove this file to disable
+   ============================================ */
+
+/* Card container */
+.draw-docgen-card {
+    border: 2px solid #6965db;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(105, 101, 219, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
+    margin: 12px 0;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.draw-docgen-card:hover {
+    border-color: #7c78e8;
+    box-shadow: 0 4px 20px rgba(105, 101, 219, 0.15);
+}
+
+/* Header */
+.draw-docgen-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(105, 101, 219, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+    border-bottom: 1px solid rgba(105, 101, 219, 0.2);
+    flex-wrap: wrap;
+}
+
+.draw-docgen-icon {
+    font-size: 1.2em;
+}
+
+.draw-docgen-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6965db;
+}
+
+.draw-docgen-name {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(105, 101, 219, 0.15);
+    color: #6965db;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.draw-docgen-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.draw-docgen-btn {
+    border: none;
+    background: rgba(105, 101, 219, 0.1);
+    color: #6965db;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.draw-docgen-btn:hover {
+    background: rgba(105, 101, 219, 0.2);
+    color: #5753c9;
+}
+
+.draw-docgen-open {
+    background: #6965db;
+    color: #fff;
+}
+
+.draw-docgen-open:hover {
+    background: #5753c9;
+    color: #fff;
+}
+
+/* Excalidraw iframe preview */
+.draw-docgen-preview {
+    padding: 0;
+    position: relative;
+    background: #fff;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+}
+
+.draw-docgen-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    display: block;
+    background: #fff;
+}
+
+/* Fullscreen iframe */
+.draw-docgen-iframe:fullscreen {
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Info hint */
+.draw-docgen-info {
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+/* Status indicator */
+.draw-docgen-status {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    font-weight: 500;
+}
+
+/* Toolbar button */
+.fmt-draw-btn {
+    color: #6965db !important;
+    font-weight: 600;
+}
+
+/* ─── Dark Mode ─── */
+
+[data-theme="dark"] .draw-docgen-card,
+.dark-mode .draw-docgen-card {
+    border-color: #5753c9;
+    background: linear-gradient(135deg, rgba(105, 101, 219, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+}
+
+[data-theme="dark"] .draw-docgen-header,
+.dark-mode .draw-docgen-header {
+    background: linear-gradient(135deg, rgba(105, 101, 219, 0.18) 0%, rgba(99, 102, 241, 0.1) 100%);
+    border-bottom-color: rgba(105, 101, 219, 0.3);
+}
+
+[data-theme="dark"] .draw-docgen-label,
+.dark-mode .draw-docgen-label {
+    color: #a5a2f1;
+}
+
+[data-theme="dark"] .draw-docgen-name,
+.dark-mode .draw-docgen-name {
+    background: rgba(165, 162, 241, 0.2);
+    color: #a5a2f1;
+}
+
+[data-theme="dark"] .draw-docgen-btn,
+.dark-mode .draw-docgen-btn {
+    background: rgba(165, 162, 241, 0.15);
+    color: #a5a2f1;
+}
+
+[data-theme="dark"] .draw-docgen-preview,
+.dark-mode .draw-docgen-preview {
+    background: #121212;
+}
+
+[data-theme="dark"] .draw-docgen-info,
+.dark-mode .draw-docgen-info {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .draw-docgen-status,
+.dark-mode .draw-docgen-status {
+    background: rgba(52, 211, 153, 0.2);
+    color: #34d399;
+}
+
+/* ─── Tool Pills (Excalidraw / Mermaid) ─── */
+
+.draw-tool-pills {
+    display: flex;
+    gap: 4px;
+    padding: 8px 14px;
+    background: rgba(105, 101, 219, 0.04);
+    border-bottom: 1px solid rgba(105, 101, 219, 0.1);
+}
+
+.draw-tool-pill {
+    border: 1px solid rgba(105, 101, 219, 0.2);
+    background: transparent;
+    color: #6b7280;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+}
+
+.draw-tool-pill:hover {
+    border-color: #6965db;
+    color: #6965db;
+}
+
+.draw-tool-pill.active {
+    background: #6965db;
+    color: #fff;
+    border-color: #6965db;
+}
+
+/* ─── Mermaid Editor ─── */
+
+.draw-mermaid-editor {
+    padding: 10px 14px;
+    border-top: 1px solid rgba(105, 101, 219, 0.08);
+}
+
+.draw-mermaid-input {
+    width: 100%;
+    border: 1px solid rgba(105, 101, 219, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    line-height: 1.5;
+    resize: vertical;
+    background: rgba(255, 255, 255, 0.6);
+    color: inherit;
+    transition: border-color 0.2s;
+    min-height: 80px;
+    tab-size: 2;
+}
+
+.draw-mermaid-input:focus {
+    outline: none;
+    border-color: #6965db;
+    box-shadow: 0 0 0 3px rgba(105, 101, 219, 0.1);
+}
+
+.draw-mermaid-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.draw-mermaid-preview {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.draw-mermaid-preview .mermaid {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    background: rgba(105, 101, 219, 0.03);
+    border: 1px solid rgba(105, 101, 219, 0.1);
+    border-radius: 8px;
+}
+
+.draw-mermaid-preview .mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ─── Dark Mode: Tool Pills ─── */
+
+[data-theme="dark"] .draw-tool-pills,
+.dark-mode .draw-tool-pills {
+    background: rgba(105, 101, 219, 0.06);
+    border-bottom-color: rgba(105, 101, 219, 0.15);
+}
+
+[data-theme="dark"] .draw-tool-pill,
+.dark-mode .draw-tool-pill {
+    border-color: rgba(165, 162, 241, 0.3);
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .draw-tool-pill.active,
+.dark-mode .draw-tool-pill.active {
+    background: #6965db;
+    color: #fff;
+    border-color: #6965db;
+}
+
+/* ─── Dark Mode: Mermaid Editor ─── */
+
+[data-theme="dark"] .draw-mermaid-input,
+.dark-mode .draw-mermaid-input {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(165, 162, 241, 0.3);
+}
+
+[data-theme="dark"] .draw-mermaid-preview .mermaid,
+.dark-mode .draw-mermaid-preview .mermaid {
+    background: rgba(105, 101, 219, 0.06);
+    border-color: rgba(105, 101, 219, 0.15);
+}

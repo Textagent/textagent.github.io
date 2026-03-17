@@ -40,6 +40,7 @@ import '../css/tts.css';
 import '../css/doc-vars-panel.css';
 import '../css/game-docgen.css';
 import '../css/git-docgen.css';
+import '../css/draw-docgen.css';
 import '../css/run-preflight.css';
 
 // 3. Local modules — must use dynamic import so they
@@ -155,6 +156,9 @@ async function loadModules() {
 
     // 3i: GitHub Tools Component (standalone — remove to disable feature)
     await import('../js/git-docgen.js');
+
+    // 3j: Draw Component — Excalidraw + Mermaid (standalone — remove to disable feature)
+    await import('../js/draw-docgen.js');
 }
 
 loadModules();
