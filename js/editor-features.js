@@ -161,6 +161,7 @@
     // IMAGE PASTE FROM CLIPBOARD
     // ========================================
     M.markdownEditor.addEventListener('paste', function (e) {
+        if (M.markdownEditor.readOnly) return;
         var items = e.clipboardData && e.clipboardData.items;
         if (!items) return;
         for (var i = 0; i < items.length; i++) {
@@ -182,6 +183,7 @@
     // FORMATTING TOOLBAR HELPERS
     // ========================================
     function wrapSelection(before, after, placeholder) {
+        if (M.markdownEditor.readOnly) return;
         var start = M.markdownEditor.selectionStart;
         var end = M.markdownEditor.selectionEnd;
         var text = M.markdownEditor.value;
@@ -200,6 +202,7 @@
     }
 
     function insertAtCursor(text) {
+        if (M.markdownEditor.readOnly) return;
         var start = M.markdownEditor.selectionStart;
         var end = M.markdownEditor.selectionEnd;
         var value = M.markdownEditor.value;
@@ -211,6 +214,7 @@
     M.insertAtCursor = insertAtCursor;
 
     function insertLinePrefix(prefix) {
+        if (M.markdownEditor.readOnly) return;
         var start = M.markdownEditor.selectionStart;
         var end = M.markdownEditor.selectionEnd;
         var text = M.markdownEditor.value;
@@ -395,6 +399,7 @@
     // --- Keyboard Shortcuts for Formatting ---
     M.markdownEditor.addEventListener('keydown', function (e) {
         if (!(e.ctrlKey || e.metaKey)) return;
+        if (M.markdownEditor.readOnly) return;
         if (e.key === 'z' || e.key === 'Z') {
             e.preventDefault();
             if (e.shiftKey) performRedo(); else performUndo();
@@ -526,6 +531,7 @@
     function findPrev() { if (findMatches.length === 0) return; selectMatch((findCurrentIndex - 1 + findMatches.length) % findMatches.length); }
 
     function replaceOne() {
+        if (M.markdownEditor.readOnly) return;
         if (findCurrentIndex < 0 || findCurrentIndex >= findMatches.length) return;
         var els = getActiveFindEls();
         var match = findMatches[findCurrentIndex];
@@ -538,6 +544,7 @@
     function escapeRegExpChars(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
     function replaceAll() {
+        if (M.markdownEditor.readOnly) return;
         var els = getActiveFindEls();
         var query = els.findInput ? els.findInput.value : '';
         var replacement = els.replaceInput ? els.replaceInput.value : '';

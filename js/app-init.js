@@ -137,6 +137,7 @@
     });
 
     function handleDrop(e) {
+        if (M.markdownEditor.readOnly) return;
         var dt = e.dataTransfer;
         var files = dt.files;
         if (files.length) {
@@ -492,6 +493,7 @@
     // FILE INPUT & EXPORT
     // ========================================
     M.fileInput.addEventListener('change', function (e) {
+        if (M.markdownEditor.readOnly) return;
         if (e.target.files.length) M.importFile(e.target.files[0]);
     });
     M.importButton.addEventListener('click', function () {

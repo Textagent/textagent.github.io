@@ -11,6 +11,7 @@
 
     // --- View Lock for shared links (ppt / preview) ---
     M.sharedViewLock = null;   // null = no lock, 'ppt' | 'preview' = locked
+    var readonlyClickHandlerInstalled = false;
 
     // --- Firebase Config ---
     var firebaseConfig = {
@@ -433,6 +434,7 @@
         document.body.classList.add('shared-view-active');
         document.body.classList.remove('banner-collapsed');
         M.markdownEditor.readOnly = true;
+        document.body.classList.add('editor-readonly');
 
         // If view-locked, disable all view mode buttons that don't match
         if (M.sharedViewLock) {
@@ -444,6 +446,26 @@
         bannerAutoHideTimer = setTimeout(function () {
             collapseBannerToPill();
         }, 4000);
+
+        // Intercept clicks on disabled editing buttons and show a toast
+        if (!readonlyClickHandlerInstalled) {
+            readonlyClickHandlerInstalled = true;
+            document.addEventListener('click', function (e) {
+                if (!M.markdownEditor.readOnly) return;
+                var target = e.target.closest(
+                    '.fmt-btn, #new-document-btn, #template-btn, #share-button, ' +
+                    '#mobile-share-button, #speech-to-text-btn, #run-all-btn, ' +
+                    '#qab-new, #qab-import, #qab-template, #qab-share, #qab-voice, ' +
+                    '#qab-copy, .ai-action-chip, .ai-ctx-btn, ' +
+                    '#replace-one, #replace-all, #qab-replace-one, #qab-replace-all'
+                );
+                if (target) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    if (M.showToast) M.showToast('🔒 Read-only mode — editing is disabled', 'warning');
+                }
+            }, true); // capturing phase
+        }
     }
 
     /**
@@ -514,6 +536,7 @@
         pill.style.display = 'none';
         document.body.classList.remove('shared-view-active', 'banner-collapsed');
         M.markdownEditor.readOnly = false;
+        document.body.classList.remove('editor-readonly');
         clearTimeout(bannerAutoHideTimer);
         clearTimeout(bannerReShowTimer);
     }

@@ -6407,3 +6407,31 @@ body.focus-mode #markdown-editor {
     max-height: 60vh;
   }
 }
+
+/* ========================================
+   READ-ONLY MODE — disable editing UI
+   Applied when viewing a shared document.
+   Only scrolling and read-safe actions remain.
+   ======================================== */
+body.editor-readonly .fmt-btn,
+body.editor-readonly #new-document-btn,
+body.editor-readonly #template-btn,
+body.editor-readonly #share-button,
+body.editor-readonly #mobile-share-button,
+body.editor-readonly #speech-to-text-btn,
+body.editor-readonly #qab-new,
+body.editor-readonly #qab-import,
+body.editor-readonly #qab-template,
+body.editor-readonly #qab-share,
+body.editor-readonly #qab-voice,
+body.editor-readonly .ai-action-chip,
+body.editor-readonly .ai-ctx-btn,
+body.editor-readonly #replace-one,
+body.editor-readonly #replace-all,
+body.editor-readonly #qab-replace-one,
+body.editor-readonly #qab-replace-all,
+body.editor-readonly .dropzone-wrapper {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  user-select: none !important;
+}
