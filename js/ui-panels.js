@@ -71,6 +71,8 @@
 
     M.setViewMode = function (mode) {
         if (mode === M.currentViewMode) return;
+        // Block mode switch when viewing a view-locked shared link
+        if (M.sharedViewLock && mode !== M.sharedViewLock) return;
         var previousMode = M.currentViewMode;
         M.currentViewMode = mode;
         M.contentContainer.classList.remove('view-editor-only', 'view-preview-only', 'view-split', 'view-ppt', 'view-page');

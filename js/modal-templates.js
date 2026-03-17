@@ -76,6 +76,23 @@
                     </div>
                     <div id="share-passphrase-error" class="share-error" style="display:none"></div>
                 </div>
+
+                <!-- View Mode Lock (optional) -->
+                <div class="share-view-lock-section">
+                    <label class="share-view-lock-label"><i class="bi bi-eye me-1"></i> Open in view mode</label>
+                    <div class="share-view-lock-pills">
+                        <button class="share-view-pill active" data-view="" title="Default (split editor/preview)">Default</button>
+                        <button class="share-view-pill" data-view="preview" title="Preview only — no editor"><i class="bi bi-eye me-1"></i>Preview</button>
+                        <button class="share-view-pill" data-view="ppt" title="Presentation slides"><i class="bi bi-easel me-1"></i>PPT</button>
+                    </div>
+                    <small class="share-view-lock-hint">Recipients will only see the selected view and cannot switch modes.</small>
+                </div>
+
+                <!-- Previously Shared Versions -->
+                <div id="share-versions-section" class="share-versions-section" style="display:none">
+                    <label class="share-view-lock-label"><i class="bi bi-clock-history me-1"></i> Previously Shared</label>
+                    <div id="share-versions-list" class="share-versions-list"></div>
+                </div>
             </div>
             <div class="share-modal-footer">
                 <button class="share-btn-secondary" id="share-options-cancel">Cancel</button>

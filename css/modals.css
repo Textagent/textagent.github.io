@@ -428,6 +428,165 @@
 }
 
 /* ========================================
+   SHARE VIEW-LOCK PILLS
+   ======================================== */
+
+.share-view-lock-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.share-view-lock-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.share-view-lock-pills {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.share-view-pill {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.share-view-pill:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+}
+
+.share-view-pill:hover {
+  background-color: var(--button-hover);
+}
+
+.share-view-pill.active {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.share-view-lock-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-color);
+  opacity: 0.5;
+}
+
+/* ========================================
+   SHARED VERSIONS LIST
+   ======================================== */
+
+.share-versions-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.share-versions-list {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.share-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+}
+
+.share-version-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.share-version-time {
+  color: var(--text-color);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.share-version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-ppt {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.badge-preview {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.badge-secure {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.share-version-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.share-version-btn {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.share-version-btn:hover {
+  opacity: 1;
+  background: var(--button-hover);
+}
+
+.share-version-delete:hover {
+  color: #f85149;
+}
+
+/* ========================================
    PASSPHRASE PROMPT MODAL
    ======================================== */
 

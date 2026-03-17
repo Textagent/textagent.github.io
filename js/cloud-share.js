@@ -9,6 +9,9 @@
         : 'https://textagent.github.io/';
     M.SHARE_BASE_URL = SHARE_BASE_URL;
 
+    // --- View Lock for shared links (ppt / preview) ---
+    M.sharedViewLock = null;   // null = no lock, 'ppt' | 'preview' = locked
+
     // --- Firebase Config ---
     var firebaseConfig = {
         apiKey: 'AIzaSyC_5pgtZ-mZvHmIUH9X7MkObPwDLw8nyfw',
@@ -231,8 +234,51 @@
     // ========================================
     // SHARE FLOW
     // ========================================
+    var SHARED_VERSIONS_KEY = 'textagent_shared_versions';
     var lastSharePassphrase = '';
     var isSecureShareMode = false;
+    var selectedShareView = '';  // '' = default, 'ppt' | 'preview'
+
+    /** Get all shared versions for the current parent doc */
+    function getSharedVersions() {
+        var parentId = localStorage.getItem(CLOUD_DOC_KEY);
+        if (!parentId) return [];
+        try {
+            var all = JSON.parse(localStorage.getItem(SHARED_VERSIONS_KEY) || '{}');
+            return all[parentId] || [];
+        } catch (e) { return []; }
+    }
+
+    /** Save a new shared version */
+    function saveSharedVersion(shareId, shareUrl, viewMode, shareType) {
+        var parentId = localStorage.getItem(CLOUD_DOC_KEY);
+        if (!parentId) return;
+        try {
+            var all = JSON.parse(localStorage.getItem(SHARED_VERSIONS_KEY) || '{}');
+            if (!all[parentId]) all[parentId] = [];
+            all[parentId].push({
+                id: shareId,
+                url: shareUrl,
+                view: viewMode || '',
+                type: shareType || 'quick',
+                time: Date.now()
+            });
+            localStorage.setItem(SHARED_VERSIONS_KEY, JSON.stringify(all));
+        } catch (e) { console.warn('Failed to save shared version:', e); }
+    }
+
+    /** Delete a shared version by ID */
+    function deleteSharedVersion(shareId) {
+        var parentId = localStorage.getItem(CLOUD_DOC_KEY);
+        if (!parentId) return;
+        try {
+            var all = JSON.parse(localStorage.getItem(SHARED_VERSIONS_KEY) || '{}');
+            if (all[parentId]) {
+                all[parentId] = all[parentId].filter(function (v) { return v.id !== shareId; });
+                localStorage.setItem(SHARED_VERSIONS_KEY, JSON.stringify(all));
+            }
+        } catch (e) { console.warn('Failed to delete shared version:', e); }
+    }
 
     M.shareMarkdown = function () {
         var markdownContent = M.markdownEditor.value;
@@ -247,17 +293,21 @@
         var encrypted = await encryptData(key, compressed);
         var dataString = uint8ArrayToBase64Url(encrypted);
         var keyString = await keyToBase64Url(key);
-        var shareUrl;
+        var shareUrl, shareDocId = '';
         try {
             var wt = generateWriteToken();
-            var docRef = await db.collection('shares').add({ d: dataString, t: Date.now(), wt: wt });
+            var docData = { d: dataString, t: Date.now(), wt: wt };
+            if (selectedShareView) docData.view = selectedShareView;
+            var docRef = await db.collection('shares').add(docData);
+            shareDocId = docRef.id;
             shareUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&k=' + keyString;
         } catch (fbError) {
             console.warn('Firebase unavailable, using URL fallback:', fbError);
             shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
             if (shareUrl.length > 65000) throw new Error('Content too large to share. Try a smaller document.');
         }
-        return shareUrl;
+        if (selectedShareView) shareUrl += '&view=' + selectedShareView;
+        return { url: shareUrl, id: shareDocId };
     }
 
     async function doSecureShare(passphrase) {
@@ -269,8 +319,12 @@
         var dataString = uint8ArrayToBase64Url(encrypted);
         var saltString = uint8ArrayToBase64Url(salt);
         var wt = generateWriteToken();
-        var docRef = await db.collection('shares').add({ d: dataString, salt: saltString, secure: true, t: Date.now(), wt: wt });
-        return SHARE_BASE_URL + '#id=' + docRef.id + '&secure=1';
+        var docData = { d: dataString, salt: saltString, secure: true, t: Date.now(), wt: wt };
+        if (selectedShareView) docData.view = selectedShareView;
+        var docRef = await db.collection('shares').add(docData);
+        var secureUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&secure=1';
+        if (selectedShareView) secureUrl += '&view=' + selectedShareView;
+        return { url: secureUrl, id: docRef.id };
     }
 
     // ========================================
@@ -286,6 +340,10 @@
         var inlineData = params.get('d');
         var keyString = params.get('k');
         var isSecure = params.get('secure') === '1';
+        var viewParam = params.get('view');  // 'ppt' | 'preview' | null
+        if (viewParam && (viewParam === 'ppt' || viewParam === 'preview')) {
+            M.sharedViewLock = viewParam;
+        }
 
         // Secure share: no key in URL, passphrase needed
         if (isSecure && docId && !keyString) {
@@ -295,6 +353,10 @@
                 var doc = await db.collection('shares').doc(docId).get();
                 if (!doc.exists) throw new Error('Shared document not found.');
                 var data = doc.data();
+                // Check view lock from Firestore doc (authoritative — can't be stripped from URL)
+                if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
+                    M.sharedViewLock = data.view;
+                }
                 pendingSecureDoc = { dataString: data.d, saltString: data.salt, docId: docId };
                 showPassphrasePrompt();
             } catch (error) {
@@ -314,7 +376,12 @@
             if (docId) {
                 var doc = await db.collection('shares').doc(docId).get();
                 if (!doc.exists) throw new Error('Shared document not found.');
-                dataString = doc.data().d;
+                var docData = doc.data();
+                dataString = docData.d;
+                // Check view lock from Firestore doc (authoritative — can't be stripped from URL)
+                if (docData.view && (docData.view === 'ppt' || docData.view === 'preview')) {
+                    M.sharedViewLock = docData.view;
+                }
             } else { dataString = inlineData; }
             var encrypted = base64UrlToUint8Array(dataString);
             var key = await base64UrlToKey(keyString);
@@ -322,7 +389,8 @@
             var markdownContent = decompressData(compressed);
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            M.setViewMode('split');
+            // Use locked view mode if specified, otherwise default to split
+            M.setViewMode(M.sharedViewLock || 'split');
             M.isViewingSharedDoc = true;
             showSharedBanner();
         } catch (error) {
@@ -344,7 +412,7 @@
             hidePassphrasePrompt();
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            M.setViewMode('split');
+            M.setViewMode(M.sharedViewLock || 'split');
             M.isViewingSharedDoc = true;
             showSharedBanner();
             pendingSecureDoc = null;
@@ -366,11 +434,42 @@
         document.body.classList.remove('banner-collapsed');
         M.markdownEditor.readOnly = true;
 
+        // If view-locked, disable all view mode buttons that don't match
+        if (M.sharedViewLock) {
+            applyViewLockUI(M.sharedViewLock);
+        }
+
         // Auto-collapse banner → pill after 4 seconds
         clearTimeout(bannerAutoHideTimer);
         bannerAutoHideTimer = setTimeout(function () {
             collapseBannerToPill();
         }, 4000);
+    }
+
+    /**
+     * Disable / hide view mode buttons that don't match the locked mode.
+     * Applied to desktop, mobile, and QAB view buttons.
+     */
+    function applyViewLockUI(lockedMode) {
+        document.body.classList.add('view-locked');
+        var selectors = '.view-mode-btn, .mobile-view-mode-btn, .qab-view-btn';
+        document.querySelectorAll(selectors).forEach(function (btn) {
+            var mode = btn.getAttribute('data-mode');
+            if (mode !== lockedMode) {
+                btn.disabled = true;
+                btn.classList.add('view-lock-disabled');
+            }
+        });
+    }
+
+    /** Remove view lock styling — re-enable all buttons */
+    function removeViewLockUI() {
+        document.body.classList.remove('view-locked');
+        var selectors = '.view-mode-btn, .mobile-view-mode-btn, .qab-view-btn';
+        document.querySelectorAll(selectors).forEach(function (btn) {
+            btn.disabled = false;
+            btn.classList.remove('view-lock-disabled');
+        });
     }
 
     /** Slide the full banner up and show the pill */
@@ -444,6 +543,9 @@
     function clearCloudSession() {
         hideSharedBanner();
         M.isViewingSharedDoc = false;
+        // Clear view lock
+        M.sharedViewLock = null;
+        removeViewLockUI();
         localStorage.removeItem(CLOUD_DOC_KEY);
         localStorage.removeItem(CLOUD_KEY_KEY);
         localStorage.removeItem(CLOUD_WT_KEY);
@@ -491,6 +593,7 @@
 
     function openShareOptionsModal() {
         isSecureShareMode = false;
+        selectedShareView = '';
         sharePassInput.value = '';
         sharePassConfirm.value = '';
         sharePassError.style.display = 'none';
@@ -501,6 +604,63 @@
         shareOptionsModal.classList.add('active');
         document.getElementById('share-do-share').disabled = false;
         document.getElementById('share-do-share').innerHTML = '<i class="bi bi-share me-1"></i> Share';
+        // Reset view lock pills
+        shareOptionsModal.querySelectorAll('.share-view-pill').forEach(function (p) {
+            p.classList.toggle('active', p.getAttribute('data-view') === '');
+        });
+        var hint = shareOptionsModal.querySelector('.share-view-lock-hint');
+        if (hint) hint.style.display = 'none';
+        // Render previously shared versions
+        renderSharedVersions();
+    }
+
+    /** Render the "Previously Shared" list in the share options modal */
+    function renderSharedVersions() {
+        var section = document.getElementById('share-versions-section');
+        var list = document.getElementById('share-versions-list');
+        if (!section || !list) return;
+        var versions = getSharedVersions();
+        if (!versions.length) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = '';
+        list.innerHTML = '';
+        // Show most recent first
+        versions.slice().reverse().forEach(function (v) {
+            var row = document.createElement('div');
+            row.className = 'share-version-row';
+            var d = new Date(v.time);
+            var timeStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' +
+                          d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            var viewBadge = '';
+            if (v.view === 'ppt') viewBadge = '<span class="share-version-badge badge-ppt"><i class="bi bi-easel"></i> PPT</span>';
+            else if (v.view === 'preview') viewBadge = '<span class="share-version-badge badge-preview"><i class="bi bi-eye"></i> Preview</span>';
+            var typeBadge = v.type === 'secure'
+                ? '<span class="share-version-badge badge-secure"><i class="bi bi-shield-lock"></i></span>'
+                : '';
+            row.innerHTML =
+                '<div class="share-version-info">' +
+                    '<span class="share-version-time">' + timeStr + '</span>' +
+                    viewBadge + typeBadge +
+                '</div>' +
+                '<div class="share-version-actions">' +
+                    '<button class="share-version-btn" data-action="copy" title="Copy link"><i class="bi bi-clipboard"></i></button>' +
+                    '<button class="share-version-btn share-version-delete" data-action="delete" title="Remove"><i class="bi bi-trash3"></i></button>' +
+                '</div>';
+            // Wire copy
+            row.querySelector('[data-action="copy"]').addEventListener('click', function () {
+                navigator.clipboard.writeText(v.url).then(function () {
+                    M.showToast('Link copied!', 'success');
+                });
+            });
+            // Wire delete
+            row.querySelector('[data-action="delete"]').addEventListener('click', function () {
+                deleteSharedVersion(v.id);
+                renderSharedVersions();
+            });
+            list.appendChild(row);
+        });
     }
 
     function closeShareOptionsModal() {
@@ -518,6 +678,18 @@
             shareDescQuick.style.display = isSecureShareMode ? 'none' : '';
             sharePassError.style.display = 'none';
             if (isSecureShareMode) setTimeout(function () { sharePassInput.focus(); }, 100);
+        });
+    });
+
+    // View lock pill toggle
+    document.querySelectorAll('.share-view-pill').forEach(function (pill) {
+        pill.addEventListener('click', function () {
+            document.querySelectorAll('.share-view-pill').forEach(function (p) { p.classList.remove('active'); });
+            pill.classList.add('active');
+            selectedShareView = pill.getAttribute('data-view') || '';
+            // Show/hide hint based on whether a lock is selected
+            var hint = document.querySelector('.share-view-lock-hint');
+            if (hint) hint.style.display = selectedShareView ? '' : 'none';
         });
     });
 
@@ -547,7 +719,7 @@
         btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sharing...';
         sharePassError.style.display = 'none';
         try {
-            var shareUrl;
+            var shareResult;
             if (isSecureShareMode) {
                 var pass = sharePassInput.value;
                 var passConfirm = sharePassConfirm.value;
@@ -566,13 +738,17 @@
                     return;
                 }
                 lastSharePassphrase = pass;
-                shareUrl = await doSecureShare(pass);
+                shareResult = await doSecureShare(pass);
             } else {
                 lastSharePassphrase = '';
-                shareUrl = await doQuickShare();
+                shareResult = await doQuickShare();
+            }
+            // Track shared version
+            if (shareResult.id) {
+                saveSharedVersion(shareResult.id, shareResult.url, selectedShareView, isSecureShareMode ? 'secure' : 'quick');
             }
             closeShareOptionsModal();
-            showShareResult(shareUrl, isSecureShareMode);
+            showShareResult(shareResult.url, isSecureShareMode);
         } catch (error) {
             console.error('Share failed:', error);
             sharePassError.textContent = 'Share failed: ' + error.message;

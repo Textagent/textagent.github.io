@@ -462,3 +462,17 @@
 [data-theme="dark"] .pdf-export table td[rowspan] {
   background-color: var(--table-bg, #161b22) !important;
 }
+
+/* ========================================
+   VIEW-LOCKED SHARED LINKS
+   ======================================== */
+
+.view-lock-disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.view-lock-disabled:hover {
+  background-color: transparent !important;
+}
