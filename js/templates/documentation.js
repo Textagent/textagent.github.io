@@ -18,7 +18,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Rendering** | GitHub Styling · Syntax Highlighting (180+ langs) · LaTeX Math (MathJax) · Mermaid Diagrams (zoom/pan/export) · PlantUML · Callout blocks · Footnotes · Emoji · Anchor links |\n' +
       '| **🎬 Media Embedding** | Video playback via `![alt](video.mp4)` syntax · YouTube/Vimeo auto-embeds · `embed` code block for responsive media grids (`cols=1-4`, `height=N`) · Video.js v10 with native fallback · Website URLs as rich link preview cards |\n' +
       '| **🤖 AI Assistant** | 3 local Qwen 3.5 sizes (0.8B / 2B / 4B via WebGPU/WASM) · Gemini 3.1 Flash Lite · Groq Llama 3.3 70B · OpenRouter — summarize, expand, rephrase, grammar-fix, explain, simplify, auto-complete; AI writing tags; per-card model selection; smart model loading UX (cache vs download, delete cached models) |\n' +
-      '| **🏷️ AI Document Tags** | `{{@AI:}}` text (`@think: Yes` for reasoning) · `{{@Image:}}` images · `{{@Memory:}}` context · `{{@Agent:}}` pipelines · `{{@OCR:}}` image-to-text (Text/Math/Table, Granite Docling, Florence-2) · `{{@TTS:}}` speech · `{{@STT:}}` dictation · `{{@Translate:}}` translation · `{{@Game:}}` game builder — `@model:` per-card persistence · `@upload:` image/PDF · `@prompt:` editable textareas · concurrent blocks |\n' +
+      '| **🏷️ AI Document Tags** | `{{@AI:}}` text (`@think: Yes` for reasoning) · `{{@Image:}}` images · `{{@Memory:}}` context · `{{@Agent:}}` pipelines · `{{@OCR:}}` image-to-text (Text/Math/Table, Granite Docling, Florence-2, GLM-OCR) · `{{@TTS:}}` speech · `{{@STT:}}` dictation · `{{@Translate:}}` translation · `{{@Game:}}` game builder — `@model:` per-card persistence · `@upload:` image/PDF · `@prompt:` editable textareas · concurrent blocks |\n' +
       '| **🔌 API Calls** | `{{API:}}` REST API integration — GET/POST/PUT/DELETE · custom headers · JSON body · response stored in `$(api_varName)` · inline review panel · toolbar GET/POST buttons |\n' +
       '| **🔗 Agent Flow** | `{{@Agent:}}` multi-step pipelines — chain @step 1→2→3, output feeds next step · per-card model + search provider selector · live status indicators |\n' +
       '| **🔍 Web Search** | Toggle web search for AI — DuckDuckGo (free) · Brave Search · Serper.dev — search results injected into LLM context · source citations |\n' +
@@ -354,7 +354,8 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Kokoro TTS (82M)** | 🏠 Local (WebWorker) — ~80 MB | 🔊 Speech |\n' +
       '| **Voxtral STT (3B)** | 🏠 Local (WebGPU) — ~2.7 GB | 🎤 Dictation |\n' +
       '| **Granite Docling (258M)** | 🏠 Local (WebGPU/WASM) — ~500 MB | 📄 Document OCR |\n' +
-      '| **Florence-2 (230M)** | 🏠 Local (WebGPU/WASM) — ~230 MB | 📷 Vision OCR |\n\n' +
+      '| **Florence-2 (230M)** | 🏠 Local (WebGPU/WASM) — ~230 MB | 📷 Vision OCR |\n' +
+      '| **GLM-OCR (1.5B)** | 🏠 Local (WebGPU) — ~650 MB | 📷 Advanced OCR |\n\n' +
       '**AI Capabilities:**\n' +
       '- 📝 Summarize documents (agent-style chunked processing)\n' +
       '- ✍️ Improve writing style and grammar\n' +
@@ -516,7 +517,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] Compact header with collapsible Tools dropdown\n' +
       '- [x] Media embedding (video, YouTube, Vimeo, embed grid, link preview cards)\n' +
       '- [x] Text-to-Speech (Kokoro TTS engine + Web Speech API fallback)\n' +
-      '- [x] OCR tag — image-to-text (Granite Docling + Florence-2)\n' +
+      '- [x] OCR tag — image-to-text (Granite Docling + Florence-2 + GLM-OCR)\n' +
       '- [x] STT tag — in-preview speech-to-text dictation blocks\n' +
       '- [x] Translate tag — translation with TTS pronunciation\n' +
       '- [x] Game Builder — AI-generated \\& pre-built games\n' +
@@ -564,7 +565,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '## 📷 OCR — Image to Text\n\n' +
       'Extract text from images and PDFs using the `{{@OCR:}}` tag:\n\n' +
       '- **Three modes:** Text (general OCR), Math (equation extraction), Table (structured data)\n' +
-      '- **Two models:** Granite Docling 258M (~500 MB) or Florence-2 230M (~230 MB)\n' +
+      '- **Three models:** Granite Docling 258M (~500 MB), Florence-2 230M (~230 MB), or GLM-OCR 1.5B (~650 MB, WebGPU)\n' +
       '- **📎 Upload** images or PDFs — PDFs rendered page-by-page via pdf.js (2x scale, max 3 pages)\n' +
       '- Results appear inline with accept/reject controls\n\n' +
       '---\n\n' +

@@ -540,6 +540,23 @@
             downloadSize: '~230 MB',
         },
 
+        // ── Local: GLM-OCR 1.5B (THUDM) — Vision OCR ──────────
+        'glm-ocr': {
+            label: 'GLM-OCR · Local',
+            badge: 'GLM-OCR · Local',
+            icon: 'bi bi-type',
+            statusReady: 'GLM-OCR (1.5B) · Local',
+            dropdownName: 'GLM-OCR (1.5B)',
+            dropdownDesc: 'Local · Advanced OCR · WebGPU · ~650 MB',
+            isLocal: true,
+            category: 'local-document',
+            isDocModel: true,
+            localModelId: 'textagent/GLM-OCR-ONNX',
+            workerFile: 'ai-worker-glm-ocr.js',
+            downloadSize: '~650 MB',
+            requiresWebGPU: true,
+        },
+
         // ── Local: Kokoro 82M TTS (Text-to-Speech) ────────────
         'kokoro-tts': {
             label: 'Kokoro TTS · Local',
