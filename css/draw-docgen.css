@@ -137,6 +137,107 @@
     font-weight: 600;
 }
 
+/* ─── AI Generate Button & Prompt ─── */
+
+/* Model selector (same pattern as git-docgen) */
+.draw-ai-model-select {
+    border: 1px solid rgba(105, 101, 219, 0.3);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    background: transparent;
+    color: inherit;
+    max-width: 140px;
+    cursor: pointer;
+}
+
+.draw-ai-prompt-section {
+    padding: 10px 14px;
+    background: rgba(105, 101, 219, 0.04);
+    border-bottom: 1px solid rgba(105, 101, 219, 0.1);
+}
+
+.draw-ai-prompt-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.draw-ai-prompt-input {
+    flex: 1;
+    border: 1px solid rgba(105, 101, 219, 0.25);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    background: rgba(255, 255, 255, 0.6);
+    color: inherit;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.draw-ai-prompt-input:focus {
+    outline: none;
+    border-color: #6965db;
+    box-shadow: 0 0 0 3px rgba(105, 101, 219, 0.12);
+}
+
+.draw-ai-prompt-input::placeholder {
+    color: #9ca3af;
+    font-size: 0.78rem;
+}
+
+.draw-ai-generate-btn {
+    background: linear-gradient(135deg, #6965db 0%, #a855f7 100%) !important;
+    color: #fff !important;
+    font-weight: 600;
+    min-width: 100px;
+}
+
+.draw-ai-generate-btn:hover {
+    background: linear-gradient(135deg, #5753c9 0%, #9333ea 100%) !important;
+}
+
+.draw-ai-generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.draw-ai-cancel-btn {
+    padding: 4px 8px !important;
+    font-size: 0.85rem !important;
+    background: transparent !important;
+    color: #9ca3af !important;
+}
+
+.draw-ai-cancel-btn:hover {
+    color: #ef4444 !important;
+}
+
+.draw-ai-status {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: #6965db;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(105, 101, 219, 0.06);
+}
+
+.draw-ai-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(105, 101, 219, 0.2);
+    border-top-color: #6965db;
+    border-radius: 50%;
+    animation: draw-ai-spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+@keyframes draw-ai-spin {
+    to { transform: rotate(360deg); }
+}
+
 /* ─── Dark Mode ─── */
 
 [data-theme="dark"] .draw-docgen-card,
@@ -182,6 +283,38 @@
 .dark-mode .draw-docgen-status {
     background: rgba(52, 211, 153, 0.2);
     color: #34d399;
+}
+
+/* ─── Dark Mode: AI Prompt ─── */
+
+[data-theme="dark"] .draw-ai-prompt-section,
+.dark-mode .draw-ai-prompt-section {
+    background: rgba(105, 101, 219, 0.06);
+    border-bottom-color: rgba(105, 101, 219, 0.15);
+}
+
+[data-theme="dark"] .draw-ai-prompt-input,
+.dark-mode .draw-ai-prompt-input {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(165, 162, 241, 0.3);
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .draw-ai-prompt-input::placeholder,
+.dark-mode .draw-ai-prompt-input::placeholder {
+    color: #6b7280;
+}
+
+[data-theme="dark"] .draw-ai-status,
+.dark-mode .draw-ai-status {
+    color: #a5a2f1;
+    background: rgba(105, 101, 219, 0.1);
+}
+
+[data-theme="dark"] .draw-ai-spinner,
+.dark-mode .draw-ai-spinner {
+    border-color: rgba(165, 162, 241, 0.2);
+    border-top-color: #a5a2f1;
 }
 
 /* ─── Tool Pills (Excalidraw / Mermaid) ─── */

@@ -105,6 +105,7 @@
         @keyframes pulse-toggle { 50% { opacity: 0.6; } }
         .lib-status { padding: 10px 16px; border-top: 1px solid #e5e7eb; background: #fff; flex-shrink: 0; }
         .lib-status-text { font-size: 0.72rem; color: #6b7280; text-align: center; }
+
     </style>
     <!-- Importmap: tell the browser where to find bare specifiers used by @excalidraw/excalidraw -->
     <script type="importmap">
@@ -125,6 +126,8 @@
             <span>Loading Excalidraw…</span>
         </div>
     </div>
+
+
 
     <div id="lib-panel">
         <div class="lib-header">
@@ -176,6 +179,8 @@
         let drawIndex = -1;
         let initialData = null;
 
+
+
         // ── Listen for messages from parent ───────────
         window.addEventListener('message', function (e) {
             if (!e.data || typeof e.data !== 'object') return;
@@ -198,6 +203,7 @@
                     window.parent.postMessage({ type: 'export-error', message: 'Excalidraw API not ready yet. Try again in a moment.' }, '*');
                 }
             }
+
         });
 
         // ── Export handling (native Excalidraw APIs) ──

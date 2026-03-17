@@ -228,4 +228,65 @@ test.describe('Regression — Recent Fixes', () => {
         });
         expect(exists).toBe(true);
     });
+
+    // ── GLM-OCR model in registry ────────────────────────────
+
+    test('GLM-OCR model entry exists in AI_MODELS with WebGPU requirement', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const models = window.AI_MODELS || {};
+            const m = models['glm-ocr'];
+            return m ? {
+                exists: true,
+                isDocModel: m.isDocModel,
+                isLocal: m.isLocal,
+                requiresWebGPU: m.requiresWebGPU,
+            } : { exists: false };
+        });
+        expect(result.exists).toBe(true);
+        expect(result.isDocModel).toBe(true);
+        expect(result.isLocal).toBe(true);
+        expect(result.requiresWebGPU).toBe(true);
+    });
+
+    // ── Draw DocGen tag renders card ─────────────────────────
+
+    test('Draw tag renders card with tool pills in preview', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{Draw: regression-draw}}');
+        await page.waitForTimeout(2000);
+
+        const result = await page.evaluate(() => {
+            const preview = document.getElementById('markdown-preview');
+            if (!preview) return { card: false, pills: 0 };
+            return {
+                card: !!preview.querySelector('.draw-docgen-card'),
+                pills: preview.querySelectorAll('.draw-tool-pill').length,
+            };
+        });
+        expect(result.card).toBe(true);
+        expect(result.pills).toBe(2);
+    });
+
+    // ── Read-only CSS lockdown class ─────────────────────────
+
+    test('editor-readonly CSS lockdown disables fmt-btn with reduced opacity', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            var btn = document.querySelector('.fmt-btn');
+            if (!btn) return { found: false, opacity: '1', cursor: '' };
+            document.body.classList.add('editor-readonly');
+            var style = window.getComputedStyle(btn);
+            var opacity = style.opacity;
+            var cursor = style.cursor;
+            document.body.classList.remove('editor-readonly');
+            return { found: true, opacity, cursor };
+        });
+        expect(result.found).toBe(true);
+        expect(parseFloat(result.opacity)).toBeLessThan(1);
+    });
+
+    // ── Excalidraw embed page serves ─────────────────────────
+
+    test('excalidraw-embed.html is accessible', async ({ page }) => {
+        const response = await page.request.get('/excalidraw-embed.html');
+        expect(response.ok()).toBe(true);
+    });
 });

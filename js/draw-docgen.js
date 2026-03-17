@@ -164,6 +164,24 @@
         var blockIndex = 0;
         var match;
 
+        // Build model dropdown options (same pattern as git-docgen)
+        var models = window.AI_MODELS || {};
+        var modelIds = Object.keys(models);
+        var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
+
+        function buildModelOpts(selectedId) {
+            var selId = selectedId || currentModel;
+            var opts = '';
+            modelIds.forEach(function (id) {
+                var m = models[id];
+                if (m.isImageModel || m.isTtsModel || m.isSttModel) return;
+                var name = m.dropdownName || m.label || id;
+                var sel = id === selId ? ' selected' : '';
+                opts += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+            });
+            return opts;
+        }
+
         while ((match = re.exec(markdown)) !== null) {
             if (isInsideFence(match.index, fencedRanges)) continue;
 
@@ -176,9 +194,16 @@
             var drawTool = toolMatch ? toolMatch[1].trim().toLowerCase() : 'excalidraw';
             if (!TOOL_LABELS[drawTool]) drawTool = 'excalidraw';
 
+            // Parse @model: field
+            var modelMatch = prompt.match(/(?:^|\s)(?:@model|Model):\s*(\S+)/mi);
+            var blockModelId = modelMatch ? modelMatch[1].trim() : null;
+            if (blockModelId && models[blockModelId]) { /* valid */ } else { blockModelId = null; }
+            var cardModelOpts = buildModelOpts(blockModelId);
+
             // Strip metadata fields for display name
             var diagramName = prompt
                 .replace(/(?:^|\s)(?:@tool|Tool):\s*\S+/mi, '')
+                .replace(/(?:^|\s)(?:@model|Model):\s*\S+/mi, '')
                 .trim() || 'Untitled';
 
             // Check state
@@ -221,11 +246,20 @@
                     : '')
                 + '<button class="draw-docgen-btn draw-docgen-remove" data-draw-index="' + blockIndex + '" title="Remove tag">✕</button>'
                 + '</div></div>'
+                // AI prompt section — always visible
+                + '<div class="draw-ai-prompt-section" data-draw-index="' + blockIndex + '">'
+                + '<div class="draw-ai-prompt-row">'
+                + '<input type="text" class="draw-ai-prompt-input" data-draw-index="' + blockIndex + '" placeholder="Describe your diagram… e.g. microservices architecture with API gateway" spellcheck="false">'
+                + '<select class="draw-ai-model-select" data-draw-index="' + blockIndex + '" title="Model for diagram generation">' + cardModelOpts + '</select>'
+                + '<button class="draw-docgen-btn draw-ai-generate-btn" data-draw-index="' + blockIndex + '" title="Generate diagram with AI">🚀 Generate</button>'
+                + '<button class="draw-docgen-btn draw-ai-cancel-btn" data-draw-index="' + blockIndex + '" title="Cancel generation" style="display:none">✕</button>'
+                + '</div>'
+                + '<div class="draw-ai-status" data-draw-index="' + blockIndex + '" style="display:none"></div>'
+                + '</div>'
                 + pillsHtml
                 + mermaidEditorHtml
                 + '<div class="draw-docgen-preview" data-draw-index="' + blockIndex + '"'
                 + (drawTool === 'excalidraw' && isOpen ? '' : ' style="display:none"') + '></div>'
-                + (drawTool === 'excalidraw' && !isOpen && !hasData ? '<div class="draw-docgen-info"><small>💡 Click <strong>Open</strong> to launch Excalidraw whiteboard — draw diagrams, wireframes, and sketches inline in your document</small></div>' : '')
                 + '</div>';
 
             lastIndex = match.index + match[0].length;
@@ -264,6 +298,12 @@
             iframe.contentWindow.postMessage({ type: 'set-draw-index', drawIndex: blockIndex }, '*');
             if (savedData) {
                 iframe.contentWindow.postMessage({ type: 'load-scene', drawIndex: blockIndex, data: savedData }, '*');
+            }
+            // Forward API key for AI diagram generation
+            var geminiKey = null;
+            try { geminiKey = localStorage.getItem(M.KEYS.API_KEY_GEMINI); } catch (e) { /* ignore */ }
+            if (geminiKey) {
+                iframe.contentWindow.postMessage({ type: 'set-api-key', apiKey: geminiKey }, '*');
             }
         });
 
@@ -535,6 +575,284 @@
     }
 
     // ==============================================
+    // AI DIAGRAM GENERATION — LLM → Excalidraw JSON
+    // ==============================================
+
+    /**
+     * Attempt to repair common LLM JSON mistakes.
+     * Handles: trailing commas, stray quotes after numbers/booleans,
+     * missing commas, truncated JSON, unescaped chars.
+     */
+    function repairJson(raw) {
+        var s = raw;
+        // Remove trailing commas before } or ]
+        s = s.replace(/,\s*([}\]])/g, '$1');
+        // Fix stray quote after number: "key":123" → "key":123
+        s = s.replace(/:(\s*-?\d+(?:\.\d+)?)"(\s*[,}\]])/g, ':$1$2');
+        // Fix stray quote after boolean/null
+        s = s.replace(/:(\s*(?:true|false|null))"(\s*[,}\]])/g, ':$1$2');
+        // Fix missing comma between properties: }"key" → },"key"  or ]"key" → ],"key"
+        s = s.replace(/([}\]])\s*"/g, function (m, bracket) {
+            // Only add comma if followed by a key pattern
+            return bracket + ',"';
+        });
+        // But fix the false positive at the very end: },"  at end-of-string without a following key
+        // Actually the above is fine for arrays of objects
+        // Fix missing comma between } and {
+        s = s.replace(/\}\s*\{/g, '},{');
+        // Remove any BOM or zero-width chars
+        s = s.replace(/[\uFEFF\u200B-\u200D\u2060]/g, '');
+        // Handle truncated JSON — close open brackets
+        var opens = 0, closeBraces = 0;
+        for (var i = 0; i < s.length; i++) {
+            if (s[i] === '[') opens++;
+            if (s[i] === ']') opens--;
+            if (s[i] === '{') closeBraces++;
+            if (s[i] === '}') closeBraces--;
+        }
+        // If truncated mid-value, try to close gracefully
+        if (opens > 0 || closeBraces > 0) {
+            // Remove any trailing partial key-value pair
+            s = s.replace(/,?\s*"[^"]*"?\s*:?\s*"?[^"{}[\]]*$/, '');
+            // Close remaining open braces/brackets
+            while (closeBraces > 0) { s += '}'; closeBraces--; }
+            while (opens > 0) { s += ']'; opens--; }
+        }
+        return s;
+    }
+
+    /**
+     * Parse Excalidraw element JSON from LLM response.
+     * Handles: raw JSON array, markdown code fences, JSON embedded in text.
+     * Includes JSON repair for common LLM mistakes.
+     */
+    function parseExcalidrawJson(text) {
+        if (!text) return null;
+        // 1. Strip markdown code fences
+        var stripped = text.replace(/```(?:json)?\s*\n?/gi, '').replace(/```\s*$/gi, '').trim();
+
+        // Helper: extract elements from parsed result
+        function extractElements(parsed) {
+            if (Array.isArray(parsed)) return parsed.filter(function (el) { return el && el.type; });
+            if (parsed && Array.isArray(parsed.elements)) return parsed.elements.filter(function (el) { return el && el.type; });
+            return null;
+        }
+
+        // 2. Try direct parse
+        try {
+            var result = extractElements(JSON.parse(stripped));
+            if (result && result.length > 0) return result;
+        } catch (e) { /* continue */ }
+
+        // 3. Extract JSON array from text (find first [ ... ])
+        var arrMatch = stripped.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (arrMatch) {
+            try {
+                var result2 = extractElements(JSON.parse(arrMatch[0]));
+                if (result2 && result2.length > 0) return result2;
+            } catch (e) { /* continue to repair */ }
+        }
+
+        // 4. Try JSON repair on the full text
+        var toRepair = arrMatch ? arrMatch[0] : stripped;
+        var repaired = repairJson(toRepair);
+        try {
+            var result3 = extractElements(JSON.parse(repaired));
+            if (result3 && result3.length > 0) return result3;
+        } catch (e) { /* continue */ }
+
+        // 5. Last resort: extract individual JSON objects and build array
+        var objPattern = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+        var objects = [];
+        var objMatch;
+        while ((objMatch = objPattern.exec(stripped)) !== null) {
+            try {
+                var obj = JSON.parse(repairJson(objMatch[0]));
+                if (obj && obj.type) objects.push(obj);
+            } catch (e) { /* skip malformed object */ }
+        }
+        if (objects.length > 0) return objects;
+
+        return null;
+    }
+
+    /**
+     * Generate an Excalidraw diagram using the AI assistant.
+     * Sends the prompt with taskType 'excalidraw_diagram', parses JSON,
+     * opens the Excalidraw iframe, and posts the elements.
+     * Uses per-card model selection (same pattern as git-docgen).
+     */
+    async function generateExcalidrawDiagram(blockIndex, prompt, container, drawTool) {
+        if (!M.requestAiTask) {
+            showToast('⚠️ AI assistant not available. Please load an AI model first.', 'warning');
+            return;
+        }
+
+        // Get per-card model selection
+        var card = container.querySelector('.draw-docgen-card[data-draw-index="' + blockIndex + '"]');
+        var cardSelect = card ? card.querySelector('.draw-ai-model-select') : null;
+        var perCardModel = cardSelect ? cardSelect.value : null;
+        var originalModel = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+
+        // Pre-flight: check model is ready (same pattern as git-docgen)
+        var models = window.AI_MODELS || {};
+        var checkModelId = perCardModel || originalModel;
+        var modelInfo = checkModelId ? models[checkModelId] : null;
+        if (modelInfo) {
+            if (modelInfo.isLocal) {
+                if (M._ai && M._ai.getLocalState) {
+                    var ls = M._ai.getLocalState(checkModelId);
+                    if (!ls.loaded && !ls.worker) {
+                        var consentKey = M.KEYS && M.KEYS.AI_CONSENTED_PREFIX
+                            ? M.KEYS.AI_CONSENTED_PREFIX + checkModelId : null;
+                        var hasConsent = consentKey && localStorage.getItem(consentKey);
+                        if (hasConsent && M._ai.initAiWorker) {
+                            showToast('⏳ Loading "' + (modelInfo.label || checkModelId) + '" from cache…', 'info');
+                            M._ai.initAiWorker(checkModelId);
+                            var waited = 0;
+                            while (waited < 60000) {
+                                await new Promise(function (r) { setTimeout(r, 500); });
+                                waited += 500;
+                                ls = M._ai.getLocalState(checkModelId);
+                                if (ls.loaded) break;
+                            }
+                            if (!ls.loaded) {
+                                showToast('⚠️ Model is still loading. Please wait and try again.', 'warning');
+                                return;
+                            }
+                        } else {
+                            if (M.showModelDownloadPopup) {
+                                M.showModelDownloadPopup(checkModelId);
+                            } else {
+                                showToast('⚠️ Local model needs to be downloaded first.', 'warning');
+                            }
+                            return;
+                        }
+                    }
+                }
+            } else {
+                var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+                var provider = providers[checkModelId];
+                if (provider && !provider.getKey()) {
+                    showToast('🔑 Please set your API key for "' + (modelInfo.label || checkModelId) + '" first.', 'warning');
+                    if (M.showApiKeyModal) M.showApiKeyModal(checkModelId);
+                    return;
+                }
+            }
+        }
+
+        // Temporarily switch model if needed
+        if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
+            M.switchToModel(perCardModel);
+        }
+
+        var statusEl = container.querySelector('.draw-ai-status[data-draw-index="' + blockIndex + '"]');
+        var genBtn = container.querySelector('.draw-ai-generate-btn[data-draw-index="' + blockIndex + '"]');
+        var cancelBtn = container.querySelector('.draw-ai-cancel-btn[data-draw-index="' + blockIndex + '"]');
+        var promptInput = container.querySelector('.draw-ai-prompt-input[data-draw-index="' + blockIndex + '"]');
+
+        // Show generating status
+        if (statusEl) {
+            statusEl.style.display = '';
+            statusEl.innerHTML = '<span class="draw-ai-spinner"></span> Generating diagram…';
+        }
+        if (genBtn) { genBtn.disabled = true; genBtn.textContent = '⏳ Generating…'; }
+        if (cancelBtn) cancelBtn.style.display = '';
+        if (promptInput) promptInput.disabled = true;
+
+        // Determine task type based on current draw tool
+        var currentTool = drawTool || (card ? card.dataset.drawTool : 'excalidraw');
+        var taskType = currentTool === 'mermaid' ? 'generate' : 'excalidraw_diagram';
+        var aiPrompt = currentTool === 'mermaid'
+            ? 'Generate Mermaid diagram code for: ' + prompt + '\n\nOutput ONLY the Mermaid code, no markdown fences, no explanation. Start directly with the diagram type (graph, flowchart, sequenceDiagram, classDiagram, etc).'
+            : 'Generate an Excalidraw diagram for: ' + prompt;
+
+        try {
+            var result = await M.requestAiTask({
+                taskType: taskType,
+                context: null,
+                userPrompt: aiPrompt,
+                enableThinking: false,
+                maxTokensOverride: 16384,
+                onToken: function (token, accumulated) {
+                    if (statusEl) {
+                        var charCount = accumulated.length;
+                        statusEl.innerHTML = '<span class="draw-ai-spinner"></span> Generating… (' + charCount + ' chars)';
+                    }
+                }
+            });
+
+            if (currentTool === 'mermaid') {
+                // Mermaid mode: put generated code into the textarea
+                var mermaidCode = result.replace(/```(?:mermaid)?\s*\n?/gi, '').replace(/```\s*$/gi, '').trim();
+                var textarea = container.querySelector('.draw-mermaid-input[data-draw-index="' + blockIndex + '"]');
+                if (textarea) {
+                    textarea.value = mermaidCode;
+                    textarea.style.height = 'auto';
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                }
+                saveMermaidSource(blockIndex, mermaidCode);
+                if (statusEl) {
+                    statusEl.innerHTML = '✅ Mermaid code generated!';
+                    setTimeout(function () { statusEl.style.display = 'none'; }, 3000);
+                }
+                showToast('🤖 Mermaid diagram code generated!', 'success');
+                // Auto-render
+                var renderBtn = container.querySelector('.draw-mermaid-render[data-draw-index="' + blockIndex + '"]');
+                if (renderBtn) setTimeout(function () { renderBtn.click(); }, 300);
+            } else {
+                // Excalidraw mode: parse JSON and load into iframe
+                var elements = parseExcalidrawJson(result);
+                if (!elements || elements.length === 0) {
+                    if (statusEl) {
+                        statusEl.innerHTML = '❌ Failed to parse diagram JSON. LLM response:<pre style="font-size:0.75rem;max-height:120px;overflow:auto;margin-top:4px;padding:6px;background:var(--color-canvas-subtle,#161b22);border-radius:4px">' + escapeHtml(result.substring(0, 500)) + '</pre>';
+                    }
+                    showToast('❌ Could not parse Excalidraw elements from AI response.', 'error');
+                    return;
+                }
+
+                var sceneData = { elements: elements, appState: { viewBackgroundColor: '#ffffff' } };
+                saveDrawing(blockIndex, sceneData);
+
+                if (!activeIframes.has(blockIndex)) {
+                    createExcalidrawIframe(blockIndex, container);
+                }
+
+                var iframe = activeIframes.get(blockIndex);
+                if (iframe && iframe.contentWindow) {
+                    setTimeout(function () {
+                        iframe.contentWindow.postMessage({
+                            type: 'load-scene',
+                            drawIndex: blockIndex,
+                            data: sceneData
+                        }, '*');
+                    }, 1500);
+                }
+
+                if (statusEl) {
+                    statusEl.innerHTML = '✅ Generated ' + elements.length + ' elements!';
+                    setTimeout(function () { statusEl.style.display = 'none'; }, 3000);
+                }
+                showToast('🤖 AI diagram generated with ' + elements.length + ' elements!', 'success');
+            }
+
+        } catch (err) {
+            if (statusEl) {
+                statusEl.innerHTML = '❌ ' + escapeHtml(err.message);
+            }
+            showToast('❌ AI generation failed: ' + err.message, 'error');
+        } finally {
+            if (genBtn) { genBtn.disabled = false; genBtn.textContent = '🚀 Generate'; }
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (promptInput) promptInput.disabled = false;
+            // Restore original model
+            if (perCardModel && originalModel && perCardModel !== originalModel && M.switchToModel) {
+                M.switchToModel(originalModel);
+            }
+        }
+    }
+
+    // ==============================================
     // PREVIEW ACTIONS — bind card buttons
     // ==============================================
 
@@ -611,6 +929,81 @@
                 }
                 createExcalidrawIframe(idx, container);
             });
+        });
+
+        // 🚀 AI Generate button
+        container.querySelectorAll('.draw-ai-generate-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.drawIndex, 10);
+                var input = container.querySelector('.draw-ai-prompt-input[data-draw-index="' + idx + '"]');
+                var prompt = input ? input.value.trim() : '';
+                if (!prompt) {
+                    showToast('⚠️ Enter a diagram description first.', 'warning');
+                    if (input) input.focus();
+                    return;
+                }
+                generateExcalidrawDiagram(idx, prompt, container);
+            });
+        });
+
+        // ✕ AI Cancel button (shown during generation)
+        container.querySelectorAll('.draw-ai-cancel-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Cancel hides the status — generation still completes but status is dismissed
+                var idx = parseInt(this.dataset.drawIndex, 10);
+                var statusEl = container.querySelector('.draw-ai-status[data-draw-index="' + idx + '"]');
+                if (statusEl) statusEl.style.display = 'none';
+                this.style.display = 'none';
+            });
+        });
+
+        // Model selector — auto-load local models / prompt for API keys
+        container.querySelectorAll('.draw-ai-model-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var modelId = this.value;
+                if (!modelId) return;
+                var models = window.AI_MODELS || {};
+                var modelInfo = models[modelId];
+
+                if (modelInfo && modelInfo.isLocal && M._ai && M._ai.isLocalModel && M._ai.isLocalModel(modelId)) {
+                    var ls = M._ai.getLocalState(modelId);
+                    if (!ls.loaded && !ls.worker) {
+                        var consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
+                        var hasConsent = localStorage.getItem(consentKey);
+                        if (hasConsent) {
+                            M._ai.initAiWorker(modelId);
+                        } else if (M.showModelDownloadPopup) {
+                            M.showModelDownloadPopup(modelId);
+                        }
+                    }
+                }
+
+                var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+                var cloudProvider = providers[modelId];
+                if (cloudProvider && !cloudProvider.getKey()) {
+                    M.showApiKeyModal(modelId);
+                }
+            });
+        });
+
+        // Enter key in AI prompt input
+        container.querySelectorAll('.draw-ai-prompt-input').forEach(function (input) {
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var idx = parseInt(this.dataset.drawIndex, 10);
+                    var genBtn = container.querySelector('.draw-ai-generate-btn[data-draw-index="' + idx + '"]');
+                    if (genBtn) genBtn.click();
+                }
+            });
+            // Prevent editor from capturing input events
+            input.addEventListener('keydown', function (e) { e.stopPropagation(); });
+            input.addEventListener('keyup', function (e) { e.stopPropagation(); });
+            input.addEventListener('keypress', function (e) { e.stopPropagation(); });
         });
 
         // ⏹ Close (Excalidraw)
@@ -755,5 +1148,7 @@
     M.transformDrawMarkdown = transformDrawMarkdown;
     M.bindDrawPreviewActions = bindDrawPreviewActions;
     M.parseDrawBlocks = parseDrawBlocks;
+    M.generateExcalidrawDiagram = generateExcalidrawDiagram;
+    M.parseExcalidrawJson = parseExcalidrawJson;
 
 })(window.MDView);
