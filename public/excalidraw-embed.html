@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excalidraw — TextAgent</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #fff; }
+        #root { height: 100%; }
+        .loading {
+            display: flex; align-items: center; justify-content: center; height: 100%;
+            font-family: system-ui, -apple-system, sans-serif; color: #6965db; font-size: 1.1rem;
+            flex-direction: column; gap: 12px;
+        }
+        .loading-spinner {
+            width: 32px; height: 32px; border: 3px solid #e5e7eb;
+            border-top-color: #6965db; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-msg {
+            display: flex; align-items: center; justify-content: center; height: 100%;
+            font-family: system-ui, -apple-system, sans-serif; color: #ef4444;
+            font-size: 0.9rem; padding: 24px; text-align: center; flex-direction: column; gap: 8px;
+        }
+    </style>
+    <!-- Importmap: tell the browser where to find bare specifiers used by @excalidraw/excalidraw -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.3.1",
+            "react-dom": "https://esm.sh/react-dom@18.3.1",
+            "react-dom/": "https://esm.sh/react-dom@18.3.1/",
+            "react/": "https://esm.sh/react@18.3.1/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="root">
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <span>Loading Excalidraw…</span>
+        </div>
+    </div>
+
+    <script type="module">
+    try {
+        // Import React (resolved via importmap)
+        const React = (await import('react')).default;
+        const { createRoot } = await import('react-dom/client');
+
+        // Import Excalidraw — use ?external to let importmap resolve react/react-dom
+        const ExcalidrawMod = await import('https://esm.sh/@excalidraw/excalidraw@0.17.6?external=react,react-dom');
+
+        // The Excalidraw component can be a named export, nested in default, or IS the default.
+        // React.forwardRef returns an object (not a function), so we accept both types.
+        const Excalidraw = ExcalidrawMod.Excalidraw
+            || (ExcalidrawMod.default && ExcalidrawMod.default.Excalidraw)
+            || ExcalidrawMod.default;
+
+        // Export utilities from the same module
+        const exportToBlob = ExcalidrawMod.exportToBlob
+            || (ExcalidrawMod.default && ExcalidrawMod.default.exportToBlob);
+        const exportToSvg = ExcalidrawMod.exportToSvg
+            || (ExcalidrawMod.default && ExcalidrawMod.default.exportToSvg);
+
+        if (!Excalidraw) {
+            const defaultKeys = ExcalidrawMod.default ? Object.keys(ExcalidrawMod.default).slice(0, 20).join(', ') : 'N/A';
+            throw new Error('Excalidraw component not found. Module keys: ' + Object.keys(ExcalidrawMod).join(', ') + '. Default keys: ' + defaultKeys);
+        }
+
+        // ── State ─────────────────────────────────────
+        let excalidrawAPI = null;
+        let drawIndex = -1;
+        let initialData = null;
+
+        // ── Listen for messages from parent ───────────
+        window.addEventListener('message', function (e) {
+            if (!e.data || typeof e.data !== 'object') return;
+
+            if (e.data.type === 'set-draw-index' && typeof e.data.drawIndex === 'number') {
+                drawIndex = e.data.drawIndex;
+            }
+
+            if (e.data.type === 'load-scene' && e.data.data) {
+                initialData = e.data.data;
+                if (typeof e.data.drawIndex === 'number') drawIndex = e.data.drawIndex;
+                renderApp();
+            }
+
+            if (e.data.type === 'export-request') {
+                if (excalidrawAPI) {
+                    handleExport(e.data.format);
+                } else {
+                    console.warn('[Excalidraw Embed] export-request received but excalidrawAPI is null');
+                    window.parent.postMessage({ type: 'export-error', message: 'Excalidraw API not ready yet. Try again in a moment.' }, '*');
+                }
+            }
+        });
+
+        // ── Export handling (native Excalidraw APIs) ──
+        async function handleExport(format) {
+            try {
+                const elements = excalidrawAPI.getSceneElements();
+                const appState = excalidrawAPI.getAppState();
+                const files = excalidrawAPI.getFiles();
+
+                if (!elements || elements.length === 0) {
+                    window.parent.postMessage({ type: 'export-error', message: 'Nothing to export — draw something first.' }, '*');
+                    return;
+                }
+
+                if (format === 'png') {
+                    if (exportToBlob) {
+                        const blob = await exportToBlob({
+                            elements,
+                            appState: { ...appState, exportWithDarkMode: false },
+                            files,
+                            mimeType: 'image/png',
+                        });
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            window.parent.postMessage({ type: 'export-result', format: 'png', data: reader.result }, '*');
+                        };
+                        reader.readAsDataURL(blob);
+                    } else {
+                        // Fallback: scrape canvas
+                        const canvas = document.querySelector('canvas');
+                        if (canvas) {
+                            window.parent.postMessage({ type: 'export-result', format: 'png', data: canvas.toDataURL('image/png') }, '*');
+                        } else {
+                            window.parent.postMessage({ type: 'export-error', message: 'exportToBlob not available and no canvas found.' }, '*');
+                        }
+                    }
+                } else if (format === 'svg') {
+                    if (exportToSvg) {
+                        const svgEl = await exportToSvg({
+                            elements,
+                            appState: { ...appState, exportWithDarkMode: false },
+                            files,
+                        });
+                        const svgString = new XMLSerializer().serializeToString(svgEl);
+                        window.parent.postMessage({ type: 'export-result', format: 'svg', data: svgString }, '*');
+                    } else {
+                        // Fallback: export as PNG with svg label
+                        const canvas = document.querySelector('canvas');
+                        if (canvas) {
+                            window.parent.postMessage({ type: 'export-result', format: 'svg', data: canvas.toDataURL('image/png') }, '*');
+                        } else {
+                            window.parent.postMessage({ type: 'export-error', message: 'exportToSvg not available and no canvas found.' }, '*');
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Export error:', err);
+                window.parent.postMessage({ type: 'export-error', message: err.message }, '*');
+            }
+        }
+
+        // ── Render ────────────────────────────────────
+        let rootInstance = null;
+
+        function renderApp() {
+            document.getElementById('loading').style.display = 'none';
+            const rootEl = document.getElementById('root');
+            rootEl.style.height = '100%';
+
+            const props = {
+                onChange: (elements, appState) => {
+                    window.parent.postMessage({
+                        type: 'excalidraw-change',
+                        drawIndex: drawIndex,
+                        data: {
+                            elements: elements,
+                            appState: { viewBackgroundColor: appState.viewBackgroundColor }
+                        }
+                    }, '*');
+                },
+                excalidrawAPI: (api) => { excalidrawAPI = api; },
+                ref: (api) => { if (api && !excalidrawAPI) excalidrawAPI = api; }
+            };
+
+            if (initialData) {
+                props.initialData = {
+                    elements: initialData.elements || [],
+                    appState: initialData.appState || {}
+                };
+            }
+
+            const app = React.createElement(
+                'div', { style: { height: '100%' } },
+                React.createElement(Excalidraw, props)
+            );
+
+            if (!rootInstance) {
+                rootInstance = createRoot(rootEl);
+            }
+            rootInstance.render(app);
+        }
+
+        // ── Ready ─────────────────────────────────────
+        window.parent.postMessage({ type: 'excalidraw-ready' }, '*');
+
+        // Render immediately (empty canvas), then update if scene data arrives
+        renderApp();
+
+    } catch (err) {
+        console.error('Excalidraw load error:', err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('root').innerHTML =
+            '<div class="error-msg">❌ Failed to load Excalidraw<br><br>' +
+            err.message + '<br><br>' +
+            '<small>Check your internet connection and try again.</small></div>';
+    }
+    </script>
+</body>
+</html>
