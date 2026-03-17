@@ -23,6 +23,88 @@
             font-family: system-ui, -apple-system, sans-serif; color: #ef4444;
             font-size: 0.9rem; padding: 24px; text-align: center; flex-direction: column; gap: 8px;
         }
+        /* Library Browser Panel */
+        .lib-inject-btn {
+            width: calc(100% - 16px); margin: 8px; padding: 9px 14px;
+            background: #6965db; color: #fff; border: none; border-radius: 8px;
+            font-size: 0.82rem; cursor: pointer; font-family: system-ui, -apple-system, sans-serif;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background 0.2s; box-sizing: border-box;
+        }
+        .lib-inject-btn:hover { background: #5b57c7; }
+        #lib-panel {
+            position: fixed; top: 0; left: 0; width: 340px; height: 100%; z-index: 20;
+            background: #f8f8fc; border-right: 1px solid #e5e7eb;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+            font-family: system-ui, -apple-system, sans-serif;
+            transform: translateX(-100%); transition: transform 0.25s ease;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        #lib-panel.open { transform: translateX(0); }
+        .lib-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; border-bottom: 1px solid #e5e7eb;
+            background: #fff; flex-shrink: 0;
+        }
+        .lib-header h3 { margin: 0; font-size: 0.95rem; color: #1e1e2e; }
+        .lib-close-btn {
+            background: none; border: none; font-size: 1.2rem; cursor: pointer;
+            color: #6b7280; padding: 2px 6px; border-radius: 4px;
+        }
+        .lib-close-btn:hover { background: #f3f4f6; }
+        .lib-search {
+            padding: 10px 16px; border-bottom: 1px solid #e5e7eb;
+            background: #fff; flex-shrink: 0;
+        }
+        .lib-search input {
+            width: 100%; padding: 7px 10px; border: 1px solid #d1d5db;
+            border-radius: 6px; font-size: 0.82rem; outline: none;
+            font-family: inherit; box-sizing: border-box;
+        }
+        .lib-search input:focus { border-color: #6965db; box-shadow: 0 0 0 2px rgba(105,101,219,0.15); }
+        .lib-body { overflow-y: auto; flex: 1; padding: 8px 0; }
+        .lib-category {
+            margin: 0 8px 4px;
+        }
+        .lib-cat-header {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 10px; cursor: pointer; border-radius: 6px;
+            font-size: 0.78rem; font-weight: 600; color: #6965db;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            user-select: none;
+        }
+        .lib-cat-header:hover { background: #ededf7; }
+        .lib-cat-arrow { transition: transform 0.2s; font-size: 0.7rem; }
+        .lib-cat-header.collapsed .lib-cat-arrow { transform: rotate(-90deg); }
+        .lib-cat-items { padding: 0 4px; }
+        .lib-cat-header.collapsed + .lib-cat-items { display: none; }
+        .lib-card {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 8px 10px; margin: 2px 0; border-radius: 6px;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .lib-card:hover { background: #eeedf7; }
+        .lib-card-info { flex: 1; min-width: 0; }
+        .lib-card-name { font-size: 0.82rem; font-weight: 600; color: #1e1e2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lib-card-desc { font-size: 0.72rem; color: #6b7280; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .lib-card-meta { font-size: 0.68rem; color: #9ca3af; margin-top: 3px; }
+        .lib-toggle {
+            flex-shrink: 0; width: 36px; height: 20px; border-radius: 10px;
+            background: #d1d5db; position: relative; transition: background 0.2s;
+            border: none; cursor: pointer; margin-top: 2px;
+        }
+        .lib-toggle::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .lib-toggle.active { background: #6965db; }
+        .lib-toggle.active::after { transform: translateX(16px); }
+        .lib-toggle.loading { background: #fbbf24; animation: pulse-toggle 0.8s ease infinite; }
+        @keyframes pulse-toggle { 50% { opacity: 0.6; } }
+        .lib-status { padding: 10px 16px; border-top: 1px solid #e5e7eb; background: #fff; flex-shrink: 0; }
+        .lib-status-text { font-size: 0.72rem; color: #6b7280; text-align: center; }
     </style>
     <!-- Importmap: tell the browser where to find bare specifiers used by @excalidraw/excalidraw -->
     <script type="importmap">
@@ -44,7 +126,22 @@
         </div>
     </div>
 
+    <div id="lib-panel">
+        <div class="lib-header">
+            <h3>📚 Library Browser</h3>
+            <button class="lib-close-btn" onclick="document.getElementById('lib-panel').classList.remove('open')">✕</button>
+        </div>
+        <div class="lib-search">
+            <input type="text" id="lib-search-input" placeholder="Search libraries..." oninput="filterLibraries(this.value)">
+        </div>
+        <div class="lib-body" id="lib-body"></div>
+        <div class="lib-status"><div class="lib-status-text" id="lib-status">0 libraries loaded</div></div>
+    </div>
+
     <script type="module">
+    // Required for Excalidraw library install to happen in same tab
+    if (!window.name) window.name = 'excalidraw-embed';
+
     try {
         // Import React (resolved via importmap)
         const React = (await import('react')).default;
@@ -64,6 +161,10 @@
             || (ExcalidrawMod.default && ExcalidrawMod.default.exportToBlob);
         const exportToSvg = ExcalidrawMod.exportToSvg
             || (ExcalidrawMod.default && ExcalidrawMod.default.exportToSvg);
+
+        // Utility: parse #addLibrary hash (used by libraries.excalidraw.com)
+        const parseLibraryTokensFromUrl = ExcalidrawMod.parseLibraryTokensFromUrl
+            || (ExcalidrawMod.default && ExcalidrawMod.default.parseLibraryTokensFromUrl);
 
         if (!Excalidraw) {
             const defaultKeys = ExcalidrawMod.default ? Object.keys(ExcalidrawMod.default).slice(0, 20).join(', ') : 'N/A';
@@ -161,6 +262,262 @@
         // ── Render ────────────────────────────────────
         let rootInstance = null;
 
+        // ── Library Browser — Catalog with metadata ──
+        const LIBRARY_CATALOG = [
+            { cat: '🏗️ Architecture & System Design', libs: [
+                { id: 'software-architecture', name: 'Software Architecture', desc: 'Microservice, database, cache, event bus, pipeline, documents, browser, mobile device', file: '/assets/excalidraw-libs/software-architecture.excalidrawlib' },
+                { id: 'system-design-components', name: 'System Design Components', desc: 'Components for high-level system diagrams — useful in interviews and architecture review', file: '/assets/excalidraw-libs/system-design-components.excalidrawlib' },
+                { id: 'architecture-diagram', name: 'Architecture Diagram Components', desc: 'Slack, Docker, GitHub, VPC, Private/Public subnet, User, Users, Device, Server, Email', file: '/assets/excalidraw-libs/architecture-diagram-components.excalidrawlib' },
+                { id: 'software-logos', name: 'Software Logos', desc: 'Archive, database, Docker, JSON, Kubernetes, load balancer, Postgres, Redis, Nginx, RabbitMQ, server', file: '/assets/excalidraw-libs/software-logos.excalidrawlib' },
+                { id: 'system-design-template', name: 'System Design Template', desc: 'Standard structure for efficiently creating system designs with fill-in-the-blank components', file: '/assets/excalidraw-libs/system-design-template.excalidrawlib' },
+                { id: 'systems-design', name: 'Systems Design Components', desc: 'Cloud Infra, Cloud, Stream, Servers, DB — simple library for systems design', file: '/assets/excalidraw-libs/systems-design-components.excalidrawlib' },
+                { id: 'uml-er', name: 'Shapes for UML & ER Diagrams', desc: 'Opinionated selection of shapes for UML class, sequence, and ER diagrams', file: '/assets/excalidraw-libs/uml-er-diagrams.excalidrawlib' },
+                { id: 'decision-flow', name: 'Decision Flow Control', desc: 'Yes/no condition boxes for diagramming — branching and decision trees', file: '/assets/excalidraw-libs/decision-flow-control.excalidrawlib' },
+            ]},
+            { cat: '🎨 UI/UX & Wireframing', libs: [
+                { id: 'forms', name: 'Forms', desc: 'Collection of form components — inputs, buttons, checkboxes, selects, textareas', file: '/assets/excalidraw-libs/forms.excalidrawlib' },
+                { id: 'basic-ux', name: 'Basic UX/Wireframing Elements', desc: 'Buttons, text boxes, checkboxes, drop-downs, toggles, image placeholders, and more', file: '/assets/excalidraw-libs/basic-ux-wireframing.excalidrawlib' },
+                { id: 'lo-fi-wireframe', name: 'Lo-Fi Wireframing Kit', desc: 'Collection of Lo-Fi wireframing components for rapid prototyping', file: '/assets/excalidraw-libs/lo-fi-wireframing-kit.excalidrawlib' },
+                { id: 'stick-figures', name: 'Stick Figures', desc: 'Stick man, Girl, Guy, Grandma, Child, Shrug, Happy, Sad — for user stories', file: '/assets/excalidraw-libs/stick-figures.excalidrawlib' },
+                { id: 'sticky-notes', name: 'Sticky Notes', desc: 'Post-its in every color for design thinking sessions and brainstorming', file: '/assets/excalidraw-libs/sticky-notes.excalidrawlib' },
+            ]},
+            { cat: '🔣 Icons & Logos', libs: [
+                { id: 'awesome-icons', name: 'Awesome Icons', desc: 'A growing collection of general-purpose icons for any diagram', file: '/assets/excalidraw-libs/awesome-icons.excalidrawlib' },
+                { id: 'icons', name: 'Icons', desc: 'Paper, documents, code, share, upload, download, file types, programming languages, and more', file: '/assets/excalidraw-libs/icons.excalidrawlib' },
+                { id: 'google-icons', name: 'Google Icons', desc: 'All Google Cloud Platform and Google Workspace product icons (139 items)', file: '/assets/excalidraw-libs/google-icons.excalidrawlib' },
+                { id: 'technology-logos', name: 'Technology Logos', desc: 'Kubernetes, Docker, git, Terraform, Spring, Quarkus, Azure, Kafka, Redis, and more', file: '/assets/excalidraw-libs/technology-logos.excalidrawlib' },
+            ]},
+            { cat: '☁️ Cloud & DevOps', libs: [
+                { id: 'cloud', name: 'Cloud', desc: 'Kubernetes, Gardener, AWS, Azure, GCP logos and architecture icons', file: '/assets/excalidraw-libs/cloud.excalidrawlib' },
+                { id: 'cloud-patterns', name: 'Cloud Design Patterns', desc: 'Cloud design pattern components from the Azure architecture patterns collection', file: '/assets/excalidraw-libs/cloud-design-patterns.excalidrawlib' },
+                { id: 'aws-icons', name: 'AWS Architecture Icons', desc: 'Lambda, ELB, EC2 and other AWS service icons for architecture diagrams', file: '/assets/excalidraw-libs/aws-architecture-icons.excalidrawlib' },
+                { id: 'devops', name: 'Dev Ops Icons', desc: 'Nomad, Consul, Vault, Packer, Ansible, Jira, Docker, Terraform, Kubernetes, and more', file: '/assets/excalidraw-libs/dev-ops-icons.excalidrawlib' },
+                { id: 'network', name: 'Network Topology Icons', desc: 'Computer, VPN, Firewall, Server, Switch, Hub, Router, Client', file: '/assets/excalidraw-libs/network-topology-icons.excalidrawlib' },
+            ]},
+            { cat: '📊 Data & Algorithms', libs: [
+                { id: 'algo-ds', name: 'Algorithms & Data Structures', desc: 'Arrays, matrices, trees, linked lists, hashing tables — for CS education and interviews', file: '/assets/excalidraw-libs/algorithms-data-structures.excalidrawlib' },
+                { id: 'database', name: 'Database', desc: 'Icons for database infrastructures — cloud and on-premises, Oracle, backup & recovery', file: '/assets/excalidraw-libs/database.excalidrawlib' },
+                { id: 'charts', name: 'Charts', desc: 'Collection of charts: bar, column, line, pie', file: '/assets/excalidraw-libs/charts.excalidrawlib' },
+                { id: 'graphs', name: 'Graphs', desc: 'Visualisations of popular graphs — adjacency, directed, weighted, and more', file: '/assets/excalidraw-libs/graphs.excalidrawlib' },
+                { id: 'data-viz', name: 'Data Viz', desc: 'Charts commonly used in data visualisations — bar, line, pie, scatter, and more', file: '/assets/excalidraw-libs/data-viz.excalidrawlib' },
+            ]},
+            { cat: '🧠 AI, Science & Education', libs: [
+                { id: 'deep-learning', name: 'Deep Learning', desc: 'GNN, CNN, RNN, MLP, LSTM, Attention, Encoder-Decoder, Transformer, Mask', file: '/assets/excalidraw-libs/deep-learning.excalidrawlib' },
+                { id: 'math-teacher', name: 'Math Teacher Library', desc: 'Coordinate grids, Venn diagrams, number lines, sphere diagrams, prisms, parallel lines', file: '/assets/excalidraw-libs/math-teacher-library.excalidrawlib' },
+            ]},
+        ];
+
+        // Track which libraries are loaded
+        const _loadedLibs = new Set();
+        const _libItemCache = {};
+
+        function renderLibraryBrowser() {
+            const body = document.getElementById('lib-body');
+            if (!body) return;
+            let html = '';
+            for (const cat of LIBRARY_CATALOG) {
+                html += '<div class="lib-category" data-cat="' + cat.cat + '">';
+                html += '<div class="lib-cat-header" onclick="this.classList.toggle(\'collapsed\')">';
+                html += '<span class="lib-cat-arrow">▼</span> ' + cat.cat + ' <span style="color:#9ca3af;font-weight:400">(' + cat.libs.length + ')</span>';
+                html += '</div>';
+                html += '<div class="lib-cat-items">';
+                for (const lib of cat.libs) {
+                    const active = _loadedLibs.has(lib.id);
+                    html += '<div class="lib-card" data-lib-id="' + lib.id + '" onclick="toggleLibrary(\'' + lib.id + '\')">';
+                    html += '<div class="lib-card-info">';
+                    html += '<div class="lib-card-name">' + lib.name + '</div>';
+                    html += '<div class="lib-card-desc">' + lib.desc + '</div>';
+                    html += '</div>';
+                    html += '<button class="lib-toggle' + (active ? ' active' : '') + '" id="tog-' + lib.id + '"></button>';
+                    html += '</div>';
+                }
+                html += '</div></div>';
+            }
+            body.innerHTML = html;
+        }
+
+        // Find lib metadata by id
+        function findLib(id) {
+            for (const cat of LIBRARY_CATALOG)
+                for (const lib of cat.libs)
+                    if (lib.id === id) return lib;
+            return null;
+        }
+
+        // Toggle a library on/off
+        window.toggleLibrary = async function(id) {
+            if (!excalidrawAPI) return;
+            const lib = findLib(id);
+            if (!lib) return;
+            const tog = document.getElementById('tog-' + id);
+
+            if (_loadedLibs.has(id)) {
+                // Unload: rebuild library without this lib's items
+                _loadedLibs.delete(id);
+                if (tog) { tog.classList.remove('active'); }
+                await rebuildLibrary();
+                updateLibStatus();
+                return;
+            }
+
+            // Load
+            if (tog) { tog.classList.add('loading'); }
+            try {
+                if (!_libItemCache[id]) {
+                    const resp = await fetch(lib.file);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    _libItemCache[id] = data.libraryItems || data.library || [];
+                }
+                _loadedLibs.add(id);
+                if (tog) { tog.classList.remove('loading'); tog.classList.add('active'); }
+                await rebuildLibrary();
+                updateLibStatus();
+            } catch (err) {
+                console.error('[Library] Failed to load ' + id + ':', err);
+                if (tog) { tog.classList.remove('loading'); }
+            }
+        };
+
+        async function rebuildLibrary() {
+            let allItems = [];
+            for (const id of _loadedLibs) {
+                const items = _libItemCache[id];
+                if (items && Array.isArray(items)) allItems = allItems.concat(items);
+            }
+            await excalidrawAPI.updateLibrary({
+                libraryItems: allItems,
+                merge: false,
+                prompt: false,
+                openLibraryMenu: allItems.length > 0,
+                defaultStatus: 'published',
+            });
+        }
+
+        function updateLibStatus() {
+            const el = document.getElementById('lib-status');
+            if (el) {
+                let count = 0;
+                for (const id of _loadedLibs) {
+                    const items = _libItemCache[id];
+                    if (items) count += items.length;
+                }
+                el.textContent = _loadedLibs.size + ' libraries loaded · ' + count + ' items';
+            }
+        }
+
+        // Search/filter
+        window.filterLibraries = function(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('.lib-category').forEach(cat => {
+                let anyVisible = false;
+                cat.querySelectorAll('.lib-card').forEach(card => {
+                    const name = card.querySelector('.lib-card-name')?.textContent?.toLowerCase() || '';
+                    const desc = card.querySelector('.lib-card-desc')?.textContent?.toLowerCase() || '';
+                    const match = !q || name.includes(q) || desc.includes(q);
+                    card.style.display = match ? '' : 'none';
+                    if (match) anyVisible = true;
+                });
+                cat.style.display = anyVisible ? '' : 'none';
+                // Auto-expand categories that match
+                const header = cat.querySelector('.lib-cat-header');
+                if (q && anyVisible && header) header.classList.remove('collapsed');
+            });
+        };
+
+        // Initialize browser panel + inject button into Excalidraw's Library sidebar
+        function initLibraryBrowser() {
+            renderLibraryBrowser();
+            updateLibStatus();
+
+            // Watch for Excalidraw's Library sidebar to appear, inject our browse button
+            const observer = new MutationObserver(() => {
+                // Excalidraw's library sidebar uses class 'layer-ui__library'
+                const libSidebar = document.querySelector('.layer-ui__library, [class*="library-menu"]');
+                if (libSidebar && !libSidebar.querySelector('.lib-inject-btn')) {
+                    const btn = document.createElement('button');
+                    btn.className = 'lib-inject-btn';
+                    btn.innerHTML = '📦 Browse & Add Library Packs';
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        document.getElementById('lib-panel').classList.toggle('open');
+                    };
+                    // Insert at top of the sidebar content
+                    const firstChild = libSidebar.querySelector('[class*="library-menu-items"]') || libSidebar.firstChild;
+                    if (firstChild) {
+                        libSidebar.insertBefore(btn, firstChild);
+                    } else {
+                        libSidebar.appendChild(btn);
+                    }
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+
+        // ── Library installation handler ────────────
+        async function handleLibraryFromHash() {
+            const hash = window.location.hash;
+            if (!hash || !hash.includes('addLibrary')) return;
+
+            // Parse the library URL from the hash
+            let libraryUrl = null;
+            try {
+                if (parseLibraryTokensFromUrl) {
+                    const tokens = parseLibraryTokensFromUrl();
+                    if (tokens && tokens.libraryUrl) {
+                        libraryUrl = tokens.libraryUrl;
+                    }
+                }
+                // Fallback: manual parse
+                if (!libraryUrl) {
+                    const params = new URLSearchParams(hash.replace(/^#/, ''));
+                    libraryUrl = params.get('addLibrary');
+                }
+            } catch (e) {
+                console.warn('[Excalidraw Embed] Error parsing library URL:', e);
+            }
+
+            if (!libraryUrl) return;
+
+            // Clear the hash to prevent re-processing
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+
+            // Wait for excalidrawAPI to be available (may still be initializing)
+            let waitCount = 0;
+            while (!excalidrawAPI && waitCount < 50) {
+                await new Promise(r => setTimeout(r, 100));
+                waitCount++;
+            }
+
+            if (!excalidrawAPI) {
+                console.error('[Excalidraw Embed] API not available for library install');
+                return;
+            }
+
+            try {
+                const resp = await fetch(libraryUrl);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const libData = await resp.json();
+                const libraryItems = libData.libraryItems || libData.library || libData;
+
+                if (Array.isArray(libraryItems) && libraryItems.length > 0) {
+                    await excalidrawAPI.updateLibrary({
+                        libraryItems,
+                        merge: true,
+                        prompt: false,
+                        openLibraryMenu: true,
+                        defaultStatus: 'published',
+                    });
+                    console.log('[Excalidraw Embed] Library installed:', libraryItems.length, 'items');
+                }
+            } catch (err) {
+                console.error('[Excalidraw Embed] Failed to install library:', err);
+            }
+        }
+
+        // Listen for hash changes (library install redirects)
+        window.addEventListener('hashchange', handleLibraryFromHash);
+
         function renderApp() {
             document.getElementById('loading').style.display = 'none';
             const rootEl = document.getElementById('root');
@@ -177,8 +534,15 @@
                         }
                     }, '*');
                 },
-                excalidrawAPI: (api) => { excalidrawAPI = api; },
-                ref: (api) => { if (api && !excalidrawAPI) excalidrawAPI = api; }
+                excalidrawAPI: (api) => {
+                    excalidrawAPI = api;
+                    // Process any pending library install from URL hash
+                    handleLibraryFromHash();
+                    // Initialize the library browser panel
+                    initLibraryBrowser();
+                },
+                ref: (api) => { if (api && !excalidrawAPI) excalidrawAPI = api; },
+                libraryReturnUrl: window.location.origin + window.location.pathname,
             };
 
             if (initialData) {
