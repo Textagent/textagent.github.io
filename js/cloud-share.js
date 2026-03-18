@@ -846,7 +846,7 @@
     });
 
     // --- Email to Self ---
-    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpcI39pMZ5pOqjblsq-uFBxCZZ8ODfStnnVzrTRf4FAUUrJDnHJVR9winiF7zVmBDNCw/exec';
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXi8chA2zot_-MajrJ7-j2mW6ESLqjiI5AlebxgjWopl-ENFFNdVETvRbvI0TvP3dtZQ/exec';
     var emailInput = document.getElementById('share-email-input');
     var emailSubjectInput = document.getElementById('share-email-subject');
     var emailSendBtn = document.getElementById('share-email-send');
