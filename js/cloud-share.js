@@ -846,15 +846,53 @@
     });
 
     // --- Email to Self ---
-    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-xyiD2820PQ36aaH4ucp3Yh67PwOC7icTHCtW6Hr6yOEgFntOkzfHrNTs7sXasWL74g/exec';
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP8Z8aPmPo5h8LRrwPupck11yYjO77GDuGSsd-YUEu9cSblxd7hbKdF2Rn3DYK6HztXg/exec';
+    var TURNSTILE_SITE_KEY = '0x4AAAAAACsdzO7GSlx2JXk5';
+    var turnstileWidgetId = null;
     var emailInput = document.getElementById('share-email-input');
     var emailSubjectInput = document.getElementById('share-email-subject');
     var emailSendBtn = document.getElementById('share-email-send');
     var emailStatus = document.getElementById('share-email-status');
+    var turnstileError = document.getElementById('turnstile-error');
 
     // Restore last-used email
     var savedEmail = localStorage.getItem(M.KEYS.EMAIL_SELF);
     if (savedEmail && emailInput) emailInput.value = savedEmail;
+
+    /** Render Turnstile widget when the share result modal opens */
+    function initTurnstile() {
+        if (turnstileWidgetId !== null) return; // Already rendered
+        if (typeof turnstile === 'undefined') return; // Script not loaded yet
+        var container = document.getElementById('turnstile-container');
+        if (!container) return;
+        try {
+            turnstileWidgetId = turnstile.render(container, {
+                sitekey: TURNSTILE_SITE_KEY,
+                theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+                callback: function () {
+                    // Token received — hide any previous error
+                    if (turnstileError) turnstileError.style.display = 'none';
+                }
+            });
+        } catch (e) {
+            console.warn('Turnstile render failed:', e);
+        }
+    }
+
+    /** Reset the Turnstile widget for retry */
+    function resetTurnstile() {
+        if (typeof turnstile !== 'undefined') {
+            try { turnstile.reset(); } catch (e) { /* ignore */ }
+        }
+    }
+
+    // Hook into share result modal opening to init Turnstile
+    var _origShowShareResult = showShareResult;
+    showShareResult = function (url, isSecure) {
+        _origShowShareResult(url, isSecure);
+        // Small delay so the modal DOM is visible before Turnstile measures it
+        setTimeout(initTurnstile, 200);
+    };
 
     if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {
         var email = emailInput.value.trim();
@@ -864,6 +902,21 @@
             setTimeout(function () { emailInput.classList.remove('shake'); }, 500);
             return;
         }
+
+        // Validate Turnstile CAPTCHA token
+        // Call getResponse() without widget ID — works with single widget on page
+        var captchaToken = '';
+        if (typeof turnstile !== 'undefined') {
+            captchaToken = turnstile.getResponse() || '';
+        }
+        if (!captchaToken) {
+            if (turnstileError) {
+                turnstileError.textContent = 'Please complete the verification before sending.';
+                turnstileError.style.display = '';
+            }
+            return;
+        }
+        if (turnstileError) turnstileError.style.display = 'none';
 
         // Persist email for next time
         try { localStorage.setItem(M.KEYS.EMAIL_SELF, email); } catch (e) { /* ignore */ }
@@ -895,6 +948,7 @@
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify({
+                    captchaToken: captchaToken,
                     email: email,
                     subject: subject,
                     title: heading,
@@ -918,6 +972,8 @@
             }
             setTimeout(function () { btn.innerHTML = origHTML; btn.disabled = false; }, 3000);
         }
+        // Reset CAPTCHA widget so user must re-verify for next send
+        resetTurnstile();
     });
 
     // --- Passphrase Prompt Modal ---

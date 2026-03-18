@@ -8,25 +8,64 @@
 //   4. Execute as: Me | Who has access: Anyone
 //   5. Click Deploy → Copy the URL
 //   6. Paste the URL into TextAgent's cloud-share.js (EMAIL_SCRIPT_URL)
+//
+// SECURITY:
+//   - Cloudflare Turnstile CAPTCHA token is verified server-side
+//   - Rate limiting: max 20 emails per day via PropertiesService
+//   - Only the SECRET key lives here (never exposed to client)
 // ============================================================
+
+// ⚠️ Replace with your Cloudflare Turnstile SECRET key (from dashboard)
+var TURNSTILE_SECRET = 'PASTE_YOUR_SECRET_KEY_HERE'; // ⚠️ Only in Apps Script editor — NEVER commit to Git
+
+// Daily email rate limit
+var DAILY_EMAIL_LIMIT = 20;
 
 function doPost(e) {
     try {
         var data = JSON.parse(e.postData.contents);
+
+        // ── 1. Verify Cloudflare Turnstile CAPTCHA ──
+        var captchaToken = data.captchaToken || '';
+        if (!captchaToken) {
+            return jsonResponse({ success: false, error: 'Missing CAPTCHA token' });
+        }
+
+        var verification = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'post',
+            payload: {
+                secret: TURNSTILE_SECRET,
+                response: captchaToken
+            }
+        });
+        var verifyResult = JSON.parse(verification.getContentText());
+
+        if (!verifyResult.success) {
+            return jsonResponse({ success: false, error: 'CAPTCHA verification failed' });
+        }
+
+        // ── 2. Rate limiting (per day) ──
+        var props = PropertiesService.getScriptProperties();
+        var today = new Date().toDateString();
+        var countKey = 'email_count_' + today;
+        var count = parseInt(props.getProperty(countKey) || '0', 10);
+
+        if (count >= DAILY_EMAIL_LIMIT) {
+            return jsonResponse({ success: false, error: 'Daily email limit reached. Try again tomorrow.' });
+        }
+
+        // ── 3. Validate email ──
         var recipientEmail = data.email;
         var docTitle = data.title || 'Untitled Document';
         var emailSubject = data.subject || ('TextAgent: ' + docTitle);
         var markdownContent = data.content || '';
         var shareLink = data.shareLink || '';
 
-        // Validate email
         if (!recipientEmail || recipientEmail.indexOf('@') === -1) {
-            return ContentService
-                .createTextOutput(JSON.stringify({ success: false, error: 'Invalid email address' }))
-                .setMimeType(ContentService.MimeType.JSON);
+            return jsonResponse({ success: false, error: 'Invalid email address' });
         }
 
-        // Build HTML email body
+        // ── 4. Build HTML email body ──
         var htmlBody = '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">'
             + '<div style="border-bottom:2px solid #58a6ff;padding-bottom:16px;margin-bottom:24px">'
             + '<h2 style="margin:0;color:#1f2937">📝 TextAgent</h2>'
@@ -54,7 +93,7 @@ function doPost(e) {
         var safeName = docTitle.replace(/[^a-zA-Z0-9\s\-]/g, '').replace(/\s+/g, '-').substring(0, 50);
         var mdBlob = Utilities.newBlob(markdownContent, 'text/markdown', (safeName || 'document') + '.md');
 
-        // Send email
+        // ── 5. Send email ──
         MailApp.sendEmail({
             to: recipientEmail,
             subject: emailSubject,
@@ -64,20 +103,24 @@ function doPost(e) {
             name: 'TextAgent'
         });
 
-        return ContentService
-            .createTextOutput(JSON.stringify({ success: true }))
-            .setMimeType(ContentService.MimeType.JSON);
+        // ── 6. Increment rate limit counter ──
+        props.setProperty(countKey, String(count + 1));
+
+        return jsonResponse({ success: true });
 
     } catch (error) {
-        return ContentService
-            .createTextOutput(JSON.stringify({ success: false, error: error.message }))
-            .setMimeType(ContentService.MimeType.JSON);
+        return jsonResponse({ success: false, error: error.message });
     }
 }
 
 // Test endpoint (optional — for verifying deployment)
 function doGet(e) {
+    return jsonResponse({ status: 'ok', service: 'TextAgent Email (secured with Turnstile)' });
+}
+
+/** Helper: return a JSON response */
+function jsonResponse(obj) {
     return ContentService
-        .createTextOutput(JSON.stringify({ status: 'ok', service: 'TextAgent Email' }))
+        .createTextOutput(JSON.stringify(obj))
         .setMimeType(ContentService.MimeType.JSON);
 }
