@@ -2,6 +2,14 @@
 
 All changes to TextAgent, in reverse chronological order.
 
+## 2026-03-18
+
+### test: 51 new Playwright tests for 8 previously untested features
+- 8 new spec files: help-mode, page-view, table-tools, api-tag, linux-tag, template-loading, inline-rename, presentation
+- Covers Help Mode toggle/popovers, Page View A4 mode, Table Tools toolbar, API/Linux tag parsing & rendering, Template modal, Inline rename chip, Presentation PPT switching
+- Total test count: 521 → 572
+- **Files added:** `tests/feature/help-mode.spec.js`, `tests/feature/page-view.spec.js`, `tests/feature/table-tools.spec.js`, `tests/feature/api-tag.spec.js`, `tests/feature/linux-tag.spec.js`, `tests/feature/template-loading.spec.js`, `tests/feature/inline-rename.spec.js`, `tests/feature/presentation.spec.js`
+
 ---
 
 ## 2026-03-06
