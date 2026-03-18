@@ -404,6 +404,17 @@
   margin-top: 0;
 }
 
+/* Honeypot — invisible to humans, bots auto-fill */
+.share-email-hp {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .share-email-status {
   font-size: 13px;
   margin-top: 8px;

@@ -851,13 +851,19 @@
     var emailSubjectInput = document.getElementById('share-email-subject');
     var emailSendBtn = document.getElementById('share-email-send');
     var emailStatus = document.getElementById('share-email-status');
+    var emailHoneypot = document.getElementById('share-email-website');
+    var emailModalOpenTime = 0;
 
     // Restore last-used email
     var savedEmail = localStorage.getItem(M.KEYS.EMAIL_SELF);
     if (savedEmail && emailInput) emailInput.value = savedEmail;
 
-
-
+    // Track when the share result modal opens (for time-based bot detection)
+    var _origShowShareResult = showShareResult;
+    showShareResult = function (url, isSecure) {
+        _origShowShareResult(url, isSecure);
+        emailModalOpenTime = Date.now();
+    };
     if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {
         var email = emailInput.value.trim();
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -867,8 +873,12 @@
             return;
         }
 
+        // Anti-bot: honeypot check (hidden field bots auto-fill)
+        if (emailHoneypot && emailHoneypot.value) return;
 
-
+        // Anti-bot: time check (reject submissions < 3 seconds after modal opened)
+        var elapsed = Date.now() - emailModalOpenTime;
+        if (elapsed < 3000) return;
         // Persist email for next time
         try { localStorage.setItem(M.KEYS.EMAIL_SELF, email); } catch (e) { /* ignore */ }
 
@@ -903,7 +913,9 @@
                     subject: subject,
                     title: heading,
                     content: content,
-                    shareLink: shareUrl
+                    shareLink: shareUrl,
+                    hp: emailHoneypot ? emailHoneypot.value : '',
+                    ts: elapsed
                 })
             });
             // If fetch didn't throw, the request reached Google's servers

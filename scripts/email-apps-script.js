@@ -21,6 +21,16 @@ function doPost(e) {
     try {
         var data = JSON.parse(e.postData.contents);
 
+        // ── 1. Anti-bot checks ──
+        // Honeypot: hidden field that only bots fill
+        if (data.hp) {
+            return jsonResponse({ success: false, error: 'Invalid request' });
+        }
+        // Time check: reject submissions faster than 3 seconds
+        if (data.ts && data.ts < 3000) {
+            return jsonResponse({ success: false, error: 'Invalid request' });
+        }
+
         // ── 2. Rate limiting ──
         var props = PropertiesService.getScriptProperties();
         var today = new Date().toDateString();
