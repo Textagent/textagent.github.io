@@ -53,7 +53,7 @@
         },
         '#share-button, #qab-share, #mobile-share-button': {
             name: 'Encrypted Share',
-            desc: 'Share your document via an encrypted link. Content is compressed and encrypted client-side with AES-256-GCM. Optional passphrase protection. Email to Self sends the share link and .md file to your inbox.',
+            desc: 'Share your document via an encrypted link. Content is compressed and encrypted client-side with AES-256-GCM. Optional password protection. Email to Self sends the share link and .md file to your inbox.',
             shortcut: null,
             demo: 'assets/demos/22_email_to_self.webp'
         },

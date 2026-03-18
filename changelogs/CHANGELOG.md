@@ -80,15 +80,15 @@ All changes to TextAgent, in reverse chronological order.
 - Single source of truth for all AI model configurations
 - **Files:** `js/ai-models.js`, `index.html`, `js/app-core.js`
 
-### feat: AI context menu + inline progress bar + passphrase sharing
+### feat: AI context menu + inline progress bar + password sharing
 - Enhanced AI context menu with column layout and writing assistance actions
 - Added inline AI status bar with progress UI
-- Added passphrase protection for sharing
+- Added password protection for sharing
 - **Files:** `js/ai-panel.js`, `css/ai-panel.css`, `js/cloud-share.js`, `index.html`
 
-### feat: secure sharing with passphrase protection
+### feat: secure sharing with password protection
 - Share options modal with Quick Share and Secure Share modes
-- PBKDF2 key derivation from user passphrase
+- PBKDF2 key derivation from user password
 - Download credentials as .txt file
 - **Files:** `js/cloud-share.js`, `index.html`, `css/modals.css`
 

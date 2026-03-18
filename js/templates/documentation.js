@@ -29,7 +29,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **Code** | ▶ Bash · ▶ Math · 🐍 Python · 🌐 HTML Sandbox (`html-autorun` for widgets/quizzes) · ⚡ JavaScript · 🗄️ SQL (SQLite) · 🐧 Compile \\& Run (25+ languages via Judge0 CE) |\n' +
       '| **Import** | MD · DOCX · XLSX/XLS · CSV · HTML · JSON · XML · PDF — drag \\& drop or click to import |\n' +
       '| **Export** | Markdown · Self-contained styled HTML (all CSS inlined, theme preserved) · PDF (smart page-breaks) · LLM Memory (5 formats + shareable link) |\n' +
-      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional passphrase protection · Read-only shared links · ✉️ Email to Self |\n' +
+      '| **Sharing** | ☁️ AES-256-GCM encrypted sharing via Firebase · Optional password protection · Read-only shared links · ✉️ Email to Self |\n' +
       '| **Presentation** | Slide mode · Multiple layouts \\& transitions · Speaker notes · Overview grid · 20+ PPT templates with image backgrounds |\n' +
       '| **Desktop** | Native app via Neutralino.js with system tray and offline support |\n' +
       '| **🎮 Game Builder** | `{{@Game:}}` tag — AI-generated games (Canvas 2D / Three.js / P5.js) or pre-built via `@prebuilt:` (chess, snake, shooter, pong, breakout, maths quiz, hiragana, kana master) · 📋 Import HTML · 📥 Export standalone · ⛶ Fullscreen |\n' +
@@ -419,7 +419,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '3. Only the link holder with the key can decrypt\n' +
       '4. No one (not even the server) can read your content\n\n' +
       '**Additional sharing features:**\n' +
-      '- 🔑 **Passphrase protection** — optionally add a passphrase to shared links\n' +
+      '- 🔑 **Password protection** — optionally add a password to shared links\n' +
       '- 🔒 **Read-only shared links** — recipients cannot overwrite the original\n' +
       '- ✏️ **Edit Copy** — creates a local fork instead of overwriting\n\n' +
       '> [!NOTE]\n' +
@@ -496,7 +496,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] SQL sandbox (SQLite WASM)\n' +
       '- [x] LLM Memory export (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text)\n' +
       '- [x] Presentation mode with layouts \\& transitions\n' +
-      '- [x] Encrypted cloud sharing with passphrase protection\n' +
+      '- [x] Encrypted cloud sharing with password protection\n' +
       '- [x] Read-only shared links\n' +
       '- [x] Multi-format file import (8 types)\n' +
       '- [x] Dark mode, Focus mode \\& Zen mode\n' +
@@ -649,7 +649,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- **SRI Integrity Hashes** \u2014 All third-party scripts verified\n' +
       '- **XSS Sanitization** \u2014 DOMPurify protects against injection attacks\n' +
       '- **postMessage Validation** \u2014 Origin checks on all sandboxed iframe communication\n' +
-      '- **Passphrase Policy** \u2014 Minimum 8-character passphrases for secure sharing\n' +
+      '- **Password Policy** \u2014 Minimum 8-character passwords for secure sharing\n' +
       '- **No Tracking** \u2014 Zero analytics, zero cookies, zero telemetry\n' +
       '- **Open Source** \u2014 Fully transparent, inspect every line of code\n'
   },

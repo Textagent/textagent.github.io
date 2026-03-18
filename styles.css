@@ -2238,6 +2238,39 @@ a:focus {
   border-style: solid;
 }
 
+.share-credentials-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share-credentials-actions .share-btn-download {
+  margin-top: 0;
+  flex: 1;
+}
+
+.share-btn-copy-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  background-color: var(--accent-color);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.share-btn-copy-all:hover {
+  background-color: #4b94e8;
+  border-color: #4b94e8;
+}
+
 #share-download-section {
   margin-top: 16px;
   padding-top: 16px;

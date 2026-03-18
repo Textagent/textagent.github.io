@@ -56,12 +56,12 @@
                 <div id="share-secure-section" style="display:none">
                     <p class="share-modal-desc">
                         <i class="bi bi-shield-check me-1"></i>
-                        Content is protected by a passphrase. The link alone cannot decrypt it.
+                        Content is protected by a password. The link alone cannot decrypt it.
                     </p>
                     <div class="share-form-group">
-                        <label for="share-passphrase-input">Passphrase</label>
+                        <label for="share-passphrase-input">Password</label>
                         <div class="share-passphrase-wrapper">
-                            <input type="password" id="share-passphrase-input" placeholder="Enter a strong passphrase"
+                            <input type="password" id="share-passphrase-input" placeholder="Enter a strong password"
                                 autocomplete="off" />
                             <button type="button" class="share-pass-toggle" id="share-pass-toggle" title="Show/Hide">
                                 <i class="bi bi-eye"></i>
@@ -70,8 +70,8 @@
                         <small>Choose something memorable. You'll need to share this separately.</small>
                     </div>
                     <div class="share-form-group">
-                        <label for="share-passphrase-confirm">Confirm Passphrase</label>
-                        <input type="password" id="share-passphrase-confirm" placeholder="Re-enter passphrase"
+                        <label for="share-passphrase-confirm">Confirm Password</label>
+                        <input type="password" id="share-passphrase-confirm" placeholder="Re-enter password"
                             autocomplete="off" />
                     </div>
                     <div id="share-passphrase-error" class="share-error" style="display:none"></div>
@@ -127,10 +127,15 @@
                     fragment — it's never sent to any server.</small>
                 <!-- Download credentials (visible only for secure share) -->
                 <div id="share-download-section" style="display:none">
-                    <button class="share-btn-download" id="share-download-credentials">
-                        <i class="bi bi-download me-1"></i> Download Credentials (.txt)
-                    </button>
-                    <small class="share-link-note"><i class="bi bi-exclamation-triangle me-1"></i>Send the passphrase
+                    <div class="share-credentials-actions">
+                        <button class="share-btn-download" id="share-download-credentials">
+                            <i class="bi bi-download me-1"></i> Download Credentials (.txt)
+                        </button>
+                        <button class="share-btn-copy-all" id="share-copy-credentials" title="Copy link and passphrase to clipboard">
+                            <i class="bi bi-clipboard me-1"></i> Copy Credentials
+                        </button>
+                    </div>
+                        <small class="share-link-note"><i class="bi bi-exclamation-triangle me-1"></i>Send the password
                         separately from the link for maximum security.</small>
                 </div>
                 <!-- Email to Self section -->
@@ -144,7 +149,7 @@
                             <i class="bi bi-send me-1"></i> Send
                         </button>
                     </div>
-                    <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>Sends the share link
+                    <small class="share-link-note" id="share-email-note"><i class="bi bi-info-circle me-1"></i>Sends the share link
                         and .md file directly to your inbox.</small>
                     <div id="share-email-status" class="share-email-status"></div>
                 </div>
@@ -159,10 +164,10 @@
                 <i class="bi bi-shield-lock-fill"></i>
             </div>
             <h5 class="passphrase-prompt-title">This document is protected</h5>
-            <p class="passphrase-prompt-desc">Enter the passphrase to unlock and view this shared document.</p>
+            <p class="passphrase-prompt-desc">Enter the password to unlock and view this shared document.</p>
             <div class="share-form-group">
                 <div class="share-passphrase-wrapper">
-                    <input type="password" id="passphrase-unlock-input" placeholder="Enter passphrase"
+                    <input type="password" id="passphrase-unlock-input" placeholder="Enter password"
                         autocomplete="off" />
                     <button type="button" class="share-pass-toggle" id="passphrase-unlock-toggle" title="Show/Hide">
                         <i class="bi bi-eye"></i>

@@ -418,7 +418,7 @@
             showSharedBanner();
             pendingSecureDoc = null;
         } catch (e) {
-            throw new Error('Wrong passphrase. Please try again.');
+            throw new Error('Wrong password. Please try again.');
         }
     }
 
@@ -749,14 +749,14 @@
                 var pass = sharePassInput.value;
                 var passConfirm = sharePassConfirm.value;
                 if (!pass || pass.length < 8) {
-                    sharePassError.textContent = 'Passphrase must be at least 8 characters.';
+                    sharePassError.textContent = 'Password must be at least 8 characters.';
                     sharePassError.style.display = '';
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';
                     return;
                 }
                 if (pass !== passConfirm) {
-                    sharePassError.textContent = 'Passphrases do not match.';
+                    sharePassError.textContent = 'Passwords do not match.';
                     sharePassError.style.display = '';
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';
@@ -790,14 +790,17 @@
         var desc = document.getElementById('share-result-desc');
         var note = document.getElementById('share-result-note');
         var dlSection = document.getElementById('share-download-section');
+        var emailNote = document.getElementById('share-email-note');
         if (isSecure) {
-            desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Passphrase-protected. The link alone cannot decrypt the content.';
-            note.innerHTML = '<i class="bi bi-info-circle me-1"></i>No key material is in the URL — only the passphrase holder can open this.';
+            desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Password-protected. The link alone cannot decrypt the content.';
+            note.innerHTML = '<i class="bi bi-info-circle me-1"></i>No key material is in the URL — only the password holder can open this.';
             dlSection.style.display = '';
+            if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends the share link, password, and .md file directly to your inbox.';
         } else {
             desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Content is encrypted. Only this link can unlock it.';
             note.innerHTML = '<i class="bi bi-info-circle me-1"></i>The decryption key is in the URL fragment — it\'s never sent to any server.';
             dlSection.style.display = 'none';
+            if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends the share link and .md file directly to your inbox.';
         }
         shareResultModal.classList.add('active');
     }
@@ -831,11 +834,11 @@
         fileContent += 'Created:  ' + new Date().toISOString() + '\n\n';
         fileContent += '-----------------------------------\n';
         fileContent += 'URL:\n' + url + '\n\n';
-        fileContent += 'Passphrase:\n' + pass + '\n';
+        fileContent += 'Password:\n' + pass + '\n';
         fileContent += '-----------------------------------\n\n';
         fileContent += 'IMPORTANT:\n';
-        fileContent += '• Share the URL and passphrase SEPARATELY for maximum security.\n';
-        fileContent += '• Anyone with both the URL and passphrase can view the document.\n';
+        fileContent += '• Share the URL and password SEPARATELY for maximum security.\n';
+        fileContent += '• Anyone with both the URL and password can view the document.\n';
         fileContent += '• Delete this file after sharing the credentials.\n';
         var blob = new Blob([fileContent], { type: 'text/plain' });
         var a = document.createElement('a');
@@ -845,8 +848,30 @@
         URL.revokeObjectURL(a.href);
     });
 
+    // --- Copy Credentials (link + passphrase) ---
+    document.getElementById('share-copy-credentials').addEventListener('click', async function () {
+        var url = document.getElementById('share-link-input').value;
+        var pass = lastSharePassphrase;
+        var text = 'Link:\n' + url + '\n\nPassword:\n' + pass;
+        var btn = this;
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Copied!';
+        } catch (e) {
+            // Fallback
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Copied!';
+        }
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy Credentials'; }, 2000);
+    });
+
     // --- Email to Self ---
-    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXi8chA2zot_-MajrJ7-j2mW6ESLqjiI5AlebxgjWopl-ENFFNdVETvRbvI0TvP3dtZQ/exec';
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwG35nTbbqmtKMW1IWD1YnSkMavq1bNsqndys2csWbySo-KY4CUxFyEQ1Gr8GoFnQH0rw/exec';
     var emailInput = document.getElementById('share-email-input');
     var emailSubjectInput = document.getElementById('share-email-subject');
     var emailSendBtn = document.getElementById('share-email-send');
@@ -905,10 +930,7 @@
             // Google Apps Script redirects (302) without CORS headers,
             // so we use no-cors mode. The response is opaque (can't read body),
             // but the email is sent server-side regardless.
-            await fetch(EMAIL_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
+            var emailPayload = {
                     email: email,
                     subject: subject,
                     title: heading,
@@ -916,7 +938,15 @@
                     shareLink: shareUrl,
                     hp: emailHoneypot ? emailHoneypot.value : '',
                     ts: elapsed
-                })
+                };
+            // Include passphrase for secure shares so the email contains credentials
+            if (lastSharePassphrase) {
+                emailPayload.passphrase = lastSharePassphrase;
+            }
+            await fetch(EMAIL_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(emailPayload)
             });
             // If fetch didn't throw, the request reached Google's servers
             btn.innerHTML = '<i class="bi bi-check-lg"></i>';
@@ -958,7 +988,7 @@
         var btn = this;
         var pass = passphraseUnlockInput.value;
         if (!pass) {
-            passphraseUnlockError.textContent = 'Please enter the passphrase.';
+            passphraseUnlockError.textContent = 'Please enter the password.';
             passphraseUnlockError.style.display = '';
             return;
         }
@@ -968,7 +998,7 @@
         try {
             await unlockSecureDoc(pass);
         } catch (e) {
-            passphraseUnlockError.textContent = e.message || 'Decryption failed. Wrong passphrase?';
+            passphraseUnlockError.textContent = e.message || 'Decryption failed. Wrong password?';
             passphraseUnlockError.style.display = '';
         }
         btn.disabled = false;

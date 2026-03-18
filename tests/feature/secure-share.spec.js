@@ -82,7 +82,7 @@ test.describe('Secure Share Validation', () => {
             // Secure share shows the download section
             document.getElementById('share-download-section').style.display = '';
             document.getElementById('share-result-desc').innerHTML =
-                '<i class="bi bi-shield-lock me-1"></i> Passphrase-protected.';
+                '<i class="bi bi-shield-lock me-1"></i> Password-protected.';
             resultModal.classList.add('active');
         });
 
@@ -118,7 +118,7 @@ test.describe('Secure Share Validation', () => {
         expect(filename).not.toMatch(/[!@#$%^&*()]/);
     });
 
-    test('downloaded credentials contain both URL and passphrase', async ({ page }) => {
+    test('downloaded credentials contain both URL and password', async ({ page }) => {
         // Close current modal
         await page.locator('#share-options-cancel').click();
 
@@ -145,10 +145,10 @@ test.describe('Secure Share Validation', () => {
         }
         const content = Buffer.concat(chunks).toString('utf-8');
 
-        // Verify content includes URL and Passphrase sections
+        // Verify content includes URL and Password sections
         expect(content).toContain('URL:');
         expect(content).toContain(fakeUrl);
-        expect(content).toContain('Passphrase:');
+        expect(content).toContain('Password:');
         expect(content).toContain('TextAgent');
     });
 });

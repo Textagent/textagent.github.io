@@ -55,24 +55,41 @@ function doPost(e) {
         var emailSubject = data.subject || ('TextAgent: ' + docTitle);
         var markdownContent = data.content || '';
         var shareLink = data.shareLink || '';
+        var password = data.passphrase || '';
 
         if (!recipientEmail || recipientEmail.indexOf('@') === -1) {
             return jsonResponse({ success: false, error: 'Invalid email address' });
         }
 
         // ── 4. Build HTML email body ──
+        var isSecure = !!password;
+
+        // Password section (only for secure shares)
+        var passwordHtml = '';
+        if (isSecure) {
+            passwordHtml = '<div style="margin:12px 0 20px;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">'
+                + '<strong style="font-size:13px;color:#166534">🔑 Password</strong><br>'
+                + '<code style="font-size:14px;color:#166534;background:#dcfce7;padding:2px 8px;border-radius:4px;display:inline-block;margin-top:4px">' + password + '</code>'
+                + '</div>';
+        }
+
+        var openInstructions = isSecure
+            ? 'Click the link below and enter the password to open it.'
+            : 'Click the link below to open it, or find the <code>.md</code> file attached.';
+
         var htmlBody = '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">'
             + '<div style="border-bottom:2px solid #58a6ff;padding-bottom:16px;margin-bottom:24px">'
             + '<h2 style="margin:0;color:#1f2937">📝 TextAgent</h2>'
             + '<p style="margin:4px 0 0;color:#6b7280;font-size:14px">Your document has been shared</p>'
             + '</div>'
             + '<h3 style="margin:0 0 12px;color:#1f2937">' + docTitle + '</h3>'
-            + '<p style="color:#4b5563;font-size:14px;line-height:1.6">You sent yourself this document from TextAgent. '
-            + 'Click the link below to open it, or find the <code>.md</code> file attached to this email.</p>'
+            + '<p style="color:#4b5563;font-size:14px;line-height:1.6">A document was shared with you via TextAgent. '
+            + openInstructions + '</p>'
             + '<div style="margin:20px 0;padding:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">'
             + '<strong style="font-size:13px;color:#0369a1">🔗 Open in TextAgent</strong><br>'
             + '<a href="' + shareLink + '" style="word-break:break-all;color:#2563eb;font-size:13px">' + shareLink + '</a>'
             + '</div>'
+            + passwordHtml
             + '<p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #e5e7eb;padding-top:12px">'
             + 'Sent via <a href="https://textagent.github.io" style="color:#2563eb">TextAgent</a> — '
             + 'Write with AI Agents, 100% client-side.</p>'
@@ -81,6 +98,7 @@ function doPost(e) {
         // Plain text fallback
         var plainBody = 'TextAgent: ' + docTitle + '\n\n'
             + 'Open in TextAgent:\n' + shareLink + '\n\n'
+            + (isSecure ? 'Password:\n' + password + '\n\n' : '')
             + 'The .md file is attached to this email.\n\n'
             + '---\nSent via TextAgent (https://textagent.github.io)';
 
