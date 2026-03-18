@@ -1013,14 +1013,6 @@
     </div>
 
 
-    <!-- Cloudflare Turnstile CAPTCHA (explicit render — used in email-to-self flow) -->
-    <script>
-        // Cloudflare Turnstile onload callback — dispatches event for cloud-share.js
-        function onTurnstileLoad() {
-            window.dispatchEvent(new Event('turnstile-ready'));
-        }
-    </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
 
     <script type="module" src="/src/main.js"></script>
 </body>

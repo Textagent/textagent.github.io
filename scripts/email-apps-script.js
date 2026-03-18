@@ -10,13 +10,8 @@
 //   6. Paste the URL into TextAgent's cloud-share.js (EMAIL_SCRIPT_URL)
 //
 // SECURITY:
-//   - Cloudflare Turnstile CAPTCHA token is verified server-side
 //   - Rate limiting: 100 emails/day global, 7/day per recipient address
-//   - Only the SECRET key lives here (never exposed to client)
 // ============================================================
-
-// ⚠️ Replace with your Cloudflare Turnstile SECRET key (from dashboard)
-var TURNSTILE_SECRET = 'PASTE_YOUR_SECRET_KEY_HERE'; // ⚠️ Only in Apps Script editor — NEVER commit to Git
 
 // Rate limits
 var DAILY_EMAIL_LIMIT = 100;       // Global cap (Gmail free tier allows 100/day)
@@ -25,25 +20,6 @@ var PER_EMAIL_LIMIT = 7;           // Max emails per recipient address per day
 function doPost(e) {
     try {
         var data = JSON.parse(e.postData.contents);
-
-        // ── 1. Verify Cloudflare Turnstile CAPTCHA ──
-        var captchaToken = data.captchaToken || '';
-        if (!captchaToken) {
-            return jsonResponse({ success: false, error: 'Missing CAPTCHA token' });
-        }
-
-        var verification = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-            method: 'post',
-            payload: {
-                secret: TURNSTILE_SECRET,
-                response: captchaToken
-            }
-        });
-        var verifyResult = JSON.parse(verification.getContentText());
-
-        if (!verifyResult.success) {
-            return jsonResponse({ success: false, error: 'CAPTCHA verification failed' });
-        }
 
         // ── 2. Rate limiting ──
         var props = PropertiesService.getScriptProperties();

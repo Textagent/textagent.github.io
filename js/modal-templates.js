@@ -138,8 +138,6 @@
                     <div class="share-email-header"><i class="bi bi-envelope me-1"></i> Email to Self</div>
                     <input type="email" id="share-email-input" class="share-email-field" placeholder="your@email.com" autocomplete="email" />
                     <input type="text" id="share-email-subject" class="share-email-field" placeholder="Subject (optional)" />
-                    <div id="turnstile-container" class="turnstile-container"></div>
-                    <div id="turnstile-error" class="share-error" style="display:none"></div>
                     <div class="share-email-row">
                         <button class="share-btn-primary" id="share-email-send" title="Send link & file to your email">
                             <i class="bi bi-send me-1"></i> Send
