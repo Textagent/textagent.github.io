@@ -4,26 +4,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper: validate the optional 'view' field (must be 'ppt' or 'preview')
+    function validView() {
+      return !('view' in request.resource.data)
+             || request.resource.data.view == 'ppt'
+             || request.resource.data.view == 'preview';
+    }
+
     match /shares/{docId} {
       // Anyone can read shared documents (needed for shared link access)
       allow read: if true;
 
       // Allow create with strict validation:
-      // - Quick share: { d, t, wt }
-      // - Secure share: { d, t, salt, secure, wt }
+      // - Quick share: { d, t, wt [, view] }
+      // - Secure share: { d, t, salt, secure, wt [, view] }
       // - 'wt' is the write-token for ownership verification
+      // - 'view' is optional view-lock ('ppt' | 'preview')
       allow create: if (
                       // Quick share / cloud auto-save
-                      (request.resource.data.keys().hasOnly(['d', 't', 'wt'])
+                      (request.resource.data.keys().hasOnly(['d', 't', 'wt', 'view'])
                        && request.resource.data.d is string
                        && request.resource.data.d.size() < 1048576
                        && request.resource.data.t is int
                        && request.resource.data.wt is string
                        && request.resource.data.wt.size() >= 16
-                       && request.resource.data.wt.size() <= 64)
+                       && request.resource.data.wt.size() <= 64
+                       && validView())
                       ||
                       // Secure share
-                      (request.resource.data.keys().hasOnly(['d', 't', 'salt', 'secure', 'wt'])
+                      (request.resource.data.keys().hasOnly(['d', 't', 'salt', 'secure', 'wt', 'view'])
                        && request.resource.data.d is string
                        && request.resource.data.d.size() < 1048576
                        && request.resource.data.t is int
@@ -31,16 +40,18 @@ service cloud.firestore {
                        && request.resource.data.secure == true
                        && request.resource.data.wt is string
                        && request.resource.data.wt.size() >= 16
-                       && request.resource.data.wt.size() <= 64)
+                       && request.resource.data.wt.size() <= 64
+                       && validView())
                     );
 
       // Allow update only if write-token matches (ownership proof)
       // Backward compat: old docs without 'wt' can still be updated
-      allow update: if request.resource.data.keys().hasOnly(['d', 't', 'wt'])
+      allow update: if request.resource.data.keys().hasOnly(['d', 't', 'wt', 'view'])
                     && request.resource.data.d is string
                     && request.resource.data.d.size() < 1048576
                     && request.resource.data.t is int
                     && request.resource.data.wt is string
+                    && validView()
                     && (
                       // Doc has no write-token (legacy) — allow update
                       !('wt' in resource.data)

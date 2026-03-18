@@ -295,15 +295,9 @@
 
         // Send saved scene data once iframe is ready
         iframe.addEventListener('load', function () {
-            iframe.contentWindow.postMessage({ type: 'set-draw-index', drawIndex: blockIndex }, '*');
+            iframe.contentWindow.postMessage({ type: 'set-draw-index', drawIndex: blockIndex }, window.location.origin);
             if (savedData) {
-                iframe.contentWindow.postMessage({ type: 'load-scene', drawIndex: blockIndex, data: savedData }, '*');
-            }
-            // Forward API key for AI diagram generation
-            var geminiKey = null;
-            try { geminiKey = localStorage.getItem(M.KEYS.API_KEY_GEMINI); } catch (e) { /* ignore */ }
-            if (geminiKey) {
-                iframe.contentWindow.postMessage({ type: 'set-api-key', apiKey: geminiKey }, '*');
+                iframe.contentWindow.postMessage({ type: 'load-scene', drawIndex: blockIndex, data: savedData }, window.location.origin);
             }
         });
 
@@ -414,6 +408,7 @@
         _messageListenerAdded = true;
 
         window.addEventListener('message', function (e) {
+            if (e.origin !== window.location.origin) return;
             if (!e.data || typeof e.data !== 'object') return;
 
             if (e.data.type === 'excalidraw-change') {
@@ -500,7 +495,7 @@
         var iframe = activeIframes.get(blockIndex);
         if (iframe && iframe.contentWindow) {
             _pendingInsertIndex = blockIndex;
-            iframe.contentWindow.postMessage({ type: 'export-request', format: 'png' }, '*');
+            iframe.contentWindow.postMessage({ type: 'export-request', format: 'png' }, window.location.origin);
         } else {
             showToast('⚠️ Open the whiteboard first, then click Insert.', 'warning');
         }
@@ -535,7 +530,7 @@
     function requestExport(blockIndex, format) {
         var iframe = activeIframes.get(blockIndex);
         if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage({ type: 'export-request', format: format }, '*');
+            iframe.contentWindow.postMessage({ type: 'export-request', format: format }, window.location.origin);
         } else {
             var data = loadDrawing(blockIndex);
             if (!data || !data.elements || data.elements.length === 0) {
@@ -825,7 +820,7 @@
                             type: 'load-scene',
                             drawIndex: blockIndex,
                             data: sceneData
-                        }, '*');
+                        }, window.location.origin);
                     }, 1500);
                 }
 

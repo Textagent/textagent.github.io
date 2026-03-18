@@ -846,7 +846,7 @@
     });
 
     // --- Email to Self ---
-    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP8Z8aPmPo5h8LRrwPupck11yYjO77GDuGSsd-YUEu9cSblxd7hbKdF2Rn3DYK6HztXg/exec';
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpcI39pMZ5pOqjblsq-uFBxCZZ8ODfStnnVzrTRf4FAUUrJDnHJVR9winiF7zVmBDNCw/exec';
     var TURNSTILE_SITE_KEY = '0x4AAAAAACsdzO7GSlx2JXk5';
     var turnstileWidgetId = null;
     var emailInput = document.getElementById('share-email-input');

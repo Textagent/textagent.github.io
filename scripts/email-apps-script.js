@@ -11,15 +11,16 @@
 //
 // SECURITY:
 //   - Cloudflare Turnstile CAPTCHA token is verified server-side
-//   - Rate limiting: max 20 emails per day via PropertiesService
+//   - Rate limiting: 100 emails/day global, 7/day per recipient address
 //   - Only the SECRET key lives here (never exposed to client)
 // ============================================================
 
 // ⚠️ Replace with your Cloudflare Turnstile SECRET key (from dashboard)
 var TURNSTILE_SECRET = 'PASTE_YOUR_SECRET_KEY_HERE'; // ⚠️ Only in Apps Script editor — NEVER commit to Git
 
-// Daily email rate limit
-var DAILY_EMAIL_LIMIT = 20;
+// Rate limits
+var DAILY_EMAIL_LIMIT = 100;       // Global cap (Gmail free tier allows 100/day)
+var PER_EMAIL_LIMIT = 7;           // Max emails per recipient address per day
 
 function doPost(e) {
     try {
@@ -44,18 +45,26 @@ function doPost(e) {
             return jsonResponse({ success: false, error: 'CAPTCHA verification failed' });
         }
 
-        // ── 2. Rate limiting (per day) ──
+        // ── 2. Rate limiting ──
         var props = PropertiesService.getScriptProperties();
         var today = new Date().toDateString();
-        var countKey = 'email_count_' + today;
-        var count = parseInt(props.getProperty(countKey) || '0', 10);
 
-        if (count >= DAILY_EMAIL_LIMIT) {
+        // Global daily cap
+        var globalKey = 'email_count_' + today;
+        var globalCount = parseInt(props.getProperty(globalKey) || '0', 10);
+        if (globalCount >= DAILY_EMAIL_LIMIT) {
             return jsonResponse({ success: false, error: 'Daily email limit reached. Try again tomorrow.' });
         }
 
+        // Per-recipient rate limit (no login needed — email IS the identity)
+        var recipientEmail = (data.email || '').toLowerCase().trim();
+        var perEmailKey = 'email_' + recipientEmail + '_' + today;
+        var perEmailCount = parseInt(props.getProperty(perEmailKey) || '0', 10);
+        if (perEmailCount >= PER_EMAIL_LIMIT) {
+            return jsonResponse({ success: false, error: 'You have reached the limit of ' + PER_EMAIL_LIMIT + ' emails per day to this address.' });
+        }
+
         // ── 3. Validate email ──
-        var recipientEmail = data.email;
         var docTitle = data.title || 'Untitled Document';
         var emailSubject = data.subject || ('TextAgent: ' + docTitle);
         var markdownContent = data.content || '';
@@ -103,8 +112,9 @@ function doPost(e) {
             name: 'TextAgent'
         });
 
-        // ── 6. Increment rate limit counter ──
-        props.setProperty(countKey, String(count + 1));
+        // ── 6. Increment rate limit counters ──
+        props.setProperty(globalKey, String(globalCount + 1));
+        props.setProperty(perEmailKey, String(perEmailCount + 1));
 
         return jsonResponse({ success: true });
 

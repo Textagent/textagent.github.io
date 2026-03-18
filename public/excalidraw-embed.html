@@ -183,6 +183,7 @@
 
         // ── Listen for messages from parent ───────────
         window.addEventListener('message', function (e) {
+            if (e.origin !== window.location.origin) return;
             if (!e.data || typeof e.data !== 'object') return;
 
             if (e.data.type === 'set-draw-index' && typeof e.data.drawIndex === 'number') {
@@ -200,7 +201,7 @@
                     handleExport(e.data.format);
                 } else {
                     console.warn('[Excalidraw Embed] export-request received but excalidrawAPI is null');
-                    window.parent.postMessage({ type: 'export-error', message: 'Excalidraw API not ready yet. Try again in a moment.' }, '*');
+                    window.parent.postMessage({ type: 'export-error', message: 'Excalidraw API not ready yet. Try again in a moment.' }, window.location.origin);
                 }
             }
 
@@ -214,7 +215,7 @@
                 const files = excalidrawAPI.getFiles();
 
                 if (!elements || elements.length === 0) {
-                    window.parent.postMessage({ type: 'export-error', message: 'Nothing to export — draw something first.' }, '*');
+                    window.parent.postMessage({ type: 'export-error', message: 'Nothing to export — draw something first.' }, window.location.origin);
                     return;
                 }
 
@@ -228,16 +229,16 @@
                         });
                         const reader = new FileReader();
                         reader.onload = () => {
-                            window.parent.postMessage({ type: 'export-result', format: 'png', data: reader.result }, '*');
+                            window.parent.postMessage({ type: 'export-result', format: 'png', data: reader.result }, window.location.origin);
                         };
                         reader.readAsDataURL(blob);
                     } else {
                         // Fallback: scrape canvas
                         const canvas = document.querySelector('canvas');
                         if (canvas) {
-                            window.parent.postMessage({ type: 'export-result', format: 'png', data: canvas.toDataURL('image/png') }, '*');
+                            window.parent.postMessage({ type: 'export-result', format: 'png', data: canvas.toDataURL('image/png') }, window.location.origin);
                         } else {
-                            window.parent.postMessage({ type: 'export-error', message: 'exportToBlob not available and no canvas found.' }, '*');
+                            window.parent.postMessage({ type: 'export-error', message: 'exportToBlob not available and no canvas found.' }, window.location.origin);
                         }
                     }
                 } else if (format === 'svg') {
@@ -248,20 +249,20 @@
                             files,
                         });
                         const svgString = new XMLSerializer().serializeToString(svgEl);
-                        window.parent.postMessage({ type: 'export-result', format: 'svg', data: svgString }, '*');
+                        window.parent.postMessage({ type: 'export-result', format: 'svg', data: svgString }, window.location.origin);
                     } else {
                         // Fallback: export as PNG with svg label
                         const canvas = document.querySelector('canvas');
                         if (canvas) {
-                            window.parent.postMessage({ type: 'export-result', format: 'svg', data: canvas.toDataURL('image/png') }, '*');
+                            window.parent.postMessage({ type: 'export-result', format: 'svg', data: canvas.toDataURL('image/png') }, window.location.origin);
                         } else {
-                            window.parent.postMessage({ type: 'export-error', message: 'exportToSvg not available and no canvas found.' }, '*');
+                            window.parent.postMessage({ type: 'export-error', message: 'exportToSvg not available and no canvas found.' }, window.location.origin);
                         }
                     }
                 }
             } catch (err) {
                 console.error('Export error:', err);
-                window.parent.postMessage({ type: 'export-error', message: err.message }, '*');
+                window.parent.postMessage({ type: 'export-error', message: err.message }, window.location.origin);
             }
         }
 
@@ -538,7 +539,7 @@
                             elements: elements,
                             appState: { viewBackgroundColor: appState.viewBackgroundColor }
                         }
-                    }, '*');
+                    }, window.location.origin);
                 },
                 excalidrawAPI: (api) => {
                     excalidrawAPI = api;
@@ -570,7 +571,7 @@
         }
 
         // ── Ready ─────────────────────────────────────
-        window.parent.postMessage({ type: 'excalidraw-ready' }, '*');
+        window.parent.postMessage({ type: 'excalidraw-ready' }, window.location.origin);
 
         // Render immediately (empty canvas), then update if scene data arrives
         renderApp();

@@ -66,23 +66,28 @@ A flat list of every change made, one bullet per change. This is for fast scanni
 - Include a summary table at the bottom listing ALL files with approximate line counts
 - Use clear, specific language — avoid vague descriptions
 
-3. Update `README.md` to reflect the changes:
+3. Run Firestore rules validation before proceeding (abort if it fails):
+```
+npm run test:firestore
+```
+
+4. Update `README.md` to reflect the changes:
    - Update the **Features at a Glance** table if any feature category description needs expanding
    - Add new entries to the **Release Notes** table at the top (date descending), one row per distinct feature/fix
 
-4. Stage the changelog, README, and all changed files:
+5. Stage the changelog, README, and all changed files:
 ```
 git add CHANGELOG-<topic>.md README.md <files...>
 ```
 
-5. Commit with a descriptive message following conventional commits format:
+6. Commit with a descriptive message following conventional commits format:
 ```
 git commit -m "feat|fix|refactor|chore: <short description>
 
 <bullet list of key changes>"
 ```
 
-6. Push to origin:
+7. Push to origin:
 ```
 git push origin main
 ```

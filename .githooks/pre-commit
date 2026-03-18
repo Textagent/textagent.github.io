@@ -1,8 +1,17 @@
 #!/bin/sh
-# Pre-commit hook: Require a CHANGELOG-*.md file in every commit
+# Pre-commit hook: Security check + changelog enforcement
 #
-# Checks that at least one CHANGELOG-*.md file is being committed
-# alongside code changes.
+# 1. Runs security-check.sh on staged files (blocks on critical issues)
+# 2. Checks that at least one CHANGELOG-*.md file is being committed
+#    alongside code changes.
+
+# ── Security Check ──
+if [ -f "scripts/security-check.sh" ]; then
+    bash scripts/security-check.sh --staged
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+fi
 
 # Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
