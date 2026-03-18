@@ -10,24 +10,12 @@ import { test, expect } from '@playwright/test';
  * Strategy: We open the share-result modal directly via DOM manipulation
  * (bypassing the full share flow which requires Firebase). Then we interact
  * with the email UI section within that modal.
- *
- * The Turnstile CAPTCHA widget is mocked via a fake `window.turnstile` global
- * injected before page load so cloud-share.js can use it during initialization.
  */
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/**';
 
 test.describe('Email-to-Self Flow', () => {
     test.beforeEach(async ({ page }) => {
-        // Inject Turnstile mock BEFORE page loads so cloud-share.js sees it
-        await page.addInitScript(() => {
-            window.turnstile = {
-                render: function (_el, _opts) { return 'widget-0'; },
-                getResponse: function () { return 'fake-turnstile-token-for-testing'; },
-                reset: function () { /* no-op */ }
-            };
-        });
-
         await page.goto('/');
         await page.waitForSelector('#markdown-editor', { state: 'visible' });
         await page.waitForFunction(() => window.MDView && window.MDView.shareMarkdown);
@@ -36,7 +24,7 @@ test.describe('Email-to-Self Flow', () => {
         await page.locator('#markdown-editor').fill('# Test Heading\n\nBody content for email test.');
         await page.waitForTimeout(400);
 
-        // Open share result modal via showShareResult (triggers initTurnstile internally)
+        // Open share result modal directly
         await page.evaluate(() => {
             document.getElementById('share-link-input').value = 'https://textagent.github.io/#d=fakedata&k=fakekey';
             document.getElementById('share-download-section').style.display = 'none';
@@ -63,20 +51,6 @@ test.describe('Email-to-Self Flow', () => {
         await expect(page.locator('#share-email-input')).toHaveClass(/shake/, { timeout: 1000 });
     });
 
-    test('send is blocked when CAPTCHA is not completed', async ({ page }) => {
-        // Override Turnstile mock to return empty (no token)
-        await page.evaluate(() => {
-            window.turnstile.getResponse = function () { return ''; };
-        });
-
-        await page.locator('#share-email-input').fill('test@example.com');
-        await page.locator('#share-email-send').click();
-
-        // Should show CAPTCHA error message
-        const error = page.locator('#turnstile-error');
-        await expect(error).toBeVisible({ timeout: 2000 });
-        await expect(error).toContainText('verification');
-    });
 
     test('custom subject is used when provided', async ({ page }) => {
         let capturedBody = null;
@@ -96,7 +70,6 @@ test.describe('Email-to-Self Flow', () => {
         await page.waitForTimeout(1000);
         expect(capturedBody).not.toBeNull();
         expect(capturedBody.subject).toBe('My Custom Subject');
-        expect(capturedBody.captchaToken).toBe('fake-turnstile-token-for-testing');
     });
 
     test('empty subject falls back to TextAgent: <heading>', async ({ page }) => {

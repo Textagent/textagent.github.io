@@ -181,7 +181,7 @@ test.describe('Memory Tag — Parsing', () => {
 
     test('parseDocgenBlocks parses multi-source @use: field', async ({ page }) => {
         const blocks = await page.evaluate(() => {
-            return window.MDView.parseDocgenBlocks('{{Think: @use: workspace, client-docs\nAnalyze the architecture }}');
+            return window.MDView.parseDocgenBlocks('{{AI: @use: workspace, client-docs\nAnalyze the architecture }}');
         });
         expect(blocks.length).toBe(1);
         expect(blocks[0].useMemory).toEqual(['workspace', 'client-docs']);
@@ -245,7 +245,7 @@ test.describe('Memory Tag — Parsing', () => {
             return window.MDView.parseDocgenBlocks('{{AI:\n  @search: duckduckgo\n  @prompt: find info\n}}');
         });
         expect(blocks.length).toBe(1);
-        expect(blocks[0].search).toBe('duckduckgo');
+        expect(blocks[0].searchProviders).toEqual(['duckduckgo']);
         expect(blocks[0].prompt).not.toContain('@search');
     });
 
@@ -259,21 +259,21 @@ test.describe('Memory Tag — Parsing', () => {
         expect(blocks[0].type).toBe('AI');
         expect(blocks[0].useMemory).toEqual(['my-context', 'my-context-2']);
         expect(blocks[0].think).toBe(true);
-        expect(blocks[0].search).toBe('duckduckgo');
+        expect(blocks[0].searchProviders).toEqual(['duckduckgo']);
         expect(blocks[0].prompt).toBe('describe what to generate');
     });
 
     test('multiple tags including Memory are parsed correctly', async ({ page }) => {
         const blocks = await page.evaluate(() => {
             return window.MDView.parseDocgenBlocks(
-                '{{Memory: @name: docs }}\n\n{{AI: @use: docs\n@prompt: Summarize the docs }}\n\n{{Think: Analyze this }}'
+                '{{Memory: @name: docs }}\n\n{{AI: @use: docs\n@prompt: Summarize the docs }}\n\n{{AI: @think: Yes\n@prompt: Analyze this }}'
             );
         });
         expect(blocks.length).toBe(3);
         expect(blocks[0].type).toBe('Memory');
         expect(blocks[1].type).toBe('AI');
         expect(blocks[1].useMemory).toEqual(['docs']);
-        expect(blocks[2].type).toBe('AI'); // Think tags are now converted to AI with think: true
+        expect(blocks[2].type).toBe('AI');
         expect(blocks[2].think).toBe(true);
     });
 
@@ -374,14 +374,12 @@ test.describe('Memory Tag — Preview Card Rendering', () => {
         await expect(thinkBtn).toHaveClass(/active/);
     });
 
-    test('AI card with @search: duckduckgo pre-selects dropdown', async ({ page }) => {
+    test('AI card with @search: duckduckgo shows active search button', async ({ page }) => {
         await page.locator('#markdown-editor').fill('{{@AI:\n  @search: duckduckgo\n  @prompt: search for info\n}}');
         await page.waitForTimeout(500);
 
-        const searchSelect = page.locator('.ai-agent-search-select');
-        await expect(searchSelect).toBeVisible();
-        const val = await searchSelect.inputValue();
-        expect(val).toBe('duckduckgo');
+        const searchBtn = page.locator('.ai-search-multi-btn.active');
+        await expect(searchBtn).toBeVisible();
     });
 
     test('Memory card remove button updates editor text', async ({ page }) => {
