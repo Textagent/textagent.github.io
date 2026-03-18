@@ -7,12 +7,13 @@
     'use strict';
 
     M.PRODUCT = {
-        TEMPLATE_COUNT: 103,
-        CATEGORY_COUNT: 11,
+        TEMPLATE_COUNT: 136,
+        CATEGORY_COUNT: 14,
         PPT_TEMPLATE_COUNT: 26,
         CATEGORIES: [
             'AI', 'Agents', 'Coding', 'Creative', 'Documentation',
-            'Maths', 'PPT', 'Project', 'Quiz', 'Tables', 'Technical'
+            'Finance', 'Games', 'Maths', 'PPT', 'Project', 'Quiz',
+            'Skills', 'Tables', 'Technical'
         ],
 
         /** Short summary, e.g. "103+ templates across 11 categories" */

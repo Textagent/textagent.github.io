@@ -37,6 +37,12 @@
         { keywords: ['disk', 'folder', 'file system'], video: 'assets/demos/23_disk_workspace.webp', title: 'Disk-Backed Workspace — Save to Folder' },
         { keywords: ['api call', 'rest api'], video: 'assets/demos/24_api_linux_tags.png', title: 'API Calls & Linux Tags — REST + Compile' },
         { keywords: ['run all', 'notebook'], video: 'assets/demos/25_run_all.png', title: 'Run All — Notebook Execution Engine' },
+        { keywords: ['game builder', 'game tag', 'prebuilt'], video: 'assets/demos/26_game_builder.webp', title: 'Game Builder — AI-Generated & Pre-Built Games' },
+        { keywords: ['finance', 'stock', 'crypto', 'trading'], video: 'assets/demos/27_finance_dashboard.webp', title: 'Finance Dashboard — Live TradingView Charts' },
+        { keywords: ['text-to-speech', 'tts', 'kokoro'], video: 'assets/demos/28_text_to_speech.webp', title: 'Text-to-Speech — Kokoro TTS Engine' },
+        { keywords: ['ocr', 'image-to-text', 'docling', 'florence'], video: 'assets/demos/29_ocr_tag.webp', title: 'OCR — Image to Text Extraction' },
+        { keywords: ['draw', 'excalidraw', 'whiteboard'], video: 'assets/demos/30_draw_excalidraw.webp', title: 'Draw — Excalidraw Whiteboard & AI Diagrams' },
+        { keywords: ['media', 'video', 'embed grid', 'youtube'], video: 'assets/demos/31_media_embedding.webp', title: 'Media Embedding — Video, YouTube & Embed Grid' },
     ];
 
     // ── Modal element (lazily created) ──
@@ -98,8 +104,15 @@
     }
 
     // ── Attach badges to headings ──
+    // Only runs on the Feature Showcase template to avoid false-positive
+    // keyword matches (e.g. "security", "memory") on user-written documents.
     M.attachDemoBadges = function (previewEl) {
         if (!previewEl) return;
+
+        // Guard: only show demo badges on the Feature Showcase template
+        var editorContent = M.markdownEditor ? M.markdownEditor.value : '';
+        if (!editorContent.includes('# 🚀 Welcome to TextAgent')) return;
+
         const headings = previewEl.querySelectorAll('h2');
         headings.forEach((h2) => {
             // Avoid duplicating badges on re-render

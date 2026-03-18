@@ -23,6 +23,10 @@
     var toggleBtn = document.getElementById('workspace-toggle');
     var newFileBtn = document.getElementById('workspace-new-file');
     var contextMenu = document.getElementById('workspace-context-menu');
+    var docTitleChip = document.getElementById('doc-title-chip');
+    var docTitleName = document.getElementById('doc-title-name');
+    var qabDocTitleChip = document.getElementById('qab-doc-title-chip');
+    var qabDocTitleName = document.getElementById('qab-doc-title-name');
 
     // --- Helpers ---
     function generateId() {
@@ -1016,8 +1020,12 @@
 
     function updatePageTitle(fileName) {
         var base = 'TextAgent';
-        if (fileName) document.title = fileName.replace(/\.md$/i, '') + ' — ' + base;
+        var displayName = fileName ? fileName.split('/').pop().replace(/\.md$/i, '') : 'Untitled';
+        if (fileName) document.title = displayName + ' \u2014 ' + base;
         else document.title = base;
+        // Update header doc-title chips (main header + QAB)
+        if (docTitleName) docTitleName.textContent = displayName;
+        if (qabDocTitleName) qabDocTitleName.textContent = displayName;
     }
 
     // --- Sidebar toggle button ---
@@ -1034,6 +1042,58 @@
     // --- New file button in sidebar ---
     if (newFileBtn) {
         newFileBtn.addEventListener('click', function () { M.wsCreateFile(); });
+    }
+
+    // --- Doc title chip click-to-rename ---
+    if (docTitleChip) {
+        docTitleChip.addEventListener('click', function () {
+            if (!workspace || !workspace.activeFileId) return;
+            var file = findFileById(workspace.activeFileId);
+            if (!file) return;
+            var displayName = file.name.split('/').pop();
+            showActionModal({
+                title: '<i class="bi bi-pencil"></i> Rename File',
+                msg: 'Enter a new name for "' + displayName + '":',
+                okText: 'Rename',
+                okClass: 'action-rename',
+                inputValue: displayName,
+                selectName: true,
+                onConfirm: function (inputVal) {
+                    if (!inputVal || !inputVal.trim()) return;
+                    if (inputVal.trim() === displayName) {
+                        M.showToast('Name unchanged.', 'info');
+                        return;
+                    }
+                    M.wsRenameFile(workspace.activeFileId, inputVal.trim());
+                }
+            });
+        });
+    }
+
+    // --- QAB doc title chip click-to-rename ---
+    if (qabDocTitleChip) {
+        qabDocTitleChip.addEventListener('click', function () {
+            if (!workspace || !workspace.activeFileId) return;
+            var file = findFileById(workspace.activeFileId);
+            if (!file) return;
+            var displayName = file.name.split('/').pop();
+            showActionModal({
+                title: '<i class="bi bi-pencil"></i> Rename File',
+                msg: 'Enter a new name for "' + displayName + '":',
+                okText: 'Rename',
+                okClass: 'action-rename',
+                inputValue: displayName,
+                selectName: true,
+                onConfirm: function (inputVal) {
+                    if (!inputVal || !inputVal.trim()) return;
+                    if (inputVal.trim() === displayName) {
+                        M.showToast('Name unchanged.', 'info');
+                        return;
+                    }
+                    M.wsRenameFile(workspace.activeFileId, inputVal.trim());
+                }
+            });
+        });
     }
 
     // --- Initialize ---

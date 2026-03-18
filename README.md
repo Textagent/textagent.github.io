@@ -47,7 +47,7 @@
 | **✉️ Email to Self** | Send documents directly to your inbox from the share modal — email address input with `.md` file attached + share link; powered by Google Apps Script (free, 100 emails/day); Cloudflare Turnstile CAPTCHA verification; dual rate limiting (100/day global + 7/day per recipient); loading state + success/error feedback; email persisted in localStorage; zero third-party dependencies |
 | **💾 Disk Workspace** | Folder-backed storage via File System Access API — "Open Folder" in sidebar header; `.md` files read/written directly to disk; `.textagent/workspace.json` manifest; debounced autosave ("💾 Saved to disk" indicator); refresh from disk for external edits; disconnect to revert to localStorage; auto-reconnect on reload via IndexedDB handles; unified action modal for rename/duplicate/delete with confirmation; Chromium-only (hidden in unsupported browsers) |
 | **📈 Finance Dashboard** | Stock/crypto/index dashboard templates with live TradingView charts; dynamic grid via `data-var-prefix` (add/remove tickers in `@variables` table, grid auto-adjusts); configurable chart range (`1M`, `12M`, `36M`), interval (`D`, `W`, `M`), and EMA period (default 52); interactive 1M/1Y/3Y range + 52D/52W/52M EMA toggle buttons; `@variables` table persists after ⚡ Vars for re-editing; JS code block generates grid HTML from variables |
-| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 123+ templates (14 categories: AI, Agents, Coding, Creative, Documentation, Finance, Games, Maths, PPT, Project, Quiz, Skills, Tables, Technical), AI Model Manager template (local model reference with sizes, privacy, and capabilities), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme), Clear All / Clear Selection buttons (undoable via Ctrl+Z) |
+| **Extras** | Auto-save (localStorage + cloud), table of contents, image paste, 136+ templates (14 categories: AI, Agents, Coding, Creative, Documentation, Finance, Games, Maths, PPT, Project, Quiz, Skills, Tables, Technical), AI Model Manager template (local model reference with sizes, privacy, and capabilities), template variable substitution (`$(varName)` with auto-detect), table spreadsheet tools (sort, filter, stats, chart, add row/col, inline cell edit, CSV/MD export), content statistics, modular codebase (13+ JS modules), fully responsive mobile UI with scrollable Quick Action Bar (Files, Search, TOC, Share, Copy, Tools, AI, Model, Upload, Help) and formatting toolbar, multi-file workspace sidebar, compact header mode with collapsible Tools dropdown (Presentation, Zen, Word Wrap, Focus, Voice, Dark Mode, Preview Theme), Clear All / Clear Selection buttons (undoable via Ctrl+Z) |
 | **Dev Tooling** | ESLint + Prettier (lint, format:check), Playwright test suite — 521 tests across smoke, feature, integration, dev, regression, performance, quality, and security categories (import, export, share, view-mode, editor, email-to-self, secure share, startup timing, export integrity, persistence, module loading, disk workspace, context memory, exec engine, build validation, load-time, accessibility, video player, TTS, STT, file converters, stock widget, embed grid, model registry, model tag, game tag, draw docgen, readonly mode, excalidraw library, static analysis, code smell, XSS hardening, Florence-2 model, Docling model, GLM-OCR model, TTS download), Firestore rules validation (21 tests), automated security scanner (13 checks, 3 severity tiers), pre-commit changelog + security enforcement, GitHub Actions CI |
 
 ## 🤖 AI Assistant
@@ -104,7 +104,7 @@ Import files directly — they're auto-converted to Markdown client-side:
 ### AI Writing Assistant — Local & Cloud Models
 ![AI Assistant panel with model selector, action chips, and three-column layout](assets/ai-assistant.png)
 
-### Templates Gallery — 109+ Templates, 13 Categories
+### Templates Gallery — 136+ Templates, 14 Categories
 ![Templates modal with category tabs, search, and template cards including Games](assets/templates-gallery.png)
 
 ### LaTeX Math & Mermaid Diagrams
@@ -151,9 +151,9 @@ Import files directly — they're auto-converted to Markdown client-side:
 </details>
 
 <details open>
-<summary><strong>📄 Templates Gallery — 109+ Templates, 13 Categories</strong></summary>
+<summary><strong>📄 Templates Gallery — 136+ Templates, 14 Categories</strong></summary>
 
-**Start any document in seconds.** Browse 109+ professionally designed templates across 13 categories: AI, Agents, Coding, Creative, Documentation, Finance, Games, Maths, PPT, Project, Quiz, Tables, and Technical. AI-powered templates include `{{AI:}}` tags for one-click document generation and the Games category features 6 instant pre-built games.
+**Start any document in seconds.** Browse 136+ professionally designed templates across 14 categories: AI, Agents, Coding, Creative, Documentation, Finance, Games, Maths, PPT, Project, Quiz, Skills, Tables, and Technical. AI-powered templates include `{{AI:}}` tags for one-click document generation and the Games category features 8 instant pre-built games.
 
 <img src="public/assets/demos/03_templates_gallery.webp" alt="Templates Gallery — browsing categories and loading AI Business Proposal template" width="100%">
 
@@ -357,6 +357,69 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 </details>
 
+<details open>
+<summary><strong>▶ Run All — Notebook Execution Engine</strong></summary>
+
+**Execute everything with one click.** Run All executes every code block, AI tag, API call, and Linux compile in document order. 11 runtime adapters with a progress bar, per-block status badges (⏳/⚡/✅/❌), abort support, and a SQLite shared context store for cross-block data sharing.
+
+<img src="public/assets/demos/25_run_all.png" alt="Run All — notebook execution with progress bar, block status badges, and sequential execution" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🎮 Game Builder — AI-Generated & Pre-Built Games</strong></summary>
+
+**Build and play games in your markdown.** Use `{{@Game:}}` tags with engine selector (Canvas 2D / Three.js / P5.js) for AI-generated games, or `@prebuilt:` for 8 instant games (chess, snake, shooter, pong, breakout, maths quiz, hiragana, kana master). Import external HTML, export standalone, and go fullscreen.
+
+<img src="public/assets/demos/26_game_builder.webp" alt="Game Builder — pre-built chess game with Three.js engine, model selector, and game controls" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>📈 Finance Dashboard — Live TradingView Charts</strong></summary>
+
+**Create live stock dashboards.** Load a Finance template, customize tickers via the `@variables` table, and get a responsive grid of TradingView charts with configurable range (1M/1Y/3Y), interval (D/W/M), and EMA period. Interactive toggle buttons and dynamic grid expansion.
+
+<img src="public/assets/demos/27_finance_dashboard.webp" alt="Finance Dashboard — Stock Watchlist with AAPL, MSFT, GOOGL live TradingView charts and variables table" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🔊 Text-to-Speech — Kokoro TTS Engine</strong></summary>
+
+**Hear any text read aloud.** Use `{{@TTS:}}` tags for per-card text-to-speech with language selector. Powered by Kokoro 82M v1.0 ONNX (~80 MB, WebWorker) for 9 languages, with Web Speech API fallback. Run to generate audio, Play to replay, Save to download as WAV.
+
+<img src="public/assets/demos/28_text_to_speech.webp" alt="Text-to-Speech — TTS card with Kokoro engine, language selector, Run/Play/Save buttons" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>📷 OCR — Image to Text Extraction</strong></summary>
+
+**Extract text from images and PDFs.** Use `{{@OCR:}}` tags with three models: Granite Docling 258M, Florence-2 230M, or GLM-OCR 1.5B. Three modes (Text/Math/Table) with 📎 upload for images and PDFs. PDFs rendered page-by-page via pdf.js.
+
+<img src="public/assets/demos/29_ocr_tag.webp" alt="OCR — OCR Scan card with Florence-2 model, Text/SVG mode pills, and upload button" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🎨 Draw — Excalidraw Whiteboard & AI Diagrams</strong></summary>
+
+**Collaborative whiteboard in your markdown.** Use `{{@Draw:}}` tags for an embedded Excalidraw canvas with AI diagram generation (describe a diagram → Generate), Excalidraw/Mermaid tool switcher, Insert/PNG/SVG export, and a 📚 Library Browser with 29 bundled packs (600+ items) across 6 categories.
+
+<img src="public/assets/demos/30_draw_excalidraw.webp" alt="Draw — Excalidraw card with AI prompt, Generate button, model selector, and Excalidraw/Mermaid pills" width="100%">
+
+</details>
+
+<details open>
+<summary><strong>🎬 Media Embedding — Video, YouTube & Embed Grid</strong></summary>
+
+**Embed rich media in your markdown.** Use `![alt](video.mp4)` for video playback, paste YouTube/Vimeo URLs for auto-embeds, and create responsive media grids with the `embed` code block (`cols=1-4`, `height=N`). Website URLs render as rich link preview cards with favicon and "Open ↗" button.
+
+<img src="public/assets/demos/31_media_embedding.webp" alt="Media Embedding — YouTube video embed with player controls and responsive embed grid layout" width="100%">
+
+</details>
+
 ## 📝 Usage
 
 | Action | How |
@@ -460,6 +523,8 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Commits | Feature / Update |
 |------|---------|-----------------:|
+| **2026-03-18** | | ✏️ **Inline File Rename** — clickable document title chip in header showing active file name (without `.md`); click to open rename modal with name pre-selected; title chip also added to Quick Action Bar (collapsed header) for always-visible rename access; both chips auto-sync on file switch, rename, or create; pencil icon appears on hover; responsive hiding on narrow screens (main header) with QAB always visible |
+| **2026-03-18** | | 🎬 **Feature Demo Expansion** — 6 new demo recordings (Game Builder, Finance Dashboard, Text-to-Speech, OCR, Draw/Excalidraw, Media Embedding); demo badges now guarded to only render on Feature Showcase template (prevents false-positive keyword matches on user documents); product metadata updated to 136 templates across 14 categories (was 103/11); Feature Showcase template updated with Draw, Page View, View-Locked Sharing, and Turnstile sections; dev tooling stats updated (521 tests, Firestore validation, security scanner) |
 | **2026-03-18** | | 🛡️ **Security Hardening** — postMessage origin validation: replaced all `postMessage(..., '*')` with `window.location.origin` in `draw-docgen.js` (~6 sites) and `excalidraw-embed.html` (~14 sites); added `e.origin` guard on all `message` listeners; removed API key forwarding via postMessage; Firestore rules: new `validView()` helper restricts `view` field to `ppt`/`preview`, added to all three rule branches (create quick/secure, update); Cloudflare Turnstile CAPTCHA integrated into email endpoint with server-side token verification; dual rate limiting (100/day global + 7/day per recipient address); new `scripts/security-check.sh` with 13 automated checks across 3 severity tiers, integrated into pre-commit hook; `tests/firestore/firestore-rules.test.js` with 21 zero-dependency validation tests; `npm run test:firestore` and `npm run security` scripts added |
 | **2026-03-18** | | 🚀 **AI Diagram Generation** — natural language → Excalidraw JSON via LLM; new AI prompt section in `{{Draw:}}` cards with text input, model selector dropdown, and 🚀 Generate button; `EXCALIDRAW_CHEAT_SHEET` system prompt teaches LLM the element schema (rectangle, ellipse, diamond, text, arrow, line); `repairJson()` auto-fixes common LLM JSON mistakes (trailing commas, truncated output, missing brackets); `@model:` field in Draw tags for per-card model persistence; cancel/retry support; Gemini API key forwarding to Excalidraw embed; 37 new Playwright tests (22 draw-docgen, 7 readonly-mode, 8 excalidraw-library) + 5 regression pins |
 | **2026-03-18** | | 🤖 **Draw AI Diagram Generation** — refactored `{{Draw:}}` AI generation to match Image/Git card pattern: always-visible prompt bar with per-card model selector dropdown + 🚀 Generate button; `excalidraw_diagram` task type with Excalidraw cheat sheet injected into AI workers; robust `repairJson()` pipeline handles common local-model JSON mistakes (trailing commas, stray quotes, truncated output, missing commas); last-resort individual object extraction recovers partial diagrams; removed duplicate ~300-line in-iframe AI bar from `excalidraw-embed.html`; 23 tests pass |

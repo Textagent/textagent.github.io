@@ -20,7 +20,7 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://esm.run https://www.gstatic.com https://vjs.zencdn.net https://unpkg.com https://threejs.org;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://esm.run https://www.gstatic.com https://vjs.zencdn.net https://unpkg.com https://threejs.org https://challenges.cloudflare.com;
         style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://vjs.zencdn.net;
         connect-src 'self' https: http: https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://esm.run https://huggingface.co https://cdn-lfs.hf.co https://cdn-lfs-us-1.hf.co;
         img-src 'self' data: blob: https://www.plantuml.com https://textagent.github.io https://img.shields.io https://www.google.com;
@@ -28,7 +28,7 @@
         media-src 'self' blob: https: http:;
         worker-src 'self' blob:;
         child-src 'self' blob:;
-        frame-src 'self' blob: https://webvm.io https://s.tradingview.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://excalidraw.com;
+        frame-src 'self' blob: https://webvm.io https://s.tradingview.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://excalidraw.com https://challenges.cloudflare.com;
         object-src 'none';
         base-uri 'self';
     ">
@@ -131,6 +131,11 @@
                         title="View on GitHub" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-github"></i>
                     </a>
+                    <span class="doc-title-chip" id="doc-title-chip" title="Click to rename file">
+                        <i class="bi bi-file-earmark-text doc-title-icon"></i>
+                        <span class="doc-title-name" id="doc-title-name">Untitled</span>
+                        <i class="bi bi-pencil doc-title-edit-icon"></i>
+                    </span>
                     <div class="stats-pill-wrapper d-none d-xl-flex">
                         <button id="stats-toggle" class="stats-toggle-btn" title="Document stats">
                             <i class="bi bi-info-circle"></i>
@@ -435,6 +440,11 @@
             <button id="qab-header-toggle" class="qab-logo-btn qab-brand-toggle" title="Show full header">
                 <i class="bi bi-chevron-down"></i> <span class="brand-label">TextAgent</span>
             </button>
+            <span class="doc-title-chip qab-doc-title" id="qab-doc-title-chip" title="Click to rename file">
+                <i class="bi bi-file-earmark-text doc-title-icon"></i>
+                <span class="doc-title-name" id="qab-doc-title-name">Untitled</span>
+                <i class="bi bi-pencil doc-title-edit-icon"></i>
+            </span>
             <span class="qab-separator"></span>
 
             <!-- View mode buttons (mirrored from header) -->

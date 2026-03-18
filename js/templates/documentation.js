@@ -40,7 +40,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '| **🧠 Context Memory** | `{{@Memory:}}` tag — SQLite FTS5 full-text search · Heading-aware chunking · Three storage modes (browser, disk, external) · `@use:` field for AI/Think/Agent context retrieval |\n' +
       '| **Extras** | Auto-save (localStorage + cloud) · Table of Contents · Image paste · ' + window.MDView.PRODUCT.summaryParen() + ' · Table spreadsheet tools · Content statistics · Modular codebase · Multi-file workspace sidebar (Ctrl+B) · Compact header with Quick Action Bar |\n' +
       '| **▶ Run All** | One-click notebook execution — runs all code blocks, AI tags, API calls, and Linux compiles in document order · 11 runtime adapters · Progress bar with abort · Per-block status badges · SQLite shared context store |\n' +
-      '| **Dev Tooling** | ESLint + Prettier · 484 Playwright tests (smoke, feature, integration, dev, regression, performance, quality, security) · Pre-commit changelog enforcement · GitHub Actions CI |\n\n' +
+      '| **Dev Tooling** | ESLint + Prettier · 521 Playwright tests (smoke, feature, integration, dev, regression, performance, quality, security) · Firestore rules validation (21 tests) · Automated security scanner (13 checks, 3 severity tiers) · Pre-commit changelog + security enforcement · GitHub Actions CI |\n\n' +
       '---\n\n' +
       '## 💻 Six Executable Languages\n\n' +
       'TextAgent can **run code directly in the preview** — no server needed! All execution happens in the browser via WebAssembly or sandboxed iframes.\n\n' +
@@ -529,6 +529,10 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- [x] @model: per-card model persistence\n' +
       '- [x] Smart model loading UX (cache/download detection, delete cached models)\n' +
       '- [x] Dual-engine voice dictation (Voxtral + Whisper)\n' +
+      '- [x] Draw DocGen (Excalidraw + AI diagram generation + Library Browser)\n' +
+      '- [x] Page View (A4 document mode with pagebreak support)\n' +
+      '- [x] View-Locked Sharing (lock recipients to PPT or Preview mode)\n' +
+      '- [x] Cloudflare Turnstile CAPTCHA on email endpoint\n' +
       '- [ ] Your feature suggestion here!\n\n' +
       '---\n\n' +
       '## 😀 Emoji Support\n\n' +
@@ -599,6 +603,24 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '- **Three templates** — Stock Watchlist, Crypto Tracker, Market Overview\n\n' +
       '> [!TIP]\n' +
       '> Check out the **Finance** category in Templates for ready-made dashboards!\n\n' +
+      '---\n\n' +
+      '## \ud83c\udfa8 Draw \u2014 Excalidraw Whiteboard\n\n' +
+      'Create diagrams and whiteboard drawings with the `{{@Draw:}}` tag:\n\n' +
+      '- **Excalidraw canvas** \u2014 full whiteboard with drawing tools, shapes, and arrows\n' +
+      '- **AI diagram generation** \u2014 describe a diagram in natural language, click \ud83d\ude80 Generate\n' +
+      '- **Mermaid mode** \u2014 switch to Mermaid for code-defined diagrams\n' +
+      '- **Export** \u2014 Insert diagram into document, download as PNG or SVG\n' +
+      '- **\ud83d\udcda Library Browser** \u2014 29 bundled packs (600+ items) across 6 categories\n' +
+      '- **Per-card model selector** \u2014 choose which AI model generates diagrams\n\n' +
+      '> [!TIP]\n' +
+      '> Click the \ud83c\udfa8 **Draw** button in the toolbar to insert a `{{@Draw:}}` tag!\n\n' +
+      '---\n\n' +
+      '## \ud83d\udcc4 Page View \u2014 A4 Document Mode\n\n' +
+      'View your markdown as paginated A4 documents:\n\n' +
+      '- **Split layout** \u2014 editor on the left, A4 page frames on the right\n' +
+      '- **Automatic reflow** \u2014 content distributes across 210\u00d7297mm page frames\n' +
+      '- **Page breaks** \u2014 use `<!-- pagebreak -->` HTML comments to force new pages\n' +
+      '- **Page numbers** \u2014 automatic numbering, dark mode support, responsive mobile\n\n' +
       '---\n\n' +
       '## 💾 Disk-Backed Workspace\n\n' +
       'Work directly with files on your local disk via the **File System Access API**:\n\n' +
