@@ -859,6 +859,8 @@
     var savedEmail = localStorage.getItem(M.KEYS.EMAIL_SELF);
     if (savedEmail && emailInput) emailInput.value = savedEmail;
 
+    var turnstileModalOpen = false; // Track if the share result modal is open
+
     /** Render Turnstile widget when the share result modal opens */
     function initTurnstile() {
         if (turnstileWidgetId !== null) return; // Already rendered
@@ -879,6 +881,23 @@
         }
     }
 
+    /**
+     * Try to init Turnstile with retry — the script loads async/defer so it
+     * may not be available when the share result modal first opens.
+     */
+    function initTurnstileWithRetry(attempt) {
+        attempt = attempt || 0;
+        if (turnstileWidgetId !== null) return; // Already rendered
+        if (typeof turnstile !== 'undefined') {
+            initTurnstile();
+            return;
+        }
+        // Retry up to 10 times (5 seconds total)
+        if (attempt < 10 && turnstileModalOpen) {
+            setTimeout(function () { initTurnstileWithRetry(attempt + 1); }, 500);
+        }
+    }
+
     /** Reset the Turnstile widget for retry */
     function resetTurnstile() {
         if (typeof turnstile !== 'undefined') {
@@ -890,8 +909,21 @@
     var _origShowShareResult = showShareResult;
     showShareResult = function (url, isSecure) {
         _origShowShareResult(url, isSecure);
-        // Small delay so the modal DOM is visible before Turnstile measures it
-        setTimeout(initTurnstile, 200);
+        turnstileModalOpen = true;
+        // Start retry loop — handles case where script hasn't loaded yet
+        setTimeout(function () { initTurnstileWithRetry(0); }, 200);
+    };
+
+    // Auto-init when Turnstile script finishes loading (if modal is already open)
+    window.addEventListener('turnstile-ready', function () {
+        if (turnstileModalOpen) initTurnstile();
+    });
+
+    // When the share result modal closes, mark it
+    var _origCloseShareResult = M.closeShareResultModal;
+    M.closeShareResultModal = function () {
+        turnstileModalOpen = false;
+        _origCloseShareResult();
     };
 
     if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {
