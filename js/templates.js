@@ -92,7 +92,7 @@
       card.setAttribute('data-template-index', String(idx));
       card.setAttribute('title', 'Click to use this template');
 
-      const preview = tpl.content.trim().split('\n').slice(0, 4).join('\n');
+      const preview = tpl.content ? tpl.content.trim().split('\n').slice(0, 4).join('\n') : '(content loaded on demand)';
 
       card.innerHTML = `
       <div class="template-card-icon ${getCategoryIconClass(tpl.category)}">
@@ -123,7 +123,7 @@
       return tpl.name.toLowerCase().includes(query) ||
         tpl.description.toLowerCase().includes(query) ||
         tpl.category.toLowerCase().includes(query) ||
-        tpl.content.toLowerCase().includes(query);
+        (tpl.content && tpl.content.toLowerCase().includes(query));
     });
 
     renderTemplateCards(_filteredTemplates);
@@ -435,7 +435,11 @@
    * Select a template: if editor has meaningful content, confirm first;
    * otherwise load immediately.
    */
-  function selectTemplate(tpl) {
+  async function selectTemplate(tpl) {
+    // Lazy-load content if loadContent is defined (e.g. skills templates)
+    if (!tpl.content && typeof tpl.loadContent === 'function') {
+      tpl.content = await tpl.loadContent();
+    }
     var editorContent = M.markdownEditor.value.trim();
     var defaultContent = (M.getDefaultContent ? M.getDefaultContent().trim() : '');
     var hasContent = editorContent.length > 0 && editorContent !== defaultContent;
