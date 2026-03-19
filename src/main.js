@@ -159,6 +159,10 @@ async function loadModules() {
 
     // 3j: Draw Component — Excalidraw + Mermaid (standalone — remove to disable feature)
     await import('../js/draw-docgen.js');
+
+    // 3k: Agent Cloud Execution (standalone — depends on M.KEYS from storage-keys)
+    await import('../js/github-auth.js');
+    await import('../js/agent-cloud.js');
 }
 
 loadModules();

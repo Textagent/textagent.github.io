@@ -213,6 +213,14 @@
                     } else if (block.think === undefined) {
                         block.think = false;
                     }
+                    // Parse @cloud: yes/no field — route step execution to cloud compute
+                    var cloudMatch = block.prompt.match(/^\s*(?:@cloud|Cloud):\s*(yes|no)$/mi);
+                    if (cloudMatch) {
+                        block.cloud = cloudMatch[1].toLowerCase() === 'yes';
+                        block.prompt = block.prompt.replace(cloudMatch[0], '').trim();
+                    } else if (block.cloud === undefined) {
+                        block.cloud = false;
+                    }
                     // Parse @search: field (supports comma-separated multi-provider)
                     var searchMatch = block.prompt.match(/^\s*(?:@search|Search):\s*(.+)$/mi);
                     if (searchMatch) {
@@ -435,6 +443,8 @@
             var prompt = match[2].trim();
             var thinkFieldMatch = prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : false;
+            var cloudFieldMatch = prompt.match(/^(?:@cloud|Cloud):\s*(yes|no)$/mi);
+            var hasCloud = cloudFieldMatch ? cloudFieldMatch[1].toLowerCase() === 'yes' : false;
             var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
 
@@ -593,6 +603,7 @@
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
+                    + '<button class="ai-placeholder-btn ai-cloud-toggle' + (hasCloud ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Run on cloud (GitHub Codespaces)">☁️</button>'
                     + '<button class="ai-placeholder-btn ai-search-multi-btn' + (agentActiveSearch.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Search engines">🔍' + (agentActiveSearch.length > 0 ? ' ' + agentActiveSearch.length : '') + '</button>'
                     + '<button class="ai-placeholder-btn ai-vars-toggle' + (agentVarName || agentActiveInputs.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Variables — set output name and select input variables">🔗' + (agentVarName ? ' ' + escapeHtml(agentVarName) : '') + (agentActiveInputs.length > 0 ? ' +' + agentActiveInputs.length : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this flow">' + cardModelOpts + '</select>'
@@ -1755,6 +1766,25 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 var isActive = this.classList.toggle('active');
                 updateBlockField(idx, '@think', isActive ? 'Yes' : 'No');
+            });
+        });
+
+        // Cloud toggle — ☁️ button (Agent cards only)
+        container.querySelectorAll('.ai-cloud-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var isActive = this.classList.toggle('active');
+                // Gate: require GitHub auth when enabling cloud
+                if (isActive && M.agentCloud && !M.agentCloud.isAvailable()) {
+                    if (M.githubAuth && !M.githubAuth.isAuthenticated()) {
+                        M.githubAuth.showAuthModal();
+                        this.classList.remove('active');
+                        return;
+                    }
+                }
+                updateBlockField(idx, '@cloud', isActive ? 'yes' : 'no');
             });
         });
 

@@ -3034,3 +3034,79 @@
     border-color: rgba(37, 99, 235, 0.25);
     background: rgba(0, 0, 0, 0.05);
 }
+
+/* --- Cloud Toggle Button (Agent Card) --- */
+.ai-cloud-toggle.active {
+    background: rgba(56, 139, 253, 0.2) !important;
+    border-color: rgba(56, 139, 253, 0.4) !important;
+    color: #58a6ff !important;
+    box-shadow: 0 0 6px rgba(56, 139, 253, 0.15);
+}
+
+.ai-cloud-toggle.active:hover {
+    background: rgba(56, 139, 253, 0.3) !important;
+}
+
+[data-theme="light"] .ai-cloud-toggle.active {
+    background: rgba(37, 99, 235, 0.12) !important;
+    border-color: rgba(37, 99, 235, 0.35) !important;
+    color: #2563eb !important;
+}
+
+/* --- GitHub Device Code UI --- */
+.github-device-code {
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-align: center;
+    padding: 16px;
+    background: rgba(110, 118, 129, 0.1);
+    border: 1px solid rgba(110, 118, 129, 0.2);
+    border-radius: 8px;
+    margin: 12px 0;
+    color: var(--color-fg-default, #e6edf3);
+    user-select: all;
+    cursor: text;
+}
+
+[data-theme="light"] .github-device-code {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #24292e;
+}
+
+.github-device-instructions {
+    font-size: 0.9em;
+    color: var(--color-fg-muted, #8b949e);
+    margin-bottom: 4px;
+}
+
+.github-device-instructions a {
+    color: #58a6ff;
+    font-weight: 600;
+}
+
+.github-device-waiting {
+    font-size: 0.85em;
+    color: var(--color-fg-muted, #8b949e);
+    text-align: center;
+}
+
+.github-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+/* Spin animation for waiting indicator */
+@keyframes ai-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ai-spin {
+    display: inline-block;
+    animation: ai-spin 1s linear infinite;
+}

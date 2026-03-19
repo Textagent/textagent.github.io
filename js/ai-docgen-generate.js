@@ -1132,14 +1132,31 @@
             }
 
             try {
-                var result = await M.requestAiTask({
-                    taskType: 'generate',
-                    context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
-                    userPrompt: stepPrompt,
-                    enableThinking: useThinking,
-                    silent: true,
-                    attachments: agentAttachments
-                });
+                var result;
+
+                // ── Cloud execution path (when @cloud: yes) ──
+                if (block.cloud && M.agentCloud && M.agentCloud.isAvailable()) {
+                    updateStepStatus(i, 'running');
+                    var cloudCommand = steps[i].description;
+                    if (accumulatedContext) {
+                        cloudCommand += '\n\nContext from previous steps:\n' + accumulatedContext.substring(0, 2000);
+                    }
+                    var cloudResult = await M.agentCloud.run(cloudCommand, {
+                        prevOutput: accumulatedContext,
+                        timeout: 60000
+                    });
+                    result = (cloudResult.stdout || '') + (cloudResult.stderr ? '\n\nStderr:\n' + cloudResult.stderr : '');
+                } else {
+                    // ── Standard LLM execution path ──
+                    result = await M.requestAiTask({
+                        taskType: 'generate',
+                        context: accumulatedContext || docContext.substring(Math.max(0, docContext.length - 2000)),
+                        userPrompt: stepPrompt,
+                        enableThinking: useThinking,
+                        silent: true,
+                        attachments: agentAttachments
+                    });
+                }
 
                 // When Think is ON, refine each step's output
                 if (useThinking) {

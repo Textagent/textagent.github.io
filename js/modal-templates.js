@@ -682,6 +682,56 @@ const chatResponse = await openai.chat.completions.create({
             </div>
         </div>
     </div>
+
+    <!-- GitHub Auth Dialog (for Agent Cloud Execution) -->
+    <div id="github-auth-modal" class="ai-consent-modal" style="display:none">
+        <div class="ai-consent-content ai-apikey-content">
+            <div class="ai-consent-header">
+                <div class="ai-consent-icon" style="background:#24292e"><i class="bi bi-github"></i></div>
+                <h4>Connect GitHub</h4>
+                <p>Sign in to use free Codespaces for agent execution</p>
+            </div>
+            <div class="ai-consent-body">
+                <div class="ai-apikey-input-group">
+                    <div id="github-auth-info">
+                        <div class="ai-consent-row">
+                            <i class="bi bi-cloud"></i>
+                            <div>
+                                <strong>120 free core-hours/month</strong>
+                                <small>Every GitHub account includes free Codespaces quota</small>
+                            </div>
+                        </div>
+                        <div class="ai-consent-row">
+                            <i class="bi bi-shield-lock"></i>
+                            <div>
+                                <strong>Runs on YOUR account</strong>
+                                <small>TextAgent only creates disposable Codespaces under your login</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="github-device-code-section" style="display:none">
+                        <p class="github-device-instructions">Open <a id="github-verify-link" href="https://github.com/login/device" target="_blank" rel="noopener noreferrer">github.com/login/device</a> and enter this code:</p>
+                        <div id="github-device-code" class="github-device-code"></div>
+                        <p class="github-device-waiting"><i class="bi bi-arrow-repeat ai-spin"></i> Waiting for authorization…</p>
+                    </div>
+                    <div id="github-auth-connected" style="display:none">
+                        <div class="github-user-info">
+                            <i class="bi bi-check-circle-fill" style="color:#2ea043;font-size:1.2rem"></i>
+                            <span>Connected as <strong id="github-username"></strong></span>
+                            <button id="github-disconnect" class="ai-consent-btn ai-consent-btn-danger" style="font-size:0.75rem;padding:4px 10px">Disconnect</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="github-auth-error" class="ai-apikey-error" style="display:none"></div>
+            </div>
+            <div class="ai-consent-footer">
+                <button id="github-auth-cancel" class="ai-consent-btn ai-consent-btn-secondary">Cancel</button>
+                <button id="github-auth-connect" class="ai-consent-btn ai-consent-btn-primary" style="background:#24292e">
+                    <i class="bi bi-github me-1"></i> Sign in with GitHub
+                </button>
+            </div>
+        </div>
+    </div>
 `;
 
     // Inject before the script tags at the end of body

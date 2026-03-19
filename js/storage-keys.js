@@ -61,5 +61,12 @@
 
         // --- Context Memory ---
         MEMORY_DB: 'textagent-memory-db',
+
+        // --- Agent Execution (Cloud) ---
+        GITHUB_TOKEN: 'textagent-github-token',
+        GITHUB_USER: 'textagent-github-user',
+        AGENT_PROVIDER: 'textagent-agent-provider',
+        AGENT_CODESPACE_ID: 'textagent-agent-codespace',
+        AGENT_CUSTOM_URL: 'textagent-agent-custom-url',
     };
 })();
