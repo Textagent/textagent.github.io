@@ -1,9 +1,14 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import agentRunnerPlugin from './vite-plugin-agent-runner.js';
 
 export default defineConfig({
     root: '.',
     publicDir: 'public',
+
+    plugins: [
+        agentRunnerPlugin()
+    ],
 
     build: {
         outDir: 'dist',

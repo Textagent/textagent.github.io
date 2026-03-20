@@ -46,8 +46,16 @@
         run: async function (command, opts) {
             opts = opts || {};
 
+            var provider = M.agentCloud.getProvider() || 'local';
+            console.log('%c[AgentCloud] ▶ run()', 'color: #58a6ff; font-weight: bold',
+                '| provider=' + provider,
+                '| agent=' + (opts.agentType || 'none'),
+                '| forceLocal=' + !!opts.forceLocal,
+                '| cmd=' + command.substring(0, 80));
+
             // Local agent execution (no GitHub auth needed)
             if (opts.forceLocal) {
+                console.log('[AgentCloud] → Using LOCAL Docker endpoint');
                 return runCustomEndpoint(command, opts);
             }
 
@@ -289,7 +297,31 @@
 
     /** Custom/local endpoint (Docker-backed, E2B, Daytona, self-hosted) */
     async function runCustomEndpoint(command, opts) {
-        var url = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || 'http://localhost:8080/api/exec';
+        var url = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || (window.location.origin + '/api/exec');
+        var baseUrl = url.replace(/\/api\/exec$/, '');
+
+        // ── Health check: auto-detect if server is running ──
+        var serverReady = await checkServerHealth(baseUrl);
+        if (!serverReady) {
+            // Try to auto-start the server
+            var started = await tryAutoStartServer(baseUrl);
+            if (!started) {
+                throw new Error(
+                    'Agent runner is not running.\n\n' +
+                    'Start it with:\n  cd agent-runner && node server.js\n\n' +
+                    'Then click ▶ Run again.'
+                );
+            }
+        }
+
+        console.log('%c[AgentCloud] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #3fb950; font-weight: bold');
+        console.log('%c[AgentCloud] 📨 Sending request to agent runner', 'color: #3fb950');
+        console.log('[AgentCloud]    URL:', url);
+        console.log('[AgentCloud]    Agent:', opts.agentType || '(none)');
+        console.log('[AgentCloud]    Command:', command.substring(0, 200));
+        console.log('[AgentCloud]    Context:', opts.prevOutput ? opts.prevOutput.length + ' chars' : '(none)');
+
+        var startTime = performance.now();
 
         var res = await fetch(url, {
             method: 'POST',
@@ -301,13 +333,87 @@
             })
         });
 
+        var elapsed = Math.round(performance.now() - startTime);
+
         if (!res.ok) {
             var errBody = '';
             try { errBody = await res.text(); } catch (_) {}
+            console.error('[AgentCloud] ❌ Error ' + res.status + ' after ' + elapsed + 'ms:', errBody.substring(0, 200));
+            console.log('%c[AgentCloud] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #f85149; font-weight: bold');
             throw new Error('Agent exec error (' + res.status + '): ' + errBody.substring(0, 200));
         }
 
-        return await res.json();
+        var result = await res.json();
+        console.log('%c[AgentCloud] ✅ Response received in ' + elapsed + 'ms', 'color: #3fb950');
+        console.log('[AgentCloud]    Exit code:', result.exitCode);
+        console.log('[AgentCloud]    Stdout:', (result.stdout || '').substring(0, 300) || '(empty)');
+        if (result.stderr) console.warn('[AgentCloud]    Stderr:', result.stderr.substring(0, 300));
+        console.log('%c[AgentCloud] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #3fb950; font-weight: bold');
+
+        return result;
+    }
+
+    /** Quick health check — returns true if server responds */
+    async function checkServerHealth(baseUrl) {
+        try {
+            var res = await fetch(baseUrl + '/health', {
+                method: 'GET',
+                signal: AbortSignal.timeout(2000)
+            });
+            return res.ok;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    /** Try to auto-start the agent-runner server */
+    async function tryAutoStartServer(baseUrl) {
+        console.log('[AgentCloud] 🚀 Agent runner not detected — attempting auto-start...');
+
+        if (M.showToast) {
+            M.showToast('🚀 Starting agent runner...', 'info');
+        }
+
+        // Try spawning via the native Neutralino API (desktop app)
+        if (window.Neutralino && Neutralino.os && Neutralino.os.execCommand) {
+            try {
+                Neutralino.os.execCommand('cd agent-runner && node server.js &', { background: true });
+                // Wait for server to come up
+                return await waitForServer(baseUrl, 15000);
+            } catch (e) {
+                console.warn('[AgentCloud] Neutralino exec failed:', e);
+            }
+        }
+
+        // If running in a Codespace / Gitpod / devcontainer, try fetch to terminal API
+        // This is a fallback for environments that support it
+
+        // Show helpful error with command
+        if (M.showToast) {
+            M.showToast(
+                '⚠️ Agent runner not running — run: cd agent-runner && node server.js',
+                'warning',
+                8000
+            );
+        }
+
+        // Give a brief moment in case it was just starting up
+        return await waitForServer(baseUrl, 5000);
+    }
+
+    /** Poll for server readiness */
+    async function waitForServer(baseUrl, maxWaitMs) {
+        var start = Date.now();
+        while (Date.now() - start < maxWaitMs) {
+            var ready = await checkServerHealth(baseUrl);
+            if (ready) {
+                console.log('[AgentCloud] ✅ Agent runner is ready');
+                if (M.showToast) M.showToast('✅ Agent runner connected', 'info');
+                return true;
+            }
+            await new Promise(function (r) { setTimeout(r, 1000); });
+        }
+        return false;
     }
 
 })(window.MDView = window.MDView || {});
