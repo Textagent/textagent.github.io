@@ -25,6 +25,45 @@ const IDLE_STOP_MS = 10 * 60 * 1000; // Auto-stop containers after 10 min idle
 const CONTAINER_PREFIX = 'textagent-agent-';
 const IMAGE_PREFIX = 'textagent/';
 
+// Agent CLI mapping — known agents are invoked via their native CLI
+// instead of running the step description as a raw shell command
+const AGENT_CLI_MAP = {
+    'openclaw': {
+        bin: 'openclaw',
+        buildCmd: (message, context) => {
+            const parts = ['openclaw', 'agent', '--message', JSON.stringify(message), '--json', '--timeout', '90'];
+            return parts.join(' ');
+        }
+    },
+    'openfang': {
+        bin: 'openfang',
+        buildCmd: (message, context) => {
+            const parts = ['openfang', 'agent', '--message', JSON.stringify(message), '--json', '--timeout', '90'];
+            return parts.join(' ');
+        }
+    }
+};
+
+// API keys to forward from host env into agent containers
+const FORWARDED_ENV_KEYS = [
+    'OPENAI_API_KEY',
+    'ANTHROPIC_API_KEY',
+    'GOOGLE_API_KEY',
+    'GOOGLE_GENERATIVE_AI_API_KEY',
+    'GROQ_API_KEY',
+    'MISTRAL_API_KEY',
+    'TOGETHER_API_KEY',
+    'OPENROUTER_API_KEY',
+    'DEEPSEEK_API_KEY',
+    'XAI_API_KEY'
+];
+
+/** Timestamped log helper */
+function log(...args) {
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    console.log(`[${ts}]`, ...args);
+}
+
 // Track running containers and idle timers
 const containers = {};   // { agentType: containerName }
 const idleTimers = {};   // { agentType: timeoutId }
@@ -37,6 +76,7 @@ function isDockerAvailable() {
         execSync('docker info', { stdio: 'ignore', timeout: 5000 });
         return true;
     } catch (e) {
+        log('⚠️  Docker not available:', e.message);
         return false;
     }
 }
@@ -45,8 +85,11 @@ function isDockerAvailable() {
 function imageExists(agentType) {
     try {
         const result = execSync(`docker images -q ${IMAGE_PREFIX}${agentType}`, { encoding: 'utf8', timeout: 5000 });
-        return result.trim().length > 0;
+        const exists = result.trim().length > 0;
+        log(`🔍 Image ${IMAGE_PREFIX}${agentType}: ${exists ? 'EXISTS' : 'NOT FOUND'}`);
+        return exists;
     } catch (e) {
+        log(`🔍 Image check failed for ${agentType}:`, e.message);
         return false;
     }
 }
@@ -82,8 +125,11 @@ function isContainerRunning(containerName) {
             `docker inspect -f '{{.State.Running}}' ${containerName} 2>/dev/null`,
             { encoding: 'utf8', timeout: 5000 }
         );
-        return result.trim() === 'true';
+        const running = result.trim() === 'true';
+        log(`🔍 Container ${containerName}: ${running ? 'RUNNING' : 'NOT RUNNING'}`);
+        return running;
     } catch (e) {
+        log(`🔍 Container ${containerName}: NOT FOUND`);
         return false;
     }
 }
@@ -109,11 +155,18 @@ function ensureContainer(agentType) {
         buildImage(agentType);
     }
 
+    // Build -e flags for API keys from host environment
+    const envFlags = FORWARDED_ENV_KEYS
+        .filter(k => process.env[k])
+        .map(k => `-e ${k}=${process.env[k]}`)
+        .join(' ');
+
     // Start container
     console.log(`[Docker] 🚀 Starting container ${containerName}...`);
+    if (envFlags) log(`   Forwarding env keys: ${FORWARDED_ENV_KEYS.filter(k => process.env[k]).join(', ')}`);
     try {
         execSync(
-            `docker run -d --name ${containerName} ${IMAGE_PREFIX}${agentType}`,
+            `docker run -d --name ${containerName} ${envFlags} ${IMAGE_PREFIX}${agentType}`,
             { encoding: 'utf8', timeout: 30000 }
         );
         containers[agentType] = containerName;
@@ -130,16 +183,27 @@ function dockerExec(containerName, command, timeoutMs) {
         const safeCmd = command.replace(/'/g, "'\\''");
         const fullCmd = `docker exec ${containerName} bash -c '${safeCmd}'`;
 
+        log(`🏃 Executing in ${containerName}:`);
+        log(`   Command: ${command.substring(0, 200)}`);
+        log(`   Timeout: ${timeoutMs}ms`);
+        const execStart = Date.now();
+
         exec(fullCmd, {
             timeout: timeoutMs,
             maxBuffer: MAX_OUTPUT,
             env: { ...process.env, TERM: 'dumb' }
         }, (error, stdout, stderr) => {
-            resolve({
+            const elapsed = Date.now() - execStart;
+            const result = {
                 stdout: (stdout || '').substring(0, MAX_OUTPUT),
                 stderr: (stderr || '').substring(0, MAX_OUTPUT),
                 exitCode: error ? (error.code || 1) : 0
-            });
+            };
+            log(`✅ Execution complete in ${elapsed}ms`);
+            log(`   exit=${result.exitCode} stdout=${result.stdout.length}B stderr=${result.stderr.length}B`);
+            if (result.stdout) log(`   stdout: ${result.stdout.substring(0, 200)}`);
+            if (result.stderr) log(`   stderr: ${result.stderr.substring(0, 200)}`);
+            resolve(result);
         });
     });
 }
@@ -229,10 +293,15 @@ const server = http.createServer((req, res) => {
         });
 
         req.on('end', async () => {
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            log('📨 POST /api/exec — Request received');
+            log(`   Body size: ${body.length} bytes`);
+
             let parsed;
             try {
                 parsed = JSON.parse(body);
             } catch (e) {
+                log('❌ Invalid JSON body');
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Invalid JSON' }));
                 return;
@@ -240,8 +309,14 @@ const server = http.createServer((req, res) => {
 
             const command = parsed.command;
             const agentType = (parsed.agentType || '').trim().toLowerCase();
+            const requestStart = Date.now();
+
+            log(`   agent:   ${agentType || '(none — host mode)'}`);
+            log(`   command: ${(command || '').substring(0, 200)}`);
+            log(`   context: ${parsed.context ? parsed.context.length + ' chars' : '(none)'}`);
 
             if (!command || typeof command !== 'string') {
+                log('❌ Missing "command" field');
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Missing "command" field' }));
                 return;
@@ -251,20 +326,25 @@ const server = http.createServer((req, res) => {
             const blocked = [/rm\s+-rf\s+\/(?!\w)/i, /mkfs/i, /dd\s+if=/i, /:(){ :|:& };:/];
             for (const pattern of blocked) {
                 if (pattern.test(command)) {
+                    log('🚫 Command BLOCKED (dangerous pattern)');
                     res.writeHead(403, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'Command blocked for safety' }));
                     return;
                 }
             }
 
-            console.log(`[exec] ${new Date().toISOString()} agent=${agentType || 'host'} — ${command.substring(0, 120)}`);
+            log('✅ Command passed safety checks');
 
             try {
                 let result;
 
                 if (agentType) {
                     // ── Docker execution path ──
+                    log('🐳 Docker execution path');
+
+                    log('   Step 1/5: Checking Docker availability...');
                     if (!isDockerAvailable()) {
+                        log('❌ Docker NOT available');
                         res.writeHead(500, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({
                             error: 'Docker is not available. Please install Docker Desktop and start it.',
@@ -274,9 +354,12 @@ const server = http.createServer((req, res) => {
                         }));
                         return;
                     }
+                    log('   ✅ Docker is available');
 
                     // Validate agent type (only allow alphanumeric + hyphen)
+                    log('   Step 2/5: Validating agent type...');
                     if (!/^[a-z0-9-]+$/.test(agentType)) {
+                        log(`❌ Invalid agent type: "${agentType}"`);
                         res.writeHead(400, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ error: 'Invalid agent type. Use lowercase letters, numbers, hyphens only.' }));
                         return;
@@ -284,29 +367,88 @@ const server = http.createServer((req, res) => {
 
                     // Check Dockerfile exists
                     const agentDir = path.join(__dirname, 'agents', agentType);
-                    if (!fs.existsSync(path.join(agentDir, 'Dockerfile'))) {
+                    const dockerfilePath = path.join(agentDir, 'Dockerfile');
+                    log(`   Step 3/5: Checking Dockerfile at ${dockerfilePath}`);
+                    if (!fs.existsSync(dockerfilePath)) {
+                        log(`❌ No Dockerfile found for "${agentType}"`);
                         res.writeHead(404, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ error: `Unknown agent type "${agentType}". No Dockerfile found at agents/${agentType}/Dockerfile` }));
                         return;
                     }
+                    log(`   ✅ Dockerfile found`);
 
                     // Ensure container is running (builds image + starts if needed)
+                    log('   Step 4/5: Ensuring container is running...');
                     const containerName = ensureContainer(agentType);
+                    log(`   ✅ Container ready: ${containerName}`);
 
-                    // Execute inside container
-                    result = await dockerExec(containerName, command, TIMEOUT_MS);
+                    // Step 5/5: Build and execute the agent command
+                    // For known agents (openclaw/openfang), wrap in their native CLI
+                    // For unknown agents, run as raw shell command
+                    const agentCli = AGENT_CLI_MAP[agentType];
+                    let execCommand;
+
+                    if (agentCli) {
+                        // ── Native CLI invocation ──
+                        // Build message: include context from previous steps if available
+                        let agentMessage = command;
+                        if (parsed.context) {
+                            agentMessage = 'Context from previous steps:\n' + parsed.context.substring(0, 3000)
+                                + '\n\nCurrent task: ' + command;
+                        }
+                        execCommand = agentCli.buildCmd(agentMessage, parsed.context || '');
+                        log(`   Step 5/5: Invoking ${agentCli.bin} CLI...`);
+                        log(`   CLI command: ${execCommand.substring(0, 200)}`);
+                    } else {
+                        execCommand = command;
+                        log('   Step 5/5: Executing raw command (unknown agent type)...');
+                    }
+
+                    const rawResult = await dockerExec(containerName, execCommand, TIMEOUT_MS);
+
+                    // For known agents using --json, parse the structured response
+                    if (agentCli && rawResult.stdout) {
+                        try {
+                            const agentResponse = JSON.parse(rawResult.stdout);
+                            // Extract the reply text from the agent's JSON response
+                            const replyText = agentResponse.reply
+                                || agentResponse.text
+                                || agentResponse.message
+                                || agentResponse.output
+                                || rawResult.stdout;
+                            result = {
+                                stdout: typeof replyText === 'string' ? replyText : JSON.stringify(replyText, null, 2),
+                                stderr: rawResult.stderr,
+                                exitCode: rawResult.exitCode
+                            };
+                            log(`   🤖 Agent reply: ${result.stdout.substring(0, 200)}`);
+                        } catch (parseErr) {
+                            // JSON parse failed — use raw output
+                            log(`   ⚠️  Agent JSON parse failed, using raw output`);
+                            result = rawResult;
+                        }
+                    } else {
+                        result = rawResult;
+                    }
 
                     // Reset idle timer
                     resetIdleTimer(agentType);
+                    log(`   ⏱️  Idle timer reset (${IDLE_STOP_MS / 1000}s)`);
                 } else {
                     // ── Host execution (no agent type specified) ──
+                    log('🖥️  Host execution path (no agent type)');
                     result = await hostExec(command, TIMEOUT_MS);
                 }
 
+                const totalMs = Date.now() - requestStart;
+                log(`📤 Response sent — ${totalMs}ms total`);
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(result));
             } catch (err) {
-                console.error('[exec] Error:', err.message);
+                const totalMs = Date.now() - requestStart;
+                log(`❌ Error after ${totalMs}ms: ${err.message}`);
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     error: err.message,

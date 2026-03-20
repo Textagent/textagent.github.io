@@ -10,19 +10,25 @@ cd /workspaces/agent-runner
 # ── Install Node dependencies (exec API server) ──
 npm install --production 2>/dev/null || true
 
-# ── Clone & install agents ──
-echo "📦 Setting up OpenClaw..."
-if [ ! -d "agents/openclaw" ]; then
-  git clone --depth 1 https://github.com/openclaw/openclaw.git agents/openclaw 2>/dev/null || echo "⚠ OpenClaw repo not available yet — placeholder"
-fi
+# ── Agent images are built on first use ──
+# OpenClaw and OpenFang are installed inside their Docker images
+# via npm (see agents/openclaw/Dockerfile and agents/openfang/Dockerfile).
+# No manual cloning or pip install needed.
 
-echo "📦 Setting up OpenFang..."
-if [ ! -d "agents/openfang" ]; then
-  git clone --depth 1 https://github.com/openfang/openfang.git agents/openfang 2>/dev/null || echo "⚠ OpenFang repo not available yet — placeholder"
-fi
+echo "📋 Available agents:"
+for agent_dir in agents/*/; do
+  agent_name=$(basename "$agent_dir")
+  if [ -f "$agent_dir/Dockerfile" ]; then
+    echo "   ✅ $agent_name"
+  fi
+done
 
-# ── Install Python dependencies ──
-pip install --quiet --no-cache-dir -r requirements.txt 2>/dev/null || true
+# ── Remind about API keys ──
+echo ""
+echo "💡 To use agent execution, set your API key(s):"
+echo "   export OPENAI_API_KEY=sk-..."
+echo "   (or ANTHROPIC_API_KEY, GOOGLE_API_KEY, etc.)"
+echo ""
 
 # ── Start the exec API server in the background ──
 echo "🚀 Starting exec API on port 8080..."
