@@ -775,6 +775,40 @@ a:focus {
   }
 }
 
+/* Compact QAB on mobile */
+@media (max-width: 480px) {
+  .brand-label {
+    font-size: 0.72rem;
+  }
+
+  .header-brand-toggle,
+  .qab-logo-btn.qab-brand-toggle {
+    padding: 3px 5px;
+    margin-right: 2px;
+    gap: 2px;
+  }
+
+  .qab-separator {
+    margin: 0 4px;
+    height: 16px;
+  }
+
+  .qab-view-btn {
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    gap: 3px;
+  }
+
+  .qab-view-btn i {
+    font-size: 0.72rem;
+  }
+
+  .qab-view-modes {
+    padding: 1px;
+    gap: 1px;
+  }
+}
+
 /* ========================================
    GITHUB LINK
    ======================================== */

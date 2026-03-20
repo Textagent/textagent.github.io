@@ -1,0 +1,432 @@
+/* ============================================
+   composer.css — Floating Composer Widget
+   ============================================ */
+
+/* ---- Floating Action Button (FAB) ---- */
+.composer-fab {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transition: all 0.25s ease;
+  z-index: 999;
+}
+
+.composer-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+/* Dismiss badge — appears on hover */
+.composer-fab-dismiss {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-danger-fg, #d73a49);
+  color: #fff;
+  border: 2px solid var(--bg-color, #fff);
+  font-size: 9px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.composer-fab:hover .composer-fab-dismiss {
+  display: flex;
+}
+
+.composer-fab.active {
+  background: var(--color-danger-fg, #d73a49);
+  transform: rotate(45deg);
+}
+
+/* ---- Floating Panel ---- */
+.composer-floating-panel {
+  position: fixed;
+  bottom: 88px;
+  left: 24px;
+  width: 420px;
+  max-height: 70vh;
+  display: none;
+  flex-direction: column;
+  background: var(--editor-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  z-index: 998;
+  overflow: hidden;
+  animation: composerPanelIn 0.25s ease;
+}
+
+.composer-floating-panel.active {
+  display: flex;
+}
+
+@keyframes composerPanelIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- Panel Header ---- */
+.composer-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--button-bg);
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+}
+
+.composer-panel-header:active {
+  cursor: grabbing;
+}
+
+.composer-expand-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 5px;
+  font-family: inherit;
+}
+
+.composer-expand-btn:hover {
+  opacity: 1;
+  border-color: var(--accent-color);
+}
+
+.composer-expand-btn i {
+  transition: transform 0.2s;
+}
+
+.composer-floating-panel.expanded .composer-expand-btn i {
+  transform: rotate(180deg);
+}
+
+.composer-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.composer-panel-title i {
+  font-size: 15px;
+  color: var(--accent-color);
+}
+
+.composer-panel-close {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.composer-panel-close:hover {
+  opacity: 1;
+  background: var(--button-hover);
+}
+
+/* ---- Block History (scrollable chat cards) — hidden by default ---- */
+.composer-blocks {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 80px;
+  max-height: 35vh;
+}
+
+.composer-floating-panel.expanded .composer-blocks {
+  display: flex;
+}
+
+.composer-blocks::-webkit-scrollbar { width: 5px; }
+.composer-blocks::-webkit-scrollbar-track { background: transparent; }
+.composer-blocks::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+
+/* Empty state */
+.composer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-color);
+  opacity: 0.4;
+  gap: 6px;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.composer-empty i { font-size: 28px; opacity: 0.5; }
+.composer-empty .composer-empty-hint { font-size: 11px; opacity: 0.7; }
+
+/* ---- Individual Block Card ---- */
+.composer-block {
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 36px 8px 10px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-color);
+  position: relative;
+  transition: border-color 0.15s;
+  cursor: default;
+  animation: composerSlideIn 0.2s ease;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.composer-block:hover { border-color: var(--accent-color); }
+.composer-block.editing { border-color: var(--accent-color); box-shadow: 0 0 0 1px var(--accent-color); }
+.composer-block.ai-block { border-left: 3px solid #a371f7; }
+
+@keyframes composerSlideIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Block actions (edit / delete / reorder) */
+.composer-block-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
+  gap: 2px;
+}
+.composer-block:hover .composer-block-actions { display: flex; }
+
+.composer-block-btn {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-color);
+  opacity: 0.6;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  transition: all 0.15s;
+  padding: 0;
+}
+.composer-block-btn:hover { opacity: 1; border-color: var(--accent-color); }
+.composer-block-btn.delete-btn:hover { color: #f85149; border-color: #f85149; }
+
+/* ---- Chip Bar ---- */
+.composer-chip-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 5px 10px;
+  border-top: 1px solid var(--border-color);
+  background: var(--button-bg);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.composer-chip-label {
+  font-size: 8px;
+  color: var(--text-color);
+  opacity: 0.5;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.composer-chip-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border-color);
+  flex-shrink: 0;
+  margin: 0 1px;
+}
+
+.composer-chip {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  color: var(--text-color);
+  opacity: 0.7;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.composer-chip:hover { opacity: 1; border-color: var(--accent-color); }
+.composer-chip.active { color: var(--accent-color); border-color: var(--accent-color); opacity: 1; }
+.composer-chip.ai-chip { color: #a371f7; }
+.composer-chip.ai-chip:hover { border-color: #a371f7; background: rgba(163,113,247,0.08); }
+
+/* ---- Input Bar ---- */
+.composer-input-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-color);
+  background: var(--button-bg);
+  align-items: flex-end;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.composer-input {
+  flex: 1;
+  background: var(--editor-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-color);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  resize: none;
+  outline: none;
+  line-height: 1.4;
+  min-height: 38px;
+  max-height: 100px;
+  transition: border-color 0.2s;
+}
+
+.composer-input:focus { border-color: var(--accent-color); }
+.composer-input::placeholder { color: var(--text-color); opacity: 0.4; }
+
+.composer-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.composer-send-btn:hover { filter: brightness(1.15); transform: scale(1.05); }
+.composer-send-btn:active { transform: scale(0.95); }
+
+/* ---- Slash Command Menu ---- */
+.composer-slash-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 10px;
+  right: 50px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  padding: 4px;
+  display: none;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.composer-slash-menu.active { display: block; }
+
+.composer-slash-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.1s;
+  color: var(--text-color);
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.composer-slash-item:hover,
+.composer-slash-item.selected { background: rgba(56,139,253,0.12); }
+
+.composer-slash-item i { width: 16px; text-align: center; opacity: 0.5; font-size: 12px; }
+.composer-slash-desc { opacity: 0.4; font-size: 10px; margin-left: auto; font-family: monospace; }
+
+/* ---- Mobile responsive ---- */
+@media (max-width: 767px) {
+  .composer-fab {
+    bottom: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .composer-floating-panel {
+    bottom: 72px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: 65vh;
+    border-radius: 14px;
+  }
+
+  .composer-block-actions { display: flex !important; }
+  .composer-block { padding-right: 70px; }
+}
+
+/* ---- Always show block actions on touch ---- */
+@media (hover: none) {
+  .composer-block-actions { display: flex !important; }
+}

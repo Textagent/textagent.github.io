@@ -299,4 +299,54 @@ test.describe('Agent Cloud Execution', () => {
             expect(modalDisplay).toBe('flex');
         }
     });
+
+    // ═══════════════════════════════════════════
+    // @agenttype: FIELD PARSING TESTS
+    // ═══════════════════════════════════════════
+
+    test('parseDocgenBlocks parses @agenttype: openclaw correctly', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const md = '{{@Agent:\n  @agenttype: openclaw\n  @cloud: yes\n  1. Run agent\n}}';
+            const blocks = /** @type {any} */ (window).MDView.parseDocgenBlocks(md);
+            return {
+                agentType: blocks[0]?.agentType,
+                cloud: blocks[0]?.cloud,
+            };
+        });
+        expect(result.agentType).toBe('openclaw');
+        expect(result.cloud).toBe(true);
+    });
+
+    test('@agenttype: field is stripped from the prompt', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const md = '{{@Agent:\n  @agenttype: openfang\n  1. Run agent\n}}';
+            const blocks = /** @type {any} */ (window).MDView.parseDocgenBlocks(md);
+            return { promptContainsAgentType: blocks[0]?.prompt?.includes('@agenttype') };
+        });
+        expect(result.promptContainsAgentType).toBe(false);
+    });
+
+    test('@agenttype: works with @cloud: no for local execution', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const md = '{{@Agent:\n  @cloud: no\n  @agenttype: openclaw\n  1. Clone repo\n  2. Run agent\n}}';
+            const blocks = /** @type {any} */ (window).MDView.parseDocgenBlocks(md);
+            return {
+                agentType: blocks[0]?.agentType,
+                cloud: blocks[0]?.cloud,
+            };
+        });
+        expect(result.agentType).toBe('openclaw');
+        expect(result.cloud).toBe(false);
+    });
+
+    test('Agent card shows agenttype badge when @agenttype is set', async ({ page }) => {
+        await page.locator('#markdown-editor').fill('{{@Agent:\n  @agenttype: openclaw\n  1. Run agent\n}}');
+        await page.waitForTimeout(800);
+
+        const badge = await page.evaluate(() => {
+            const el = document.querySelector('#markdown-preview .ai-agenttype-badge');
+            return el ? el.textContent.trim() : null;
+        });
+        expect(badge).toBe('openclaw');
+    });
 });

@@ -722,6 +722,32 @@ const chatResponse = await openai.chat.completions.create({
                         </div>
                     </div>
                 </div>
+
+                <!-- Agent Execution Settings -->
+                <div class="agent-settings-section" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color,#30363d)">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--text-color)"><i class="bi bi-gear me-1"></i>Agent Execution</div>
+                    <div class="agent-provider-group" style="display:flex;flex-direction:column;gap:6px">
+                        <label class="agent-provider-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-color)">
+                            <input type="radio" name="agent-provider" value="codespaces" class="agent-provider-radio">
+                            <i class="bi bi-cloud" style="opacity:0.6"></i>
+                            <span><strong>GitHub Codespaces</strong> <small style="opacity:0.5">— free cloud sandbox</small></span>
+                        </label>
+                        <label class="agent-provider-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-color)">
+                            <input type="radio" name="agent-provider" value="local" class="agent-provider-radio">
+                            <i class="bi bi-hdd" style="opacity:0.6"></i>
+                            <span><strong>Local Docker</strong> <small style="opacity:0.5">— localhost:8080 (requires Docker)</small></span>
+                        </label>
+                        <label class="agent-provider-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-color)">
+                            <input type="radio" name="agent-provider" value="custom" class="agent-provider-radio">
+                            <i class="bi bi-link-45deg" style="opacity:0.6"></i>
+                            <span><strong>Custom Endpoint</strong> <small style="opacity:0.5">— self-hosted / E2B / Daytona</small></span>
+                        </label>
+                    </div>
+                    <div id="agent-custom-url-group" style="display:none;margin-top:8px">
+                        <input type="url" id="agent-custom-url-input" class="ai-apikey-input" placeholder="https://your-server.com/api/exec" style="width:100%;font-size:13px">
+                    </div>
+                </div>
+
                 <div id="github-auth-error" class="ai-apikey-error" style="display:none"></div>
             </div>
             <div class="ai-consent-footer">

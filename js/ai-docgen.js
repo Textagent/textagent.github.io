@@ -74,7 +74,7 @@
     function insertDocgenTag(type) {
         if (type === 'Agent') {
             var agentDefaultModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : '') || '';
-            M.wrapSelectionWith('{{@Agent:\n  @model: ' + (agentDefaultModel || 'qwen-local') + '\n  @step 1: ', '\n  @step 2: describe the next step\n}}', 'describe this step');
+            M.wrapSelectionWith('{{@Agent:\n  @model: ' + (agentDefaultModel || 'qwen-local') + '\n  @cloud: no\n  @step 1: ', '\n  @step 2: describe the next step\n}}', 'describe this step');
             return;
         }
         if (type === 'Memory') {
@@ -220,6 +220,12 @@
                         block.prompt = block.prompt.replace(cloudMatch[0], '').trim();
                     } else if (block.cloud === undefined) {
                         block.cloud = false;
+                    }
+                    // Parse @agenttype: field — which external agent to run (e.g. openclaw, openfang)
+                    var agentTypeMatch = block.prompt.match(/^\s*(?:@agenttype|agenttype):\s*(\S+)$/mi);
+                    if (agentTypeMatch) {
+                        block.agentType = agentTypeMatch[1].trim().toLowerCase();
+                        block.prompt = block.prompt.replace(agentTypeMatch[0], '').trim();
                     }
                     // Parse @search: field (supports comma-separated multi-provider)
                     var searchMatch = block.prompt.match(/^\s*(?:@search|Search):\s*(.+)$/mi);
@@ -445,8 +451,12 @@
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : false;
             var cloudFieldMatch = prompt.match(/^(?:@cloud|Cloud):\s*(yes|no)$/mi);
             var hasCloud = cloudFieldMatch ? cloudFieldMatch[1].toLowerCase() === 'yes' : false;
+            var agentTypeMatch = prompt.match(/^(?:@agenttype|agenttype):\s*(\S+)$/mi);
+            var agentTypeName = agentTypeMatch ? agentTypeMatch[1].trim() : '';
             var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
+            var agentTypeBadge = (type === 'Agent' && agentTypeName) ? '<span class="ai-agenttype-badge" title="External agent: ' + escapeHtml(agentTypeName) + '">' + escapeHtml(agentTypeName) + '</span>' : '';
+            var cloudBadge = (type === 'Agent') ? '<span class="ai-cloud-badge' + (hasCloud ? ' cloud-enabled' : ' cloud-disabled') + '" title="' + (hasCloud ? 'Runs on GitHub Codespaces' : 'Runs locally via Docker') + '">' + (hasCloud ? '☁️ Cloud' : '🖥️ Local') + '</span>' : '';
 
             // Parse @model: from the raw prompt to determine which model to pre-select
             var blockModelMatch = prompt.match(/^\s*(?:@model|Model):\s*(\S+)$/mi);
@@ -455,6 +465,9 @@
             if (blockModelId && !(models[blockModelId])) blockModelId = null;
             // Strip @model: from display prompt
             prompt = prompt.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
+            // Strip @cloud: and @agenttype: from display prompt (shown via toggle/badge instead)
+            prompt = prompt.replace(/^\s*(?:@cloud|Cloud):\s*(?:yes|no)$/mi, '').trim();
+            prompt = prompt.replace(/^\s*(?:@agenttype|agenttype):\s*\S+$/mi, '').trim();
             var cardModelOpts = buildModelOptionsHtml(blockModelId, type);
 
             if (type === 'Memory') {
@@ -597,7 +610,8 @@
                 result += '<div class="ai-placeholder-card ai-agent-card" data-ai-type="Agent" data-ai-index="' + blockIndex + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
-                    + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + '<span class="ai-placeholder-label">' + label + agentTypeBadge + cloudBadge + '</span>'
+                    + '<select class="ai-agenttype-select" data-ai-index="' + blockIndex + '" title="Select agent type"><option value=""' + (!agentTypeName ? ' selected' : '') + '>No Agent</option><option value="openclaw"' + (agentTypeName === 'openclaw' ? ' selected' : '') + '>openclaw</option><option value="openfang"' + (agentTypeName === 'openfang' ? ' selected' : '') + '>openfang</option></select>'
                     + agentUseHint
                     + '<div class="ai-placeholder-actions">'
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
@@ -1747,8 +1761,10 @@
             var fieldRe = new RegExp('^\\s*' + fieldName + ':\\s*.+$', 'mi');
             inner = inner.replace(fieldRe, '').trim();
 
-            // Add new field (if value is not empty/off/no)
-            if (value && value !== 'off' && value !== 'no') {
+            // Add new field (if value is not empty/off)
+            // For @cloud, always keep the field (even when 'no') so the badge renders
+            var keepField = value && value !== 'off' && (fieldName === '@cloud' || value !== 'no');
+            if (keepField) {
                 inner = fieldName + ': ' + value + '\n  ' + inner;
             }
 
@@ -1785,6 +1801,15 @@
                     }
                 }
                 updateBlockField(idx, '@cloud', isActive ? 'yes' : 'no');
+            });
+        });
+
+        // Agent type selector — dropdown on Agent card
+        container.querySelectorAll('.ai-agenttype-select').forEach(function (sel) {
+            sel.addEventListener('change', function (e) {
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                updateBlockField(idx, '@agenttype', this.value || '');
             });
         });
 

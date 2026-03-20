@@ -42,6 +42,7 @@ import '../css/game-docgen.css';
 import '../css/git-docgen.css';
 import '../css/draw-docgen.css';
 import '../css/run-preflight.css';
+import '../css/composer.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -89,6 +90,7 @@ async function loadModules() {
         import('../js/stock-widget.js'),
         import('../js/video-player.js'),
         import('../js/page-view.js'),
+        import('../js/composer.js'),
     ]);
 
     // 3b-pre: Document Variables façade (must load before exec-sandbox, templates, ai-docgen, api-docgen)

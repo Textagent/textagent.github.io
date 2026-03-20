@@ -4,8 +4,7 @@
    ============================================ */
 
 /* --- View Mode: Show editor + page container side by side --- */
-.content-container.view-page .preview-pane,
-.content-container.view-page .resize-divider {
+.content-container.view-page .preview-pane {
   display: none;
 }
 

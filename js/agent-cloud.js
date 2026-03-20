@@ -40,10 +40,17 @@
          * @param {Object} [opts] - Options
          * @param {string} [opts.prevOutput] - Previous step output for context
          * @param {number} [opts.timeout=60000] - Timeout in ms
+         * @param {boolean} [opts.forceLocal] - Skip GitHub auth, use local endpoint
          * @returns {Promise<{stdout: string, stderr: string, exitCode: number}>}
          */
         run: async function (command, opts) {
             opts = opts || {};
+
+            // Local agent execution (no GitHub auth needed)
+            if (opts.forceLocal) {
+                return runCustomEndpoint(command, opts);
+            }
+
             var token = M.githubAuth.getToken();
             if (!token) throw new Error('Not authenticated with GitHub. Please sign in first.');
 
@@ -280,22 +287,24 @@
         }
     }
 
-    /** Custom endpoint fallback (E2B, Daytona, self-hosted) */
+    /** Custom/local endpoint (Docker-backed, E2B, Daytona, self-hosted) */
     async function runCustomEndpoint(command, opts) {
-        var url = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL);
-        if (!url) throw new Error('No custom endpoint URL configured. Go to Settings → Agent Execution.');
+        var url = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || 'http://localhost:8080/api/exec';
 
         var res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 command: command,
+                agentType: opts.agentType || '',
                 context: opts.prevOutput || ''
             })
         });
 
         if (!res.ok) {
-            throw new Error('Custom endpoint error (' + res.status + ')');
+            var errBody = '';
+            try { errBody = await res.text(); } catch (_) {}
+            throw new Error('Agent exec error (' + res.status + '): ' + errBody.substring(0, 200));
         }
 
         return await res.json();

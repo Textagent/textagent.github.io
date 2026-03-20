@@ -1,0 +1,5 @@
+# Add Python dependencies for agents here
+# Example:
+# transformers>=4.40
+# torch>=2.0
+# openai>=1.0

@@ -231,4 +231,50 @@
         }
     });
 
+    // ── Agent Execution Settings wiring ──
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('agent-provider-radio')) {
+            var provider = e.target.value;
+            localStorage.setItem(M.KEYS.AGENT_PROVIDER, provider);
+
+            // Show/hide custom URL input
+            var urlGroup = document.getElementById('agent-custom-url-group');
+            if (urlGroup) urlGroup.style.display = provider === 'custom' ? '' : 'none';
+
+            // Set default custom URL for local
+            if (provider === 'local') {
+                localStorage.setItem(M.KEYS.AGENT_CUSTOM_URL, 'http://localhost:8080/api/exec');
+            }
+        }
+    });
+
+    // Persist custom URL on input
+    document.addEventListener('input', function (e) {
+        if (e.target.id === 'agent-custom-url-input') {
+            localStorage.setItem(M.KEYS.AGENT_CUSTOM_URL, e.target.value.trim());
+        }
+    });
+
+    // Initialize settings when modal opens
+    var origShow = M.githubAuth.showAuthModal;
+    M.githubAuth.showAuthModal = function () {
+        origShow.call(M.githubAuth);
+        initAgentSettings();
+    };
+
+    function initAgentSettings() {
+        var provider = localStorage.getItem(M.KEYS.AGENT_PROVIDER) || 'codespaces';
+        var customUrl = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || '';
+
+        // Set radio
+        var radios = document.querySelectorAll('.agent-provider-radio');
+        radios.forEach(function (r) { r.checked = r.value === provider; });
+
+        // Show/hide URL input
+        var urlGroup = document.getElementById('agent-custom-url-group');
+        var urlInput = document.getElementById('agent-custom-url-input');
+        if (urlGroup) urlGroup.style.display = provider === 'custom' ? '' : 'none';
+        if (urlInput) urlInput.value = customUrl;
+    }
+
 })(window.MDView = window.MDView || {});

@@ -1,0 +1,11 @@
+# Cloned agents
+agents/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# OS
+.DS_Store

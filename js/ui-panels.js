@@ -123,7 +123,7 @@
         document.addEventListener('touchmove', handleResizeTouch);
         document.addEventListener('touchend', stopResize);
         M.resizeDivider.addEventListener('keydown', function (e) {
-            if (M.currentViewMode !== 'split') return;
+            if (M.currentViewMode !== 'split' && M.currentViewMode !== 'compose' && M.currentViewMode !== 'page') return;
             var step = 2;
             if (e.key === 'ArrowLeft') { e.preventDefault(); M.editorWidthPercent = Math.max(M.MIN_PANE_PERCENT, M.editorWidthPercent - step); applyPaneWidths(); }
             else if (e.key === 'ArrowRight') { e.preventDefault(); M.editorWidthPercent = Math.min(100 - M.MIN_PANE_PERCENT, M.editorWidthPercent + step); applyPaneWidths(); }
@@ -131,12 +131,12 @@
     }
 
     function startResize(e) {
-        if (M.currentViewMode !== 'split') return;
+        if (M.currentViewMode !== 'split' && M.currentViewMode !== 'compose' && M.currentViewMode !== 'page') return;
         e.preventDefault(); M.isResizing = true;
         M.resizeDivider.classList.add('dragging'); document.body.classList.add('resizing');
     }
     function startResizeTouch(e) {
-        if (M.currentViewMode !== 'split') return;
+        if (M.currentViewMode !== 'split' && M.currentViewMode !== 'compose' && M.currentViewMode !== 'page') return;
         e.preventDefault(); M.isResizing = true;
         M.resizeDivider.classList.add('dragging'); document.body.classList.add('resizing');
     }
@@ -162,14 +162,19 @@
         M.resizeDivider.classList.remove('dragging'); document.body.classList.remove('resizing');
     }
     function applyPaneWidths() {
-        if (M.currentViewMode !== 'split') return;
+        if (M.currentViewMode !== 'split' && M.currentViewMode !== 'compose' && M.currentViewMode !== 'page') return;
         var previewPercent = 100 - M.editorWidthPercent;
         M.editorPaneElement.style.flex = '1 1 calc(' + M.editorWidthPercent + '% - 4px)';
         M.previewPaneElement.style.flex = '1 1 calc(' + previewPercent + '% - 4px)';
+        // Also resize page-view-container if in page mode
+        var pageContainer = document.getElementById('page-view-container');
+        if (pageContainer) pageContainer.style.flex = '1 1 calc(' + previewPercent + '% - 4px)';
     }
     function resetPaneWidths() {
         M.editorPaneElement.style.flex = '';
         M.previewPaneElement.style.flex = '';
+        var pageContainer = document.getElementById('page-view-container');
+        if (pageContainer) pageContainer.style.flex = '';
     }
 
     // ========================================

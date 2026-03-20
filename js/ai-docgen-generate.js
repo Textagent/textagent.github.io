@@ -1134,18 +1134,25 @@
             try {
                 var result;
 
-                // ── Cloud execution path (when @cloud: yes) ──
-                if (block.cloud && M.agentCloud && M.agentCloud.isAvailable()) {
+                // ── Agent execution path (cloud or local) ──
+                // @agenttype triggers exec API regardless of @cloud setting
+                // @cloud: yes → Codespaces | @cloud: no + @agenttype → local server
+                var useAgentExec = block.agentType || (block.cloud && M.agentCloud && M.agentCloud.isAvailable());
+
+                if (useAgentExec) {
                     updateStepStatus(i, 'running');
                     var cloudCommand = steps[i].description;
                     if (accumulatedContext) {
                         cloudCommand += '\n\nContext from previous steps:\n' + accumulatedContext.substring(0, 2000);
                     }
-                    var cloudResult = await M.agentCloud.run(cloudCommand, {
+
+                    var execResult = await M.agentCloud.run(cloudCommand, {
                         prevOutput: accumulatedContext,
-                        timeout: 60000
+                        timeout: 60000,
+                        agentType: block.agentType || '',
+                        forceLocal: block.agentType && !block.cloud
                     });
-                    result = (cloudResult.stdout || '') + (cloudResult.stderr ? '\n\nStderr:\n' + cloudResult.stderr : '');
+                    result = (execResult.stdout || '') + (execResult.stderr ? '\n\nStderr:\n' + execResult.stderr : '');
                 } else {
                     // ── Standard LLM execution path ──
                     result = await M.requestAiTask({

@@ -3035,6 +3035,91 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
+/* --- Agent Type Badge (e.g. "openclaw" on Agent card) --- */
+.ai-agenttype-badge {
+    display: inline-block;
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: lowercase;
+    letter-spacing: 0.03em;
+    padding: 1px 8px;
+    margin-left: 6px;
+    border-radius: 10px;
+    background: rgba(56, 139, 253, 0.15);
+    border: 1px solid rgba(56, 139, 253, 0.3);
+    color: #58a6ff;
+    vertical-align: middle;
+}
+
+[data-theme="light"] .ai-agenttype-badge {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.25);
+    color: #2563eb;
+}
+
+/* --- Cloud / Local Badge (Agent Card) --- */
+
+/* --- Agent Type Selector Dropdown (Agent Card) --- */
+.ai-agenttype-select {
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--button-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    outline: none;
+    margin-left: 4px;
+    font-family: inherit;
+    vertical-align: middle;
+}
+
+.ai-agenttype-select:hover {
+    border-color: var(--accent-color);
+}
+
+.ai-agenttype-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(56, 139, 253, 0.15);
+}
+
+
+.ai-cloud-badge {
+    display: inline-block;
+    font-size: 0.65em;
+    font-weight: 700;
+    padding: 1px 8px;
+    margin-left: 6px;
+    border-radius: 10px;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+}
+
+.ai-cloud-badge.cloud-enabled {
+    background: rgba(46, 160, 67, 0.15);
+    border: 1px solid rgba(46, 160, 67, 0.3);
+    color: #3fb950;
+}
+
+.ai-cloud-badge.cloud-disabled {
+    background: rgba(139, 148, 158, 0.12);
+    border: 1px solid rgba(139, 148, 158, 0.25);
+    color: #8b949e;
+}
+
+[data-theme="light"] .ai-cloud-badge.cloud-enabled {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.25);
+    color: #16a34a;
+}
+
+[data-theme="light"] .ai-cloud-badge.cloud-disabled {
+    background: rgba(107, 114, 128, 0.08);
+    border-color: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+}
+
 /* --- Cloud Toggle Button (Agent Card) --- */
 .ai-cloud-toggle.active {
     background: rgba(56, 139, 253, 0.2) !important;

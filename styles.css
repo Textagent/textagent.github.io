@@ -1428,6 +1428,30 @@ a:focus {
   /* But always show inside QAB */
   .qab-doc-title.doc-title-chip {
     display: inline-flex;
+    padding: 2px 6px;
+    gap: 4px;
+    font-size: 12px;
+    max-width: 140px;
+    margin-right: 2px;
+  }
+  .qab-doc-title .doc-title-icon {
+    font-size: 12px;
+  }
+  .qab-doc-title .doc-title-edit-icon {
+    font-size: 9px;
+  }
+}
+
+/* Further compact on phone-sized screens */
+@media (max-width: 480px) {
+  .qab-doc-title.doc-title-chip {
+    max-width: 100px;
+    font-size: 11px;
+    padding: 2px 5px;
+    gap: 3px;
+  }
+  .qab-doc-title .doc-title-icon {
+    display: none;
   }
 }
 
