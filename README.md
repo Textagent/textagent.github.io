@@ -283,6 +283,21 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 <img src="public/assets/demos/17_agent_flow.webp" alt="Agent Flow — multi-step pipeline with search provider and model selection" width="100%">
 
+#### Agent Execution Decision Tree
+
+```mermaid
+graph LR
+    A["▶ Run Agent Flow"] --> B{"Has @agenttype?"}
+    B -->|YES| C{"@cloud?"}
+    B -->|NO| F["Mode 3: Standard LLM<br/>Qwen / Gemini / etc.<br/>No Docker, no server"]
+    C -->|yes| D["Mode 1: Cloud<br/>GitHub Codespaces<br/>Docker in VM"]
+    C -->|no| E["Mode 2: Local Docker<br/>localhost:8080<br/>Docker on machine"]
+
+    style D fill:#2ea043,color:#fff
+    style E fill:#8b949e,color:#fff
+    style F fill:#388bfd,color:#fff
+```
+
 </details>
 
 <details open>

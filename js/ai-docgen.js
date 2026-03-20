@@ -456,7 +456,7 @@
             var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
             var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
             var agentTypeBadge = (type === 'Agent' && agentTypeName) ? '<span class="ai-agenttype-badge" title="External agent: ' + escapeHtml(agentTypeName) + '">' + escapeHtml(agentTypeName) + '</span>' : '';
-            var cloudBadge = (type === 'Agent') ? '<span class="ai-cloud-badge' + (hasCloud ? ' cloud-enabled' : ' cloud-disabled') + '" title="' + (hasCloud ? 'Runs on GitHub Codespaces' : 'Runs locally via Docker') + '">' + (hasCloud ? '☁️ Cloud' : '🖥️ Local') + '</span>' : '';
+            var cloudBadge = (type === 'Agent' && agentTypeName) ? '<span class="ai-cloud-badge' + (hasCloud ? ' cloud-enabled' : ' cloud-disabled') + '" title="' + (hasCloud ? 'Runs on GitHub Codespaces' : 'Runs locally via Docker') + '">' + (hasCloud ? '☁️ Cloud' : '🖥️ Local') + '</span>' : '';
 
             // Parse @model: from the raw prompt to determine which model to pre-select
             var blockModelMatch = prompt.match(/^\s*(?:@model|Model):\s*(\S+)$/mi);
@@ -617,7 +617,7 @@
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image for vision analysis">📎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-select-btn" data-ai-index="' + blockIndex + '" title="Select memory sources">📚</button>'
                     + '<button class="ai-placeholder-btn ai-think-toggle' + (hasThink ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Toggle thinking mode">🧠</button>'
-                    + '<button class="ai-placeholder-btn ai-cloud-toggle' + (hasCloud ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Run on cloud (GitHub Codespaces)">☁️</button>'
+                    + '<button class="ai-placeholder-btn ai-cloud-toggle' + (hasCloud ? ' active' : '') + (agentTypeName ? '' : ' disabled') + '" data-ai-index="' + blockIndex + '" title="' + (agentTypeName ? 'Run on cloud (GitHub Codespaces)' : 'Select an agent type first') + '"' + (agentTypeName ? '' : ' disabled') + '>☁️</button>'
                     + '<button class="ai-placeholder-btn ai-search-multi-btn' + (agentActiveSearch.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Search engines">🔍' + (agentActiveSearch.length > 0 ? ' ' + agentActiveSearch.length : '') + '</button>'
                     + '<button class="ai-placeholder-btn ai-vars-toggle' + (agentVarName || agentActiveInputs.length > 0 ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="Variables — set output name and select input variables">🔗' + (agentVarName ? ' ' + escapeHtml(agentVarName) : '') + (agentActiveInputs.length > 0 ? ' +' + agentActiveInputs.length : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this flow">' + cardModelOpts + '</select>'
@@ -1792,8 +1792,9 @@
                 e.stopPropagation();
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 var isActive = this.classList.toggle('active');
-                // Gate: require GitHub auth when enabling cloud
-                if (isActive && M.agentCloud && !M.agentCloud.isAvailable()) {
+                // Gate: require GitHub auth ONLY when provider is 'codespaces'
+                var provider = localStorage.getItem(M.KEYS.AGENT_PROVIDER) || 'codespaces';
+                if (isActive && provider === 'codespaces') {
                     if (M.githubAuth && !M.githubAuth.isAuthenticated()) {
                         M.githubAuth.showAuthModal();
                         this.classList.remove('active');

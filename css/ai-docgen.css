@@ -1511,6 +1511,7 @@
 [data-theme="light"] .clear-confirm-hint kbd {
     background: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.12);
+    color: #334155;
 }
 
 [data-theme="light"] .clear-confirm-cancel {

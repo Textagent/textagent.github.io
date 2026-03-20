@@ -282,7 +282,7 @@ test.describe('Agent Cloud Execution', () => {
             localStorage.removeItem('textagent-agent-provider');
         });
 
-        await page.locator('#markdown-editor').fill('{{@Agent:\n  1. Research topic\n}}');
+        await page.locator('#markdown-editor').fill('{{@Agent:\n  @agenttype: openclaw\n  1. Research topic\n}}');
         await page.waitForTimeout(800);
 
         // Click the cloud toggle

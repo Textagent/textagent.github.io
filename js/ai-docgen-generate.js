@@ -1135,9 +1135,9 @@
                 var result;
 
                 // ── Agent execution path (cloud or local) ──
-                // @agenttype triggers exec API regardless of @cloud setting
-                // @cloud: yes → Codespaces | @cloud: no + @agenttype → local server
-                var useAgentExec = block.agentType || (block.cloud && M.agentCloud && M.agentCloud.isAvailable());
+                // @agenttype is REQUIRED to use agent exec; without it, always use LLM
+                // @cloud: yes + @agenttype → Codespaces | @cloud: no + @agenttype → local Docker
+                var useAgentExec = !!block.agentType;
 
                 if (useAgentExec) {
                     updateStepStatus(i, 'running');
