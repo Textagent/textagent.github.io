@@ -206,6 +206,9 @@
         setHeaderLevel(0);
     });
 
+    // Expose setHeaderLevel so other modules (e.g. cloud-share) can hide header
+    M.setHeaderLevel = setHeaderLevel;
+
     // Restore saved header level on page load
     var savedLevel = parseInt(localStorage.getItem(HEADER_LEVEL_KEY), 10);
     if (savedLevel === 1 || savedLevel === 2) {

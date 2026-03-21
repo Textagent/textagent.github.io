@@ -390,10 +390,13 @@
             var markdownContent = decompressData(compressed);
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            // Use locked view mode if specified, otherwise default to split
-            M.setViewMode(M.sharedViewLock || 'split');
+            // Use locked view mode if specified, otherwise default to preview
+            var sharedMode = M.sharedViewLock || 'preview';
+            M.setViewMode(sharedMode);
             M.isViewingSharedDoc = true;
             showSharedBanner();
+            // Auto-hide full header for preview mode shared links
+            if (sharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
         } catch (error) {
             console.error('Failed to load shared markdown:', error);
             M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
@@ -413,9 +416,12 @@
             hidePassphrasePrompt();
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            M.setViewMode(M.sharedViewLock || 'split');
+            var secureSharedMode = M.sharedViewLock || 'preview';
+            M.setViewMode(secureSharedMode);
             M.isViewingSharedDoc = true;
             showSharedBanner();
+            // Auto-hide full header for preview mode shared links
+            if (secureSharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
             pendingSecureDoc = null;
         } catch (e) {
             throw new Error('Wrong password. Please try again.');
@@ -618,7 +624,7 @@
 
     function openShareOptionsModal() {
         isSecureShareMode = false;
-        selectedShareView = '';
+        selectedShareView = 'preview';
         sharePassInput.value = '';
         sharePassConfirm.value = '';
         sharePassError.style.display = 'none';
@@ -629,12 +635,12 @@
         shareOptionsModal.classList.add('active');
         document.getElementById('share-do-share').disabled = false;
         document.getElementById('share-do-share').innerHTML = '<i class="bi bi-share me-1"></i> Share';
-        // Reset view lock pills
+        // Reset view lock pills — default to Preview
         shareOptionsModal.querySelectorAll('.share-view-pill').forEach(function (p) {
-            p.classList.toggle('active', p.getAttribute('data-view') === '');
+            p.classList.toggle('active', p.getAttribute('data-view') === 'preview');
         });
         var hint = shareOptionsModal.querySelector('.share-view-lock-hint');
-        if (hint) hint.style.display = 'none';
+        if (hint) hint.style.display = '';
         // Render previously shared versions
         renderSharedVersions();
     }
