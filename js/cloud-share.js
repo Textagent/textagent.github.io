@@ -83,6 +83,49 @@
     M.keyToBase64Url = keyToBase64Url;
     M.base64UrlToKey = base64UrlToKey;
 
+    // --- Compact Share ID Generation ---
+    function generateShortId() {
+        var epoch = Math.floor(Date.now() / 1000).toString(36);
+        var rand = '';
+        var chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+        for (var i = 0; i < 5; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+        return epoch + rand;
+    }
+
+    /**
+     * Create a compact share document in Firestore.
+     * Encrypts content, generates a short ID, stores key in Firestore.
+     * Returns { url, id } on success.
+     */
+    async function createCompactShare(content, options) {
+        options = options || {};
+        var compressed = compressData(content);
+        var key = await generateEncryptionKey();
+        var encrypted = await encryptData(key, compressed);
+        var dataString = uint8ArrayToBase64Url(encrypted);
+        var keyString = await keyToBase64Url(key);
+        var wt = generateWriteToken();
+        var docData = { d: dataString, k: keyString, t: Date.now(), wt: wt };
+        if (options.view) docData.view = options.view;
+
+        // Retry with new ID on collision (Firestore .set with merge:false)
+        for (var attempt = 0; attempt < 3; attempt++) {
+            var shortId = generateShortId();
+            try {
+                var docRef = db.collection('shares').doc(shortId);
+                var existing = await docRef.get();
+                if (existing.exists) continue; // collision, retry
+                await docRef.set(docData);
+                var shareUrl = SHARE_BASE_URL + '#s=' + shortId;
+                return { url: shareUrl, id: shortId, wt: wt, keyString: keyString };
+            } catch (e) {
+                if (attempt === 2) throw e;
+            }
+        }
+        throw new Error('Could not generate unique share ID. Please try again.');
+    }
+    M.createCompactShare = createCompactShare;
+
     // --- PBKDF2 Passphrase Key Derivation ---
     async function deriveKeyFromPassphrase(passphrase, salt) {
         var enc = new TextEncoder();
@@ -139,7 +182,7 @@
     }
     function restoreFromLocalStorage() {
         var hash = window.location.hash;
-        if (hash && (hash.includes('d=') || hash.includes('id=')) && hash.includes('k=')) return false;
+        if (hash && ((hash.includes('d=') || hash.includes('id=')) && hash.includes('k=') || hash.includes('s='))) return false;
         // Per-file restore: use workspace active file ID if available
         var saved;
         if (M.wsActiveFileId) {
@@ -193,6 +236,7 @@
         if (M.markdownEditor.readOnly) return;
         // Don't auto-save if we're on someone else's shared URL and haven't established our own cloud doc
         var hash = window.location.hash;
+        if (hash && hash.includes('s=') && !localStorage.getItem(CLOUD_DOC_KEY)) return;
         if (hash && (hash.includes('id=') || hash.includes('d=')) && !localStorage.getItem(CLOUD_DOC_KEY)) return;
         try {
             var compressed = compressData(content);
@@ -204,17 +248,22 @@
             var dataString = uint8ArrayToBase64Url(encrypted);
             var keyString = await keyToBase64Url(key);
             var existingDocId = localStorage.getItem(CLOUD_DOC_KEY);
+            var isCompact = window.location.hash.includes('s=');
             if (existingDocId) {
                 var wt = localStorage.getItem(CLOUD_WT_KEY) || '';
-                await db.collection('shares').doc(existingDocId).set({ d: dataString, t: Date.now(), wt: wt });
+                var updateData = { d: dataString, t: Date.now(), wt: wt };
+                if (isCompact) updateData.k = keyString;
+                await db.collection('shares').doc(existingDocId).set(updateData);
             } else {
                 var wt = generateWriteToken();
-                var docRef = await db.collection('shares').add({ d: dataString, t: Date.now(), wt: wt });
-                localStorage.setItem(CLOUD_DOC_KEY, docRef.id);
+                // Use compact format for new cloud auto-save docs
+                var shortId = generateShortId();
+                await db.collection('shares').doc(shortId).set({ d: dataString, k: keyString, t: Date.now(), wt: wt });
+                localStorage.setItem(CLOUD_DOC_KEY, shortId);
                 localStorage.setItem(CLOUD_WT_KEY, wt);
             }
             var docId = existingDocId || localStorage.getItem(CLOUD_DOC_KEY);
-            var shareUrl = '#id=' + docId + '&k=' + keyString;
+            var shareUrl = '#s=' + docId;
             if (window.location.hash !== shareUrl) history.replaceState(null, '', shareUrl);
             lastCloudContent = content; cloudSaveDirty = false;
             if (autosaveText) {
@@ -289,26 +338,22 @@
 
     async function doQuickShare() {
         var markdownContent = M.markdownEditor.value;
-        var compressed = compressData(markdownContent);
-        var key = await generateEncryptionKey();
-        var encrypted = await encryptData(key, compressed);
-        var dataString = uint8ArrayToBase64Url(encrypted);
-        var keyString = await keyToBase64Url(key);
-        var shareUrl, shareDocId = '';
         try {
-            var wt = generateWriteToken();
-            var docData = { d: dataString, t: Date.now(), wt: wt };
-            if (selectedShareView) docData.view = selectedShareView;
-            var docRef = await db.collection('shares').add(docData);
-            shareDocId = docRef.id;
-            shareUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&k=' + keyString;
+            var result = await createCompactShare(markdownContent, { view: selectedShareView || undefined });
+            return { url: result.url, id: result.id };
         } catch (fbError) {
+            // Fallback to inline URL if Firebase fails
             console.warn('Firebase unavailable, using URL fallback:', fbError);
-            shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
+            var compressed = compressData(markdownContent);
+            var key = await generateEncryptionKey();
+            var encrypted = await encryptData(key, compressed);
+            var dataString = uint8ArrayToBase64Url(encrypted);
+            var keyString = await keyToBase64Url(key);
+            var shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
             if (shareUrl.length > 65000) throw new Error('Content too large to share. Try a smaller document.');
+            if (selectedShareView) shareUrl += '&view=' + selectedShareView;
+            return { url: shareUrl, id: '' };
         }
-        if (selectedShareView) shareUrl += '&view=' + selectedShareView;
-        return { url: shareUrl, id: shareDocId };
     }
 
     async function doSecureShare(passphrase) {
@@ -337,6 +382,7 @@
         var hash = window.location.hash.substring(1);
         if (!hash) return;
         var params = new URLSearchParams(hash);
+        var compactId = params.get('s');
         var docId = params.get('id');
         var inlineData = params.get('d');
         var keyString = params.get('k');
@@ -346,7 +392,39 @@
             M.sharedViewLock = viewParam;
         }
 
-        // Secure share: no key in URL, passphrase needed
+        // --- Compact share: #s=<shortId> ---
+        if (compactId) {
+            try {
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-lock"></i> Decrypting shared content...</div>';
+                M.setViewMode('split');
+                var doc = await db.collection('shares').doc(compactId).get();
+                if (!doc.exists) throw new Error('Shared document not found.');
+                var data = doc.data();
+                // Check view lock from Firestore doc
+                if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
+                    M.sharedViewLock = data.view;
+                }
+                var encrypted = base64UrlToUint8Array(data.d);
+                var key = await base64UrlToKey(data.k);
+                var compressed = await decryptData(key, encrypted);
+                var markdownContent = decompressData(compressed);
+                M.markdownEditor.value = markdownContent;
+                M.renderMarkdown();
+                var sharedMode = M.sharedViewLock || 'preview';
+                M.setViewMode(sharedMode);
+                M.isViewingSharedDoc = true;
+                showSharedBanner();
+                if (sharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+            } catch (error) {
+                console.error('Failed to load compact shared markdown:', error);
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
+                M.markdownPreview.querySelector('p:last-child').textContent = error.message;
+                M.setViewMode('split');
+            }
+            return;
+        }
+
+        // --- Secure share: no key in URL, passphrase needed ---
         if (isSecure && docId && !keyString) {
             try {
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-shield-lock"></i> Loading protected document...</div>';
@@ -368,7 +446,7 @@
             return;
         }
 
-        // Quick share: key in URL
+        // --- Legacy quick share: key in URL (#id=...&k=...) ---
         if (!keyString || (!docId && !inlineData)) return;
         try {
             M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-lock"></i> Decrypting shared content...</div>';
@@ -803,8 +881,8 @@
             dlSection.style.display = '';
             if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends the share link, password, and .md file directly to your inbox.';
         } else {
-            desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Content is encrypted. Only this link can unlock it.';
-            note.innerHTML = '<i class="bi bi-info-circle me-1"></i>The decryption key is in the URL fragment — it\'s never sent to any server.';
+            desc.innerHTML = '<i class="bi bi-link-45deg me-1"></i> Compact encrypted link — content is secured server-side.';
+            note.innerHTML = '<i class="bi bi-info-circle me-1"></i>For maximum security, use password-protected sharing.';
             dlSection.style.display = 'none';
             if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends the share link and .md file directly to your inbox.';
         }
@@ -1038,7 +1116,7 @@
 
     // --- Restore Auto-Saved Content or Load Default ---
     // Only restore if we are NOT loading a shared link (which will overwrite the editor anyway)
-    var hasShareHash = window.location.hash && (window.location.hash.includes('d=') || window.location.hash.includes('id='));
+    var hasShareHash = window.location.hash && (window.location.hash.includes('d=') || window.location.hash.includes('id=') || window.location.hash.includes('s='));
     if (!hasShareHash) {
         var wasRestored = restoreFromLocalStorage();
         if (wasRestored) {

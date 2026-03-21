@@ -333,22 +333,19 @@
     memoryGenLink.textContent = 'Generating...';
 
     try {
-      // Compress → Encrypt → Upload to Firebase (same flow as main share)
-      const compressed = M.compressData(output);
-      const key = await M.generateEncryptionKey();
-      const encrypted = await M.encryptData(key, compressed);
-      const dataString = M.uint8ArrayToBase64Url(encrypted);
-      const keyString = await M.keyToBase64Url(key);
-
+      // Use compact share (same as main share flow)
       let shareUrl;
       try {
-        const docRef = await M.db.collection('shares').add({
-          d: dataString,
-          t: Date.now()
-        });
-        shareUrl = `${M.SHARE_BASE_URL}#id=${docRef.id}&k=${keyString}`;
+        const result = await M.createCompactShare(output);
+        shareUrl = result.url;
       } catch (fbError) {
+        // Fallback to inline URL if Firebase fails
         console.warn('Firebase unavailable, using URL fallback:', fbError);
+        const compressed = M.compressData(output);
+        const key = await M.generateEncryptionKey();
+        const encrypted = await M.encryptData(key, compressed);
+        const dataString = M.uint8ArrayToBase64Url(encrypted);
+        const keyString = await M.keyToBase64Url(key);
         shareUrl = `${M.SHARE_BASE_URL}#d=${dataString}&k=${keyString}`;
         if (shareUrl.length > 65000) {
           throw new Error('Content too large to share via URL. Use download or copy.');
