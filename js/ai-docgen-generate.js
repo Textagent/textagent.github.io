@@ -1023,21 +1023,28 @@
         }
 
         var originalModel = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
-        var cardSelect = document.querySelector('.ai-card-model-select[data-ai-index="' + blockIndex + '"]');
-        var perCardModel = cardSelect ? cardSelect.value : null;
-        if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
-            M.switchToModel(perCardModel);
-        }
+        var perCardModel = null;
 
-        // Ensure model is loaded (trigger download/consent/API key if needed)
-        if (!ensureModelReady(perCardModel || originalModel)) {
-            if (perCardModel && originalModel && perCardModel !== originalModel) {
-                M.switchToModel(originalModel);
+        // Skip model loading when using external agents (Docker handles execution)
+        if (!block.agentType) {
+            var cardSelect = document.querySelector('.ai-card-model-select[data-ai-index="' + blockIndex + '"]');
+            perCardModel = cardSelect ? cardSelect.value : null;
+            if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
+                M.switchToModel(perCardModel);
             }
-            return;
+
+            // Ensure model is loaded (trigger download/consent/API key if needed)
+            if (!ensureModelReady(perCardModel || originalModel)) {
+                if (perCardModel && originalModel && perCardModel !== originalModel) {
+                    M.switchToModel(originalModel);
+                }
+                return;
+            }
+        } else {
+            console.log('[Agent] Skipping model load — using external agent:', block.agentType);
         }
 
-        var cardSearchProviders = getCardSearchProviders(blockIndex);
+        var cardSearchProviders = block.agentType ? [] : getCardSearchProviders(blockIndex);
 
         _dg.activeBlockOps.add(blockIndex);
         var agentCard = document.querySelector('.ai-placeholder-card[data-ai-index="' + blockIndex + '"]');
@@ -1141,10 +1148,9 @@
 
                 if (useAgentExec) {
                     updateStepStatus(i, 'running');
+                    // Only send the step description as the shell command
+                    // Context is passed separately via prevOutput (not executed)
                     var cloudCommand = steps[i].description;
-                    if (accumulatedContext) {
-                        cloudCommand += '\n\nContext from previous steps:\n' + accumulatedContext.substring(0, 2000);
-                    }
 
                     var execResult = await M.agentCloud.run(cloudCommand, {
                         prevOutput: accumulatedContext,

@@ -20,7 +20,7 @@ const fs = require('fs');
 
 const PORT = process.env.PORT || 8080;
 const MAX_OUTPUT = 64 * 1024;       // 64 KB max per stream
-const TIMEOUT_MS = 120 * 1000;      // 120s command timeout
+const TIMEOUT_MS = 360 * 1000;      // 360s command timeout (allows local model inference)
 const IDLE_STOP_MS = 10 * 60 * 1000; // Auto-stop containers after 10 min idle
 const CONTAINER_PREFIX = 'textagent-agent-';
 const IMAGE_PREFIX = 'textagent/';
@@ -31,15 +31,16 @@ const AGENT_CLI_MAP = {
     'openclaw': {
         bin: 'openclaw',
         buildCmd: (message, context) => {
-            const parts = ['openclaw', 'agent', '--message', JSON.stringify(message), '--json', '--timeout', '90'];
+            const parts = ['openclaw', 'agent', '--session-id', 'textagent-openclaw', '--local', '--message', JSON.stringify(message), '--json', '--timeout', '300'];
             return parts.join(' ');
         }
     },
     'openfang': {
         bin: 'openfang',
         buildCmd: (message, context) => {
-            const parts = ['openfang', 'agent', '--message', JSON.stringify(message), '--json', '--timeout', '90'];
-            return parts.join(' ');
+            // OpenFang is daemon-based — use REST API at 127.0.0.1:50051 (started automatically by container CMD)
+            const payload = JSON.stringify({model: 'assistant', messages: [{role: 'user', content: message}]});
+            return `curl -s -X POST http://127.0.0.1:50051/v1/chat/completions -H 'Content-Type: application/json' -d '${payload.replace(/'/g, "'\\''")}'`;
         }
     }
 };
@@ -166,15 +167,41 @@ function ensureContainer(agentType) {
     if (envFlags) log(`   Forwarding env keys: ${FORWARDED_ENV_KEYS.filter(k => process.env[k]).join(', ')}`);
     try {
         execSync(
-            `docker run -d --name ${containerName} ${envFlags} ${IMAGE_PREFIX}${agentType}`,
+            `docker run -d --name ${containerName} --add-host=host.docker.internal:host-gateway ${envFlags} ${IMAGE_PREFIX}${agentType}`,
             { encoding: 'utf8', timeout: 30000 }
         );
         containers[agentType] = containerName;
         console.log(`[Docker] ✅ Container ${containerName} started`);
+
+        // For daemon-based agents, wait for the daemon to be ready
+        if (AGENT_CLI_MAP[agentType] && agentType === 'openfang') {
+            console.log(`[Docker] ⏳ Waiting for ${agentType} daemon to boot...`);
+            waitForDaemonReady(containerName, 50051, 30000);
+        }
+
         return containerName;
     } catch (e) {
         throw new Error(`Failed to start container for "${agentType}": ${(e.stderr || e.message).substring(0, 300)}`);
     }
+}
+
+/** Wait for a daemon port to become ready inside a container */
+function waitForDaemonReady(containerName, port, maxWaitMs) {
+    const start = Date.now();
+    while (Date.now() - start < maxWaitMs) {
+        try {
+            const result = execSync(
+                `docker exec ${containerName} curl -sf -o /dev/null http://127.0.0.1:${port}/ 2>/dev/null && echo ready || echo waiting`,
+                { encoding: 'utf8', timeout: 5000 }
+            ).trim();
+            if (result === 'ready') {
+                log(`✅ Daemon ready on port ${port} (${Date.now() - start}ms)`);
+                return;
+            }
+        } catch (e) { /* retry */ }
+        execSync('sleep 1', { timeout: 2000 });
+    }
+    log(`⚠️  Daemon readiness timeout after ${maxWaitMs}ms — proceeding anyway`);
 }
 
 /** Execute a command inside a running container */
@@ -214,8 +241,7 @@ function stopContainer(agentType) {
     if (!containerName) return;
 
     try {
-        execSync(`docker stop ${containerName}`, { timeout: 15000, stdio: 'ignore' });
-        execSync(`docker rm ${containerName}`, { timeout: 5000, stdio: 'ignore' });
+        execSync(`docker rm -f ${containerName}`, { timeout: 10000, stdio: 'ignore' });
         console.log(`[Docker] 🛑 Stopped and removed ${containerName}`);
     } catch (e) {
         console.warn(`[Docker] Warning: cleanup failed for ${containerName}:`, e.message);
@@ -251,6 +277,23 @@ function hostExec(command, timeoutMs) {
     });
 }
 
+// ── Startup: recover already-running containers ──
+try {
+    const running = execSync(
+        `docker ps --filter "name=${CONTAINER_PREFIX}" --format "{{.Names}}"`,
+        { encoding: 'utf8', timeout: 5000 }
+    ).trim();
+    if (running) {
+        running.split('\n').forEach(name => {
+            const agentType = name.replace(CONTAINER_PREFIX, '');
+            if (agentType) {
+                containers[agentType] = name;
+                console.log(`[Docker] 🔄 Recovered running container: ${name} (${agentType})`);
+            }
+        });
+    }
+} catch (e) { /* ignore scan errors */ }
+
 // ── HTTP Server ──
 
 const server = http.createServer((req, res) => {
@@ -279,7 +322,70 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Exec endpoint
+    // ── Agent Status endpoint — scans Docker directly ──
+    if (req.method === 'GET' && req.url === '/api/agents/status') {
+        const agents = [];
+        try {
+            const running = execSync(
+                `docker ps --filter "name=${CONTAINER_PREFIX}" --format "{{.Names}}|{{.Status}}|{{.CreatedAt}}"`,
+                { encoding: 'utf8', timeout: 5000 }
+            ).trim();
+            if (running) {
+                running.split('\n').forEach(line => {
+                    const [name, dockerStatus, createdAt] = line.split('|');
+                    const agentType = name.replace(CONTAINER_PREFIX, '');
+                    if (agentType) {
+                        containers[agentType] = name; // sync into in-memory map
+                        agents.push({
+                            agentType,
+                            containerName: name,
+                            status: 'running',
+                            startedAt: createdAt || null,
+                            uptime: dockerStatus || null,
+                            model: 'Local Docker'
+                        });
+                    }
+                });
+            }
+        } catch (e) { /* docker ps failed */ }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ agents, docker: true }));
+        return;
+    }
+
+    // ── Agent Stop endpoint ──
+    if (req.method === 'POST' && req.url === '/api/agents/stop') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            let parsed;
+            try { parsed = JSON.parse(body); } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                return;
+            }
+            const stopped = [];
+            if (parsed.all) {
+                // Stop all agent containers
+                for (const agentType of Object.keys(containers)) {
+                    log(`🛑 User requested stop: ${agentType}`);
+                    stopContainer(agentType);
+                    stopped.push(agentType);
+                }
+            } else if (parsed.agentType && containers[parsed.agentType]) {
+                log(`🛑 User requested stop: ${parsed.agentType}`);
+                stopContainer(parsed.agentType);
+                stopped.push(parsed.agentType);
+            } else if (parsed.agentType) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: `Agent "${parsed.agentType}" is not running` }));
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ stopped, remaining: Object.keys(containers) }));
+        });
+        return;
+    }
     if (req.method === 'POST' && req.url === '/api/exec') {
         let body = '';
 
@@ -411,7 +517,11 @@ const server = http.createServer((req, res) => {
                         try {
                             const agentResponse = JSON.parse(rawResult.stdout);
                             // Extract the reply text from the agent's JSON response
-                            const replyText = agentResponse.reply
+                            // Supports: OpenClaw format (.reply, .text, .message, .output, .payloads)
+                            //           OpenFang/OpenAI format (.choices[0].message.content)
+                            const replyText = (agentResponse.choices && agentResponse.choices[0] && agentResponse.choices[0].message && agentResponse.choices[0].message.content)
+                                || (agentResponse.payloads && agentResponse.payloads[0] && agentResponse.payloads[0].text)
+                                || agentResponse.reply
                                 || agentResponse.text
                                 || agentResponse.message
                                 || agentResponse.output

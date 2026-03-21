@@ -43,6 +43,7 @@ import '../css/git-docgen.css';
 import '../css/draw-docgen.css';
 import '../css/run-preflight.css';
 import '../css/composer.css';
+import '../css/agent-panel.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -165,6 +166,7 @@ async function loadModules() {
     // 3k: Agent Cloud Execution (standalone — depends on M.KEYS from storage-keys)
     await import('../js/github-auth.js');
     await import('../js/agent-cloud.js');
+    await import('../js/agent-panel.js');
 }
 
 loadModules();

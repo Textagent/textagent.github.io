@@ -206,7 +206,7 @@
         return '> *Converted from: ' + file.name + '*\n\n```xml\n' + formatted + '\n```';
     }
 
-    // --- PDF Converter (pdf.js) ---
+    // --- PDF Converter (pdf.js + Tesseract.js OCR fallback) ---
     async function convertPdfToMarkdown(file) {
         var pdfjsLib = window.pdfjsLib;
         if (!pdfjsLib) {
@@ -224,20 +224,82 @@
 
         var arrayBuffer = await file.arrayBuffer();
         var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        var ocrUsed = false;
+        var ocrWorker = null;
         var markdown = '> *Converted from: ' + file.name + ' (' + pdf.numPages + ' pages)*\n\n---\n\n';
 
         for (var i = 1; i <= pdf.numPages; i++) {
             var page = await pdf.getPage(i);
             var textContent = await page.getTextContent();
-            var pageText = textContent.items.map(function (item) { return item.str; }).join(' ');
+            var pageText = textContent.items.map(function (item) { return item.str; }).join(' ').trim();
+            var usedOcrForPage = false;
+
+            // If page has little/no selectable text, try OCR (scanned PDF)
+            if (pageText.length < 20) {
+                try {
+                    if (conversionDetail) {
+                        conversionDetail.textContent = 'OCR processing page ' + i + ' of ' + pdf.numPages + '…';
+                    }
+
+                    // Lazy-load Tesseract.js on first OCR page
+                    if (!ocrWorker) {
+                        var Tesseract = await loadTesseract();
+                        ocrWorker = await Tesseract.createWorker('eng', 1, {
+                            logger: function () {} // silent
+                        });
+                    }
+
+                    // Render page to canvas at 2x scale for better OCR accuracy
+                    var viewport = page.getViewport({ scale: 2 });
+                    var canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    var ctx = canvas.getContext('2d');
+                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+                    var result = await ocrWorker.recognize(canvas);
+                    var ocrText = (result.data && result.data.text) ? result.data.text.trim() : '';
+
+                    if (ocrText.length > 0) {
+                        pageText = ocrText;
+                        usedOcrForPage = true;
+                        ocrUsed = true;
+                    }
+                } catch (ocrErr) {
+                    console.warn('OCR failed for page ' + i + ':', ocrErr);
+                    // Fall through with whatever text PDF.js extracted
+                }
+            }
 
             if (pdf.numPages > 1) {
-                markdown += '## Page ' + i + '\n\n';
+                markdown += '## Page ' + i + (usedOcrForPage ? ' *(OCR)*' : '') + '\n\n';
             }
-            markdown += pageText.trim() + '\n\n';
+            markdown += pageText + '\n\n';
+        }
+
+        // Clean up Tesseract worker
+        if (ocrWorker) {
+            try { await ocrWorker.terminate(); } catch (_) {}
+        }
+
+        // Add note if OCR was used
+        if (ocrUsed) {
+            markdown = '> [!NOTE]\n> Some pages were scanned images — text was extracted using OCR.\n\n' + markdown;
         }
 
         return markdown;
+    }
+
+    /** Lazy-load Tesseract.js from CDN (browser WASM build) */
+    async function loadTesseract() {
+        if (window.Tesseract) return window.Tesseract;
+        try {
+            var mod = await import('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js');
+            window.Tesseract = mod;
+            return mod;
+        } catch (e) {
+            throw new Error('Tesseract.js could not be loaded. OCR requires a modern browser with WASM support.');
+        }
     }
 
     // ============================================

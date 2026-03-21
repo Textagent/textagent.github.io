@@ -132,6 +132,60 @@
                 activeCodespace: csId || null,
                 username: M.githubAuth ? M.githubAuth.getUser() : null
             };
+        },
+
+        /** Get local Docker agent status */
+        getLocalStatus: async function () {
+            var baseUrl = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || (window.location.origin);
+            baseUrl = baseUrl.replace(/\/api\/exec$/, '');
+            try {
+                var res = await fetch(baseUrl + '/api/agents/status', {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (!res.ok) return { agents: [], docker: false };
+                return await res.json();
+            } catch (_) {
+                return { agents: [], docker: false };
+            }
+        },
+
+        /** Stop a specific local Docker agent */
+        stopLocalAgent: async function (agentType) {
+            var baseUrl = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || (window.location.origin);
+            baseUrl = baseUrl.replace(/\/api\/exec$/, '');
+            try {
+                var res = await fetch(baseUrl + '/api/agents/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ agentType: agentType })
+                });
+                var result = await res.json();
+                if (M.showToast) M.showToast('🛑 Stopped ' + agentType, 'info');
+                return result;
+            } catch (e) {
+                if (M.showToast) M.showToast('❌ Failed to stop ' + agentType, 'warning');
+                throw e;
+            }
+        },
+
+        /** Stop all local Docker agents */
+        stopAllLocalAgents: async function () {
+            var baseUrl = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || (window.location.origin);
+            baseUrl = baseUrl.replace(/\/api\/exec$/, '');
+            try {
+                var res = await fetch(baseUrl + '/api/agents/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ all: true })
+                });
+                var result = await res.json();
+                if (M.showToast) M.showToast('🛑 All agents stopped', 'info');
+                return result;
+            } catch (e) {
+                if (M.showToast) M.showToast('❌ Failed to stop agents', 'warning');
+                throw e;
+            }
         }
     };
 
