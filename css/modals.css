@@ -472,6 +472,58 @@
 }
 
 /* ========================================
+   CUSTOM LINK NAME
+   ======================================== */
+
+.share-custom-name-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.share-custom-name-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--editor-bg);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.share-custom-name-wrapper:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.share-custom-name-prefix {
+  padding: 8px 2px 8px 12px;
+  font-size: 13px;
+  font-family: monospace;
+  color: var(--text-color);
+  opacity: 0.45;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.share-custom-name-wrapper input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  padding: 8px 12px 8px 0;
+  font-size: 14px;
+  color: var(--text-color);
+  outline: none;
+  box-shadow: none !important;
+  min-width: 0;
+}
+
+.share-custom-name-wrapper input::placeholder {
+  opacity: 0.4;
+}
+
+/* ========================================
    SHARE VIEW-LOCK PILLS
    ======================================== */
 

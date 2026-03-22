@@ -77,6 +77,17 @@
                     <div id="share-passphrase-error" class="share-error" style="display:none"></div>
                 </div>
 
+                <!-- Custom Link Name (optional) -->
+                <div class="share-form-group share-custom-name-section">
+                    <label for="share-custom-name"><i class="bi bi-link-45deg me-1"></i>Custom Link Name <small>(optional)</small></label>
+                    <div class="share-custom-name-wrapper">
+                        <span class="share-custom-name-prefix">#s=</span>
+                        <input type="text" id="share-custom-name" placeholder="e.g. mynotes" autocomplete="off" maxlength="50" />
+                    </div>
+                    <small>Letters, numbers, hyphens. Case-insensitive. Leave empty for auto-generated.</small>
+                    <div id="share-custom-name-error" class="share-error" style="display:none"></div>
+                </div>
+
                 <!-- View Mode Lock (optional) -->
                 <div class="share-view-lock-section">
                     <label class="share-view-lock-label"><i class="bi bi-eye me-1"></i> Open in view mode</label>
@@ -592,7 +603,8 @@
                             <strong>Share as Link</strong>
                             <small>Encrypted short link — opens in TextAgent</small>
                         </div>
-                        <div class="memory-share-actions">
+                        <div class="memory-share-actions" style="flex-direction:column;gap:6px;align-items:stretch">
+                            <input type="text" id="memory-custom-name" class="memory-custom-name-input" placeholder="Custom name (optional)" autocomplete="off" maxlength="50" style="font-size:12px;padding:4px 8px;border:1px solid var(--border-color,#30363d);border-radius:6px;background:var(--input-bg,#0d1117);color:var(--text-color,#e6edf3);width:100%" />
                             <button class="memory-action-btn" id="memory-gen-link">Generate Link</button>
                         </div>
                     </div>

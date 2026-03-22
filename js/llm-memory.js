@@ -328,6 +328,20 @@
       return;
     }
 
+    // Read custom name from memory modal input
+    var memoryCustomInput = document.getElementById('memory-custom-name');
+    var customSlug = null;
+    if (memoryCustomInput && memoryCustomInput.value.trim()) {
+      var result = M.validateSlug(memoryCustomInput.value);
+      if (!result.valid && result.error) {
+        memoryShareResult.style.display = 'block';
+        memoryShareResult.className = 'error';
+        memoryShareResult.innerHTML = result.error;
+        return;
+      }
+      customSlug = result.slug || null;
+    }
+
     // Show loading state
     memoryGenLink.disabled = true;
     memoryGenLink.textContent = 'Generating...';
@@ -336,9 +350,13 @@
       // Use compact share (same as main share flow)
       let shareUrl;
       try {
-        const result = await M.createCompactShare(output);
+        const result = await M.createCompactShare(output, { customSlug: customSlug });
         shareUrl = result.url;
       } catch (fbError) {
+        // If it's a custom name error, show immediately
+        if (customSlug && (fbError.message.indexOf('unavailable') !== -1 || fbError.message.indexOf('reserved') !== -1 || fbError.message.indexOf('characters') !== -1)) {
+          throw fbError;
+        }
         // Fallback to inline URL if Firebase fails
         console.warn('Firebase unavailable, using URL fallback:', fbError);
         const compressed = M.compressData(output);
@@ -367,6 +385,7 @@
       memoryGenLink.textContent = 'Generate Link';
     }
   });
+
 
   // API example toggle
   memoryToggleApi.addEventListener('click', () => {

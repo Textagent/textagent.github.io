@@ -92,6 +92,21 @@
         return epoch + rand;
     }
 
+    // --- Custom Slug Validation ---
+    var RESERVED_SLUGS = ['js', 'css', 'dist', 'public', 'api', 'index', 'app', 'assets', 'img', 'fonts', 'admin', 'login', 'share', 'test', 'node_modules', 'favicon', 'robots', 'sitemap'];
+    var SLUG_REGEX = /^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/;
+
+    function validateSlug(slug) {
+        slug = slug.trim().toLowerCase();
+        if (!slug) return { valid: false, slug: '', error: '' }; // empty = auto-generate
+        if (slug.length < 3) return { valid: false, slug: slug, error: 'Name must be at least 3 characters.' };
+        if (slug.length > 50) return { valid: false, slug: slug, error: 'Name must be 50 characters or less.' };
+        if (!SLUG_REGEX.test(slug)) return { valid: false, slug: slug, error: 'Only letters, numbers, and hyphens allowed. Must start and end with a letter or number.' };
+        if (RESERVED_SLUGS.indexOf(slug) !== -1) return { valid: false, slug: slug, error: 'This name is reserved. Please choose another.' };
+        return { valid: true, slug: slug, error: '' };
+    }
+    M.validateSlug = validateSlug;
+
     /**
      * Create a compact share document in Firestore.
      * Encrypts content, generates a short ID, stores key in Firestore.
@@ -107,6 +122,17 @@
         var wt = generateWriteToken();
         var docData = { d: dataString, k: keyString, t: Date.now(), wt: wt };
         if (options.view) docData.view = options.view;
+
+        // --- Custom slug support ---
+        if (options.customSlug) {
+            var slug = options.customSlug;
+            var docRef = db.collection('shares').doc(slug);
+            var existing = await docRef.get();
+            if (existing.exists) throw new Error('This name is currently unavailable. Please choose another.');
+            await docRef.set(docData);
+            var shareUrl = SHARE_BASE_URL + '#s=' + slug;
+            return { url: shareUrl, id: slug, wt: wt, keyString: keyString };
+        }
 
         // Retry with new ID on collision (Firestore .set with merge:false)
         for (var attempt = 0; attempt < 3; attempt++) {
@@ -336,12 +362,27 @@
         openShareOptionsModal();
     };
 
+    function getCustomSlugFromInput() {
+        var input = document.getElementById('share-custom-name');
+        if (!input) return null;
+        var raw = input.value.trim();
+        if (!raw) return null;
+        var result = validateSlug(raw);
+        if (!result.valid && result.error) throw new Error(result.error);
+        return result.slug || null;
+    }
+
     async function doQuickShare() {
         var markdownContent = M.markdownEditor.value;
+        var customSlug = getCustomSlugFromInput();
         try {
-            var result = await createCompactShare(markdownContent, { view: selectedShareView || undefined });
+            var result = await createCompactShare(markdownContent, { view: selectedShareView || undefined, customSlug: customSlug });
             return { url: result.url, id: result.id };
         } catch (fbError) {
+            // If it's a custom name error, re-throw immediately
+            if (customSlug && (fbError.message.indexOf('unavailable') !== -1 || fbError.message.indexOf('reserved') !== -1 || fbError.message.indexOf('characters') !== -1 || fbError.message.indexOf('letters') !== -1)) {
+                throw fbError;
+            }
             // Fallback to inline URL if Firebase fails
             console.warn('Firebase unavailable, using URL fallback:', fbError);
             var compressed = compressData(markdownContent);
@@ -358,6 +399,7 @@
 
     async function doSecureShare(passphrase) {
         var markdownContent = M.markdownEditor.value;
+        var customSlug = getCustomSlugFromInput();
         var compressed = compressData(markdownContent);
         var salt = crypto.getRandomValues(new Uint8Array(16));
         var key = await deriveKeyFromPassphrase(passphrase, salt);
@@ -367,10 +409,21 @@
         var wt = generateWriteToken();
         var docData = { d: dataString, salt: saltString, secure: true, t: Date.now(), wt: wt };
         if (selectedShareView) docData.view = selectedShareView;
-        var docRef = await db.collection('shares').add(docData);
-        var secureUrl = SHARE_BASE_URL + '#id=' + docRef.id + '&secure=1';
+
+        var docId;
+        if (customSlug) {
+            var docRef = db.collection('shares').doc(customSlug);
+            var existing = await docRef.get();
+            if (existing.exists) throw new Error('This name is currently unavailable. Please choose another.');
+            await docRef.set(docData);
+            docId = customSlug;
+        } else {
+            var docRef = await db.collection('shares').add(docData);
+            docId = docRef.id;
+        }
+        var secureUrl = SHARE_BASE_URL + '#id=' + docId + '&secure=1';
         if (selectedShareView) secureUrl += '&view=' + selectedShareView;
-        return { url: secureUrl, id: docRef.id };
+        return { url: secureUrl, id: docId };
     }
 
     // ========================================
@@ -713,6 +766,11 @@
         shareOptionsModal.classList.add('active');
         document.getElementById('share-do-share').disabled = false;
         document.getElementById('share-do-share').innerHTML = '<i class="bi bi-share me-1"></i> Share';
+        // Reset custom name input
+        var customNameInput = document.getElementById('share-custom-name');
+        if (customNameInput) customNameInput.value = '';
+        var customNameError = document.getElementById('share-custom-name-error');
+        if (customNameError) customNameError.style.display = 'none';
         // Reset view lock pills — default to Preview
         shareOptionsModal.querySelectorAll('.share-view-pill').forEach(function (p) {
             p.classList.toggle('active', p.getAttribute('data-view') === 'preview');
@@ -829,6 +887,9 @@
         sharePassError.style.display = 'none';
         try {
             var shareResult;
+            // Pre-validate custom name before attempting share
+            var customNameError = document.getElementById('share-custom-name-error');
+            if (customNameError) customNameError.style.display = 'none';
             if (isSecureShareMode) {
                 var pass = sharePassInput.value;
                 var passConfirm = sharePassConfirm.value;
@@ -860,8 +921,15 @@
             showShareResult(shareResult.url, isSecureShareMode);
         } catch (error) {
             console.error('Share failed:', error);
-            sharePassError.textContent = 'Share failed: ' + error.message;
-            sharePassError.style.display = '';
+            // Show custom name errors in the custom name error div
+            var isNameError = error.message && (error.message.indexOf('unavailable') !== -1 || error.message.indexOf('reserved') !== -1 || error.message.indexOf('characters') !== -1 || error.message.indexOf('letters') !== -1 || error.message.indexOf('hyphens') !== -1);
+            if (isNameError && customNameError) {
+                customNameError.textContent = error.message;
+                customNameError.style.display = '';
+            } else {
+                sharePassError.textContent = 'Share failed: ' + error.message;
+                sharePassError.style.display = '';
+            }
         }
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-share me-1"></i> Share';
