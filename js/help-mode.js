@@ -33,9 +33,9 @@
             shortcut: null,
             demo: 'assets/demos/13_table_of_contents.webp'
         },
-        '#import-button, #qab-import, #mobile-import-button': {
-            name: 'Import File',
-            desc: 'Import files in 8 formats — MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF. All converted to Markdown client-side.',
+        '#qab-more': {
+            name: 'Upload / Import File',
+            desc: 'Open the dropzone to drag-and-drop or browse files in 8 formats — MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF. All converted to Markdown client-side.',
             shortcut: null,
             demo: 'assets/demos/08_import_export.webp'
         },

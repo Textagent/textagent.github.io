@@ -280,3 +280,10 @@ body.header-hidden .agent-panel-floating-toggle:hover {
     transform: translateY(1px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
+
+/* Hide agent panel in read-only mode when header is fully hidden */
+body.editor-readonly.header-hidden .agent-panel-toggle,
+body.editor-readonly.header-hidden .agent-panel,
+body.editor-readonly.header-hidden .agent-panel-floating-toggle {
+    display: none !important;
+}

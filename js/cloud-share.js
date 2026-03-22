@@ -592,7 +592,7 @@
                 var target = e.target.closest(
                     '.fmt-btn, #new-document-btn, #template-btn, #share-button, ' +
                     '#mobile-share-button, #speech-to-text-btn, #run-all-btn, ' +
-                    '#qab-new, #qab-import, #qab-template, #qab-share, #qab-voice, ' +
+                    '#qab-new, #qab-template, #qab-share, #qab-voice, ' +
                     '#qab-copy, .ai-action-chip, .ai-ctx-btn, ' +
                     '#replace-one, #replace-all, #qab-replace-one, #qab-replace-all'
                 );

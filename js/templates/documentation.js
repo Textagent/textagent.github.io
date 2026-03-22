@@ -426,7 +426,7 @@ window.__MDV_TEMPLATES_DOCUMENTATION = [
       '> Your encryption key is in the URL hash (`#k=...`) and is **never** sent to the server.\n\n' +
       '---\n\n' +
       '## 📁 Smart File Import\n\n' +
-      'Drag \\& drop or click **Import** to convert from **8 formats**:\n\n' +
+      'Drag \\& drop or click **Upload** to convert from **8 formats**:\n\n' +
       '| Format | Description |\n' +
       '|:-------|:------------|\n' +
       '| `.md` | Markdown files |\n' +

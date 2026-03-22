@@ -56,6 +56,12 @@
   transform: rotate(45deg);
 }
 
+/* Hide composer in read-only mode */
+body.editor-readonly .composer-fab,
+body.editor-readonly .composer-floating-panel {
+  display: none !important;
+}
+
 /* ---- Floating Panel ---- */
 .composer-floating-panel {
   position: fixed;

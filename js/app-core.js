@@ -23,7 +23,6 @@
     M.markdownEditor = document.getElementById("markdown-editor");
     M.markdownPreview = document.getElementById("markdown-preview");
     M.themeToggle = document.getElementById("theme-toggle");
-    M.importButton = document.getElementById("import-button");
     M.fileInput = document.getElementById("file-input");
     M.exportMd = document.getElementById("export-md");
     M.exportHtml = document.getElementById("export-html");
@@ -60,7 +59,6 @@
     M.mobileWordCount = document.getElementById("mobile-word-count");
     M.mobileCharCount = document.getElementById("mobile-char-count");
     M.mobileToggleSync = document.getElementById("mobile-toggle-sync");
-    M.mobileImportBtn = document.getElementById("mobile-import-button");
     M.mobileExportMd = document.getElementById("mobile-export-md");
     M.mobileExportHtml = document.getElementById("mobile-export-html");
     M.mobileExportPdf = document.getElementById("mobile-export-pdf");

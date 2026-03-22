@@ -226,12 +226,6 @@
             if (btn) btn.click();
         });
 
-        // Import — open file picker directly
-        var qabImport = document.getElementById('qab-import');
-        if (qabImport) qabImport.addEventListener('click', function () {
-            fileInput.click();
-        });
-
         // Export MD / HTML / PDF — delegate to existing export buttons
         var qabExportMd = document.getElementById('qab-export-md');
         if (qabExportMd) qabExportMd.addEventListener('click', function () {
@@ -499,10 +493,7 @@
         if (M.markdownEditor.readOnly) return;
         if (e.target.files.length) M.importFile(e.target.files[0]);
     });
-    M.importButton.addEventListener('click', function () {
-        if (M.dropzone.style.display === 'block') M.dropzone.style.display = 'none';
-        else M.dropzone.style.display = 'block';
-    });
+
     M.exportMd.addEventListener('click', async function () {
         var saveAs = await window.getSaveAs();
         var blob = new Blob([M.markdownEditor.value], { type: 'text/markdown' });
