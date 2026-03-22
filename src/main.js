@@ -133,6 +133,7 @@ async function loadModules() {
         import('../js/templates/finance.js'),
         import('../js/templates/games.js'),
         import('../js/templates/skills.js'),
+        import('../js/templates/api-explorer.js'),
     ]);
     await import('../js/templates.js');
 

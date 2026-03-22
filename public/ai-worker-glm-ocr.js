@@ -12,7 +12,7 @@
  *   ping/pong   → health check
  */
 
-const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.7";
+const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.8";
 
 // Model host — downloads ONNX models from textagent HuggingFace org
 const MODEL_ORG_FALLBACK = "onnx-community";
