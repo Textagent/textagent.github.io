@@ -22,7 +22,7 @@
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://esm.run https://www.gstatic.com https://vjs.zencdn.net https://unpkg.com https://threejs.org https://challenges.cloudflare.com;
         style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://vjs.zencdn.net https://challenges.cloudflare.com;
-        connect-src 'self' https: http: https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://esm.run https://huggingface.co https://cdn-lfs.hf.co https://cdn-lfs-us-1.hf.co;
+        connect-src 'self' https: http: https://firestore.googleapis.com https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://esm.run https://huggingface.co https://cdn-lfs.hf.co https://cdn-lfs-us-1.hf.co https://r.jina.ai https://s.jina.ai;
         img-src 'self' data: blob: https://www.plantuml.com https://textagent.github.io https://img.shields.io https://www.google.com https://challenges.cloudflare.com;
         font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         media-src 'self' blob: https: http:;
@@ -545,6 +545,8 @@
                                     class="bi bi-body-text me-2"></i>Focus Mode</button></li>
                         <li><button class="dropdown-item" type="button" id="qab-voice"><i
                                     class="bi bi-mic me-2"></i>Voice Dictation</button></li>
+                        <li><button class="dropdown-item" type="button" id="qab-agents"><i
+                                    class="bi bi-box me-2"></i>Agent Containers</button></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -705,6 +707,14 @@
                 <span class="fmt-api-group-label" style="color:#6965db">Draw</span>
                 <button class="fmt-btn fmt-draw-btn" data-action="draw-tag" title="Insert Excalidraw / Mermaid whiteboard">🎨
                     Draw</button>
+            </div>
+            <span class="fmt-separator"></span>
+            <div class="fmt-linux-group" title="Web Tools (Scrape & Search)">
+                <span class="fmt-api-group-label" style="color:#06b6d4">Tools</span>
+                <button class="fmt-btn fmt-tools-btn" data-action="tools-scrape-tag"
+                    title="Insert Web Scrape Tag">🔗 Scrape</button>
+                <button class="fmt-btn fmt-tools-btn" data-action="tools-search-tag"
+                    title="Insert Web Search Tag">🔍 Search</button>
             </div>
             <span class="fmt-separator"></span>
             <div class="fmt-coding-group" title="Executable Code Blocks">
@@ -909,6 +919,8 @@
                     <button class="composer-chip ai-chip" data-insert="{{Agent: }}" data-cursor="-2" title="Agent Flow">🤖 Agent</button>
                     <button class="composer-chip ai-chip" data-insert="{{OCR: }}" data-cursor="-2" title="OCR Scan">🔍 OCR</button>
                     <button class="composer-chip ai-chip" data-insert="{{Game: }}" data-cursor="-2" title="Game Builder">🎮 Game</button>
+                    <button class="composer-chip ai-chip" data-insert="{{@Tools: @scrape: }}" data-cursor="-2" title="Web Scrape">🔗 Scrape</button>
+                    <button class="composer-chip ai-chip" data-insert="{{@Tools: @search: }}" data-cursor="-2" title="Web Search">🔍 Search</button>
                 </div>
                 <!-- Input bar -->
                 <div class="composer-input-bar">

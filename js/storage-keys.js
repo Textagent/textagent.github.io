@@ -44,6 +44,7 @@
         API_KEY_TAVILY: 'md-viewer-tavily-api-key',
         API_KEY_GOOGLE_CSE: 'md-viewer-google-cse-key',
         API_KEY_HF: 'md-viewer-hf-key',
+        API_KEY_JINA: 'textagent-jina-api-key',
 
         // --- Speech ---
         SPEECH_LANG: 'mdview-speech-lang',

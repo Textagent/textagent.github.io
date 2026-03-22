@@ -209,9 +209,13 @@
             ? M.transformGitMarkdown(gameMarkdown)
             : gameMarkdown;
         // Chain Draw tag transform (Excalidraw + Mermaid)
-        var finalMarkdown = M.transformDrawMarkdown
+        var drawMarkdown = M.transformDrawMarkdown
             ? M.transformDrawMarkdown(gitMarkdown)
             : gitMarkdown;
+        // Chain Tools tag transform (Web Scrape & Search)
+        var finalMarkdown = M.transformToolsMarkdown
+            ? M.transformToolsMarkdown(drawMarkdown)
+            : drawMarkdown;
         // Convert <!-- pagebreak --> comments into visible div markers
         finalMarkdown = finalMarkdown.replace(
             /<!--\s*pagebreak\s*-->/gi,
@@ -220,7 +224,7 @@
         var html = marked.parse(finalMarkdown);
         var sanitizedHtml = DOMPurify.sanitize(html, {
             ADD_TAGS: ['mjx-container', 'button', 'select', 'option', 'video', 'source', 'iframe', 'video-player', 'video-skin'],
-            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action', 'data-pagebreak', 'data-draw-index', 'data-draw-tool', 'data-tool', 'data-skill', 'spellcheck', 'rows']
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action', 'data-pagebreak', 'data-draw-index', 'data-draw-tool', 'data-tool', 'data-skill', 'spellcheck', 'rows', 'data-tools-index', 'data-tools-action', 'data-tools-copy']
         });
         container.innerHTML = sanitizedHtml;
 
@@ -326,6 +330,9 @@
 
             // Draw: bind Excalidraw/Mermaid card actions
             if (M.bindDrawPreviewActions) M.bindDrawPreviewActions(M.markdownPreview);
+
+            // Tools: bind Web Scrape/Search card actions
+            if (M.bindToolsPreviewActions) M.bindToolsPreviewActions(M.markdownPreview);
 
             // Finance: render TradingView stock widgets
             if (M.renderStockWidgets) M.renderStockWidgets(M.markdownPreview);
