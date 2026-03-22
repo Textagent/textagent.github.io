@@ -245,3 +245,38 @@
 [data-theme="dark"] .agent-panel-footer {
     border-color: #30363d;
 }
+
+/* Floating toggle button — visible only when header fully hidden (level 2) */
+.agent-panel-floating-toggle {
+    position: fixed;
+    top: 6px;
+    /* Place to the right of the restore pill */
+    left: calc(50% + 70px);
+    z-index: 999;
+    display: none;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background-color: var(--header-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+}
+
+body.header-hidden .agent-panel-floating-toggle {
+    display: inline-flex;
+    opacity: 0.35;
+    pointer-events: auto;
+}
+
+body.header-hidden .agent-panel-floating-toggle:hover {
+    opacity: 1;
+    transform: translateY(1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}

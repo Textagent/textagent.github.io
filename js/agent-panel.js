@@ -24,6 +24,27 @@
             btn.innerHTML = '<i class="bi bi-box"></i> <span class="agent-panel-badge" id="agent-badge" style="display:none">0</span>';
             aiBtn.parentNode.insertBefore(btn, aiBtn);
 
+            // Wire QAB Tools dropdown item
+            var qabAgentsItem = document.getElementById('qab-agents');
+            if (qabAgentsItem) {
+                qabAgentsItem.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    M.agentPanel.toggle();
+                });
+            }
+
+            // Create floating button for header-hidden state (level 2)
+            var floatingBtn = document.createElement('button');
+            floatingBtn.id = 'agent-panel-floating-btn';
+            floatingBtn.className = 'agent-panel-floating-toggle';
+            floatingBtn.title = 'Agent Containers';
+            floatingBtn.innerHTML = '<i class="bi bi-box"></i> <span class="agent-panel-badge" id="floating-agent-badge" style="display:none">0</span>';
+            document.body.appendChild(floatingBtn);
+            floatingBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                M.agentPanel.toggle();
+            });
+
             // Create floating panel
             panel = document.createElement('div');
             panel.id = 'agent-panel';
@@ -170,14 +191,17 @@
         },
 
         _updateBadgeCount: function (count) {
-            var badge = document.getElementById('agent-badge');
-            if (!badge) return;
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = '';
-            } else {
-                badge.style.display = 'none';
-            }
+            var badgeIds = ['agent-badge', 'floating-agent-badge'];
+            badgeIds.forEach(function (id) {
+                var badge = document.getElementById(id);
+                if (!badge) return;
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = '';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
         }
     };
 

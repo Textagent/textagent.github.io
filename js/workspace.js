@@ -16,6 +16,7 @@
     var diskTreeData = null; // cached directory tree for disk mode
     var expandedFolders = new Set(); // track which folders are expanded
     var activeFilePath = null; // relative path of active file in disk mode
+    var manuallyRenamed = {}; // track files that were manually renamed (skip auto-naming)
 
     // --- DOM refs ---
     var sidebar = document.getElementById('workspace-sidebar');
@@ -656,6 +657,8 @@
         var file = findFileById(id);
         if (!file) return;
         if (!newName || !newName.trim()) return;
+        // Mark as manually renamed — disable auto-naming for this file
+        manuallyRenamed[id] = true;
         var oldName = file.name;
         newName = newName.trim();
         if (!newName.endsWith('.md')) newName += '.md';
@@ -1026,6 +1029,53 @@
         // Update header doc-title chips (main header + QAB)
         if (docTitleName) docTitleName.textContent = displayName;
         if (qabDocTitleName) qabDocTitleName.textContent = displayName;
+    }
+
+    // --- Auto-naming: derive filename from content ---
+    var autoNameTimer = null;
+    function autoNameFromContent() {
+        if (!workspace || !workspace.activeFileId) return;
+        // Skip if file was manually renamed
+        if (manuallyRenamed[workspace.activeFileId]) return;
+        // Skip in disk mode (disk files have real paths)
+        if (diskMode) return;
+
+        var file = findFileById(workspace.activeFileId);
+        if (!file) return;
+
+        var content = M.markdownEditor.value || '';
+        var stripped = content.replace(/^#+\s*/, '').trim(); // strip leading # headings
+
+        if (!stripped) {
+            // Empty content → revert to Untitled
+            if (file.name !== 'Untitled.md') {
+                file.name = 'Untitled.md';
+                saveWorkspace();
+                renderFileList();
+                updatePageTitle(file.name);
+            }
+            return;
+        }
+
+        // Take first 10 chars, keep only ASCII letters and spaces
+        var autoName = stripped.substring(0, 10).replace(/[^a-zA-Z ]/g, '').trim();
+        if (!autoName) return;
+        autoName += '.md';
+
+        if (file.name !== autoName) {
+            file.name = autoName;
+            saveWorkspace();
+            renderFileList();
+            updatePageTitle(file.name);
+        }
+    }
+
+    // Debounced auto-naming on editor input
+    if (M.markdownEditor) {
+        M.markdownEditor.addEventListener('input', function () {
+            clearTimeout(autoNameTimer);
+            autoNameTimer = setTimeout(autoNameFromContent, 400);
+        });
     }
 
     // --- Sidebar toggle button ---
