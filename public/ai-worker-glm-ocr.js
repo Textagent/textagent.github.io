@@ -55,8 +55,7 @@ async function loadModel() {
             }
         }
 
-        // 2. Check WebGPU — GLM-OCR requires WebGPU (q4f16 external data files
-        //    cannot be loaded by WASM's Module.MountedFiles)
+        // 2. Check WebGPU — GLM-OCR uses WebGPU for acceleration
         if (typeof navigator !== "undefined" && navigator.gpu) {
             const adapter = await navigator.gpu.requestAdapter();
             if (adapter) device = "webgpu";
@@ -108,6 +107,35 @@ async function loadModel() {
             });
 
             self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...` });
+
+            // Fetch upstream config and augment it with q4f16 external data entries.
+            // The upstream config.json only lists base/fp16 variants in
+            // use_external_data_format but NOT the q4f16 quantized files.
+            let modelConfig;
+            try {
+                const cfgUrl = `https://huggingface.co/${MODEL_ID}/resolve/main/config.json`;
+                const cfgResp = await fetch(cfgUrl);
+                modelConfig = await cfgResp.json();
+            } catch (_) {
+                modelConfig = { model_type: "glm_ocr" };
+            }
+            // Merge q4f16 (and other quantized) entries into use_external_data_format
+            const tjsCfg = modelConfig["transformers.js_config"] || {};
+            const extDataMap = tjsCfg.use_external_data_format || {};
+            // Add q4f16 entries (each has 1 external data chunk)
+            extDataMap["vision_encoder_q4f16.onnx"] = 1;
+            extDataMap["decoder_model_merged_q4f16.onnx"] = 1;
+            extDataMap["embed_tokens_q4f16.onnx"] = 1;
+            // Also add q4 and quantized entries for completeness
+            extDataMap["vision_encoder_q4.onnx"] = 1;
+            extDataMap["decoder_model_merged_q4.onnx"] = 1;
+            extDataMap["embed_tokens_q4.onnx"] = 1;
+            extDataMap["vision_encoder_quantized.onnx"] = 1;
+            extDataMap["decoder_model_merged_quantized.onnx"] = 1;
+            extDataMap["embed_tokens_quantized.onnx"] = 1;
+            tjsCfg.use_external_data_format = extDataMap;
+            modelConfig["transformers.js_config"] = tjsCfg;
+
             model = await AutoModelForImageTextToText.from_pretrained(MODEL_ID, {
                 dtype: {
                     embed_tokens: "q4f16",
@@ -116,6 +144,7 @@ async function loadModel() {
                 },
                 device: device,
                 progress_callback: progressCb("model"),
+                config: modelConfig,
             });
         }
 
@@ -123,39 +152,12 @@ async function loadModel() {
         try {
             await loadFromHost();
         } catch (primaryErr) {
-            // Detect the known external-data incompatibility with onnxruntime-web 1.19.x
-            const errMsg = primaryErr.message || "";
-            if (errMsg.includes("MountedFiles") || errMsg.includes("external data file")) {
-                self.postMessage({
-                    type: "error",
-                    message: "GLM-OCR is temporarily unavailable — the model's quantized weights require " +
-                        "a newer ONNX Runtime version that isn't yet compatible with this library. " +
-                        "Please use Granite Docling or Florence-2 for OCR in the meantime.",
-                });
-                return;
-            }
-
             console.warn(`textagent model failed: ${primaryErr.message}. Falling back to ${MODEL_ORG_FALLBACK}…`);
             self.postMessage({ type: "status", message: `Falling back to ${MODEL_ORG_FALLBACK} models…` });
             MODEL_ID = MODEL_ID.replace('textagent/', MODEL_ORG_FALLBACK + '/');
             processor = null;
             model = null;
-
-            try {
-                await loadFromHost();
-            } catch (fallbackErr) {
-                const fbMsg = fallbackErr.message || "";
-                if (fbMsg.includes("MountedFiles") || fbMsg.includes("external data file")) {
-                    self.postMessage({
-                        type: "error",
-                        message: "GLM-OCR is temporarily unavailable — the model's quantized weights require " +
-                            "a newer ONNX Runtime version that isn't yet compatible with this library. " +
-                            "Please use Granite Docling or Florence-2 for OCR in the meantime.",
-                    });
-                    return;
-                }
-                throw fallbackErr;
-            }
+            await loadFromHost();
         }
 
         self.postMessage({ type: "loaded", device: device });

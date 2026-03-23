@@ -1,44 +1,35 @@
-# GLM-OCR Graceful Error Handling
+# GLM-OCR External Data Fix — Model Now Loads in Browser
 
 **Date:** 2026-03-23
 
 ## Summary
 
-Added graceful error handling for the GLM-OCR model when it fails to load due to an
-incompatibility between `transformers.js@4.0.0-next.8` (the only version supporting the
-`glm_ocr` model type) and its bundled `onnxruntime-web@1.19.x` which cannot load external
-`.onnx_data` weight files in the browser.
+Fixed GLM-OCR model loading failure (`Module.MountedFiles is not available`) by augmenting
+the model's `config.json` with missing q4f16 external data entries at load time.
 
-## Problem
+## Root Cause
 
-- GLM-OCR's quantized weights (`q4f16`) are stored in external `.onnx_data` files
-- ONNX Runtime Web requires explicit `externalData` session options to load these files
-  in the browser (confirmed by official ONNX Runtime docs)
-- `transformers.js@4.0.0-next.8` does not pass `externalData` options to `InferenceSession.create()`
-- This caused a cryptic `Module.MountedFiles is not available` error on every page load
+The upstream `config.json` on HuggingFace lists `use_external_data_format` mappings for
+base and fp16 ONNX variants but **not** for q4f16 quantized variants. When Transformers.js
+loaded the q4f16 model, it didn't know the weights were in external `.onnx_data` files,
+so ONNX Runtime tried to use `Module.MountedFiles` (which doesn't exist in browsers).
+
+`transformers.js@4.0.0-next.8` already has `use_external_data_format` support (from
+PR #1212) — it just wasn't being triggered for q4f16 due to the missing config entries.
 
 ## Changes
 
 ### Modified Files
-- `ai-worker-glm-ocr.js` — Added WebGPU guard + `MountedFiles` / `external data file`
-  error detection with a clear user-facing message
+- `ai-worker-glm-ocr.js` — Fetch upstream config, merge q4f16/q4/quantized entries
+  into `use_external_data_format`, pass combined config to `from_pretrained`
 - `public/ai-worker-glm-ocr.js` — Synced copy
 
 ### What Changed
-- **WebGPU guard:** If WebGPU is unavailable, the worker now returns a clear error
-  suggesting Granite Docling or Florence-2 as alternatives
-- **External data error detection:** Catches the specific `MountedFiles` / `external data file`
-  error pattern from ONNX Runtime and shows a user-friendly message:
-  > "GLM-OCR is temporarily unavailable — the model's quantized weights require a newer
-  > ONNX Runtime version that isn't yet compatible with this library."
-- **Prevents fallback retry:** The old code would fail on `textagent/GLM-OCR-ONNX`, then
-  retry on `onnx-community/GLM-OCR-ONNX` with the same result. Now it detects the error
-  immediately and stops
-- **Clears consent flag:** The error response triggers consent cleanup in `ai-assistant.js`,
-  preventing stuck retry loops on page reload
-
-## Resolution Path
-
-The model will work automatically once `transformers.js` v4 stable releases with
-`onnxruntime-web ≥ 1.22` and adds `externalData` session option plumbing. At that point,
-only the `TRANSFORMERS_URL` version string needs updating.
+- Before calling `AutoModelForImageTextToText.from_pretrained()`, the worker now:
+  1. Fetches the model's `config.json` from HuggingFace
+  2. Adds q4f16, q4, and quantized `.onnx` files to `use_external_data_format`
+  3. Passes the augmented config as the `config` option
+- Removed previous monkey-patch attempt (onnxruntime-web 1.19.x doesn't support
+  the `externalData` session option)
+- Kept WebGPU guard for clear error when WebGPU is unavailable
+- Kept fallback to `onnx-community/` mirror
