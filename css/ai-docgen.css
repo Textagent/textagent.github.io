@@ -303,6 +303,160 @@
     color: #b45309;
 }
 
+/* --- Camera Capture Modal --- */
+.ai-camera-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: docgen-toast-in 0.2s ease-out;
+}
+
+.ai-camera-modal {
+    background: var(--color-canvas-default, #161b22);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 14px;
+    width: 92%;
+    max-width: 640px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.ai-camera-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+    background: rgba(245, 158, 11, 0.06);
+}
+
+.ai-camera-title {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: #f59e0b;
+}
+
+.ai-camera-close {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ai-camera-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.ai-camera-body {
+    position: relative;
+    width: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+}
+
+.ai-camera-video {
+    width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+    display: block;
+}
+
+.ai-camera-preview-img {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-camera-preview-img img {
+    width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
+.ai-camera-actions {
+    display: flex;
+    gap: 10px;
+    padding: 14px 16px;
+    justify-content: center;
+    border-top: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.ai-camera-capture-btn,
+.ai-camera-retake-btn,
+.ai-camera-accept-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.ai-camera-capture-btn:hover,
+.ai-camera-retake-btn:hover,
+.ai-camera-accept-btn:hover {
+    transform: translateY(-1px);
+}
+
+.ai-camera-capture-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+}
+
+.ai-camera-capture-btn:hover {
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+}
+
+.ai-camera-retake-btn {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.ai-camera-retake-btn:hover {
+    background: rgba(245, 158, 11, 0.25);
+}
+
+.ai-camera-accept-btn {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: #fff;
+}
+
+.ai-camera-accept-btn:hover {
+    box-shadow: 0 0 12px rgba(5, 150, 105, 0.4);
+}
+
+[data-theme="light"] .ai-camera-modal {
+    background: #ffffff;
+    border-color: rgba(217, 119, 6, 0.3);
+}
+
+[data-theme="light"] .ai-camera-header {
+    background: rgba(245, 158, 11, 0.04);
+    border-color: rgba(217, 119, 6, 0.12);
+}
+
+[data-theme="light"] .ai-camera-title {
+    color: #b45309;
+}
+
 .ai-placeholder-header {
     display: flex;
     align-items: center;

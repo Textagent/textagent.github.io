@@ -499,6 +499,7 @@
                     + '<div class="ai-placeholder-actions">'
                     + '<button class="ai-placeholder-btn ai-memory-attach-folder" data-memory-name="' + escapedName + '" title="Attach folder">📂 Folder</button>'
                     + '<button class="ai-placeholder-btn ai-memory-attach-files" data-memory-name="' + escapedName + '" title="Attach files">📄 Files</button>'
+                    + '<button class="ai-placeholder-btn ai-memory-semantic-toggle" data-memory-name="' + escapedName + '" title="Semantic search — auto-enabled when files are attached">💎</button>'
                     + '<button class="ai-placeholder-btn ai-memory-rebuild" data-memory-name="' + escapedName + '" title="Rebuild index">🔄</button>'
                     + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
                     + '</div></div>'
@@ -546,6 +547,7 @@
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
                     + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-camera-btn" data-ai-index="' + blockIndex + '" title="Capture from camera">📷</button>'
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image or PDF for OCR">📎</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for OCR">'
                     + cardModelOpts + '</select>'
@@ -1385,6 +1387,162 @@
             });
         });
 
+        // Camera capture — openCameraModal must be inside this scope to access addUploadFieldsToBlock
+        function openCameraModal(blockIdx) {
+            var overlay = document.createElement('div');
+            overlay.className = 'ai-camera-overlay';
+            overlay.innerHTML =
+                '<div class="ai-camera-modal">' +
+                    '<div class="ai-camera-header">' +
+                        '<span class="ai-camera-title">📷 Camera Capture</span>' +
+                        '<button class="ai-camera-close" title="Close">✕</button>' +
+                    '</div>' +
+                    '<div class="ai-camera-body">' +
+                        '<video class="ai-camera-video" autoplay playsinline muted></video>' +
+                        '<canvas class="ai-camera-canvas" style="display:none"></canvas>' +
+                        '<div class="ai-camera-preview-img" style="display:none"><img></div>' +
+                    '</div>' +
+                    '<div class="ai-camera-actions">' +
+                        '<button class="ai-camera-capture-btn">📸 Capture</button>' +
+                        '<button class="ai-camera-retake-btn" style="display:none">🔄 Retake</button>' +
+                        '<button class="ai-camera-accept-btn" style="display:none">✅ Use Photo</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+
+            var video = overlay.querySelector('.ai-camera-video');
+            var canvas = overlay.querySelector('.ai-camera-canvas');
+            var previewImg = overlay.querySelector('.ai-camera-preview-img');
+            var captureBtn = overlay.querySelector('.ai-camera-capture-btn');
+            var retakeBtn = overlay.querySelector('.ai-camera-retake-btn');
+            var acceptBtn = overlay.querySelector('.ai-camera-accept-btn');
+            var closeBtn = overlay.querySelector('.ai-camera-close');
+            var stream = null;
+            var capturedBase64 = null;
+
+            function stopStream() {
+                if (stream) {
+                    stream.getTracks().forEach(function (t) { t.stop(); });
+                    stream = null;
+                }
+            }
+
+            function closeModal() {
+                stopStream();
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            }
+
+            closeBtn.addEventListener('click', closeModal);
+            overlay.addEventListener('click', function (ev) {
+                if (ev.target === overlay) closeModal();
+            });
+            function onKeyDown(ev) {
+                if (ev.key === 'Escape') { closeModal(); document.removeEventListener('keydown', onKeyDown); }
+            }
+            document.addEventListener('keydown', onKeyDown);
+
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+            }).then(function (mediaStream) {
+                stream = mediaStream;
+                video.srcObject = stream;
+            }).catch(function (err) {
+                M.showToast('📷 Camera access denied: ' + err.message, 'error');
+                closeModal();
+            });
+
+            captureBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (!video.videoWidth) {
+                    M.showToast('Camera not ready yet — try again', 'warning');
+                    return;
+                }
+                var scale = Math.min(1, 1280 / video.videoWidth);
+                canvas.width = Math.round(video.videoWidth * scale);
+                canvas.height = Math.round(video.videoHeight * scale);
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                capturedBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+                previewImg.querySelector('img').src = 'data:image/jpeg;base64,' + capturedBase64;
+                video.style.display = 'none';
+                previewImg.style.display = 'block';
+                captureBtn.style.display = 'none';
+                retakeBtn.style.display = '';
+                acceptBtn.style.display = '';
+            });
+
+            retakeBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                capturedBase64 = null;
+                video.style.display = '';
+                previewImg.style.display = 'none';
+                captureBtn.style.display = '';
+                retakeBtn.style.display = 'none';
+                acceptBtn.style.display = 'none';
+            });
+
+            acceptBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                try {
+                    if (!capturedBase64) {
+                        M.showToast('No image captured', 'warning');
+                        return;
+                    }
+                    var fileName = 'camera-' + Date.now() + '.jpg';
+                    if (!blockUploads.has(blockIdx)) blockUploads.set(blockIdx, []);
+                    blockUploads.get(blockIdx).push({ data: capturedBase64, mimeType: 'image/jpeg', name: fileName });
+                    stopStream();
+                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    addUploadFieldsToBlock(blockIdx, [fileName]);
+                    M.showToast('📷 Camera image attached', 'success');
+                } catch (err) {
+                    M.showToast('❌ Camera error: ' + err.message, 'error');
+                    closeModal();
+                }
+            });
+        }
+
+        // Camera capture button — 📷 opens camera modal or native camera input
+        container.querySelectorAll('.ai-camera-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.aiIndex, 10);
+                var existing = blockUploads.get(idx) || [];
+                if (existing.length >= MAX_UPLOADS_PER_BLOCK) {
+                    M.showToast('Maximum ' + MAX_UPLOADS_PER_BLOCK + ' images per block.', 'warning');
+                    return;
+                }
+
+                // Check for getUserMedia support
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    openCameraModal(idx);
+                } else {
+                    // Fallback: use native camera capture input (works on mobile)
+                    var input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.setAttribute('capture', 'environment');
+                    input.addEventListener('change', function () {
+                        var file = input.files && input.files[0];
+                        if (!file) return;
+                        var reader = new FileReader();
+                        reader.onload = function () {
+                            var dataUrl = reader.result;
+                            var base64 = dataUrl.split(',')[1];
+                            var mimeType = file.type || 'image/png';
+                            if (!blockUploads.has(idx)) blockUploads.set(idx, []);
+                            blockUploads.get(idx).push({ data: base64, mimeType: mimeType, name: 'camera-' + Date.now() + '.png' });
+                            addUploadFieldsToBlock(idx, ['camera-' + Date.now() + '.png']);
+                            M.showToast('📷 Camera image captured', 'success');
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                    input.click();
+                }
+            });
+        });
+
         // Upload thumbnail remove — ✕ on individual thumbnails
         container.querySelectorAll('.ai-card-upload-remove').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
@@ -1538,6 +1696,29 @@
         });
 
         // Memory card — Attach Folder
+        // Helper: auto-load embedding model + embed chunks after attaching files
+        function autoEmbedAfterAttach(memoryName, containerEl) {
+            if (!M._memory) return;
+            var semBtn = containerEl.querySelector('.ai-memory-semantic-toggle[data-memory-name="' + memoryName + '"]');
+
+            // Load embedding model (auto-downloads on first use, cached after)
+            var status = M._memory.getEmbeddingStatus();
+            var loadPromise = status.ready ? Promise.resolve(true) : M._memory.enableSemanticSearch();
+
+            loadPromise.then(function (loaded) {
+                if (!loaded) return;
+                if (semBtn) { semBtn.textContent = '⏳'; semBtn.disabled = true; }
+                return M._memory.reembedSource(memoryName);
+            }).then(function (count) {
+                if (count !== undefined && semBtn) {
+                    semBtn.classList.add('active');
+                    semBtn.title = 'Semantic search active (' + count + ' chunks embedded)';
+                }
+            }).catch(function () { /* non-critical */ }).finally(function () {
+                if (semBtn) { semBtn.disabled = false; semBtn.textContent = '💎'; }
+            });
+        }
+
         container.querySelectorAll('.ai-memory-attach-folder').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1550,6 +1731,8 @@
                     M.showToast('📚 Indexed ' + info.chunkCount + ' chunks from "' + info.folderName + '"', 'success');
                     var statsEl = container.querySelector('.ai-memory-stats[data-memory-name="' + name + '"]');
                     if (statsEl) statsEl.textContent = '📂 ' + info.folderName + ' — ' + info.chunkCount + ' chunks';
+                    // Auto-download embedding model + embed (like other models)
+                    autoEmbedAfterAttach(name, container);
                 }).catch(function (err) {
                     if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
                 }).finally(function () {
@@ -1574,6 +1757,8 @@
                         var statsEl = container.querySelector('.ai-memory-stats[data-memory-name="' + name + '"]');
                         if (statsEl) statsEl.textContent = stats.files + ' files — ' + stats.chunks + ' chunks';
                     });
+                    // Auto-download embedding model + embed (like other models)
+                    autoEmbedAfterAttach(name, container);
                 }).catch(function (err) {
                     if (err.name !== 'AbortError') M.showToast('Failed: ' + err.message, 'error');
                 }).finally(function () {
@@ -1602,6 +1787,71 @@
                     btn.disabled = false;
                     btn.textContent = '🔄';
                 });
+            });
+        });
+
+        // Memory card — Semantic Search Toggle
+        container.querySelectorAll('.ai-memory-semantic-toggle').forEach(function (btn) {
+            // Set initial state from current embedding status
+            if (M._memory) {
+                var status = M._memory.getEmbeddingStatus();
+                if (status.ready) {
+                    btn.classList.add('active');
+                    btn.title = 'Semantic search active (' + status.chunksEmbedded + ' chunks embedded)';
+                }
+            }
+
+            btn.addEventListener('click', async function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var name = this.dataset.memoryName;
+                if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+
+                var embStatus = M._memory.getEmbeddingStatus();
+
+                if (embStatus.ready) {
+                    // Already loaded — re-embed this source
+                    btn.disabled = true;
+                    btn.textContent = '⏳';
+                    try {
+                        var count = await M._memory.reembedSource(name);
+                        M.showToast('💎 Embedded ' + count + ' chunks for "' + name + '"', 'success');
+                        btn.classList.add('active');
+                        btn.title = 'Semantic search active (' + count + ' chunks embedded)';
+                    } catch (err) {
+                        M.showToast('Embedding failed: ' + err.message, 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = '💎';
+                    }
+                } else {
+                    // Not loaded — download embedding model first
+                    btn.disabled = true;
+                    btn.textContent = '⏳ Loading...';
+                    M.showToast('💎 Downloading embedding model (~150MB)...', 'info');
+                    try {
+                        var loaded = await M._memory.enableSemanticSearch();
+                        if (loaded) {
+                            M.showToast('💎 Embedding model loaded! Embedding chunks...', 'success');
+                            btn.textContent = '⏳ Embedding...';
+                            var count = await M._memory.reembedSource(name);
+                            M.showToast('💎 Semantic search ready — ' + count + ' chunks embedded', 'success');
+                            btn.classList.add('active');
+                            btn.title = 'Semantic search active (' + count + ' chunks embedded)';
+                            // Update all semantic toggles on page
+                            container.querySelectorAll('.ai-memory-semantic-toggle').forEach(function (b) {
+                                b.classList.add('active');
+                            });
+                        } else {
+                            M.showToast('Failed to load embedding model', 'error');
+                        }
+                    } catch (err) {
+                        M.showToast('Embedding model failed: ' + err.message, 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = '\ud83d\udc8e';
+                    }
+                }
             });
         });
 
