@@ -488,3 +488,62 @@ test.describe('Memory — DOMPurify Allowlist', () => {
         await expect(steps).toHaveCount(2);
     });
 });
+
+test.describe('Context Memory — Embedding / Semantic Search API', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/');
+        await page.waitForSelector('#markdown-editor', { state: 'visible' });
+        await page.waitForFunction(() => window.MDView && window.MDView.currentViewMode === 'split');
+        await page.waitForFunction(() => window.MDView._memory, { timeout: 15000 });
+    });
+
+    test('M._memory.enableSemanticSearch is a function', async ({ page }) => {
+        const type = await page.evaluate(() => typeof window.MDView._memory.enableSemanticSearch);
+        expect(type).toBe('function');
+    });
+
+    test('M._memory.getEmbeddingStatus is a function', async ({ page }) => {
+        const type = await page.evaluate(() => typeof window.MDView._memory.getEmbeddingStatus);
+        expect(type).toBe('function');
+    });
+
+    test('M._memory.reembedSource is a function', async ({ page }) => {
+        const type = await page.evaluate(() => typeof window.MDView._memory.reembedSource);
+        expect(type).toBe('function');
+    });
+
+    test('getEmbeddingStatus returns expected shape before enabling', async ({ page }) => {
+        const status = await page.evaluate(() => window.MDView._memory.getEmbeddingStatus());
+        expect(status).toHaveProperty('ready');
+        expect(status).toHaveProperty('modelSize');
+        expect(status).toHaveProperty('chunksEmbedded');
+        expect(status.ready).toBe(false);
+        expect(status.modelSize).toBe('~150MB');
+        expect(status.chunksEmbedded).toBe(0);
+    });
+
+    test('search still works (FTS5-only) when embeddings not loaded', async ({ page }) => {
+        // Ensure workspace is initialized
+        await page.evaluate(() => window.MDView._memory.ensureWorkspaceIndex(false));
+
+        // Search should not throw when embeddings are not loaded
+        const results = await page.evaluate(() =>
+            window.MDView._memory.search(['workspace'], 'test query', 5)
+        );
+        expect(Array.isArray(results)).toBe(true);
+    });
+
+    test('formatForContext works with hybrid results containing combinedScore', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            return window.MDView._memory.formatForContext([
+                { file: 'api.md', heading: '## Auth', snippet: 'JWT validation...', combinedScore: 0.85, rank: -0.85 },
+                { file: 'db.md', heading: '', snippet: 'PostgreSQL setup...', combinedScore: 0.62, rank: -0.62 },
+            ]);
+        });
+        expect(result).toContain('[api.md > ## Auth]');
+        expect(result).toContain('JWT validation...');
+        expect(result).toContain('[db.md]');
+        expect(result).toContain('PostgreSQL setup...');
+    });
+});
+

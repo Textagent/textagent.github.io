@@ -8,6 +8,7 @@
         md: 'markdown', markdown: 'markdown',
         docx: 'docx',
         xlsx: 'xlsx', xls: 'xlsx',
+        numbers: 'xlsx',
         csv: 'csv',
         html: 'html', htm: 'html',
         json: 'json',
@@ -384,5 +385,26 @@
         if (rows.length === 0) return '';
         return arrayToMarkdownTable(rows);
     }
+
+    // ============================================
+    // Public API: Convert a File to Markdown text
+    // Used by the Memory indexer to convert binary files before chunking
+    // ============================================
+    M.convertFileToMarkdown = async function (file) {
+        var ext = getFileExtension(file.name);
+        var type = SUPPORTED_EXTENSIONS[ext];
+        if (!type || type === 'markdown') return null; // null = use raw text
+
+        switch (type) {
+            case 'docx': return await convertDocxToMarkdown(file);
+            case 'xlsx': return await convertXlsxToMarkdown(file);
+            case 'csv':  return await convertCsvToMarkdown(file);
+            case 'html': return await convertHtmlToMarkdown(file);
+            case 'json': return await convertJsonToMarkdown(file);
+            case 'xml':  return await convertXmlToMarkdown(file);
+            case 'pdf':  return await convertPdfToMarkdown(file);
+            default:     return null;
+        }
+    };
 
 })(window.MDView);

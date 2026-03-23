@@ -1,6 +1,6 @@
 // ============================================
 // context-memory.js — Workspace Intelligence + External Memory
-// SQLite FTS5-powered local context index for AI tags
+// SQLite FTS5 + Embedding-powered hybrid search for AI tags
 // ============================================
 (function (M) {
     'use strict';
@@ -202,6 +202,214 @@
     var _workspaceDb = null; // workspace memory SQLite DB
     var _externalDbs = {}; // named external memory DBs
 
+    // --- Embedding / Semantic Search State ---
+    var _embeddingWorker = null;
+    var _embeddingReady = false;
+    var _embeddingCallbacks = {}; // id → { resolve, reject }
+    var _embeddingIdCounter = 0;
+    var _vectorStores = {}; // sourceName → [{ file, heading, content, vector }]
+
+    function initEmbeddingWorker() {
+        if (_embeddingWorker) return Promise.resolve(_embeddingReady);
+
+        return new Promise(function (resolve) {
+            try {
+                _embeddingWorker = new Worker('/embedding-worker.js', { type: 'module' });
+            } catch (e) {
+                // Fallback for environments where /embedding-worker.js isn't at root
+                try {
+                    _embeddingWorker = new Worker('./embedding-worker.js', { type: 'module' });
+                } catch (e2) {
+                    console.warn('Failed to create embedding worker:', e2);
+                    resolve(false);
+                    return;
+                }
+            }
+
+            _embeddingWorker.addEventListener('message', function (event) {
+                var msg = event.data;
+                switch (msg.type) {
+                    case 'loaded':
+                        _embeddingReady = true;
+                        console.log('[Memory] Embedding model loaded (' + (msg.device || 'unknown') + ')');
+                        resolve(true);
+                        break;
+                    case 'embeddings':
+                        if (msg.id !== undefined && _embeddingCallbacks[msg.id]) {
+                            _embeddingCallbacks[msg.id].resolve(msg.vectors);
+                            delete _embeddingCallbacks[msg.id];
+                        }
+                        break;
+                    case 'error':
+                        console.warn('[Memory] Embedding error:', msg.message);
+                        if (msg.id !== undefined && _embeddingCallbacks[msg.id]) {
+                            _embeddingCallbacks[msg.id].reject(new Error(msg.message));
+                            delete _embeddingCallbacks[msg.id];
+                        }
+                        if (!_embeddingReady) resolve(false);
+                        break;
+                    case 'status':
+                        console.log('[Memory]', msg.message);
+                        break;
+                }
+            });
+
+            _embeddingWorker.addEventListener('error', function (e) {
+                console.warn('[Memory] Embedding worker error:', e.message);
+                if (!_embeddingReady) resolve(false);
+            });
+
+            _embeddingWorker.postMessage({ type: 'load' });
+        });
+    }
+
+    function embedTexts(texts) {
+        if (!_embeddingWorker || !_embeddingReady) {
+            return Promise.reject(new Error('Embedding model not ready'));
+        }
+        var id = ++_embeddingIdCounter;
+        return new Promise(function (resolve, reject) {
+            _embeddingCallbacks[id] = { resolve: resolve, reject: reject };
+            _embeddingWorker.postMessage({ type: 'embed', texts: texts, id: id });
+            // Timeout after 60s
+            setTimeout(function () {
+                if (_embeddingCallbacks[id]) {
+                    _embeddingCallbacks[id].reject(new Error('Embedding timeout'));
+                    delete _embeddingCallbacks[id];
+                }
+            }, 60000);
+        });
+    }
+
+    function cosineSim(a, b) {
+        var dot = 0;
+        for (var i = 0; i < a.length; i++) dot += a[i] * b[i];
+        return dot; // vectors are pre-normalized
+    }
+
+    function semanticSearch(sourceName, queryVector, maxResults) {
+        var store = _vectorStores[sourceName];
+        if (!store || store.length === 0) return [];
+
+        var scored = [];
+        for (var i = 0; i < store.length; i++) {
+            scored.push({
+                file: store[i].file,
+                heading: store[i].heading,
+                snippet: store[i].content.substring(0, 200),
+                score: cosineSim(queryVector, store[i].vector)
+            });
+        }
+        scored.sort(function (a, b) { return b.score - a.score; });
+        return scored.slice(0, maxResults);
+    }
+
+    function mergeResults(ftsHits, semanticHits, maxResults) {
+        // Build a map keyed by file+snippet for deduplication
+        var merged = {};
+
+        // FTS5 hits: rank is negative (lower = better), normalize to 0..1
+        var ftsMaxRank = 1;
+        for (var i = 0; i < ftsHits.length; i++) {
+            var absRank = Math.abs(ftsHits[i].rank || 0);
+            if (absRank > ftsMaxRank) ftsMaxRank = absRank;
+        }
+        for (var j = 0; j < ftsHits.length; j++) {
+            var fh = ftsHits[j];
+            var key = fh.file + '::' + (fh.snippet || '').substring(0, 80);
+            merged[key] = {
+                file: fh.file,
+                heading: fh.heading,
+                snippet: fh.snippet,
+                ftsScore: Math.abs(fh.rank || 0) / ftsMaxRank,
+                semScore: 0
+            };
+        }
+
+        // Semantic hits
+        for (var k = 0; k < semanticHits.length; k++) {
+            var sh = semanticHits[k];
+            var key2 = sh.file + '::' + (sh.snippet || '').substring(0, 80);
+            if (merged[key2]) {
+                merged[key2].semScore = sh.score;
+            } else {
+                merged[key2] = {
+                    file: sh.file,
+                    heading: sh.heading,
+                    snippet: sh.snippet,
+                    ftsScore: 0,
+                    semScore: sh.score
+                };
+            }
+        }
+
+        // Weighted combination: 0.4 keyword + 0.6 semantic
+        var results = Object.keys(merged).map(function (k) {
+            var m = merged[k];
+            m.combinedScore = 0.4 * m.ftsScore + 0.6 * m.semScore;
+            // Use a negative rank for backward compatibility with sort order
+            m.rank = -m.combinedScore;
+            return m;
+        });
+
+        results.sort(function (a, b) { return b.combinedScore - a.combinedScore; });
+        return results.slice(0, maxResults);
+    }
+
+    // --- Vector persistence helpers ---
+    function saveVectors(sourceName) {
+        var store = _vectorStores[sourceName];
+        if (!store || store.length === 0) return Promise.resolve();
+
+        // Serialize: store metadata + flat Float32Array of all vectors
+        var dim = store[0].vector.length;
+        var meta = store.map(function (v) {
+            return { file: v.file, heading: v.heading, content: v.content.substring(0, 300) };
+        });
+        var flatVectors = new Float32Array(store.length * dim);
+        for (var i = 0; i < store.length; i++) {
+            flatVectors.set(store[i].vector, i * dim);
+        }
+
+        var blob = {
+            dim: dim,
+            count: store.length,
+            meta: meta,
+            vectors: flatVectors.buffer
+        };
+
+        return idbSetBlob('vectors-' + sourceName, blob);
+    }
+
+    function loadVectors(sourceName) {
+        return idbGetBlob('vectors-' + sourceName).then(function (blob) {
+            if (!blob || !blob.vectors || !blob.meta) return false;
+
+            var dim = blob.dim;
+            var count = blob.count;
+            var flatVectors = new Float32Array(blob.vectors);
+            var store = [];
+
+            for (var i = 0; i < count; i++) {
+                var start = i * dim;
+                store.push({
+                    file: blob.meta[i].file,
+                    heading: blob.meta[i].heading,
+                    content: blob.meta[i].content,
+                    vector: Array.from(flatVectors.subarray(start, start + dim))
+                });
+            }
+
+            _vectorStores[sourceName] = store;
+            return true;
+        }).catch(function () { return false; });
+    }
+
+    function deleteVectors(sourceName) {
+        delete _vectorStores[sourceName];
+        return idbDeleteBlob('vectors-' + sourceName);
+    }
+
     var SCHEMA_SQL = [
         'CREATE TABLE IF NOT EXISTS memory_files (',
         '  name TEXT PRIMARY KEY,',
@@ -321,7 +529,7 @@
         return result;
     }
 
-    function indexFile(db, fileName, content) {
+    function indexFile(db, fileName, content, sourceName) {
         var ext = fileName.split('.').pop().toLowerCase();
         var chunks;
         if (ext === 'md' || ext === 'markdown') {
@@ -343,6 +551,33 @@
         // Record file metadata
         db.run("INSERT INTO memory_files (name, modified_at, chunk_count) VALUES (?, ?, ?)",
             [fileName, Date.now(), chunks.length]);
+
+        // Embed chunks for semantic search (async, non-blocking)
+        if (_embeddingReady && sourceName) {
+            var texts = chunks.map(function (c) { return c.content; });
+            embedTexts(texts).then(function (vectors) {
+                // Remove old vectors for this file
+                if (!_vectorStores[sourceName]) _vectorStores[sourceName] = [];
+                _vectorStores[sourceName] = _vectorStores[sourceName].filter(function (v) {
+                    return v.file !== fileName;
+                });
+                // Add new vectors
+                for (var j = 0; j < chunks.length; j++) {
+                    _vectorStores[sourceName].push({
+                        file: chunks[j].file,
+                        heading: chunks[j].heading,
+                        content: chunks[j].content,
+                        vector: vectors[j]
+                    });
+                }
+                // Persist vectors
+                saveVectors(sourceName).catch(function (e) {
+                    console.warn('[Memory] Failed to save vectors:', e);
+                });
+            }).catch(function (e) {
+                console.warn('[Memory] Embedding failed for', fileName, ':', e.message);
+            });
+        }
 
         return chunks.length;
     }
@@ -393,7 +628,7 @@
 
             if (!content) continue;
 
-            var count = indexFile(_workspaceDb, fileName, content);
+            var count = indexFile(_workspaceDb, fileName, content, 'workspace');
             totalChunks += count;
             changed = true;
         }
@@ -471,14 +706,23 @@
             for await (var entry of handle.values()) {
                 if (entry.kind === 'file') {
                     var ext = entry.name.split('.').pop().toLowerCase();
-                    // Only index text-based files
-                    if (['md', 'markdown', 'txt', 'json', 'csv', 'html', 'xml', 'yaml', 'yml', 'js', 'py', 'css'].indexOf(ext) < 0) continue;
+                    // Text-based + convertible binary formats
+                    var TEXT_EXTS = ['md', 'markdown', 'txt', 'json', 'csv', 'html', 'xml', 'yaml', 'yml', 'js', 'py', 'css', 'ts', 'tsx', 'jsx', 'log'];
+                    var BINARY_EXTS = ['docx', 'xlsx', 'xls', 'numbers', 'pdf'];
+                    if (TEXT_EXTS.indexOf(ext) < 0 && BINARY_EXTS.indexOf(ext) < 0) continue;
 
                     try {
                         var file = await entry.getFile();
-                        var content = await file.text();
+                        var content;
+                        // Use file converters for binary formats
+                        if (BINARY_EXTS.indexOf(ext) >= 0 && window.MDView && window.MDView.convertFileToMarkdown) {
+                            content = await window.MDView.convertFileToMarkdown(file);
+                            if (!content) content = await file.text(); // fallback
+                        } else {
+                            content = await file.text();
+                        }
                         var filePath = path ? path + '/' + entry.name : entry.name;
-                        var count = indexFile(db, filePath, content);
+                        var count = indexFile(db, filePath, content, name);
                         totalChunks += count;
                     } catch (e) {
                         console.warn('Failed to read:', entry.name, e);
@@ -518,8 +762,17 @@
             var fh = fileHandles[i];
             try {
                 var file = await fh.getFile();
-                var content = await file.text();
-                var count = indexFile(db, file.name, content);
+                var content;
+                var ext = file.name.split('.').pop().toLowerCase();
+                var BINARY_EXTS = ['docx', 'xlsx', 'xls', 'numbers', 'pdf'];
+                // Use file converters for binary formats
+                if (BINARY_EXTS.indexOf(ext) >= 0 && window.MDView && window.MDView.convertFileToMarkdown) {
+                    content = await window.MDView.convertFileToMarkdown(file);
+                    if (!content) content = await file.text();
+                } else {
+                    content = await file.text();
+                }
+                var count = indexFile(db, file.name, content, name);
                 totalChunks += count;
             } catch (e) {
                 console.warn('Failed to read:', fh.name, e);
@@ -536,11 +789,12 @@
 
     // --- Search ---
 
-    function searchDb(db, query, maxResults) {
+    function searchDb(db, query, maxResults, sourceName) {
         maxResults = maxResults || 5;
         if (!db) return [];
 
-        // Try FTS5 MATCH first
+        // 1. FTS5 keyword search (existing)
+        var ftsHits = [];
         try {
             var results = db.exec(
                 "SELECT file, heading, snippet(chunks, 2, '»', '«', '...', 40), rank " +
@@ -548,67 +802,97 @@
                 [query, maxResults]
             );
             if (results.length > 0) {
-                return results[0].values.map(function (row) {
+                ftsHits = results[0].values.map(function (row) {
                     return { file: row[0], heading: row[1], snippet: row[2], rank: row[3] };
                 });
             }
-            return [];
         } catch (e) {
             // FTS5 not available — fallback LIKE search
             try {
                 var terms = query.toLowerCase().split(/\s+/).filter(function (t) { return t.length > 2; });
-                if (terms.length === 0) return [];
-
-                var where = terms.map(function () { return "(LOWER(content) LIKE ? OR LOWER(heading) LIKE ? OR LOWER(file) LIKE ?)"; }).join(' OR ');
-                var params = [];
-                terms.forEach(function (t) {
-                    params.push('%' + t + '%', '%' + t + '%', '%' + t + '%');
-                });
-
-                var fallback = db.exec(
-                    "SELECT file, heading, SUBSTR(content, 1, 200) as snippet FROM chunks WHERE " + where + " LIMIT ?",
-                    params.concat([maxResults])
-                );
-                if (fallback.length > 0) {
-                    return fallback[0].values.map(function (row) {
-                        return { file: row[0], heading: row[1], snippet: row[2], rank: 0 };
+                if (terms.length > 0) {
+                    var where = terms.map(function () { return "(LOWER(content) LIKE ? OR LOWER(heading) LIKE ? OR LOWER(file) LIKE ?)"; }).join(' OR ');
+                    var params = [];
+                    terms.forEach(function (t) {
+                        params.push('%' + t + '%', '%' + t + '%', '%' + t + '%');
                     });
+
+                    var fallback = db.exec(
+                        "SELECT file, heading, SUBSTR(content, 1, 200) as snippet FROM chunks WHERE " + where + " LIMIT ?",
+                        params.concat([maxResults])
+                    );
+                    if (fallback.length > 0) {
+                        ftsHits = fallback[0].values.map(function (row) {
+                            return { file: row[0], heading: row[1], snippet: row[2], rank: 0 };
+                        });
+                    }
                 }
             } catch (e2) {
                 console.warn('Memory search fallback failed:', e2);
             }
-            return [];
         }
+
+        // 2. If no semantic search available, return FTS-only
+        if (!_embeddingReady || !sourceName || !_vectorStores[sourceName] || _vectorStores[sourceName].length === 0) {
+            return ftsHits;
+        }
+
+        // 3. Semantic search will be performed by caller (async)
+        // Store ftsHits on a temporary property so the async caller can merge
+        ftsHits._sourceName = sourceName;
+        return ftsHits;
     }
 
-    // Search across multiple sources
+    // Search across multiple sources (hybrid: FTS5 + semantic)
     async function search(sources, query, maxResults) {
         if (!sources || sources.length === 0) return [];
         maxResults = maxResults || 5;
+
+        // Compute query embedding if semantic search is available
+        var queryVector = null;
+        if (_embeddingReady) {
+            try {
+                var vectors = await embedTexts([query]);
+                queryVector = vectors[0];
+            } catch (_) { /* proceed without semantic */ }
+        }
 
         var allResults = [];
 
         for (var i = 0; i < sources.length; i++) {
             var src = sources[i].trim().toLowerCase();
+            var db = null;
+            var sourceName = src;
 
             if (src === 'workspace') {
-                // Ensure workspace is indexed
                 await ensureWorkspaceIndex(false);
-                if (_workspaceDb) {
-                    var wsResults = searchDb(_workspaceDb, query, maxResults);
-                    allResults = allResults.concat(wsResults);
-                }
+                db = _workspaceDb;
             } else {
-                // External memory
-                var extDb = await loadExternalMemory(src);
-                if (extDb) {
-                    var extResults = searchDb(extDb, query, maxResults);
-                    allResults = allResults.concat(extResults);
-                }
+                db = await loadExternalMemory(src);
+                sourceName = src;
+            }
+
+            if (!db) continue;
+
+            // Load vectors from IndexedDB if not in memory yet
+            if (_embeddingReady && !_vectorStores[sourceName]) {
+                await loadVectors(sourceName);
+            }
+
+            // FTS5 keyword search
+            var ftsHits = searchDb(db, query, maxResults, sourceName);
+
+            // Semantic search (if available)
+            if (queryVector && _vectorStores[sourceName] && _vectorStores[sourceName].length > 0) {
+                var semHits = semanticSearch(sourceName, queryVector, maxResults);
+                var merged = mergeResults(ftsHits, semHits, maxResults);
+                allResults = allResults.concat(merged);
+            } else {
+                allResults = allResults.concat(ftsHits);
             }
         }
 
-        // Sort by rank (lower = better for FTS5) and limit
+        // Sort by combined score (rank is negative combined score) and limit
         allResults.sort(function (a, b) { return (a.rank || 0) - (b.rank || 0); });
         return allResults.slice(0, maxResults);
     }
@@ -670,6 +954,7 @@
             delete _externalDbs[name];
         }
         await idbDeleteBlob('ext-' + name);
+        await deleteVectors(name);
     };
 
     memory.listExternalMemories = async function () {
@@ -716,6 +1001,83 @@
             });
         } catch (_) { /* ignore */ }
         return sources;
+    };
+
+    // --- Semantic Search API ---
+
+    /**
+     * Enable semantic (embedding-based) search.
+     * Downloads the embedding model (~23MB) in a background worker.
+     * @returns {Promise<boolean>} true if model loaded successfully
+     */
+    memory.enableSemanticSearch = function () {
+        return initEmbeddingWorker();
+    };
+
+    /**
+     * Get current embedding/semantic search status.
+     * @returns {{ ready: boolean, modelSize: string, chunksEmbedded: number }}
+     */
+    memory.getEmbeddingStatus = function () {
+        var totalChunks = 0;
+        Object.keys(_vectorStores).forEach(function (k) {
+            totalChunks += _vectorStores[k].length;
+        });
+        return {
+            ready: _embeddingReady,
+            modelSize: '~150MB',
+            chunksEmbedded: totalChunks
+        };
+    };
+
+    /**
+     * Re-embed all chunks for a source (e.g., after enabling semantic search).
+     * @param {string} sourceName — 'workspace' or external name
+     * @returns {Promise<number>} number of chunks embedded
+     */
+    memory.reembedSource = async function (sourceName) {
+        if (!_embeddingReady) throw new Error('Embedding model not loaded');
+
+        var db = sourceName === 'workspace' ? _workspaceDb : (_externalDbs[sourceName] || await loadExternalMemory(sourceName));
+        if (!db) return 0;
+
+        // Read all chunks from SQLite
+        var allChunks = [];
+        try {
+            var rows = db.exec('SELECT file, heading, content FROM chunks');
+            if (rows.length > 0) {
+                allChunks = rows[0].values.map(function (row) {
+                    return { file: row[0], heading: row[1], content: row[2] };
+                });
+            }
+        } catch (_) { return 0; }
+
+        if (allChunks.length === 0) return 0;
+
+        // Embed in batches
+        var BATCH = 32;
+        _vectorStores[sourceName] = [];
+
+        for (var i = 0; i < allChunks.length; i += BATCH) {
+            var batch = allChunks.slice(i, i + BATCH);
+            var texts = batch.map(function (c) { return c.content; });
+            try {
+                var vectors = await embedTexts(texts);
+                for (var j = 0; j < batch.length; j++) {
+                    _vectorStores[sourceName].push({
+                        file: batch[j].file,
+                        heading: batch[j].heading,
+                        content: batch[j].content,
+                        vector: vectors[j]
+                    });
+                }
+            } catch (e) {
+                console.warn('[Memory] Batch embedding failed:', e.message);
+            }
+        }
+
+        await saveVectors(sourceName);
+        return _vectorStores[sourceName].length;
     };
 
     // Expose
