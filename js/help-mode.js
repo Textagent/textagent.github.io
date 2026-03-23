@@ -389,6 +389,118 @@
             desc: 'Enter slideshow mode — each --- separator creates a new slide. Navigate with arrow keys.',
             shortcut: null,
             demo: 'assets/demos/05_presentation_mode.webp'
+        },
+        '[data-mode="page"]': {
+            name: 'Page View (A4)',
+            desc: 'Display your document in paginated A4 page layout with headers, footers, and page numbers. Perfect for print-ready previews and PDF export.',
+            shortcut: null,
+            demo: 'assets/demos/07_writing_modes.webp'
+        },
+
+        // ─── Draw, Git & Tools Tags ───
+        '[data-action="draw-tag"]': {
+            name: 'Draw / Whiteboard',
+            desc: 'Insert a {{Draw:}} block to embed an Excalidraw whiteboard or Mermaid diagram. Supports freehand drawing, shapes, text, and AI-assisted diagramming.',
+            shortcut: null,
+            demo: 'assets/demos/30_draw_excalidraw.webp'
+        },
+        '[data-action="git-tag"]': {
+            name: 'GitHub Analysis Tag',
+            desc: 'Insert a {{Git:}} block to analyze a GitHub repository. Fetches repo metadata, README, file tree, and generates a structured summary.',
+            shortcut: null,
+            demo: 'assets/demos/24_api_linux_tags.png'
+        },
+        '[data-action="tools-scrape-tag"]': {
+            name: 'Web Scrape Tag',
+            desc: 'Insert a {{@Tools: scrape}} block to extract content from a URL. Fetches the page and converts it to clean Markdown.',
+            shortcut: null,
+            demo: 'assets/demos/24_api_linux_tags.png'
+        },
+        '[data-action="tools-search-tag"]': {
+            name: 'Web Search Tag',
+            desc: 'Insert a {{@Tools: search}} block to run a web search query. Results are returned as structured Markdown with titles, snippets, and links.',
+            shortcut: null,
+            demo: 'assets/demos/24_api_linux_tags.png'
+        },
+
+        // ─── Additional AI Tags ───
+        '[data-action="translate-tag"]': {
+            name: 'Translate Tag',
+            desc: 'Insert a {{Translate:}} block to translate text between languages. Supports text translation and optional audio output.',
+            shortcut: null,
+            demo: 'assets/demos/15_ai_doc_tags.webp'
+        },
+        '[data-action="tts-tag"]': {
+            name: 'Text-to-Speech Tag',
+            desc: 'Insert a {{TTS:}} block to convert text to speech audio using the Kokoro TTS engine. Generates an inline audio player.',
+            shortcut: null,
+            demo: 'assets/demos/28_text_to_speech.webp'
+        },
+        '[data-action="stt-tag"]': {
+            name: 'Speech-to-Text Tag',
+            desc: 'Insert a {{STT:}} block to transcribe audio to text. Upload an audio file and get a text transcription.',
+            shortcut: null,
+            demo: 'assets/demos/14_voice_dictation.webp'
+        },
+        '[data-action="game-tag"]': {
+            name: 'Game Builder Tag',
+            desc: 'Insert a {{Game:}} block to generate interactive games with AI. Supports Three.js, Canvas, and P5.js — choose from pre-built games or describe your own.',
+            shortcut: null,
+            demo: 'assets/demos/26_game_builder.webp'
+        },
+
+        // ─── Media Embedding ───
+        '[data-action="media-video"]': {
+            name: 'Video Player',
+            desc: 'Insert a video player block. Supports MP4, WebM, and other HTML5-compatible video formats with playback controls.',
+            shortcut: null,
+            demo: 'assets/demos/31_media_embedding.webp'
+        },
+        '[data-action="media-embed-grid"]': {
+            name: 'Embed Grid',
+            desc: 'Insert an embed grid block for displaying multiple embedded items (videos, iframes, or media) in a responsive grid layout.',
+            shortcut: null,
+            demo: 'assets/demos/31_media_embedding.webp'
+        },
+        '[data-action="media-youtube"]': {
+            name: 'YouTube Video',
+            desc: 'Insert a YouTube video embed. Paste a YouTube URL to embed the video directly in your document with an inline player.',
+            shortcut: null,
+            demo: 'assets/demos/31_media_embedding.webp'
+        },
+
+        // ─── Additional Coding & Execution ───
+        '[data-action="coding-latex"]': {
+            name: 'LaTeX Block',
+            desc: 'Insert a LaTeX block for rendering mathematical equations and formulas. Uses KaTeX for fast, high-quality typesetting of math notation.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp'
+        },
+        '#run-all-btn': {
+            name: 'Run All',
+            desc: 'Execute all executable code blocks in the document in order — Bash, Python, JS, SQL, Math, HTML, and compiled languages. Results appear inline like a notebook.',
+            shortcut: null,
+            demo: 'assets/demos/25_run_all.png'
+        },
+
+        // ─── Additional Header & QAB Buttons ───
+        '#workspace-toggle': {
+            name: 'File Tree',
+            desc: 'Toggle the workspace sidebar showing all your files. Create, rename, duplicate, and delete files. Supports localStorage and disk-backed (File System Access API) workspaces.',
+            shortcut: 'Ctrl+B',
+            demo: 'assets/demos/19_workspace_sidebar.webp'
+        },
+        '#qab-agents': {
+            name: 'Agent Containers',
+            desc: 'Open the Agent Containers panel to manage and run autonomous AI agents. Each container runs independently with its own context and model selection.',
+            shortcut: null,
+            demo: 'assets/demos/17_agent_flow.webp'
+        },
+        '#qab-search': {
+            name: 'Find & Replace',
+            desc: 'Toggle the Find & Replace bar. Search your document with plain text or regex, navigate matches, and replace one or all occurrences.',
+            shortcut: 'Ctrl+F',
+            demo: 'assets/demos/10_formatting_toolbar.webp'
         }
     };
 
