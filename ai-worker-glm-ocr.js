@@ -55,10 +55,21 @@ async function loadModel() {
             }
         }
 
-        // 2. Check WebGPU
+        // 2. Check WebGPU — GLM-OCR requires WebGPU (q4f16 external data files
+        //    cannot be loaded by WASM's Module.MountedFiles)
         if (typeof navigator !== "undefined" && navigator.gpu) {
             const adapter = await navigator.gpu.requestAdapter();
             if (adapter) device = "webgpu";
+        }
+
+        if (device !== "webgpu") {
+            self.postMessage({
+                type: "error",
+                message: "GLM-OCR requires WebGPU which is not available in this browser. " +
+                    "Please use Chrome 113+, Edge 113+, or another WebGPU-capable browser. " +
+                    "Alternatively, use Granite Docling or Florence-2 which work without WebGPU.",
+            });
+            return;
         }
 
         // Progress callback factory
@@ -108,16 +119,43 @@ async function loadModel() {
             });
         }
 
-        // 3. Load with fallback
+        // 3. Load with fallback to onnx-community mirror
         try {
             await loadFromHost();
         } catch (primaryErr) {
+            // Detect the known external-data incompatibility with onnxruntime-web 1.19.x
+            const errMsg = primaryErr.message || "";
+            if (errMsg.includes("MountedFiles") || errMsg.includes("external data file")) {
+                self.postMessage({
+                    type: "error",
+                    message: "GLM-OCR is temporarily unavailable — the model's quantized weights require " +
+                        "a newer ONNX Runtime version that isn't yet compatible with this library. " +
+                        "Please use Granite Docling or Florence-2 for OCR in the meantime.",
+                });
+                return;
+            }
+
             console.warn(`textagent model failed: ${primaryErr.message}. Falling back to ${MODEL_ORG_FALLBACK}…`);
             self.postMessage({ type: "status", message: `Falling back to ${MODEL_ORG_FALLBACK} models…` });
             MODEL_ID = MODEL_ID.replace('textagent/', MODEL_ORG_FALLBACK + '/');
             processor = null;
             model = null;
-            await loadFromHost();
+
+            try {
+                await loadFromHost();
+            } catch (fallbackErr) {
+                const fbMsg = fallbackErr.message || "";
+                if (fbMsg.includes("MountedFiles") || fbMsg.includes("external data file")) {
+                    self.postMessage({
+                        type: "error",
+                        message: "GLM-OCR is temporarily unavailable — the model's quantized weights require " +
+                            "a newer ONNX Runtime version that isn't yet compatible with this library. " +
+                            "Please use Granite Docling or Florence-2 for OCR in the meantime.",
+                    });
+                    return;
+                }
+                throw fallbackErr;
+            }
         }
 
         self.postMessage({ type: "loaded", device: device });
