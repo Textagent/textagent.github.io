@@ -243,7 +243,9 @@
 
             // Set default custom URL for local
             if (provider === 'local') {
-                localStorage.setItem(M.KEYS.AGENT_CUSTOM_URL, 'http://localhost:8080/api/exec');
+                // Clear custom URL so agent-cloud.js defaults to window.location.origin
+                // (the Vite dev server already embeds the agent-runner API via plugin)
+                localStorage.removeItem(M.KEYS.AGENT_CUSTOM_URL);
             }
         }
     });

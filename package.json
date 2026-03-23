@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cd agent-runner && npm install --silent 2>/dev/null; node server.js & cd .. && vite",
+    "dev": "vite",
     "dev:vite": "vite",
     "dev:agent": "cd agent-runner && npm install --silent && node server.js",
     "build": "vite build",
