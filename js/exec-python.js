@@ -117,58 +117,64 @@
             outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> Executing...</span>';
 
             setTimeout(function () {
-                try {
-                    pyodide.runPython('sys.stdout = StringIO()\nsys.stderr = StringIO()');
+                // Auto-detect and load ALL imported packages (numpy, pandas, scipy, matplotlib, etc.)
+                outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> Loading packages...</span>';
+                pyodide.loadPackagesFromImports(code).then(function () {
+                    try {
+                        pyodide.runPython('sys.stdout = StringIO()\nsys.stderr = StringIO()');
 
-                    var usesMpl = /\bimport\s+matplotlib\b|\bfrom\s+matplotlib\b|\bplt\.\b/.test(code);
-                    if (usesMpl) {
-                        try {
-                            pyodide.runPython("import micropip");
-                            pyodide.runPython("import matplotlib\nmatplotlib.use('AGG')");
-                        } catch (e) { /* ignore */ }
+                        // Set matplotlib backend to AGG and suppress plt.show() warning
+                        var usesMpl = /\bimport\s+matplotlib\b|\bfrom\s+matplotlib\b|\bplt\.\b/.test(code);
+                        if (usesMpl) {
+                            try { pyodide.runPython("import matplotlib\nmatplotlib.use('AGG')\nimport warnings\nwarnings.filterwarnings('ignore', '.*non-GUI backend.*')"); } catch (e) { /* ok */ }
+                        }
+
+                        pyodide.runPython(code);
+
+                        var stdout = pyodide.runPython('sys.stdout.getvalue()');
+                        var stderr = pyodide.runPython('sys.stderr.getvalue()');
+                        var outputHtml = '';
+
+                        // Capture matplotlib figures as inline images
+                        if (usesMpl) {
+                            try {
+                                pyodide.runPython([
+                                    'import matplotlib.pyplot as _plt',
+                                    'import base64 as _b64',
+                                    'from io import BytesIO as _BytesIO',
+                                    '_mdv_figs = []',
+                                    'for _fig_num in _plt.get_fignums():',
+                                    '    _buf = _BytesIO()',
+                                    '    _plt.figure(_fig_num).savefig(_buf, format="png", dpi=100, bbox_inches="tight")',
+                                    '    _buf.seek(0)',
+                                    '    _mdv_figs.append(_b64.b64encode(_buf.read()).decode())',
+                                    '    _buf.close()',
+                                    '_plt.close("all")'
+                                ].join('\n'));
+                                var figs = pyodide.runPython('_mdv_figs').toJs();
+                                if (figs && figs.length > 0) {
+                                    figs.forEach(function (b64) {
+                                        outputHtml += '<div class="python-plot-output"><img src="data:image/png;base64,' + b64 + '" alt="matplotlib plot" style="max-width:100%;border-radius:6px;margin:4px 0" /></div>';
+                                    });
+                                }
+                            } catch (e) { /* ignore plot errors */ }
+                        }
+
+                        if (stdout) outputHtml += '<span class="code-output-stdout">' + escapeHtml(stdout) + '</span>';
+                        if (stderr) outputHtml += '<span class="code-output-stderr">' + escapeHtml(stderr) + '</span>';
+                        if (!outputHtml) outputHtml = '<span class="code-output-muted">(no output)</span>';
+                        outputEl.innerHTML = outputHtml;
+                    } catch (runErr) {
+                        outputEl.innerHTML = '<span class="code-output-error">Error: ' + escapeHtml(runErr.message) + '</span>';
+                    } finally {
+                        btnRun.disabled = false;
+                        btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
                     }
-
-                    pyodide.runPython(code);
-
-                    var stdout = pyodide.runPython('sys.stdout.getvalue()');
-                    var stderr = pyodide.runPython('sys.stderr.getvalue()');
-
-                    var outputHtml = '';
-
-                    if (usesMpl) {
-                        try {
-                            pyodide.runPython([
-                                'import matplotlib.pyplot as _plt',
-                                'import base64 as _b64',
-                                'from io import BytesIO as _BytesIO',
-                                '_mdv_figs = []',
-                                'for _fig_num in _plt.get_fignums():',
-                                '    _buf = _BytesIO()',
-                                '    _plt.figure(_fig_num).savefig(_buf, format="png", dpi=100, bbox_inches="tight")',
-                                '    _buf.seek(0)',
-                                '    _mdv_figs.append(_b64.b64encode(_buf.read()).decode())',
-                                '    _buf.close()',
-                                '_plt.close("all")'
-                            ].join('\n'));
-                            var figs = pyodide.runPython('_mdv_figs').toJs();
-                            if (figs && figs.length > 0) {
-                                figs.forEach(function (b64) {
-                                    outputHtml += '<div class="python-plot-output"><img src="data:image/png;base64,' + b64 + '" alt="matplotlib plot" style="max-width:100%;border-radius:6px;margin:4px 0" /></div>';
-                                });
-                            }
-                        } catch (e) { /* ignore plot errors */ }
-                    }
-
-                    if (stdout) outputHtml += '<span class="code-output-stdout">' + escapeHtml(stdout) + '</span>';
-                    if (stderr) outputHtml += '<span class="code-output-stderr">' + escapeHtml(stderr) + '</span>';
-                    if (!outputHtml) outputHtml = '<span class="code-output-muted">(no output)</span>';
-                    outputEl.innerHTML = outputHtml;
-                } catch (runErr) {
-                    outputEl.innerHTML = '<span class="code-output-error">Error: ' + escapeHtml(runErr.message) + '</span>';
-                } finally {
+                }).catch(function (loadErr) {
+                    outputEl.innerHTML = '<span class="code-output-error">Failed to load packages: ' + escapeHtml(loadErr.message) + '</span>';
                     btnRun.disabled = false;
                     btnRun.innerHTML = '<i class="bi bi-play-fill"></i> Run';
-                }
+                });
             }, 50);
         }, function (msg) {
             outputEl.innerHTML = '<span class="code-output-loading"><i class="bi bi-arrow-repeat"></i> ' + escapeHtml(msg) + '</span>';
