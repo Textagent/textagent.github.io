@@ -11,109 +11,109 @@
         // ─── Header Toolbar ───
         '#new-document-btn, #qab-new': {
             name: 'New Document',
-            desc: 'Clear the editor and start with a fresh, empty document.',
+            desc: 'Start fresh — clears the editor for a brand new document.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '#template-btn, #qab-template, #mobile-template-btn': {
             name: 'Templates',
-            desc: 'Browse ' + M.PRODUCT.summary() + ' — ' + M.PRODUCT.categoryList() + '.',
+            desc: 'Pick from ready-made templates — ' + M.PRODUCT.categoryList() + '. Jump-start any project in seconds.',
             shortcut: null,
             demo: 'assets/demos/03_templates_gallery.webp'
         },
         '#toggle-sync, #mobile-toggle-sync': {
             name: 'Sync Scrolling',
-            desc: 'Link the editor and preview panels so they scroll together. Keeps your writing position in sync with the rendered output.',
+            desc: 'Keep editor and preview scrolling in lockstep so you always see what you\'re writing.',
             shortcut: 'Ctrl+Shift+S',
             demo: 'assets/demos/12_sync_scrolling.webp'
         },
         '#toc-toggle, #qab-toc': {
             name: 'Table of Contents',
-            desc: 'Toggle an auto-generated sidebar showing all headings in your document. Click any heading to jump to that section.',
+            desc: 'Auto-generated heading sidebar — click any heading to jump straight to it.',
             shortcut: null,
             demo: 'assets/demos/13_table_of_contents.webp'
         },
         '#qab-more': {
-            name: 'Upload / Import File',
-            desc: 'Open the dropzone to drag-and-drop or browse files in 8 formats — MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF. All converted to Markdown client-side.',
+            name: 'Upload / Import',
+            desc: 'Drag-and-drop or browse files — supports MD, DOCX, XLSX, CSV, HTML, JSON, XML, and PDF. Converts everything to Markdown client-side.',
             shortcut: null,
             demo: 'assets/demos/08_import_export.webp'
         },
         '#exportDropdown': {
             name: 'Export',
-            desc: 'Export your document as Markdown (.md), self-contained HTML, smart PDF with page breaks, or LLM Memory format.',
+            desc: 'Save your work as Markdown, self-contained HTML, smart PDF with page breaks, or LLM Memory format.',
             shortcut: null,
             demo: 'assets/demos/08_import_export.webp'
         },
         '#copy-markdown-button, #qab-copy, #mobile-copy-markdown': {
             name: 'Copy Markdown',
-            desc: 'Copy the raw Markdown source text to your clipboard.',
+            desc: 'Copy the raw Markdown source to your clipboard — ready to paste anywhere.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '#share-button, #qab-share, #mobile-share-button': {
             name: 'Encrypted Share',
-            desc: 'Share your document via an encrypted link. Content is compressed and encrypted client-side with AES-256-GCM. Optional password protection. Email to Self sends the share link and .md file to your inbox.',
+            desc: 'Generate a zero-knowledge encrypted link (AES-256-GCM). Add a password for extra security, or email the link and .md file to yourself.',
             shortcut: null,
             demo: 'assets/demos/22_email_to_self.webp'
         },
         '#ai-toggle-button, #qab-ai, #mobile-ai-button': {
             name: 'AI Assistant',
-            desc: 'Open the AI panel to chat, summarize, expand, rephrase, fix grammar, explain, or simplify — with 4 model options (Local Qwen, Gemini, Groq, OpenRouter).',
+            desc: 'Chat, summarize, expand, rephrase, fix grammar, or simplify text. Choose from Local Qwen, Gemini, Groq, or OpenRouter models.',
             shortcut: null,
             demo: 'assets/demos/02_ai_assistant.webp'
         },
         '#ai-model-select-btn, #qab-model': {
             name: 'AI Model Selector',
-            desc: 'Switch between AI models — Local Qwen 3.5 (private, runs in browser), Gemini Flash, Groq Llama 70B, or OpenRouter auto-routing.',
+            desc: 'Switch AI models — Qwen 3.5 (100% private, runs locally), Gemini Flash, Groq Llama 70B, or OpenRouter auto-routing.',
             shortcut: null,
             demo: 'assets/demos/11_ai_model_selector.webp'
         },
         '#present-button, #qab-present': {
             name: 'Presentation Mode',
-            desc: 'Turn your Markdown into a slideshow! Add --- separators for slides, then navigate with arrow keys. Supports speaker notes, overview grid, and 20+ PPT templates.',
+            desc: 'Turn Markdown into slides! Use --- as separators, navigate with arrow keys. 20+ themes, speaker notes, and overview grid included.',
             shortcut: null,
             demo: 'assets/demos/05_presentation_mode.webp'
         },
         '#word-wrap-toggle': {
             name: 'Word Wrap',
-            desc: 'Toggle line wrapping in the editor. When off, long lines scroll horizontally.',
+            desc: 'Toggle line wrapping — when off, long lines scroll horizontally instead.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '#focus-mode-toggle': {
             name: 'Focus Mode',
-            desc: 'Dim surrounding paragraphs to help you concentrate on the current one. Great for deep writing sessions.',
+            desc: 'Dims everything except the paragraph you\'re writing — perfect for deep-focus sessions.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '#zen-mode-button': {
             name: 'Zen Mode',
-            desc: 'Enter distraction-free fullscreen writing. Just you and your words — no toolbar, no preview, no distractions.',
+            desc: 'Distraction-free fullscreen writing. Just you and your words — no toolbar, no preview.',
             shortcut: 'Ctrl+Shift+Z',
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '#speech-to-text-btn, #mobile-speech-btn': {
             name: 'Voice Dictation',
-            desc: 'Dictate Markdown hands-free with speech-to-text. Supports voice commands like "new line", "bold", "heading", "bullet", and more. Multi-language support.',
+            desc: 'Write hands-free — dictate Markdown with voice commands like "new line", "bold", "heading". Multi-language supported.',
             shortcut: null,
             demo: 'assets/demos/14_voice_dictation.webp'
         },
         '#themePickerDropdown': {
             name: 'Preview Theme',
-            desc: 'Switch the preview pane between 6 themes — GitHub, GitLab, Notion, Dracula, Solarized, and Evergreen. Each has light and dark variants.',
+            desc: 'Choose from 6 preview themes — GitHub, GitLab, Notion, Dracula, Solarized, or Evergreen. Each supports light and dark variants.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '#theme-toggle, #mobile-theme-toggle': {
             name: 'Dark Mode',
-            desc: 'Toggle between light and dark mode. Your preference is saved to localStorage.',
+            desc: 'Switch between light and dark mode. Your preference is remembered automatically.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '#stats-toggle': {
             name: 'Document Stats',
-            desc: 'Show reading time, word count, and character count for your document.',
+            desc: 'See reading time, word count, and character count at a glance.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
@@ -121,7 +121,7 @@
         // ─── Formatting Toolbar ───
         '[data-action="undo"]': {
             name: 'Undo',
-            desc: 'Undo the last edit in the editor.',
+            desc: 'Undo your last edit.',
             shortcut: 'Ctrl+Z',
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
@@ -133,97 +133,97 @@
         },
         '[data-action="bold"]': {
             name: 'Bold',
-            desc: 'Wrap selected text in **bold** markers. If nothing is selected, inserts a bold placeholder.',
+            desc: 'Make selected text **bold**. Inserts a placeholder if nothing is selected.',
             shortcut: 'Ctrl+B',
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="italic"]': {
             name: 'Italic',
-            desc: 'Wrap selected text in *italic* markers.',
+            desc: 'Make selected text *italic*.',
             shortcut: 'Ctrl+I',
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="strikethrough"]': {
             name: 'Strikethrough',
-            desc: 'Wrap selected text in ~~strikethrough~~ markers.',
+            desc: 'Apply ~~strikethrough~~ to selected text.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="heading"]': {
             name: 'Heading',
-            desc: 'Insert a # heading. Repeated clicks cycle through ## and ### levels.',
+            desc: 'Add a heading — click again to cycle through H1 → H2 → H3 levels.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="link"]': {
             name: 'Link',
-            desc: 'Insert a Markdown link [text](url). If text is selected, it becomes the link text.',
+            desc: 'Insert [text](url). Selected text becomes the link text automatically.',
             shortcut: 'Ctrl+K',
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="image"]': {
             name: 'Image',
-            desc: 'Insert a Markdown image ![alt](url). You can also paste images from clipboard.',
+            desc: 'Insert ![alt](url) — or just paste an image from your clipboard.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="code"]': {
             name: 'Inline Code',
-            desc: 'Wrap selected text in `backticks` for inline code formatting.',
+            desc: 'Wrap text in `backticks` for inline code.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="codeblock"]': {
             name: 'Code Block',
-            desc: 'Insert a fenced code block with triple backticks. Add a language tag for syntax highlighting. Supports 6 executable languages — Bash, Math, Python, HTML, JS, SQL — all running in-browser.',
+            desc: 'Insert a fenced code block with syntax highlighting. Run code live in 6 languages — Bash, Math, Python, HTML, JS, and SQL.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '[data-action="ul"]': {
             name: 'Bullet List',
-            desc: 'Insert an unordered list item with a - prefix.',
+            desc: 'Insert an unordered list item (- prefix).',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="ol"]': {
             name: 'Numbered List',
-            desc: 'Insert an ordered list item with a number prefix.',
+            desc: 'Insert an ordered list item (1. prefix).',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="tasklist"]': {
             name: 'Task List',
-            desc: 'Insert a checkbox task item — - [ ] for unchecked, - [x] for checked. Renders as interactive checkboxes in the preview.',
+            desc: 'Add interactive checkboxes — - [ ] unchecked, - [x] checked. Clickable in the preview.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="quote"]': {
             name: 'Blockquote',
-            desc: 'Insert a > blockquote. Supports GitHub-style alerts: > [!NOTE], > [!TIP], > [!WARNING], > [!IMPORTANT], > [!CAUTION].',
+            desc: 'Insert a > blockquote. Also supports GitHub alerts: [!NOTE], [!TIP], [!WARNING], [!IMPORTANT], [!CAUTION].',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="hr"]': {
             name: 'Horizontal Rule',
-            desc: 'Insert a --- horizontal rule. Also used as a slide separator in Presentation Mode.',
+            desc: 'Insert --- as a divider. Also used as a slide separator in Presentation Mode.',
             shortcut: null,
             demo: 'assets/demos/05_presentation_mode.webp'
         },
         '[data-action="table"]': {
             name: 'Insert Table',
-            desc: 'Insert a Markdown table template. Rendered tables get interactive spreadsheet tools — sort, filter, stats, charts, and inline editing.',
+            desc: 'Add a Markdown table — rendered tables get spreadsheet tools: sort, filter, stats, charts, and inline editing.',
             shortcut: null,
             demo: 'assets/demos/06_table_tools.webp'
         },
         '[data-action="clear-all"]': {
             name: 'Clear All Text',
-            desc: 'Erase the entire editor content after a confirmation prompt. The action is undoable with Ctrl+Z.',
+            desc: 'Erase all editor content (with confirmation). Undo with Ctrl+Z if needed.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
         '[data-action="clear-selection"]': {
             name: 'Clear Selected Text',
-            desc: 'Delete only the currently selected text after a confirmation prompt showing a preview of the selection. Undoable with Ctrl+Z.',
+            desc: 'Delete only the selected text (with a preview prompt). Undo with Ctrl+Z.',
             shortcut: null,
             demo: 'assets/demos/10_formatting_toolbar.webp'
         },
@@ -231,128 +231,128 @@
         // ─── AI Tags ───
         '[data-action="ai-tag"]': {
             name: 'AI Generate Tag',
-            desc: 'Wrap text in {{AI: ...}} — when you click Fill, AI generates content based on your prompt. Great for automated document creation.',
+            desc: 'Add {{AI: prompt}} — click Fill and AI writes the content for you. Ideal for automating entire documents.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="think-tag"]': {
             name: 'AI Think Tag',
-            desc: 'Wrap text in {{AI: @think: Yes ...}} — AI uses deep reasoning mode to analyze and respond with step-by-step thinking.',
+            desc: 'Add {{AI: @think: Yes …}} — engages deep reasoning mode for step-by-step analysis.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="image-tag"]': {
             name: 'AI Image Tag',
-            desc: 'Wrap text in {{Image: ...}} — AI generates an image from your text description using Gemini Imagen.',
+            desc: 'Add {{Image: description}} — generates images from text using Gemini Imagen.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="agent-tag"]': {
             name: 'Agent Flow Tag',
-            desc: 'Insert a multi-step {{Agent:}} pipeline — define Step 1, Step 2, etc. Each step\'s output chains into the next. Pick a search provider (DuckDuckGo, Brave, Serper, Tavily, Google CSE, Wikipedia, Wikidata) and model per card.',
+            desc: 'Build multi-step AI pipelines — each step\'s output feeds into the next. Pair with web search (DuckDuckGo, Brave, Tavily, etc.) for research workflows.',
             shortcut: null,
             demo: 'assets/demos/17_agent_flow.webp'
         },
         '[data-action="api-get-tag"]': {
             name: 'API GET Tag',
-            desc: 'Insert a {{API:}} block for a GET request. Define URL and optional Variable to store the response as $(api_varName).',
+            desc: 'Fetch data from any URL. Store the response in a variable with $(api_varName) for reuse.',
             shortcut: null,
             demo: 'assets/demos/24_api_linux_tags.png'
         },
         '[data-action="api-post-tag"]': {
             name: 'API POST Tag',
-            desc: 'Insert a {{API:}} block for a POST request. Define URL, Headers, Body (JSON), and optional Variable to store the response.',
+            desc: 'Send POST requests with custom headers and JSON body. Store the response for downstream use.',
             shortcut: null,
             demo: 'assets/demos/24_api_linux_tags.png'
         },
         '[data-action="memory-tag"]': {
             name: 'Memory Tag',
-            desc: 'Insert a {{Memory:}} block to index workspace files and external folders with SQLite FTS5 full-text search. Use the @use: field in AI/Think/Agent tags to auto-retrieve relevant context from your memory sources.',
+            desc: 'Index your workspace files with SQLite FTS5 full-text search. AI tags can auto-retrieve relevant context via the @use: field.',
             shortcut: null,
             demo: 'assets/demos/20_context_memory.webp'
         },
         '[data-action="ocr-tag"]': {
             name: 'OCR Scan Tag',
-            desc: 'Insert a {{OCR:}} block to extract text from images as Markdown, or convert charts and diagrams to SVG code. Upload an image, choose Text or SVG mode, and click ▶. Uses your selected AI model\'s vision capabilities.',
+            desc: 'Extract text from images as Markdown, or convert diagrams to SVG. Upload an image, choose mode, and hit ▶.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="linux-tag"]': {
             name: 'Linux Terminal',
-            desc: 'Insert a {{Linux:}} block. Two modes: (1) Terminal — specify Packages: to launch a full Debian Linux (WebVM). (2) Compile & Run — add Language: and Script: fields to compile & execute C++, Rust, Go, Java, and 25+ languages via Judge0 CE, with output inline.',
+            desc: 'Launch a full Debian VM in-browser (WebVM), or compile & run C++, Rust, Go, Java and 25+ languages via Judge0 CE.',
             shortcut: null,
             demo: 'assets/demos/24_api_linux_tags.png'
         },
         '[data-action="linux-cpp-tag"]': {
             name: 'C++ Compile & Run',
-            desc: 'Insert a {{Linux:}} block pre-configured for C++ compilation. Compiles and runs via Judge0 CE with inline output, execution time, and memory stats.',
+            desc: 'Compile and run C++ code via Judge0 CE — see output, execution time, and memory stats inline.',
             shortcut: null,
             demo: 'assets/demos/18_compile_run.webp'
         },
         '[data-action="linux-rust-tag"]': {
             name: 'Rust Compile & Run',
-            desc: 'Insert a {{Linux:}} block pre-configured for Rust. Compiles and runs via Judge0 CE with inline output.',
+            desc: 'Compile and run Rust code via Judge0 CE with inline output.',
             shortcut: null,
             demo: 'assets/demos/18_compile_run.webp'
         },
         '[data-action="linux-go-tag"]': {
             name: 'Go Compile & Run',
-            desc: 'Insert a {{Linux:}} block pre-configured for Go. Compiles and runs via Judge0 CE with inline output.',
+            desc: 'Compile and run Go code via Judge0 CE with inline output.',
             shortcut: null,
             demo: 'assets/demos/18_compile_run.webp'
         },
         '[data-action="linux-java-tag"]': {
             name: 'Java Compile & Run',
-            desc: 'Insert a {{Linux:}} block pre-configured for Java. Compiles and runs via Judge0 CE with inline output.',
+            desc: 'Compile and run Java code via Judge0 CE with inline output.',
             shortcut: null,
             demo: 'assets/demos/18_compile_run.webp'
         },
         // ─── Coding Blocks ───
         '[data-action="coding-bash"]': {
             name: 'Bash Code Block',
-            desc: 'Insert an executable Bash code block. Runs in-browser via just-bash — no server required.',
+            desc: 'Run Bash scripts right in the browser via just-bash — no server needed.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '[data-action="coding-math"]': {
             name: 'Math Code Block',
-            desc: 'Insert an executable Math block. Evaluates expressions with Nerdamer — algebra, calculus, trigonometry.',
+            desc: 'Evaluate math expressions — algebra, calculus, and trigonometry powered by Nerdamer.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '[data-action="coding-python"]': {
             name: 'Python Code Block',
-            desc: 'Insert an executable Python code block. Runs via Pyodide (CPython compiled to WASM) with stdout/stderr capture and matplotlib support.',
+            desc: 'Run Python in-browser via Pyodide (CPython in WASM). Full stdout/stderr capture and matplotlib charting.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '[data-action="coding-html"]': {
             name: 'HTML Code Block',
-            desc: 'Insert a live HTML/CSS/JS preview block. Renders in a sandboxed iframe with auto-resize. Use html-autorun to hide source and show output directly.',
+            desc: 'Live HTML/CSS/JS preview in a sandboxed iframe. Use html-autorun to show only the rendered output.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '[data-action="coding-js"]': {
             name: 'JavaScript Code Block',
-            desc: 'Insert an executable JavaScript code block. Runs in a sandboxed iframe with console.log/warn/error capture and inline output.',
+            desc: 'Execute JS in a sandboxed iframe — captures console.log, warn, and error output inline.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '[data-action="coding-sql"]': {
             name: 'SQL Code Block',
-            desc: 'Insert an executable SQL block. Queries run on an in-memory SQLite database (sql.js WASM) with formatted table output. Tables persist across blocks.',
+            desc: 'Query an in-memory SQLite database (sql.js WASM). Tables persist across blocks with formatted output.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
-            desc: 'Process all {{AI:}}, {{Image:}}, {{Agent:}}, and {{API:}} tags in the document. Each block generates independently and can be accepted, rejected, or regenerated.',
+            desc: 'Process every {{AI:}}, {{Image:}}, {{Agent:}}, and {{API:}} tag at once. Accept, reject, or regenerate each result.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '#apply-vars-btn': {
             name: 'Template Variables',
-            desc: 'Apply $(varName) variable substitutions. If no variable block exists, auto-detects variables in your text and creates a table for you to fill in.',
+            desc: 'Replace all $(varName) placeholders. Auto-detects variables and creates a fill-in table if none exists.',
             shortcut: null,
             demo: 'assets/demos/16_template_variables.webp'
         },
@@ -360,7 +360,7 @@
         // ─── Workspace ───
         '#qab-files': {
             name: 'File Tree',
-            desc: 'Toggle the workspace sidebar showing all your files. Create, rename, duplicate, and delete files. Supports localStorage and disk-backed (File System Access API) workspaces.',
+            desc: 'Manage your workspace — create, rename, duplicate, or delete files. Supports browser storage and native disk via File System Access API.',
             shortcut: 'Ctrl+B',
             demo: 'assets/demos/19_workspace_sidebar.webp'
         },
@@ -368,31 +368,31 @@
         // ─── View Mode Buttons ───
         '[data-mode="editor"]': {
             name: 'Editor Only',
-            desc: 'Show only the editor pane — full width for writing.',
+            desc: 'Full-width editor — maximum space for writing.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '[data-mode="split"]': {
             name: 'Split View',
-            desc: 'Show editor and preview side by side. Drag the divider to resize.',
+            desc: 'Editor and preview side by side. Drag the divider to resize.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '[data-mode="preview"]': {
             name: 'Preview Only',
-            desc: 'Show only the rendered preview — perfect for reading and reviewing.',
+            desc: 'Full-width rendered preview — ideal for reading and reviewing.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
         '[data-mode="ppt"]': {
             name: 'Presentation View',
-            desc: 'Enter slideshow mode — each --- separator creates a new slide. Navigate with arrow keys.',
+            desc: 'Slideshow mode — each --- separator creates a slide. Navigate with arrow keys.',
             shortcut: null,
             demo: 'assets/demos/05_presentation_mode.webp'
         },
         '[data-mode="page"]': {
             name: 'Page View (A4)',
-            desc: 'Display your document in paginated A4 page layout with headers, footers, and page numbers. Perfect for print-ready previews and PDF export.',
+            desc: 'Paginated A4 layout with headers, footers, and page numbers. Print-ready preview that exports beautifully to PDF.',
             shortcut: null,
             demo: 'assets/demos/07_writing_modes.webp'
         },
@@ -400,51 +400,51 @@
         // ─── Draw, Git & Tools Tags ───
         '[data-action="draw-tag"]': {
             name: 'Draw / Whiteboard',
-            desc: 'Insert a {{Draw:}} block to embed an Excalidraw whiteboard or Mermaid diagram. Supports freehand drawing, shapes, text, and AI-assisted diagramming.',
+            desc: 'Embed an Excalidraw whiteboard or Mermaid diagram. Freehand draw, add shapes, text, and use AI-assisted diagramming.',
             shortcut: null,
             demo: 'assets/demos/30_draw_excalidraw.webp'
         },
         '[data-action="git-tag"]': {
-            name: 'GitHub Analysis Tag',
-            desc: 'Insert a {{Git:}} block to analyze a GitHub repository. Fetches repo metadata, README, file tree, and generates a structured summary.',
+            name: 'GitHub Analysis',
+            desc: 'Analyze any GitHub repo — pulls metadata, README, file tree, and generates a structured summary.',
             shortcut: null,
             demo: 'assets/demos/24_api_linux_tags.png'
         },
         '[data-action="tools-scrape-tag"]': {
-            name: 'Web Scrape Tag',
-            desc: 'Insert a {{@Tools: scrape}} block to extract content from a URL. Fetches the page and converts it to clean Markdown.',
+            name: 'Web Scrape',
+            desc: 'Extract content from any URL and convert it to clean, readable Markdown.',
             shortcut: null,
             demo: 'assets/demos/24_api_linux_tags.png'
         },
         '[data-action="tools-search-tag"]': {
-            name: 'Web Search Tag',
-            desc: 'Insert a {{@Tools: search}} block to run a web search query. Results are returned as structured Markdown with titles, snippets, and links.',
+            name: 'Web Search',
+            desc: 'Run a web search query — results come back as Markdown with titles, snippets, and links.',
             shortcut: null,
             demo: 'assets/demos/24_api_linux_tags.png'
         },
 
         // ─── Additional AI Tags ───
         '[data-action="translate-tag"]': {
-            name: 'Translate Tag',
-            desc: 'Insert a {{Translate:}} block to translate text between languages. Supports text translation and optional audio output.',
+            name: 'Translate',
+            desc: 'Translate text between languages with optional audio output.',
             shortcut: null,
             demo: 'assets/demos/15_ai_doc_tags.webp'
         },
         '[data-action="tts-tag"]': {
-            name: 'Text-to-Speech Tag',
-            desc: 'Insert a {{TTS:}} block to convert text to speech audio using the Kokoro TTS engine. Generates an inline audio player.',
+            name: 'Text-to-Speech',
+            desc: 'Convert text to natural speech using the Kokoro TTS engine. Generates an inline audio player.',
             shortcut: null,
             demo: 'assets/demos/28_text_to_speech.webp'
         },
         '[data-action="stt-tag"]': {
-            name: 'Speech-to-Text Tag',
-            desc: 'Insert a {{STT:}} block to transcribe audio to text. Upload an audio file and get a text transcription.',
+            name: 'Speech-to-Text',
+            desc: 'Upload audio and get a text transcription — great for meeting notes and interviews.',
             shortcut: null,
             demo: 'assets/demos/14_voice_dictation.webp'
         },
         '[data-action="game-tag"]': {
-            name: 'Game Builder Tag',
-            desc: 'Insert a {{Game:}} block to generate interactive games with AI. Supports Three.js, Canvas, and P5.js — choose from pre-built games or describe your own.',
+            name: 'Game Builder',
+            desc: 'Generate interactive games with AI — supports Three.js, Canvas, and P5.js. Pick a preset or describe your own game.',
             shortcut: null,
             demo: 'assets/demos/26_game_builder.webp'
         },
@@ -452,19 +452,19 @@
         // ─── Media Embedding ───
         '[data-action="media-video"]': {
             name: 'Video Player',
-            desc: 'Insert a video player block. Supports MP4, WebM, and other HTML5-compatible video formats with playback controls.',
+            desc: 'Embed MP4, WebM, or other HTML5 video with full playback controls.',
             shortcut: null,
             demo: 'assets/demos/31_media_embedding.webp'
         },
         '[data-action="media-embed-grid"]': {
             name: 'Embed Grid',
-            desc: 'Insert an embed grid block for displaying multiple embedded items (videos, iframes, or media) in a responsive grid layout.',
+            desc: 'Display multiple videos, iframes, or media items in a responsive grid layout.',
             shortcut: null,
             demo: 'assets/demos/31_media_embedding.webp'
         },
         '[data-action="media-youtube"]': {
             name: 'YouTube Video',
-            desc: 'Insert a YouTube video embed. Paste a YouTube URL to embed the video directly in your document with an inline player.',
+            desc: 'Paste a YouTube URL to embed the video with an inline player.',
             shortcut: null,
             demo: 'assets/demos/31_media_embedding.webp'
         },
@@ -472,13 +472,13 @@
         // ─── Additional Coding & Execution ───
         '[data-action="coding-latex"]': {
             name: 'LaTeX Block',
-            desc: 'Insert a LaTeX block for rendering mathematical equations and formulas. Uses KaTeX for fast, high-quality typesetting of math notation.',
+            desc: 'Render beautiful math equations and formulas with KaTeX — fast, high-quality typesetting.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
         '#run-all-btn': {
             name: 'Run All',
-            desc: 'Execute all executable code blocks in the document in order — Bash, Python, JS, SQL, Math, HTML, and compiled languages. Results appear inline like a notebook.',
+            desc: 'Execute every code block in document order — Bash, Python, JS, SQL, Math, HTML, and compiled languages. Notebook-style inline results.',
             shortcut: null,
             demo: 'assets/demos/25_run_all.png'
         },
@@ -486,19 +486,19 @@
         // ─── Additional Header & QAB Buttons ───
         '#workspace-toggle': {
             name: 'File Tree',
-            desc: 'Toggle the workspace sidebar showing all your files. Create, rename, duplicate, and delete files. Supports localStorage and disk-backed (File System Access API) workspaces.',
+            desc: 'Manage your workspace — create, rename, duplicate, or delete files. Supports browser storage and native disk via File System Access API.',
             shortcut: 'Ctrl+B',
             demo: 'assets/demos/19_workspace_sidebar.webp'
         },
         '#qab-agents': {
             name: 'Agent Containers',
-            desc: 'Open the Agent Containers panel to manage and run autonomous AI agents. Each container runs independently with its own context and model selection.',
+            desc: 'Run autonomous AI agents — each container has its own context, model selection, and execution flow.',
             shortcut: null,
             demo: 'assets/demos/17_agent_flow.webp'
         },
         '#qab-search': {
             name: 'Find & Replace',
-            desc: 'Toggle the Find & Replace bar. Search your document with plain text or regex, navigate matches, and replace one or all occurrences.',
+            desc: 'Search with plain text or regex, navigate matches, and replace one or all occurrences.',
             shortcut: 'Ctrl+F',
             demo: 'assets/demos/10_formatting_toolbar.webp'
         }
