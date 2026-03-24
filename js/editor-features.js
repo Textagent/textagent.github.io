@@ -423,8 +423,8 @@
 
     // Resolve elements: prefer QAB inline if QAB is visible, else fall back to legacy bar
     function getActiveFindEls() {
-        var qab = document.getElementById('quick-action-bar');
-        var useQab = qab && qab.style.display !== 'none' && qabFindSection;
+        // Use QAB inputs only when the QAB find section is explicitly open (display: flex)
+        var useQab = qabFindSection && qabFindSection.style.display === 'flex';
         return {
             findInput: document.getElementById(useQab ? 'qab-find-input' : 'find-input'),
             replaceInput: document.getElementById(useQab ? 'qab-replace-input' : 'replace-input'),
@@ -559,15 +559,15 @@
         performFind();
     }
 
-    // Wire up BOTH sets of elements (legacy bar + QAB inline)
-    function wireFind(prefix) {
-        var fi = document.getElementById(prefix + 'find-input') || document.getElementById(prefix + '-find-input');
-        var rt = document.getElementById(prefix + 'regex-toggle') || document.getElementById(prefix + '-regex-toggle');
-        var fp = document.getElementById(prefix + 'find-prev') || document.getElementById(prefix + '-find-prev');
-        var fn = document.getElementById(prefix + 'find-next') || document.getElementById(prefix + '-find-next');
-        var ro = document.getElementById(prefix + 'replace-one') || document.getElementById(prefix + '-replace-one');
-        var ra = document.getElementById(prefix + 'replace-all') || document.getElementById(prefix + '-replace-all');
-        var ri = document.getElementById(prefix + 'replace-input') || document.getElementById(prefix + '-replace-input');
+    // Wire up find/replace event listeners for a set of elements by their actual IDs
+    function wireFindSet(ids) {
+        var fi = document.getElementById(ids.findInput);
+        var rt = document.getElementById(ids.regexToggle);
+        var fp = document.getElementById(ids.findPrev);
+        var fn = document.getElementById(ids.findNext);
+        var ro = document.getElementById(ids.replaceOne);
+        var ra = document.getElementById(ids.replaceAll);
+        var ri = document.getElementById(ids.replaceInput);
         if (fi) fi.addEventListener('input', performFind);
         if (fp) fp.addEventListener('click', findPrev);
         if (fn) fn.addEventListener('click', findNext);
@@ -589,13 +589,21 @@
         if (ri) ri.addEventListener('keydown', function (e) { if (e.key === 'Escape') M.closeFindBar(); });
     }
 
-    // Wire legacy bar elements
-    wireFind('find-');
+    // Wire legacy bar elements (IDs: find-input, replace-input, find-prev, etc.)
+    wireFindSet({
+        findInput: 'find-input', replaceInput: 'replace-input',
+        regexToggle: 'find-regex-toggle', findPrev: 'find-prev', findNext: 'find-next',
+        replaceOne: 'replace-one', replaceAll: 'replace-all'
+    });
     var findCloseBtn = document.getElementById('find-close');
     if (findCloseBtn) findCloseBtn.addEventListener('click', M.closeFindBar);
 
-    // Wire QAB inline elements
-    wireFind('qab-');
+    // Wire QAB inline elements (IDs: qab-find-input, qab-replace-input, etc.)
+    wireFindSet({
+        findInput: 'qab-find-input', replaceInput: 'qab-replace-input',
+        regexToggle: 'qab-regex-toggle', findPrev: 'qab-find-prev', findNext: 'qab-find-next',
+        replaceOne: 'qab-replace-one', replaceAll: 'qab-replace-all'
+    });
 
     // ========================================
     // WORD WRAP TOGGLE
