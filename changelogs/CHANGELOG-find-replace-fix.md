@@ -37,3 +37,4 @@ Added backdrop overlay technique for highlighting find matches in the editor tex
 - Gutter hidden when find bar closes
 - Fixed gutter alignment: use computed fontSize/lineHeight from textarea
 - Removed backdrop overlay (caused overlapping text) — now uses native selection highlight
+- Fixed scroll-to-match: uses native scroll-to-caret instead of manual line calculation

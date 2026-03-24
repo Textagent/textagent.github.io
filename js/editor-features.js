@@ -601,12 +601,16 @@
         if (index < 0 || index >= findMatches.length) return;
         findCurrentIndex = index;
         var match = findMatches[index];
-        // Only focus editor when navigating (next/prev/replace), not during live typing
-        if (focusEditor !== false) M.markdownEditor.focus();
+        // Briefly focus editor and place caret to trigger native scroll-to-caret
+        M.markdownEditor.focus();
+        M.markdownEditor.setSelectionRange(match.end, match.end);
+        // Now set the actual selection range (browser has already scrolled)
         M.markdownEditor.setSelectionRange(match.start, match.end);
-        var lineHeight = parseInt(getComputedStyle(M.markdownEditor).lineHeight) || 20;
-        var linesBefore = M.markdownEditor.value.substring(0, match.start).split('\n').length;
-        M.markdownEditor.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
+        // Return focus to find input during live typing
+        if (focusEditor === false) {
+            var els = getActiveFindEls();
+            if (els.findInput) els.findInput.focus();
+        }
         var els = getActiveFindEls();
         if (els.matchCount) els.matchCount.textContent = (index + 1) + ' / ' + findMatches.length;
         showFindGutter();
