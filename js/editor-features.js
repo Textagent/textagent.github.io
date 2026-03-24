@@ -442,28 +442,47 @@
     var findCurrentIndex = -1;
     var findRegexMode = false;
 
-    // --- Find Highlight Backdrop ---
+    // --- Find Highlight Backdrop + Line Numbers ---
     var findBackdrop = null;
     var findWrapper = null;
+    var findLineGutter = null;
+    var findEditorContainer = null;
 
     function ensureFindBackdrop() {
         if (findBackdrop) return findBackdrop;
         var editor = M.markdownEditor;
         var parent = editor.parentNode;
 
-        // Create wrapper that contains both backdrop and textarea
+        // Create wrapper with flex layout: [gutter | editorContainer]
         findWrapper = document.createElement('div');
         findWrapper.className = 'editor-find-wrapper';
-        // Critical: set positioning inline so it works even if CSS isn't reloaded
-        findWrapper.style.cssText = 'position:relative;width:100%;height:100%;flex:1;min-height:0;overflow:hidden;';
+        findWrapper.style.cssText = 'display:flex;width:100%;height:100%;flex:1;min-height:0;overflow:hidden;';
         parent.insertBefore(findWrapper, editor);
-        findWrapper.appendChild(editor);
 
-        // Create backdrop inside wrapper (behind textarea)
+        // Line number gutter
+        findLineGutter = document.createElement('div');
+        findLineGutter.id = 'find-line-gutter';
+        findLineGutter.style.cssText = [
+            'display:none', 'overflow:hidden', 'flex-shrink:0',
+            'width:40px', 'padding:10px 4px 10px 0', 'text-align:right',
+            'font-family:SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace',
+            'font-size:12px', 'line-height:1.5', 'color:rgba(255,255,255,0.25)',
+            'user-select:none', 'cursor:default',
+            'background:var(--editor-bg)', 'border-right:1px solid rgba(255,255,255,0.06)',
+            'box-sizing:border-box', 'scrollbar-width:none'
+        ].join(';') + ';';
+        findWrapper.appendChild(findLineGutter);
+
+        // Container for backdrop + textarea (so they overlap)
+        findEditorContainer = document.createElement('div');
+        findEditorContainer.style.cssText = 'position:relative;flex:1;min-width:0;height:100%;overflow:hidden;';
+        findWrapper.appendChild(findEditorContainer);
+        findEditorContainer.appendChild(editor);
+
+        // Create backdrop inside editor container (behind textarea)
         findBackdrop = document.createElement('div');
         findBackdrop.id = 'find-highlight-backdrop';
         findBackdrop.className = 'find-highlight-backdrop';
-        // Match textarea font/size/padding exactly — set inline for reliability
         var cs = getComputedStyle(editor);
         findBackdrop.style.cssText = [
             'position:absolute', 'top:0', 'left:0', 'right:0', 'bottom:0',
@@ -477,9 +496,9 @@
             'tab-size:' + (cs.tabSize || '8'),
             'scrollbar-width:none'
         ].join(';') + ';';
-        findWrapper.insertBefore(findBackdrop, editor);
+        findEditorContainer.insertBefore(findBackdrop, editor);
 
-        // Sync scroll
+        // Sync scroll for backdrop AND gutter
         editor.addEventListener('scroll', syncBackdropScroll);
         return findBackdrop;
     }
@@ -489,6 +508,25 @@
             findBackdrop.scrollTop = M.markdownEditor.scrollTop;
             findBackdrop.scrollLeft = M.markdownEditor.scrollLeft;
         }
+        if (findLineGutter) {
+            findLineGutter.scrollTop = M.markdownEditor.scrollTop;
+        }
+    }
+
+    function updateLineGutter(highlightLine) {
+        if (!findLineGutter) return;
+        var lines = M.markdownEditor.value.split('\n');
+        var html = '';
+        for (var i = 0; i < lines.length; i++) {
+            var num = i + 1;
+            if (num === highlightLine) {
+                html += '<div style="color:rgba(255,165,0,0.9);font-weight:bold;">' + num + '</div>';
+            } else {
+                html += '<div>' + num + '</div>';
+            }
+        }
+        findLineGutter.innerHTML = html;
+        findLineGutter.style.display = 'block';
     }
 
     function updateHighlightBackdrop() {
@@ -517,6 +555,12 @@
         M.markdownEditor.style.position = 'relative';
         M.markdownEditor.style.zIndex = '1';
         M.markdownEditor.classList.add('find-active');
+        // Update line numbers with current match line highlighted
+        var matchLine = -1;
+        if (findCurrentIndex >= 0 && findCurrentIndex < findMatches.length) {
+            matchLine = M.markdownEditor.value.substring(0, findMatches[findCurrentIndex].start).split('\n').length;
+        }
+        updateLineGutter(matchLine);
         syncBackdropScroll();
     }
 
@@ -524,6 +568,10 @@
         if (findBackdrop) {
             findBackdrop.style.display = 'none';
             findBackdrop.innerHTML = '';
+        }
+        if (findLineGutter) {
+            findLineGutter.style.display = 'none';
+            findLineGutter.innerHTML = '';
         }
         // Restore textarea styles
         M.markdownEditor.style.background = '';

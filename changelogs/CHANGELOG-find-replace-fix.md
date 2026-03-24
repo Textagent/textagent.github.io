@@ -28,3 +28,10 @@ Added backdrop overlay technique for highlighting find matches in the editor tex
 - Added `.editor-find-wrapper` container wrapping textarea + backdrop for reliable absolute positioning
 - Backdrop copies computed font/padding from textarea to guarantee pixel-perfect alignment
 - Added regex tooltip with examples on both `.*` toggle buttons
+
+## Line Number Gutter
+
+- Line numbers appear on the left side of the editor when Find is active
+- Current match's line number highlighted in orange/bold
+- Gutter scroll syncs with textarea
+- Gutter hidden when find bar closes
