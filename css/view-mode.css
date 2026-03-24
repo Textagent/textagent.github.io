@@ -207,14 +207,16 @@
   display: none;
 }
 
-/* Tooltip-style label on hover */
-.view-mode-btn:not([data-mode="editor"]):hover>span {
-  display: block;
+/* Tooltip-style label on hover using ::after + title attr */
+.view-mode-btn:not([data-mode="editor"])::after {
+  content: attr(title);
+  display: none;
   position: absolute;
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--bg-color);
+  color: var(--text-color);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 3px 10px;
@@ -223,6 +225,10 @@
   z-index: 200;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   pointer-events: none;
+}
+
+.view-mode-btn:not([data-mode="editor"]):hover::after {
+  display: block;
 }
 
 /* ========================================
