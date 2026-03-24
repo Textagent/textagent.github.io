@@ -459,14 +459,16 @@
         findWrapper.style.cssText = 'display:flex;width:100%;height:100%;flex:1;min-height:0;overflow:hidden;';
         parent.insertBefore(findWrapper, editor);
 
-        // Line number gutter
+        // Line number gutter — font-size and line-height must match textarea exactly
         findLineGutter = document.createElement('div');
         findLineGutter.id = 'find-line-gutter';
+        var editorCs = getComputedStyle(editor);
         findLineGutter.style.cssText = [
             'display:none', 'overflow:hidden', 'flex-shrink:0',
             'width:40px', 'padding:10px 4px 10px 0', 'text-align:right',
             'font-family:SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace',
-            'font-size:12px', 'line-height:1.5', 'color:rgba(255,255,255,0.25)',
+            'font-size:' + editorCs.fontSize, 'line-height:' + editorCs.lineHeight,
+            'color:rgba(255,255,255,0.25)',
             'user-select:none', 'cursor:default',
             'background:var(--editor-bg)', 'border-right:1px solid rgba(255,255,255,0.06)',
             'box-sizing:border-box', 'scrollbar-width:none'

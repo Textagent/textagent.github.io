@@ -35,3 +35,4 @@ Added backdrop overlay technique for highlighting find matches in the editor tex
 - Current match's line number highlighted in orange/bold
 - Gutter scroll syncs with textarea
 - Gutter hidden when find bar closes
+- Fixed gutter alignment: use computed fontSize/lineHeight from textarea
