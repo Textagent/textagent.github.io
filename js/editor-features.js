@@ -442,14 +442,13 @@
     var findCurrentIndex = -1;
     var findRegexMode = false;
 
-    // --- Find Highlight Backdrop + Line Numbers ---
-    var findBackdrop = null;
+    // --- Find Line Number Gutter ---
     var findWrapper = null;
     var findLineGutter = null;
     var findEditorContainer = null;
 
-    function ensureFindBackdrop() {
-        if (findBackdrop) return findBackdrop;
+    function ensureFindGutter() {
+        if (findLineGutter) return;
         var editor = M.markdownEditor;
         var parent = editor.parentNode;
 
@@ -475,41 +474,17 @@
         ].join(';') + ';';
         findWrapper.appendChild(findLineGutter);
 
-        // Container for backdrop + textarea (so they overlap)
+        // Container for textarea
         findEditorContainer = document.createElement('div');
         findEditorContainer.style.cssText = 'position:relative;flex:1;min-width:0;height:100%;overflow:hidden;';
         findWrapper.appendChild(findEditorContainer);
         findEditorContainer.appendChild(editor);
 
-        // Create backdrop inside editor container (behind textarea)
-        findBackdrop = document.createElement('div');
-        findBackdrop.id = 'find-highlight-backdrop';
-        findBackdrop.className = 'find-highlight-backdrop';
-        var cs = getComputedStyle(editor);
-        findBackdrop.style.cssText = [
-            'position:absolute', 'top:0', 'left:0', 'right:0', 'bottom:0',
-            'pointer-events:none', 'overflow:auto', 'z-index:0',
-            'white-space:pre-wrap', 'overflow-wrap:break-word', 'word-break:break-word',
-            'color:transparent', 'display:none', 'box-sizing:border-box',
-            'font-family:' + cs.fontFamily, 'font-size:' + cs.fontSize,
-            'line-height:' + cs.lineHeight, 'padding:' + cs.padding,
-            'border:' + cs.borderWidth + ' solid transparent',
-            'letter-spacing:' + cs.letterSpacing,
-            'tab-size:' + (cs.tabSize || '8'),
-            'scrollbar-width:none'
-        ].join(';') + ';';
-        findEditorContainer.insertBefore(findBackdrop, editor);
-
-        // Sync scroll for backdrop AND gutter
-        editor.addEventListener('scroll', syncBackdropScroll);
-        return findBackdrop;
+        // Sync gutter scroll with textarea
+        editor.addEventListener('scroll', syncGutterScroll);
     }
 
-    function syncBackdropScroll() {
-        if (findBackdrop) {
-            findBackdrop.scrollTop = M.markdownEditor.scrollTop;
-            findBackdrop.scrollLeft = M.markdownEditor.scrollLeft;
-        }
+    function syncGutterScroll() {
         if (findLineGutter) {
             findLineGutter.scrollTop = M.markdownEditor.scrollTop;
         }
@@ -531,59 +506,21 @@
         findLineGutter.style.display = 'block';
     }
 
-    function updateHighlightBackdrop() {
-        if (findMatches.length === 0) {
-            removeFindBackdrop();
-            return;
-        }
-        var bd = ensureFindBackdrop();
-        if (!bd) return;
-        var text = M.markdownEditor.value;
-        var html = '';
-        var last = 0;
-        for (var i = 0; i < findMatches.length; i++) {
-            var m = findMatches[i];
-            html += escHtml(text.substring(last, m.start));
-            var cls = (i === findCurrentIndex) ? 'find-hl-current' : 'find-hl';
-            html += '<mark class="' + cls + '">' + escHtml(text.substring(m.start, m.end)) + '</mark>';
-            last = m.end;
-        }
-        html += escHtml(text.substring(last));
-        html += '\n';
-        bd.innerHTML = html;
-        bd.style.display = 'block';
-        // Make textarea transparent so backdrop highlights show through
-        M.markdownEditor.style.background = 'transparent';
-        M.markdownEditor.style.position = 'relative';
-        M.markdownEditor.style.zIndex = '1';
-        M.markdownEditor.classList.add('find-active');
-        // Update line numbers with current match line highlighted
+    function showFindGutter() {
+        ensureFindGutter();
         var matchLine = -1;
         if (findCurrentIndex >= 0 && findCurrentIndex < findMatches.length) {
             matchLine = M.markdownEditor.value.substring(0, findMatches[findCurrentIndex].start).split('\n').length;
         }
         updateLineGutter(matchLine);
-        syncBackdropScroll();
+        syncGutterScroll();
     }
 
-    function removeFindBackdrop() {
-        if (findBackdrop) {
-            findBackdrop.style.display = 'none';
-            findBackdrop.innerHTML = '';
-        }
+    function hideFindGutter() {
         if (findLineGutter) {
             findLineGutter.style.display = 'none';
             findLineGutter.innerHTML = '';
         }
-        // Restore textarea styles
-        M.markdownEditor.style.background = '';
-        M.markdownEditor.style.position = '';
-        M.markdownEditor.style.zIndex = '';
-        M.markdownEditor.classList.remove('find-active');
-    }
-
-    function escHtml(str) {
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '\n');
     }
 
     M.openFindBar = function () {
@@ -615,14 +552,14 @@
         findCurrentIndex = -1;
         var mc = els.matchCount;
         if (mc) mc.textContent = '0 results';
-        removeFindBackdrop();
+        hideFindGutter();
         M.markdownEditor.focus();
     };
 
     function performFind() {
         var els = getActiveFindEls();
         var query = els.findInput ? els.findInput.value : '';
-        if (!query) { findMatches = []; findCurrentIndex = -1; if (els.matchCount) els.matchCount.textContent = '0 results'; removeFindBackdrop(); return; }
+        if (!query) { findMatches = []; findCurrentIndex = -1; if (els.matchCount) els.matchCount.textContent = '0 results'; hideFindGutter(); return; }
         var text = M.markdownEditor.value;
         findMatches = [];
         try {
@@ -657,7 +594,7 @@
             }
             selectMatch(findCurrentIndex, false);
         } else { findCurrentIndex = -1; }
-        updateHighlightBackdrop();
+        showFindGutter();
     }
 
     function selectMatch(index, focusEditor) {
@@ -672,7 +609,7 @@
         M.markdownEditor.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
         var els = getActiveFindEls();
         if (els.matchCount) els.matchCount.textContent = (index + 1) + ' / ' + findMatches.length;
-        updateHighlightBackdrop();
+        showFindGutter();
     }
 
     function findNext() { if (findMatches.length === 0) return; selectMatch((findCurrentIndex + 1) % findMatches.length); }
