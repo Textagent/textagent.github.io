@@ -12,3 +12,5 @@ Two bugs in `js/editor-features.js`:
 
 - Replaced `wireFind(prefix)` with `wireFindSet(ids)` that takes explicit ID maps for each set of elements.
 - Changed `getActiveFindEls()` to check `qabFindSection.style.display === 'flex'` — only true when the QAB find section is explicitly opened.
+
+3. **`selectMatch()` stole focus from find input** — It called `markdownEditor.focus()` on every keystroke via `performFind()` → `selectMatch()`, pulling focus from the find input back to the editor. Added `focusEditor` parameter; `performFind` passes `false` to keep focus in the find input during live typing.

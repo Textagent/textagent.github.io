@@ -510,15 +510,16 @@
             for (var i = 0; i < findMatches.length; i++) {
                 if (findMatches[i].start >= cursor) { findCurrentIndex = i; break; }
             }
-            selectMatch(findCurrentIndex);
+            selectMatch(findCurrentIndex, false);
         } else { findCurrentIndex = -1; }
     }
 
-    function selectMatch(index) {
+    function selectMatch(index, focusEditor) {
         if (index < 0 || index >= findMatches.length) return;
         findCurrentIndex = index;
         var match = findMatches[index];
-        M.markdownEditor.focus();
+        // Only focus editor when navigating (next/prev/replace), not during live typing
+        if (focusEditor !== false) M.markdownEditor.focus();
         M.markdownEditor.setSelectionRange(match.start, match.end);
         var lineHeight = parseInt(getComputedStyle(M.markdownEditor).lineHeight) || 20;
         var linesBefore = M.markdownEditor.value.substring(0, match.start).split('\n').length;
