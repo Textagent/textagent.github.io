@@ -553,6 +553,7 @@
         var mc = els.matchCount;
         if (mc) mc.textContent = '0 results';
         hideFindGutter();
+        M.markdownEditor.classList.remove('find-active');
         M.markdownEditor.focus();
     };
 
@@ -597,19 +598,30 @@
         showFindGutter();
     }
 
+    // Inject ::selection CSS for bright orange find highlight
+    (function () {
+        var style = document.createElement('style');
+        style.textContent = '#markdown-editor.find-active::selection{background-color:rgba(255,165,0,0.7)!important;color:inherit!important;}';
+        document.head.appendChild(style);
+    })();
+
     function selectMatch(index, focusEditor) {
         if (index < 0 || index >= findMatches.length) return;
         findCurrentIndex = index;
         var match = findMatches[index];
-        // Briefly focus editor and place caret to trigger native scroll-to-caret
+        // Add find-active class for orange ::selection highlight
+        M.markdownEditor.classList.add('find-active');
+        // Focus editor and place caret to trigger native scroll-to-caret
         M.markdownEditor.focus();
         M.markdownEditor.setSelectionRange(match.end, match.end);
-        // Now set the actual selection range (browser has already scrolled)
+        // Set the actual selection range (browser has already scrolled)
         M.markdownEditor.setSelectionRange(match.start, match.end);
-        // Return focus to find input during live typing
+        // Return focus to find input AFTER browser has scrolled (use delay)
         if (focusEditor === false) {
-            var els = getActiveFindEls();
-            if (els.findInput) els.findInput.focus();
+            setTimeout(function () {
+                var els = getActiveFindEls();
+                if (els.findInput) els.findInput.focus();
+            }, 50);
         }
         var els = getActiveFindEls();
         if (els.matchCount) els.matchCount.textContent = (index + 1) + ' / ' + findMatches.length;

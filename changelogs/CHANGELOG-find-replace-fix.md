@@ -38,3 +38,5 @@ Added backdrop overlay technique for highlighting find matches in the editor tex
 - Fixed gutter alignment: use computed fontSize/lineHeight from textarea
 - Removed backdrop overlay (caused overlapping text) — now uses native selection highlight
 - Fixed scroll-to-match: uses native scroll-to-caret instead of manual line calculation
+- Added bright orange ::selection highlight for current match during find
+- Fixed scroll timing: 50ms delay before refocusing find input
