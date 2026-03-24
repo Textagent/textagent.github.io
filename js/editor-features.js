@@ -444,18 +444,43 @@
 
     // --- Find Highlight Backdrop ---
     var findBackdrop = null;
+    var findWrapper = null;
 
     function ensureFindBackdrop() {
         if (findBackdrop) return findBackdrop;
-        var pane = M.markdownEditor.closest('.editor-pane');
-        if (!pane) return null;
-        pane.style.position = 'relative';
+        var editor = M.markdownEditor;
+        var parent = editor.parentNode;
+
+        // Create wrapper that contains both backdrop and textarea
+        findWrapper = document.createElement('div');
+        findWrapper.className = 'editor-find-wrapper';
+        // Critical: set positioning inline so it works even if CSS isn't reloaded
+        findWrapper.style.cssText = 'position:relative;width:100%;height:100%;flex:1;min-height:0;overflow:hidden;';
+        parent.insertBefore(findWrapper, editor);
+        findWrapper.appendChild(editor);
+
+        // Create backdrop inside wrapper (behind textarea)
         findBackdrop = document.createElement('div');
         findBackdrop.id = 'find-highlight-backdrop';
         findBackdrop.className = 'find-highlight-backdrop';
-        pane.insertBefore(findBackdrop, M.markdownEditor);
+        // Match textarea font/size/padding exactly — set inline for reliability
+        var cs = getComputedStyle(editor);
+        findBackdrop.style.cssText = [
+            'position:absolute', 'top:0', 'left:0', 'right:0', 'bottom:0',
+            'pointer-events:none', 'overflow:auto', 'z-index:0',
+            'white-space:pre-wrap', 'overflow-wrap:break-word', 'word-break:break-word',
+            'color:transparent', 'display:none', 'box-sizing:border-box',
+            'font-family:' + cs.fontFamily, 'font-size:' + cs.fontSize,
+            'line-height:' + cs.lineHeight, 'padding:' + cs.padding,
+            'border:' + cs.borderWidth + ' solid transparent',
+            'letter-spacing:' + cs.letterSpacing,
+            'tab-size:' + (cs.tabSize || '8'),
+            'scrollbar-width:none'
+        ].join(';') + ';';
+        findWrapper.insertBefore(findBackdrop, editor);
+
         // Sync scroll
-        M.markdownEditor.addEventListener('scroll', syncBackdropScroll);
+        editor.addEventListener('scroll', syncBackdropScroll);
         return findBackdrop;
     }
 
@@ -478,17 +503,19 @@
         var last = 0;
         for (var i = 0; i < findMatches.length; i++) {
             var m = findMatches[i];
-            // Escape HTML in text between matches
             html += escHtml(text.substring(last, m.start));
             var cls = (i === findCurrentIndex) ? 'find-hl-current' : 'find-hl';
             html += '<mark class="' + cls + '">' + escHtml(text.substring(m.start, m.end)) + '</mark>';
             last = m.end;
         }
         html += escHtml(text.substring(last));
-        // Append extra newline so backdrop scroll height matches textarea
         html += '\n';
         bd.innerHTML = html;
         bd.style.display = 'block';
+        // Make textarea transparent so backdrop highlights show through
+        M.markdownEditor.style.background = 'transparent';
+        M.markdownEditor.style.position = 'relative';
+        M.markdownEditor.style.zIndex = '1';
         M.markdownEditor.classList.add('find-active');
         syncBackdropScroll();
     }
@@ -498,6 +525,10 @@
             findBackdrop.style.display = 'none';
             findBackdrop.innerHTML = '';
         }
+        // Restore textarea styles
+        M.markdownEditor.style.background = '';
+        M.markdownEditor.style.position = '';
+        M.markdownEditor.style.zIndex = '';
         M.markdownEditor.classList.remove('find-active');
     }
 

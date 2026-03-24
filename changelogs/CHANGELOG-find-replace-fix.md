@@ -23,3 +23,8 @@ Added backdrop overlay technique for highlighting find matches in the editor tex
 - Scroll sync between textarea and backdrop
 - Textarea becomes transparent during find-active to show highlights through
 - Dark mode support with adjusted opacity
+
+- Fixed backdrop overlay: set critical CSS (position, font, padding) inline via JS
+- Added `.editor-find-wrapper` container wrapping textarea + backdrop for reliable absolute positioning
+- Backdrop copies computed font/padding from textarea to guarantee pixel-perfect alignment
+- Added regex tooltip with examples on both `.*` toggle buttons
