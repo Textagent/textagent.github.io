@@ -442,6 +442,69 @@
     var findCurrentIndex = -1;
     var findRegexMode = false;
 
+    // --- Find Highlight Backdrop ---
+    var findBackdrop = null;
+
+    function ensureFindBackdrop() {
+        if (findBackdrop) return findBackdrop;
+        var pane = M.markdownEditor.closest('.editor-pane');
+        if (!pane) return null;
+        pane.style.position = 'relative';
+        findBackdrop = document.createElement('div');
+        findBackdrop.id = 'find-highlight-backdrop';
+        findBackdrop.className = 'find-highlight-backdrop';
+        pane.insertBefore(findBackdrop, M.markdownEditor);
+        // Sync scroll
+        M.markdownEditor.addEventListener('scroll', syncBackdropScroll);
+        return findBackdrop;
+    }
+
+    function syncBackdropScroll() {
+        if (findBackdrop) {
+            findBackdrop.scrollTop = M.markdownEditor.scrollTop;
+            findBackdrop.scrollLeft = M.markdownEditor.scrollLeft;
+        }
+    }
+
+    function updateHighlightBackdrop() {
+        if (findMatches.length === 0) {
+            removeFindBackdrop();
+            return;
+        }
+        var bd = ensureFindBackdrop();
+        if (!bd) return;
+        var text = M.markdownEditor.value;
+        var html = '';
+        var last = 0;
+        for (var i = 0; i < findMatches.length; i++) {
+            var m = findMatches[i];
+            // Escape HTML in text between matches
+            html += escHtml(text.substring(last, m.start));
+            var cls = (i === findCurrentIndex) ? 'find-hl-current' : 'find-hl';
+            html += '<mark class="' + cls + '">' + escHtml(text.substring(m.start, m.end)) + '</mark>';
+            last = m.end;
+        }
+        html += escHtml(text.substring(last));
+        // Append extra newline so backdrop scroll height matches textarea
+        html += '\n';
+        bd.innerHTML = html;
+        bd.style.display = 'block';
+        M.markdownEditor.classList.add('find-active');
+        syncBackdropScroll();
+    }
+
+    function removeFindBackdrop() {
+        if (findBackdrop) {
+            findBackdrop.style.display = 'none';
+            findBackdrop.innerHTML = '';
+        }
+        M.markdownEditor.classList.remove('find-active');
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '\n');
+    }
+
     M.openFindBar = function () {
         var els = getActiveFindEls();
         if (els.useQab) {
@@ -471,13 +534,14 @@
         findCurrentIndex = -1;
         var mc = els.matchCount;
         if (mc) mc.textContent = '0 results';
+        removeFindBackdrop();
         M.markdownEditor.focus();
     };
 
     function performFind() {
         var els = getActiveFindEls();
         var query = els.findInput ? els.findInput.value : '';
-        if (!query) { findMatches = []; findCurrentIndex = -1; if (els.matchCount) els.matchCount.textContent = '0 results'; return; }
+        if (!query) { findMatches = []; findCurrentIndex = -1; if (els.matchCount) els.matchCount.textContent = '0 results'; removeFindBackdrop(); return; }
         var text = M.markdownEditor.value;
         findMatches = [];
         try {
@@ -512,6 +576,7 @@
             }
             selectMatch(findCurrentIndex, false);
         } else { findCurrentIndex = -1; }
+        updateHighlightBackdrop();
     }
 
     function selectMatch(index, focusEditor) {
@@ -526,6 +591,7 @@
         M.markdownEditor.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
         var els = getActiveFindEls();
         if (els.matchCount) els.matchCount.textContent = (index + 1) + ' / ' + findMatches.length;
+        updateHighlightBackdrop();
     }
 
     function findNext() { if (findMatches.length === 0) return; selectMatch((findCurrentIndex + 1) % findMatches.length); }

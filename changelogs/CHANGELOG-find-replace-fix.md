@@ -14,3 +14,12 @@ Two bugs in `js/editor-features.js`:
 - Changed `getActiveFindEls()` to check `qabFindSection.style.display === 'flex'` — only true when the QAB find section is explicitly opened.
 
 3. **`selectMatch()` stole focus from find input** — It called `markdownEditor.focus()` on every keystroke via `performFind()` → `selectMatch()`, pulling focus from the find input back to the editor. Added `focusEditor` parameter; `performFind` passes `false` to keep focus in the find input during live typing.
+
+## Visual Highlight Overlay
+
+Added backdrop overlay technique for highlighting find matches in the editor textarea:
+- Mirror div (`.find-highlight-backdrop`) behind textarea with identical font/padding
+- Orange `<mark>` highlights for all matches, brighter orange for current match
+- Scroll sync between textarea and backdrop
+- Textarea becomes transparent during find-active to show highlights through
+- Dark mode support with adjusted opacity
