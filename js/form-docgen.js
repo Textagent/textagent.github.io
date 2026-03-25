@@ -167,15 +167,24 @@
             var body = match[1].trim();
             var lines = body.split('\n');
 
-            // First line = title (may not start with @)
             var title = '';
             var fields = [];
+            var customCss = '';
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i].trim();
                 if (!line) continue;
                 var fieldMatch = line.match(/^@field:\s*(.+)/i);
                 if (fieldMatch) {
                     var parts = fieldMatch[1].split('|').map(function (s) { return s.trim(); });
+                    var fieldName = parts[0] ? parts[0].toLowerCase() : '';
+                    
+                    if (fieldName === 'css') {
+                        customCss = parts.slice(1).join('|') || '';
+                        // Remove surrounding quotes if present
+                        customCss = customCss.replace(/^"|"$/g, '').trim();
+                        continue;
+                    }
+
                     fields.push({
                         name: parts[0] || 'field_' + i,
                         type: (parts[1] || 'text').toLowerCase(),
@@ -192,6 +201,7 @@
             blocks.push({
                 title: title || 'Form',
                 fields: fields,
+                customCss: customCss,
                 start: match.index,
                 end: match.index + match[0].length,
                 fullMatch: match[0]
@@ -231,7 +241,9 @@
                 }
             });
 
-            var html = '<div class="form-dg-card" data-form-index="' + blockIndex + '">'
+            var customCssStyle = block.customCss ? ' style="' + escapeHtml(block.customCss) + '"' : '';
+
+            var html = '<div class="form-dg-card" data-form-index="' + blockIndex + '"' + customCssStyle + '>'
                 + '<div class="form-dg-header">'
                 + '<span class="form-dg-icon">📋</span>'
                 + '<span class="form-dg-title">' + escapeHtml(block.title) + '</span>'
