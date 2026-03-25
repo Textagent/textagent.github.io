@@ -11,6 +11,7 @@
     var IDLE_TIMEOUT_MS = 5 * 60 * 1000;            // Auto-stop after 5 min idle
     var CODESPACE_PREFIX = 'textagent-';             // Naming prefix for cleanup
     var idleTimer = null;
+    var _localStatusFailed = false;                   // Circuit breaker: stop polling after first 404
 
     // ── Public API ──
     M.agentCloud = {
@@ -136,6 +137,8 @@
 
         /** Get local Docker agent status */
         getLocalStatus: async function () {
+            // Circuit breaker: after the first failure on static hosting, stop polling
+            if (_localStatusFailed) return { agents: [], docker: false };
             var baseUrl = localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL) || (window.location.origin);
             baseUrl = baseUrl.replace(/\/api\/exec$/, '');
             try {
@@ -143,9 +146,15 @@
                     method: 'GET',
                     signal: AbortSignal.timeout(3000)
                 });
-                if (!res.ok) return { agents: [], docker: false };
+                if (!res.ok) {
+                    // On static hosts (GitHub Pages), this will always 404 — stop retrying
+                    if (!localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL)) _localStatusFailed = true;
+                    return { agents: [], docker: false };
+                }
+                _localStatusFailed = false; // Reset on success
                 return await res.json();
             } catch (_) {
+                if (!localStorage.getItem(M.KEYS.AGENT_CUSTOM_URL)) _localStatusFailed = true;
                 return { agents: [], docker: false };
             }
         },
