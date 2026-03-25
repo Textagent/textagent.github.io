@@ -115,6 +115,12 @@
                 ema: (grid && grid.getAttribute('data-ema')) || DEFAULT_EMA,
             };
 
+            // Apply custom height from data-height attribute
+            var customHeight = grid && grid.getAttribute('data-height');
+            if (customHeight) {
+                card.style.setProperty('--stock-card-height', customHeight);
+            }
+
             card.setAttribute('data-widget-loaded', 'true');
 
             // Header
