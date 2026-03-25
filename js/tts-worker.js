@@ -60,6 +60,64 @@ const VOICE_MAP = {
 };
 
 /**
+ * Split text into chunks at sentence boundaries for efficient synthesis.
+ * Each chunk is ≤ maxLen chars. Splits at sentence-ending punctuation
+ * (.!?) followed by whitespace, or paragraph breaks. Falls back to
+ * splitting at the last space if no sentence boundary is found.
+ */
+function splitIntoChunks(text, maxLen = 500) {
+    if (!text || text.length <= maxLen) return [text];
+
+    const chunks = [];
+    let remaining = text;
+
+    while (remaining.length > 0) {
+        if (remaining.length <= maxLen) {
+            chunks.push(remaining.trim());
+            break;
+        }
+
+        // Look for sentence-ending punctuation followed by whitespace within maxLen
+        let splitIdx = -1;
+        for (let i = maxLen; i >= Math.floor(maxLen * 0.3); i--) {
+            const ch = remaining[i - 1];
+            const next = remaining[i] || '';
+            if ((ch === '.' || ch === '!' || ch === '?') && /\s/.test(next)) {
+                splitIdx = i;
+                break;
+            }
+        }
+
+        // Fallback: split at paragraph break (\n\n)
+        if (splitIdx === -1) {
+            const paraIdx = remaining.lastIndexOf('\n\n', maxLen);
+            if (paraIdx > Math.floor(maxLen * 0.3)) {
+                splitIdx = paraIdx + 1; // include one newline in current chunk
+            }
+        }
+
+        // Fallback: split at last space within maxLen
+        if (splitIdx === -1) {
+            const spaceIdx = remaining.lastIndexOf(' ', maxLen);
+            if (spaceIdx > Math.floor(maxLen * 0.3)) {
+                splitIdx = spaceIdx + 1;
+            }
+        }
+
+        // Last resort: hard split at maxLen
+        if (splitIdx === -1) {
+            splitIdx = maxLen;
+        }
+
+        const chunk = remaining.substring(0, splitIdx).trim();
+        if (chunk) chunks.push(chunk);
+        remaining = remaining.substring(splitIdx).trim();
+    }
+
+    return chunks.filter(c => c.length > 0);
+}
+
+/**
  * Load model + tokenizer separately, then construct KokoroTTS directly.
  * This avoids the preprocessor_config.json fetch that fails in
  * KokoroTTS.from_pretrained() → StyleTextToSpeech2Model.from_pretrained().
@@ -203,28 +261,60 @@ self.addEventListener('message', async (e) => {
             console.log(`[TTS Worker] 📝 Speak request received — text="${text.substring(0, 60)}…" (${text.length} chars)`);
             console.log(`[TTS Worker] 🎙 Voice: ${selectedVoice} | Language: ${lang || 'default'}`);
 
+            // Split text into manageable chunks for efficient synthesis
+            const chunks = splitIntoChunks(text, 500);
+            const totalChunks = chunks.length;
+
+            console.log(`[TTS Worker] 📦 Split into ${totalChunks} chunk(s)`);
+
             // Notify main thread that synthesis is starting
             self.postMessage({
                 type: 'status',
                 status: 'loading',
-                message: `🔊 Synthesizing speech (${text.length} chars)…`,
+                message: totalChunks > 1
+                    ? `🔊 Synthesizing speech (${text.length} chars, ${totalChunks} chunks)…`
+                    : `🔊 Synthesizing speech (${text.length} chars)…`,
                 loadingPhase: 'synthesizing',
             });
 
             const synthStart = performance.now();
+            const audioSegments = [];
+            let sampleRate = 24000;
 
-            const audio = await tts.generate(text, {
-                voice: selectedVoice,
-            });
+            for (let ci = 0; ci < totalChunks; ci++) {
+                const chunk = chunks[ci];
+                console.log(`[TTS Worker] 🔄 Chunk ${ci + 1}/${totalChunks} (${chunk.length} chars): "${chunk.substring(0, 50)}…"`);
+
+                if (totalChunks > 1) {
+                    self.postMessage({
+                        type: 'chunk-progress',
+                        current: ci + 1,
+                        total: totalChunks,
+                        message: `🔊 Synthesizing chunk ${ci + 1}/${totalChunks}…`,
+                    });
+                }
+
+                const audio = await tts.generate(chunk, {
+                    voice: selectedVoice,
+                });
+
+                sampleRate = audio.sampling_rate || 24000;
+                audioSegments.push(audio.audio);
+            }
+
+            // Concatenate all audio segments into a single Float32Array
+            const totalLength = audioSegments.reduce((sum, seg) => sum + seg.length, 0);
+            const audioData = new Float32Array(totalLength);
+            let offset = 0;
+            for (const seg of audioSegments) {
+                audioData.set(seg, offset);
+                offset += seg.length;
+            }
 
             const synthTime = ((performance.now() - synthStart) / 1000).toFixed(2);
-
-            // kokoro-js returns: { audio: Float32Array, sampling_rate: number }
-            const audioData = audio.audio;
-            const sampleRate = audio.sampling_rate || 24000;
             const duration = (audioData.length / sampleRate).toFixed(1);
 
-            console.log(`[TTS Worker] ✅ Synthesis complete — ${duration}s of audio at ${sampleRate} Hz (took ${synthTime}s)`);
+            console.log(`[TTS Worker] ✅ Synthesis complete — ${duration}s of audio at ${sampleRate} Hz (took ${synthTime}s, ${totalChunks} chunks)`);
 
             self.postMessage({
                 type: 'audio',

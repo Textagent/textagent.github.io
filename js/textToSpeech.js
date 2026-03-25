@@ -102,6 +102,12 @@
                 console.log(`${_ttsT()} ⬇ ${file}: ${loadedMB}/${totalMB} MB (${percent}%)`);
             }
 
+            if (type === 'chunk-progress') {
+                const msg = e.data.message || `🔊 Synthesizing chunk ${e.data.current}/${e.data.total}…`;
+                console.log(`${_ttsT()} ${msg}`);
+                M.showToast && M.showToast(msg, 'info');
+            }
+
             if (type === 'audio') {
                 const duration = e.data.data.length / (e.data.sampleRate || 24000);
                 const elapsed = _generateStartTime ? ((Date.now() - _generateStartTime) / 1000).toFixed(1) : '?';
@@ -313,12 +319,7 @@
 
         // Route: Kokoro for English/Chinese, Web Speech for everything else
         if (KOKORO_LANGS.has(langKey)) {
-            // ── Kokoro Path ──
-            const maxLen = 1000;
-            if (text.length > maxLen) {
-                console.log(`${_ttsT()} Text truncated from ${text.length} to ${maxLen} chars (Kokoro limit)`);
-                text = text.substring(0, maxLen);
-            }
+            // ── Kokoro Path ── (worker handles chunking for long text)
 
             if (!worker) {
                 console.log(`${_ttsT()} Worker not initialized — starting init + queuing speak request`);
