@@ -442,7 +442,7 @@
     // ==============================================
     function insertFormTag() {
         M.wrapSelectionWith(
-            '{{@Form: My Form\n  @field: name | text | Your name | required\n  @field: email | email | your@email.com | required\n  @field: subject | select | General,Support,Feedback,Other\n  @field: message | textarea | Write your message... | required\n',
+            '{{@Form: My Form\n  @field: css | --bg-primary: #ffffff; --bg-secondary: #f8fafc; --text-primary: #0f172a; --border-color: #cbd5e1;\n  @field: name | text | Your name | required\n  @field: email | email | your@email.com | required\n  @field: subject | select | General,Support,Feedback,Other\n  @field: message | textarea | Write your message... | required\n',
             '}}',
             ''
         );
