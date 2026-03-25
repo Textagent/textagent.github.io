@@ -299,8 +299,8 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
 
             // Generate — Qwen3 model card: use sampling, NOT greedy, for thinking mode
             const genConfig = enableThinking
-                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096) }
-                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens };
+                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096), repetition_penalty: 1.2, no_repeat_ngram_size: 4 }
+                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens, repetition_penalty: 1.3, no_repeat_ngram_size: 5 };
             await model.generate({ ...inputs, ...genConfig, streamer });
 
             // Final cleanup — strip any remaining think tags or special tokens
@@ -389,8 +389,8 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             // Generate — Qwen3 model card: use sampling, NOT greedy, for thinking mode
             // Thinking: temp=0.6, top_p=0.95, top_k=20 | Non-thinking: temp=0.7, top_p=0.8, top_k=20
             const genConfig = enableThinking
-                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096) }
-                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens };
+                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096), repetition_penalty: 1.2, no_repeat_ngram_size: 4 }
+                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens, repetition_penalty: 1.3, no_repeat_ngram_size: 5 };
             await model.generate({ ...inputs, ...genConfig, streamer });
 
             // Final cleanup: strip any remaining think tags or reasoning artifacts
