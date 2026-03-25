@@ -45,6 +45,7 @@ import '../css/tools-docgen.css';
 import '../css/run-preflight.css';
 import '../css/composer.css';
 import '../css/agent-panel.css';
+import '../css/form-engine.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -134,6 +135,7 @@ async function loadModules() {
         import('../js/templates/games.js'),
         import('../js/templates/skills.js'),
         import('../js/templates/api-explorer.js'),
+        import('../js/templates/forms.js'),
     ]);
     await import('../js/templates.js');
 
@@ -151,6 +153,12 @@ async function loadModules() {
 
     // 3f: API Component (depends on M._showToast from ai-docgen)
     await import('../js/api-docgen.js');
+
+    // 3f-ext: Form Engine (depends on M.db, M.encryptData from cloud-share)
+    await import('../js/form-engine.js');
+
+    // 3f-ext2: Form DocGen Tag (depends on M.registerFormattingAction, M.wrapSelectionWith)
+    await import('../js/form-docgen.js');
 
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');

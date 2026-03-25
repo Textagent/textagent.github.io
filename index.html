@@ -537,6 +537,7 @@
                                     class="bi bi-mic me-2"></i>Voice Dictation</button></li>
                         <li><button class="dropdown-item" type="button" id="qab-agents"><i
                                     class="bi bi-box me-2"></i>Agent Containers</button></li>
+
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -654,6 +655,8 @@
                             title="Tag as Speech-to-Text (Transcribe)">🎤 STT</button>
                         <button class="fmt-btn fmt-game-btn" data-action="game-tag"
                             title="AI Game Builder (Three.js / Canvas / P5.js)">🎮 Game</button>
+                        <button class="fmt-btn fmt-form-btn" data-action="form-tag"
+                            title="Insert interactive Form (contact, survey, feedback)">📋 Form</button>
                         <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
                             title="Fill all AI blocks">Fill</button>
                     </div>
@@ -703,8 +706,15 @@
                 <span class="fmt-api-group-label" style="color:#06b6d4">Tools</span>
                 <button class="fmt-btn fmt-tools-btn" data-action="tools-scrape-tag"
                     title="Insert Web Scrape Tag">🔗 Scrape</button>
-                <button class="fmt-btn fmt-tools-btn" data-action="tools-search-tag"
-                    title="Insert Web Search Tag">🔍 Search</button>
+                <div class="fmt-group-overflow">
+                    <button class="fmt-btn fmt-group-more-btn" title="More tools">…</button>
+                    <div class="fmt-group-dropdown">
+                        <button class="fmt-btn fmt-tools-btn" data-action="tools-search-tag"
+                            title="Insert Web Search Tag">🔍 Search</button>
+                        <button class="fmt-btn fmt-tools-btn fmt-form-btn" data-action="form-tag"
+                            title="Insert Interactive Form">📋 Form</button>
+                    </div>
+                </div>
             </div>
             <span class="fmt-separator"></span>
             <div class="fmt-coding-group" title="Executable Code Blocks">
@@ -747,7 +757,7 @@
             <span class="fmt-separator"></span>
             <button class="fmt-btn fmt-vars-btn" id="apply-vars-btn"
                 title="Apply Variables — replace all $(varName) placeholders">
-                <i class="bi bi-braces-asterisk"></i> <span>Vars</span>
+                <i class="bi bi-currency-dollar"></i> <span>Vars</span>
             </button>
             <span class="fmt-separator"></span>
             <button class="fmt-btn fmt-run-all-btn" data-action="run-all" id="run-all-btn"
@@ -911,6 +921,7 @@
                     <button class="composer-chip ai-chip" data-insert="{{Game: }}" data-cursor="-2" title="Game Builder">🎮 Game</button>
                     <button class="composer-chip ai-chip" data-insert="{{@Tools: @scrape: }}" data-cursor="-2" title="Web Scrape">🔗 Scrape</button>
                     <button class="composer-chip ai-chip" data-insert="{{@Tools: @search: }}" data-cursor="-2" title="Web Search">🔍 Search</button>
+                    <button class="composer-chip ai-chip" data-insert="{{Form: My Form&#10;  @field: name | text | Your name | required&#10;  @field: email | email | your@email.com | required&#10;  @field: message | textarea | Write here...&#10;}}" data-cursor="-2" title="Interactive Form">📋 Form</button>
                 </div>
                 <!-- Input bar -->
                 <div class="composer-input-bar">

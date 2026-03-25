@@ -367,6 +367,67 @@
   margin-top: 8px;
 }
 
+/* --- Form Share Section (dual-link) --- */
+.share-form-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.share-form-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2ea043;
+  background: rgba(46, 160, 67, 0.1);
+  border: 1px solid rgba(46, 160, 67, 0.25);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+[data-theme="dark"] .share-form-badge {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.1);
+  border-color: rgba(63, 185, 80, 0.25);
+}
+
+.share-form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 6px;
+}
+
+.share-form-label small {
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.share-btn-copy-both {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px dashed var(--accent-color);
+  border-radius: 6px;
+  background-color: rgba(88, 166, 255, 0.06);
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.share-btn-copy-both:hover {
+  background-color: rgba(88, 166, 255, 0.12);
+  border-style: solid;
+}
+
 /* --- Email to Self --- */
 #share-email-section {
   margin-top: 16px;
@@ -848,6 +909,39 @@
   box-shadow: 0 4px 20px rgba(46, 160, 67, 0.5);
 }
 
+/* ========================================
+   FORM FILL MODE (respondent m=fill)
+   Clean form-only experience — no editing chrome
+   ======================================== */
+
+.form-fill-mode .app-header,
+.form-fill-mode #shared-view-banner,
+.form-fill-mode #shared-view-pill,
+.form-fill-mode #header-restore-pill,
+.form-fill-mode .editor-pane,
+.form-fill-mode .gutter,
+.form-fill-mode .resize-handle,
+.form-fill-mode .fmt-toolbar {
+  display: none !important;
+}
+
+.form-fill-mode .preview-pane {
+  width: 100% !important;
+  max-width: 720px;
+  margin: 24px auto !important;
+  padding: 24px !important;
+  border: none !important;
+}
+
+.form-fill-mode .form-dg-add-btn,
+.form-fill-mode .form-dg-remove {
+  display: none !important;
+}
+
+.form-fill-mode .main-content {
+  margin-top: 0 !important;
+  height: 100vh !important;
+}
 
 /* ========================================
    FILE CONVERSION OVERLAY

@@ -21,7 +21,8 @@
     window.__MDV_TEMPLATES_FINANCE || [],
     window.__MDV_TEMPLATES_GAMES || [],
     window.__MDV_TEMPLATES_SKILLS || [],
-    window.__MDV_TEMPLATES_API_EXPLORER || []
+    window.__MDV_TEMPLATES_API_EXPLORER || [],
+    window.__MDV_TEMPLATES_FORMS || []
   );
 
 
@@ -54,6 +55,7 @@
       case 'skills': return 'doc';
       case 'agents': return 'technical';
       case 'api-explorer': return 'technical';
+      case 'forms': return 'project';
       default: return 'doc';
     }
   }
@@ -75,6 +77,7 @@
       case 'skills': return 'bi-book';
       case 'agents': return 'bi-robot';
       case 'api-explorer': return 'bi-plug';
+      case 'forms': return 'bi-ui-checks-grid';
       default: return 'bi-file-earmark';
     }
   }

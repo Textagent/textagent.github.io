@@ -448,6 +448,12 @@
             shortcut: null,
             demo: 'assets/demos/26_game_builder.webp'
         },
+        '[data-action="form-tag"]': {
+            name: 'Interactive Form',
+            desc: 'Build forms in Markdown with {{Form:}} — 14 field types including text, email, select, stars, NPS, slider, and yes/no. Share with dual links: a respondent fill link and a creator-only response viewer. All responses are AES-256-GCM encrypted.',
+            shortcut: null,
+            demo: 'assets/demos/32_form_sharing.webp'
+        },
 
         // ─── Media Embedding ───
         '[data-action="media-video"]': {

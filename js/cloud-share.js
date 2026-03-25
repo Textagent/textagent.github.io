@@ -122,6 +122,7 @@
         var wt = generateWriteToken();
         var docData = { d: dataString, k: keyString, t: Date.now(), wt: wt };
         if (options.view) docData.view = options.view;
+        if (options.rkHash) docData.rkHash = options.rkHash;
 
         // --- Custom slug support ---
         if (options.customSlug) {
@@ -372,12 +373,35 @@
         return result.slug || null;
     }
 
+    // Generate a short random token for response key (rk)
+    function generateResponseKey() {
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var rk = '';
+        for (var i = 0; i < 24; i++) rk += chars[Math.floor(Math.random() * chars.length)];
+        return rk;
+    }
+
+    // SHA-256 hash of the response key for secure storage
+    async function hashResponseKey(rk) {
+        var encoded = new TextEncoder().encode(rk);
+        var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+        return uint8ArrayToBase64Url(new Uint8Array(hashBuffer));
+    }
+
+    // Detect if markdown contains {{Form: or {{@Form: tags
+    function hasFormContent(md) {
+        return /\{\{@?Form:/i.test(md);
+    }
+
     async function doQuickShare() {
         var markdownContent = M.markdownEditor.value;
         var customSlug = getCustomSlugFromInput();
+        var isForm = hasFormContent(markdownContent);
+        var rkString = isForm ? generateResponseKey() : '';
+        var rkHash = rkString ? await hashResponseKey(rkString) : '';
         try {
-            var result = await createCompactShare(markdownContent, { view: selectedShareView || undefined, customSlug: customSlug });
-            return { url: result.url, id: result.id };
+            var result = await createCompactShare(markdownContent, { view: selectedShareView || undefined, customSlug: customSlug, rkHash: rkHash });
+            return { url: result.url, id: result.id, isForm: isForm, rkString: rkString };
         } catch (fbError) {
             // If it's a custom name error, re-throw immediately
             if (customSlug && (fbError.message.indexOf('unavailable') !== -1 || fbError.message.indexOf('reserved') !== -1 || fbError.message.indexOf('characters') !== -1 || fbError.message.indexOf('letters') !== -1)) {
@@ -393,13 +417,16 @@
             var shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
             if (shareUrl.length > 65000) throw new Error('Content too large to share. Try a smaller document.');
             if (selectedShareView) shareUrl += '&view=' + selectedShareView;
-            return { url: shareUrl, id: '' };
+            return { url: shareUrl, id: '', isForm: isForm, rkString: rkString };
         }
     }
 
     async function doSecureShare(passphrase) {
         var markdownContent = M.markdownEditor.value;
         var customSlug = getCustomSlugFromInput();
+        var isForm = hasFormContent(markdownContent);
+        var rkString = isForm ? generateResponseKey() : '';
+        var rkHash = rkString ? await hashResponseKey(rkString) : '';
         var compressed = compressData(markdownContent);
         var salt = crypto.getRandomValues(new Uint8Array(16));
         var key = await deriveKeyFromPassphrase(passphrase, salt);
@@ -409,6 +436,7 @@
         var wt = generateWriteToken();
         var docData = { d: dataString, salt: saltString, secure: true, t: Date.now(), wt: wt };
         if (selectedShareView) docData.view = selectedShareView;
+        if (rkHash) docData.rkHash = rkHash;
 
         var docId;
         if (customSlug) {
@@ -423,7 +451,7 @@
         }
         var secureUrl = SHARE_BASE_URL + '#id=' + docId + '&secure=1';
         if (selectedShareView) secureUrl += '&view=' + selectedShareView;
-        return { url: secureUrl, id: docId };
+        return { url: secureUrl, id: docId, isForm: isForm, rkString: rkString };
     }
 
     // ========================================
@@ -444,6 +472,14 @@
         if (viewParam && (viewParam === 'ppt' || viewParam === 'preview')) {
             M.sharedViewLock = viewParam;
         }
+        // --- m=fill: respondent form fill mode (preview-locked) ---
+        var fillMode = params.get('m');
+        if (fillMode === 'fill') {
+            M.sharedViewLock = 'preview';
+            M.isFormFillMode = true;
+        }
+        // --- rk: response key for form response viewing ---
+        M.formResponseKey = params.get('rk') || '';
 
         // --- Compact share: #s=<shortId> ---
         if (compactId) {
@@ -453,6 +489,16 @@
                 var doc = await db.collection('shares').doc(compactId).get();
                 if (!doc.exists) throw new Error('Shared document not found.');
                 var data = doc.data();
+                // Validate rk (response key) against stored hash
+                if (M.formResponseKey && data.rkHash) {
+                    var urlRkHash = await hashResponseKey(M.formResponseKey);
+                    if (urlRkHash !== data.rkHash) {
+                        M.formResponseKey = ''; // Invalid rk — revoke creator access
+                    }
+                } else if (M.formResponseKey && !data.rkHash) {
+                    // Legacy doc without rkHash — reject rk for safety
+                    M.formResponseKey = '';
+                }
                 // Check view lock from Firestore doc
                 if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
                     M.sharedViewLock = data.view;
@@ -461,6 +507,12 @@
                 var key = await base64UrlToKey(data.k);
                 var compressed = await decryptData(key, encrypted);
                 var markdownContent = decompressData(compressed);
+                // Form access gate: block if form doc but no rk or m=fill
+                if (/\{\{@?Form:/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+                    M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
+                    M.setViewMode('preview');
+                    return;
+                }
                 M.markdownEditor.value = markdownContent;
                 M.renderMarkdown();
                 var sharedMode = M.sharedViewLock || 'preview';
@@ -510,6 +562,13 @@
                 if (!doc.exists) throw new Error('Shared document not found.');
                 var docData = doc.data();
                 dataString = docData.d;
+                // Validate rk against stored hash
+                if (M.formResponseKey && docData.rkHash) {
+                    var urlRkHash = await hashResponseKey(M.formResponseKey);
+                    if (urlRkHash !== docData.rkHash) M.formResponseKey = '';
+                } else if (M.formResponseKey && !docData.rkHash) {
+                    M.formResponseKey = '';
+                }
                 // Check view lock from Firestore doc (authoritative — can't be stripped from URL)
                 if (docData.view && (docData.view === 'ppt' || docData.view === 'preview')) {
                     M.sharedViewLock = docData.view;
@@ -519,6 +578,12 @@
             var key = await base64UrlToKey(keyString);
             var compressed = await decryptData(key, encrypted);
             var markdownContent = decompressData(compressed);
+            // Form access gate: block if form doc but no rk or m=fill
+            if (/\{\{@?Form:/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
+                M.setViewMode('preview');
+                return;
+            }
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
             // Use locked view mode if specified, otherwise default to preview
@@ -545,6 +610,12 @@
             var compressed = await decryptData(key, encrypted);
             var markdownContent = decompressData(compressed);
             hidePassphrasePrompt();
+            // Form access gate: block if form doc but no rk or m=fill
+            if (/\{\{@?Form:/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
+                M.setViewMode('preview');
+                return;
+            }
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
             var secureSharedMode = M.sharedViewLock || 'preview';
@@ -566,6 +637,18 @@
     function showSharedBanner() {
         var banner = document.getElementById('shared-view-banner');
         var pill = document.getElementById('shared-view-pill');
+
+        // Form fill mode: hide ALL editing chrome — clean form-only experience
+        if (M.isFormFillMode) {
+            document.body.classList.add('form-fill-mode');
+            banner.style.display = 'none';
+            pill.style.display = 'none';
+            M.markdownEditor.readOnly = true;
+            document.body.classList.add('editor-readonly');
+            if (M.sharedViewLock) applyViewLockUI(M.sharedViewLock);
+            return; // Skip banner, pill, auto-dismiss — respondent sees only the form
+        }
+
         banner.style.display = 'block';
         banner.classList.remove('banner-hidden');
         document.body.classList.add('shared-view-active');
@@ -596,8 +679,10 @@
                     '#qab-copy, .ai-action-chip, .ai-ctx-btn, ' +
                     '#replace-one, #replace-all, #qab-replace-one, #qab-replace-all'
                 );
-                // Also block any button inside the preview panel
-                var previewBtn = !target && e.target.closest('#markdown-preview button');
+                // Also block any button inside the preview panel (except form responses & submit)
+                var previewBtn = !target && e.target.closest('#markdown-preview button')
+                    && !e.target.closest('.form-dg-responses-btn')
+                    && !e.target.closest('.form-dg-submit');
                 if (target || previewBtn) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
@@ -918,7 +1003,7 @@
                 saveSharedVersion(shareResult.id, shareResult.url, selectedShareView, isSecureShareMode ? 'secure' : 'quick');
             }
             closeShareOptionsModal();
-            showShareResult(shareResult.url, isSecureShareMode);
+            showShareResult(shareResult.url, isSecureShareMode, shareResult.isForm, shareResult.rkString);
         } catch (error) {
             console.error('Share failed:', error);
             // Show custom name errors in the custom name error div
@@ -937,12 +1022,22 @@
 
     // --- Share Result Modal ---
     var shareResultModal = document.getElementById('share-result-modal');
-    function showShareResult(url, isSecure) {
-        document.getElementById('share-link-input').value = url;
+    var lastShareRk = '';
+    var lastShareRespondentUrl = '';
+    function showShareResult(url, isSecure, isForm, rkString) {
+        // For form docs, append rk to create the creator link
+        var creatorUrl = url;
+        if (isForm && rkString) {
+            creatorUrl = url + '&rk=' + rkString;
+        }
+        document.getElementById('share-link-input').value = creatorUrl;
+
         var desc = document.getElementById('share-result-desc');
         var note = document.getElementById('share-result-note');
         var dlSection = document.getElementById('share-download-section');
         var emailNote = document.getElementById('share-email-note');
+        var formSection = document.getElementById('share-form-section');
+
         if (isSecure) {
             desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Password-protected. The link alone cannot decrypt the content.';
             note.innerHTML = '<i class="bi bi-info-circle me-1"></i>No key material is in the URL — only the password holder can open this.';
@@ -954,6 +1049,22 @@
             dlSection.style.display = 'none';
             if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends the share link and .md file directly to your inbox.';
         }
+
+        // Form-detected: show respondent link section
+        if (isForm && rkString && formSection) {
+            var respondentUrl = url + '&m=fill';
+            document.getElementById('share-respondent-link-input').value = respondentUrl;
+            formSection.style.display = '';
+            lastShareRk = rkString;
+            lastShareRespondentUrl = respondentUrl;
+            desc.innerHTML = '<i class="bi bi-ui-checks me-1"></i> Form shared! Use the links below to manage and distribute.';
+            if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends both creator and respondent links to your inbox.';
+        } else if (formSection) {
+            formSection.style.display = 'none';
+            lastShareRk = '';
+            lastShareRespondentUrl = '';
+        }
+
         shareResultModal.classList.add('active');
     }
     M.closeShareResultModal = function () { shareResultModal.classList.remove('active'); };
@@ -965,6 +1076,27 @@
         try { await navigator.clipboard.writeText(linkInput.value); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
         catch (e) { linkInput.select(); document.execCommand('copy'); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
         setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+    });
+    // Copy respondent link button
+    var copyRespondentBtn = document.getElementById('copy-respondent-link');
+    if (copyRespondentBtn) copyRespondentBtn.addEventListener('click', async function () {
+        var linkInput = document.getElementById('share-respondent-link-input');
+        var btn = this;
+        try { await navigator.clipboard.writeText(linkInput.value); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
+        catch (e) { linkInput.select(); document.execCommand('copy'); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+    });
+    // Copy both links button
+    var copyBothBtn = document.getElementById('copy-both-links');
+    if (copyBothBtn) copyBothBtn.addEventListener('click', async function () {
+        var creatorLink = document.getElementById('share-link-input').value;
+        var respondentLink = document.getElementById('share-respondent-link-input').value;
+        var text = '🔧 Creator Link (edit + responses):\n' + creatorLink + '\n\n🔗 Respondent Link (share with people):\n' + respondentLink;
+        var btn = this;
+        try { await navigator.clipboard.writeText(text); }
+        catch (e) { /* fallback not needed for textarea copy */ }
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Copied!';
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-files me-1"></i> Copy Both Links'; }, 1500);
     });
 
     // --- Download Credentials ---
@@ -1023,7 +1155,7 @@
     });
 
     // --- Email to Self ---
-    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwG35nTbbqmtKMW1IWD1YnSkMavq1bNsqndys2csWbySo-KY4CUxFyEQ1Gr8GoFnQH0rw/exec';
+    var EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4lYdtiRaVoRvAQg_4Nvf9zJkZOcrCCbkj2AkGiDPK8Ep18LQ2m-m-c2b2szVLuQTfDA/exec';
     var emailInput = document.getElementById('share-email-input');
     var emailSubjectInput = document.getElementById('share-email-subject');
     var emailSendBtn = document.getElementById('share-email-send');
@@ -1037,8 +1169,8 @@
 
     // Track when the share result modal opens (for time-based bot detection)
     var _origShowShareResult = showShareResult;
-    showShareResult = function (url, isSecure) {
-        _origShowShareResult(url, isSecure);
+    showShareResult = function (url, isSecure, isForm, rkString) {
+        _origShowShareResult(url, isSecure, isForm, rkString);
         emailModalOpenTime = Date.now();
     };
     if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {
@@ -1094,6 +1226,11 @@
             // Include passphrase for secure shares so the email contains credentials
             if (lastSharePassphrase) {
                 emailPayload.passphrase = lastSharePassphrase;
+            }
+            // Include respondent link for form documents
+            if (lastShareRespondentUrl) {
+                emailPayload.respondentLink = lastShareRespondentUrl;
+                emailPayload.isForm = true;
             }
             await fetch(EMAIL_SCRIPT_URL, {
                 method: 'POST',

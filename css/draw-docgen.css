@@ -134,7 +134,8 @@
 /* Toolbar button */
 .fmt-draw-btn {
     color: #6965db !important;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.78em !important;
 }
 
 /* ─── AI Generate Button & Prompt ─── */

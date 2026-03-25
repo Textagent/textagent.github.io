@@ -133,6 +133,21 @@
                         <i class="bi bi-clipboard"></i>
                     </button>
                 </div>
+                <!-- Form-detected: respondent link section (hidden by default) -->
+                <div id="share-form-section" class="share-form-section" style="display:none">
+                    <div class="share-form-badge"><i class="bi bi-ui-checks me-1"></i>This document contains a form</div>
+                    <label class="share-form-label"><i class="bi bi-people me-1"></i>Respondent Link <small>(fill-only, preview mode)</small></label>
+                    <div class="share-link-container">
+                        <input type="text" id="share-respondent-link-input" readonly>
+                        <button id="copy-respondent-link" class="share-btn-primary" title="Copy respondent link">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>Respondents can fill &amp; submit the form but cannot view other responses.</small>
+                    <button id="copy-both-links" class="share-btn-copy-both" title="Copy both links">
+                        <i class="bi bi-files me-1"></i> Copy Both Links
+                    </button>
+                </div>
                 <small class="share-link-note" id="share-result-note"><i class="bi bi-info-circle me-1"></i>The
                     decryption key is in the URL
                     fragment — it's never sent to any server.</small>
@@ -685,6 +700,7 @@ const chatResponse = await openai.chat.completions.create({
                     <button class="template-cat-btn" data-category="finance">Finance</button>
                     <button class="template-cat-btn" data-category="games">Games</button>
                     <button class="template-cat-btn" data-category="skills">Skills</button>
+                    <button class="template-cat-btn" data-category="forms">Forms</button>
                 </div>
             </div>
             <div class="template-grid" id="template-grid"></div>
