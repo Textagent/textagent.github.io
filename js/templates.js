@@ -539,6 +539,8 @@
   M.openTemplateModal = openTemplateModal;
   M.closeTemplateModal = closeTemplateModal;
   M.applyTemplateVariables = applyTemplateVariables;
+  M.selectTemplate = selectTemplate;
+  M.MARKDOWN_TEMPLATES = MARKDOWN_TEMPLATES;
   M.getDefaultContent = function () { return MARKDOWN_TEMPLATES[0].content; };
 
 })(window.MDView);

@@ -107,7 +107,7 @@
 .help-popover {
     position: fixed;
     z-index: 99999;
-    width: 320px;
+    width: 420px;
     max-width: calc(100vw - 16px);
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -296,6 +296,254 @@
     color: #d1d5db;
 }
 
+/* ── FAQ Section (collapsible) ── */
+.help-popover-faq {
+    margin-top: 8px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 6px;
+}
+
+.dark-mode .help-popover-faq {
+    border-top-color: #2d3748;
+}
+
+.help-faq-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 5px 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #0d9488;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.dark-mode .help-faq-toggle {
+    color: #2dd4bf;
+}
+
+.help-faq-toggle:hover {
+    color: #0f766e;
+}
+
+.dark-mode .help-faq-toggle:hover {
+    color: #5eead4;
+}
+
+.help-faq-chevron {
+    margin-left: auto;
+    font-size: 0.65rem;
+    transition: transform 0.25s ease;
+}
+
+.help-popover-faq.expanded .help-faq-chevron {
+    transform: rotate(180deg);
+}
+
+.help-faq-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.help-popover-faq.expanded .help-faq-content {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.help-faq-item {
+    margin-bottom: 8px;
+}
+
+.help-faq-item:last-child {
+    margin-bottom: 2px;
+}
+
+.help-faq-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.dark-mode .help-faq-label {
+    color: #9ca3af;
+}
+
+.help-faq-code-wrap {
+    position: relative;
+}
+
+.help-faq-code {
+    display: block;
+    margin: 0;
+    padding: 8px 32px 8px 10px;
+    font-size: 0.7rem;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    line-height: 1.5;
+    color: #e2e8f0;
+    background: #1e293b;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+}
+
+.dark-mode .help-faq-code {
+    background: #0f172a;
+    color: #cbd5e1;
+}
+
+.help-faq-copy {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.help-faq-code-wrap:hover .help-faq-copy {
+    opacity: 1;
+}
+
+.help-faq-copy:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.help-faq-copy.copied {
+    color: #22c55e;
+    opacity: 1;
+}
+
+/* ── Template Chips ── */
+.help-popover-templates {
+    margin-top: 4px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 6px;
+}
+
+.dark-mode .help-popover-templates {
+    border-top-color: #2d3748;
+}
+
+.help-templates-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 5px 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #0d9488;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.dark-mode .help-templates-toggle {
+    color: #2dd4bf;
+}
+
+.help-templates-toggle:hover {
+    color: #0f766e;
+}
+
+.dark-mode .help-templates-toggle:hover {
+    color: #5eead4;
+}
+
+.help-templates-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.help-popover-templates.expanded .help-templates-content {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.help-popover-templates.expanded .help-faq-chevron {
+    transform: rotate(180deg);
+}
+
+.help-template-section {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.help-template-section .help-faq-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 6px;
+}
+
+.help-template-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.help-template-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #0d9488;
+    background: rgba(13, 148, 136, 0.08);
+    border: 1px solid rgba(13, 148, 136, 0.25);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.help-template-chip i {
+    font-size: 0.75em;
+}
+
+.help-template-chip:hover {
+    color: #fff;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
+    transform: translateY(-1px);
+}
+
+.dark-mode .help-template-chip {
+    color: #2dd4bf;
+    background: rgba(20, 184, 166, 0.1);
+    border-color: rgba(20, 184, 166, 0.25);
+}
+
+.dark-mode .help-template-chip:hover {
+    color: #fff;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border-color: transparent;
+}
+
 /* ============================================
    Demo Panel — 50% screen, expandable
    ============================================ */
@@ -402,12 +650,19 @@
 @media (max-width: 768px) {
     .help-popover {
         width: calc(100vw - 24px);
-        max-width: 340px;
+        max-width: 380px;
         border-radius: 12px;
     }
 
     .help-demo-panel {
         width: 92vw;
         max-height: 70vh;
+    }
+}
+
+/* Extra-wide screens — make popover roomier for code examples */
+@media (min-width: 1200px) {
+    .help-popover {
+        width: 520px;
     }
 }

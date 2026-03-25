@@ -233,13 +233,25 @@
             name: 'AI Generate Tag',
             desc: 'Add {{AI: prompt}} — click Fill and AI writes the content for you. Ideal for automating entire documents.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp',
+            faq: [
+                { q: 'Basic AI generation', code: '{{@AI:\n  @prompt: Write a summary of quantum computing\n}}' },
+                { q: 'Store output in a variable', code: '{{@AI:\n  @var: story\n  @prompt: Create a short children\'s story\n}}' },
+                { q: 'Pipe AI output → TTS', code: '{{@AI:\n  @var: story\n  @prompt: Create a story for children\n}}\n\n{{@TTS:\n  @model: kokoro-tts\n  @prompt: $(story)\n  @lang: English\n}}' },
+                { q: 'Chain AI blocks with @input', code: '{{@AI:\n  @var: draft\n  @prompt: Write a blog post about AI\n}}\n\n{{@AI:\n  @input: draft\n  @prompt: Polish and improve this text:\n$(draft)\n}}' }
+            ],
+            templates: ['AI Business Proposal', 'AI Research Paper', 'AI SWOT Analysis', 'Blog Post (AI Fill)']
         },
         '[data-action="think-tag"]': {
             name: 'AI Think Tag',
             desc: 'Add {{AI: @think: Yes …}} — engages deep reasoning mode for step-by-step analysis.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp',
+            faq: [
+                { q: 'Deep reasoning with Think', code: '{{@AI:\n  @think: yes\n  @prompt: Analyze the pros and cons of\nremote work vs office work\n}}' },
+                { q: 'Think + variable chaining', code: '{{@AI:\n  @var: analysis\n  @think: yes\n  @prompt: Perform a SWOT analysis\nfor a coffee shop business\n}}\n\n{{@AI:\n  @input: analysis\n  @prompt: Summarize the key takeaways:\n$(analysis)\n}}' }
+            ],
+            templates: ['AI Technical RFC', 'AI Stock Research Report', 'AI Investment Thesis']
         },
         '[data-action="image-tag"]': {
             name: 'AI Image Tag',
@@ -251,31 +263,51 @@
             name: 'Agent Flow Tag',
             desc: 'Build multi-step AI pipelines — each step\'s output feeds into the next. Pair with web search (DuckDuckGo, Brave, Tavily, etc.) for research workflows.',
             shortcut: null,
-            demo: 'assets/demos/17_agent_flow.webp'
+            demo: 'assets/demos/17_agent_flow.webp',
+            faq: [
+                { q: 'Multi-step pipeline', code: '{{@Agent:\n  @step 1: Research the history of AI\n  @step 2: Identify 5 key milestones\n  @step 3: Write a timeline summary\n}}' },
+                { q: 'Agent + web search', code: '{{@Agent:\n  @search: duckduckgo\n  @var: research\n  @step 1: Search for latest AI news\n  @step 2: Summarize top 3 findings\n  @step 3: Write a brief newsletter\n}}' },
+                { q: 'Agent to TTS audio report', code: '{{@Agent:\n  @var: report\n  @step 1: Analyze climate change data\n  @step 2: Create an executive summary\n}}\n\n{{@TTS:\n  @model: kokoro-tts\n  @prompt: $(report)\n  @lang: English\n}}' }
+            ],
+            templates: ['AI Global Briefing Generator', 'AI Research Agent']
         },
         '[data-action="api-get-tag"]': {
             name: 'API GET Tag',
             desc: 'Fetch data from any URL. Store the response in a variable with $(api_varName) for reuse.',
             shortcut: null,
-            demo: 'assets/demos/24_api_linux_tags.png'
+            demo: 'assets/demos/24_api_linux_tags.png',
+            faq: [
+                { q: 'Fetch weather data', code: '{{@API:\n  Method: GET\n  URL: https://api.open-meteo.com/v1/forecast?latitude=35.68&longitude=139.76&current_weather=true\n  Variable: weather\n}}' },
+                { q: 'API → AI analysis', code: '{{@API:\n  Method: GET\n  URL: https://api.example.com/data\n  Variable: api_data\n}}\n\n{{@AI:\n  @input: api_data\n  @prompt: Analyze this data:\n$(api_data)\n}}' }
+            ]
         },
         '[data-action="api-post-tag"]': {
             name: 'API POST Tag',
             desc: 'Send POST requests with custom headers and JSON body. Store the response for downstream use.',
             shortcut: null,
-            demo: 'assets/demos/24_api_linux_tags.png'
+            demo: 'assets/demos/24_api_linux_tags.png',
+            faq: [
+                { q: 'POST with JSON body', code: '{{@API:\n  Method: POST\n  URL: https://api.example.com/submit\n  Headers: Content-Type: application/json\n  Body: {"name": "TextAgent", "action": "test"}\n  Variable: response\n}}' }
+            ]
         },
         '[data-action="memory-tag"]': {
             name: 'Memory Tag',
             desc: 'Index your workspace files with SQLite FTS5 full-text search. AI tags can auto-retrieve relevant context via the @use: field.',
             shortcut: null,
-            demo: 'assets/demos/20_context_memory.webp'
+            demo: 'assets/demos/20_context_memory.webp',
+            faq: [
+                { q: 'Index workspace files', code: '{{@Memory: Index all workspace files}}' },
+                { q: 'AI with memory context', code: '{{@AI:\n  @use: memory\n  @prompt: Based on my project files,\nwrite a README for this project\n}}' }
+            ]
         },
         '[data-action="ocr-tag"]': {
             name: 'OCR Scan Tag',
             desc: 'Extract text from images as Markdown, or convert diagrams to SVG. Upload an image, choose mode, and hit ▶.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp',
+            faq: [
+                { q: 'OCR → AI analysis', code: '{{@OCR:\n  @var: scanned_text\n  @prompt: Upload an image to extract text\n}}\n\n{{@AI:\n  @input: scanned_text\n  @prompt: Summarize this document:\n$(scanned_text)\n}}' }
+            ]
         },
         '[data-action="linux-tag"]': {
             name: 'Linux Terminal',
@@ -348,13 +380,21 @@
             name: 'Fill All AI Blocks',
             desc: 'Process every {{AI:}}, {{Image:}}, {{Agent:}}, and {{API:}} tag at once. Accept, reject, or regenerate each result.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp',
+            faq: [
+                { q: 'Fill sequential blocks', code: '{{@AI:\n  @var: outline\n  @prompt: Create an outline for a blog\n}}\n\n{{@AI:\n  @input: outline\n  @prompt: Write the full blog:\n$(outline)\n}}\n\nClick ✨ Fill to run all blocks in order.' }
+            ]
         },
         '#apply-vars-btn': {
             name: 'Template Variables',
             desc: 'Replace all $(varName) placeholders. Auto-detects variables and creates a fill-in table if none exists.',
             shortcut: null,
-            demo: 'assets/demos/16_template_variables.webp'
+            demo: 'assets/demos/16_template_variables.webp',
+            faq: [
+                { q: 'Define and use variables', code: '<!-- @variables -->\n| Variable | Value |\n|----------|-------|\n| name     | Alice |\n| topic    | AI    |\n<!-- @/variables -->\n\n# Report for $(name)\nTopic: $(topic)' },
+                { q: '@var stores AI output', code: '{{@AI:\n  @var: result\n  @prompt: Generate a greeting\n}}\n\nThe AI said: $(result)' }
+            ],
+            templates: ['AI Global Briefing Generator', 'AI Language Tutor', 'Stock Watchlist']
         },
 
         // ─── Workspace ───
@@ -402,25 +442,38 @@
             name: 'Draw / Whiteboard',
             desc: 'Embed an Excalidraw whiteboard or Mermaid diagram. Freehand draw, add shapes, text, and use AI-assisted diagramming.',
             shortcut: null,
-            demo: 'assets/demos/30_draw_excalidraw.webp'
+            demo: 'assets/demos/30_draw_excalidraw.webp',
+            faq: [
+                { q: 'Embed a whiteboard', code: '{{@Draw: Open a blank Excalidraw canvas}}' },
+                { q: 'AI-generated Mermaid diagram', code: '{{@Draw:\n  @prompt: Create a flowchart showing\n  user login → auth check →\n  dashboard or error page\n}}' }
+            ]
         },
         '[data-action="git-tag"]': {
             name: 'GitHub Analysis',
             desc: 'Analyze any GitHub repo — pulls metadata, README, file tree, and generates a structured summary.',
             shortcut: null,
-            demo: 'assets/demos/24_api_linux_tags.png'
+            demo: 'assets/demos/24_api_linux_tags.png',
+            faq: [
+                { q: 'Analyze a GitHub repo', code: '{{@Git: https://github.com/facebook/react}}' }
+            ]
         },
         '[data-action="tools-scrape-tag"]': {
             name: 'Web Scrape',
             desc: 'Extract content from any URL and convert it to clean, readable Markdown.',
             shortcut: null,
-            demo: 'assets/demos/24_api_linux_tags.png'
+            demo: 'assets/demos/24_api_linux_tags.png',
+            faq: [
+                { q: 'Scrape URL → AI summary', code: '{{@Scrape:\n  @var: page_content\n  @url: https://example.com/article\n}}\n\n{{@AI:\n  @input: page_content\n  @prompt: Summarize this article:\n$(page_content)\n}}' }
+            ]
         },
         '[data-action="tools-search-tag"]': {
             name: 'Web Search',
             desc: 'Run a web search query — results come back as Markdown with titles, snippets, and links.',
             shortcut: null,
-            demo: 'assets/demos/24_api_linux_tags.png'
+            demo: 'assets/demos/24_api_linux_tags.png',
+            faq: [
+                { q: 'Search → AI analysis', code: '{{@Search:\n  @var: results\n  @query: latest AI breakthroughs 2025\n}}\n\n{{@AI:\n  @input: results\n  @prompt: Analyze these search results\nand write a summary:\n$(results)\n}}' }
+            ]
         },
 
         // ─── Additional AI Tags ───
@@ -428,31 +481,54 @@
             name: 'Translate',
             desc: 'Translate text between languages with optional audio output.',
             shortcut: null,
-            demo: 'assets/demos/15_ai_doc_tags.webp'
+            demo: 'assets/demos/15_ai_doc_tags.webp',
+            faq: [
+                { q: 'Translate to Japanese', code: '{{@Translate:\n  @lang: Japanese\n  @prompt: Hello, how are you?\nWhere is the train station?\n}}' },
+                { q: 'AI → Translate → TTS chain', code: '{{@AI:\n  @var: phrases\n  @prompt: Generate 5 essential travel\nphrases for visiting France\n}}\n\n{{@Translate:\n  @input: phrases\n  @var: french\n  @lang: French\n  @prompt: $(phrases)\n}}\n\n{{@TTS:\n  @model: kokoro-tts\n  @input: french\n  @lang: French\n  @prompt: $(french)\n}}' }
+            ],
+            templates: ['AI Language Tutor', 'AI Global Briefing Generator']
         },
         '[data-action="tts-tag"]': {
             name: 'Text-to-Speech',
             desc: 'Convert text to natural speech using the Kokoro TTS engine. Generates an inline audio player.',
             shortcut: null,
-            demo: 'assets/demos/28_text_to_speech.webp'
+            demo: 'assets/demos/28_text_to_speech.webp',
+            faq: [
+                { q: 'Basic text-to-speech', code: '{{@TTS:\n  @model: kokoro-tts\n  @prompt: Hello, welcome to TextAgent!\n  @lang: English\n}}' },
+                { q: 'Speak AI-generated story', code: '{{@AI:\n  @var: story\n  @prompt: Create a story for children\n}}\n\n{{@TTS:\n  @model: kokoro-tts\n  @prompt: $(story)\n  @lang: English\n}}' },
+                { q: 'Using @input dependency', code: '{{@AI:\n  @var: story\n  @prompt: Create a story for children\n}}\n\n{{@TTS:\n  @model: kokoro-tts\n  @input: story\n  @prompt: $(story)\n  @lang: English\n}}' }
+            ],
+            templates: ['AI Language Tutor', 'AI Global Briefing Generator']
         },
         '[data-action="stt-tag"]': {
             name: 'Speech-to-Text',
             desc: 'Upload audio and get a text transcription — great for meeting notes and interviews.',
             shortcut: null,
-            demo: 'assets/demos/14_voice_dictation.webp'
+            demo: 'assets/demos/14_voice_dictation.webp',
+            faq: [
+                { q: 'Transcribe audio → AI summary', code: '{{@STT:\n  @var: transcript\n  @prompt: Upload an audio file to transcribe\n}}\n\n{{@AI:\n  @input: transcript\n  @prompt: Summarize these meeting notes:\n$(transcript)\n}}' }
+            ]
         },
         '[data-action="game-tag"]': {
             name: 'Game Builder',
             desc: 'Generate interactive games with AI — supports Three.js, Canvas, and P5.js. Pick a preset or describe your own game.',
             shortcut: null,
-            demo: 'assets/demos/26_game_builder.webp'
+            demo: 'assets/demos/26_game_builder.webp',
+            faq: [
+                { q: 'Instant preset game', code: '{{@Game: @preset: pong}}' },
+                { q: 'Custom AI game', code: '{{@Game:\n  Create a space invaders game with\n  neon colors and particle effects\n}}' }
+            ],
+            templates: ['Platform Skills Reference']
         },
         '[data-action="form-tag"]': {
             name: 'Interactive Form',
             desc: 'Build forms in Markdown with {{Form:}} — 14 field types including text, email, select, stars, NPS, slider, and yes/no. Share with dual links: a respondent fill link and a creator-only response viewer. All responses are AES-256-GCM encrypted.',
             shortcut: null,
-            demo: 'assets/demos/32_form_sharing.webp'
+            demo: 'assets/demos/32_form_sharing.webp',
+            faq: [
+                { q: 'Contact form', code: '{{@Form: Contact Us\n  @field: Name | text | required\n  @field: Email | email | required\n  @field: Message | textarea | required\n  @field: Rating | stars\n}}' }
+            ],
+            templates: ['Contact Form', 'Survey Form', 'RSVP Form', 'Feedback Form']
         },
 
         // ─── Media Embedding ───
@@ -486,7 +562,11 @@
             name: 'Run All',
             desc: 'Execute every code block in document order — Bash, Python, JS, SQL, Math, HTML, and compiled languages. Notebook-style inline results.',
             shortcut: null,
-            demo: 'assets/demos/25_run_all.png'
+            demo: 'assets/demos/25_run_all.png',
+            faq: [
+                { q: 'Capture code output in variable', code: '```javascript @var: result\nconsole.log("Hello from JS!");\n```\n\nUse $(result) in subsequent blocks.' },
+                { q: 'Full pipeline: Vars → AI → TTS', code: 'Click ⚡ Vars to apply variables,\nthen ⚡ Run All to execute:\n\n1. AI blocks generate content\n2. Variables store outputs via @var\n3. TTS blocks speak $(varName) aloud\n4. All blocks run in document order' }
+            ]
         },
 
         // ─── Additional Header & QAB Buttons ───
@@ -622,6 +702,53 @@
         document.addEventListener('keydown', escHandler, true);
     }
 
+    // ── Escape HTML for safe display ──
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ── Build FAQ HTML (examples only) ──
+    function buildFaqHtml(faqItems) {
+        if (!faqItems || !faqItems.length) return '';
+        let items = '';
+        faqItems.forEach((item, i) => {
+            items += `
+                <div class="help-faq-item">
+                    <div class="help-faq-label">${i + 1}. ${escapeHtml(item.q)}</div>
+                    <div class="help-faq-code-wrap">
+                        <pre class="help-faq-code">${escapeHtml(item.code)}</pre>
+                        <button class="help-faq-copy" title="Copy to clipboard" data-faq-idx="${i}"><i class="bi bi-clipboard"></i></button>
+                    </div>
+                </div>`;
+        });
+        return `
+            <div class="help-popover-faq">
+                <button class="help-faq-toggle">
+                    <i class="bi bi-book"></i> Examples
+                    <i class="bi bi-chevron-down help-faq-chevron"></i>
+                </button>
+                <div class="help-faq-content">${items}</div>
+            </div>`;
+    }
+
+    // ── Build Templates HTML (separate section) ──
+    function buildTemplatesHtml(templateNames) {
+        if (!templateNames || !templateNames.length) return '';
+        const chips = templateNames.map(name =>
+            `<button class="help-template-chip" data-template-name="${escapeHtml(name)}" title="Open ${escapeHtml(name)} template"><i class="bi bi-file-earmark-text"></i> ${escapeHtml(name)}</button>`
+        ).join('');
+        return `
+            <div class="help-popover-templates">
+                <button class="help-templates-toggle">
+                    <i class="bi bi-grid"></i> Templates
+                    <i class="bi bi-chevron-down help-faq-chevron"></i>
+                </button>
+                <div class="help-templates-content">
+                    <div class="help-template-chips">${chips}</div>
+                </div>
+            </div>`;
+    }
+
     // ── Show Help Popover ──
     function showHelpPopover(anchorEl, data) {
         hideHelpPopover();
@@ -641,6 +768,11 @@
             shortcutHtml = `<div class="help-popover-shortcut">${keys}</div>`;
         }
 
+        // FAQ section (examples)
+        const faqHtml = buildFaqHtml(data.faq);
+        // Templates section (separate)
+        const templatesHtml = buildTemplatesHtml(data.templates);
+
         popover.innerHTML = `
             <div class="help-popover-header">
                 <span class="help-popover-title">${data.name}</span>
@@ -650,6 +782,8 @@
                 <p class="help-popover-desc">${data.desc}</p>
                 ${shortcutHtml}
                 ${demoButtonHtml}
+                ${faqHtml}
+                ${templatesHtml}
             </div>
             <div class="help-popover-footer">
                 <button class="help-popover-try">Try it →</button>
@@ -677,6 +811,57 @@
                 showDemoPanel(data.demo, data.name);
             });
         }
+
+        // FAQ toggle (expand/collapse)
+        const faqToggle = popover.querySelector('.help-faq-toggle');
+        if (faqToggle) {
+            faqToggle.addEventListener('click', () => {
+                const faqSection = popover.querySelector('.help-popover-faq');
+                faqSection.classList.toggle('expanded');
+                setTimeout(() => positionPopover(popover, anchorEl), 50);
+            });
+        }
+
+        // Templates toggle (expand/collapse) — independent from FAQ
+        const templatesToggle = popover.querySelector('.help-templates-toggle');
+        if (templatesToggle) {
+            templatesToggle.addEventListener('click', () => {
+                const tplSection = popover.querySelector('.help-popover-templates');
+                tplSection.classList.toggle('expanded');
+                setTimeout(() => positionPopover(popover, anchorEl), 50);
+            });
+        }
+
+        // FAQ copy buttons
+        popover.querySelectorAll('.help-faq-copy').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.getAttribute('data-faq-idx'), 10);
+                const code = data.faq[idx].code;
+                navigator.clipboard.writeText(code).then(() => {
+                    btn.innerHTML = '<i class="bi bi-check2"></i>';
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                        btn.classList.remove('copied');
+                    }, 1500);
+                });
+            });
+        });
+
+        // Template chip clicks — find template by name and load it
+        popover.querySelectorAll('.help-template-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                const name = chip.getAttribute('data-template-name');
+                const M = window.MDView;
+                if (!M || !M.MARKDOWN_TEMPLATES || !M.selectTemplate) return;
+                const tpl = M.MARKDOWN_TEMPLATES.find(t => t.name === name);
+                if (!tpl) return;
+                hideDemoPanel();
+                hideHelpPopover();
+                if (helpModeActive) toggleHelpMode();
+                setTimeout(() => M.selectTemplate(tpl), 100);
+            });
+        });
 
         // "Try it →" — exit help mode and trigger the button
         popover.querySelector('.help-popover-try').addEventListener('click', () => {
