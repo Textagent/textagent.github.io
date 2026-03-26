@@ -2,6 +2,187 @@
 // templates/quiz.js — Quiz & Assessment Templates
 // ============================================
 window.__MDV_TEMPLATES_QUIZ = [
+    // ── Simple {{Quiz:}} DocGen Tag Templates (new declarative system) ─────────
+    {
+        name: '{{Quiz:}} — AI Quiz Creator',
+        category: 'quiz',
+        icon: 'bi-stars',
+        description: 'Simple declarative quiz. Paste any chapter text → set difficulty → AI generates questions. Supports MCQ, True/False, Match, Fill-in-blank, Essay, Ordering, Likert & more.',
+        content:
+            '# 🎓 My Quiz\n\n' +
+            '{{@Quiz: My Quiz\n' +
+            '  @subject: Mathematics\n' +
+            '  @difficulty: Easy\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @questions: 8\n' +
+            '  @chapter: [Paste your chapter or topic text here. AI will generate questions at the chosen difficulty level.]\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — Cambridge Class 1 Maths',
+        category: 'quiz',
+        icon: 'bi-123',
+        description: 'Cambridge Primary Stage 1 Maths: 8 ready-to-play questions across MCQ, True/False, Fill-in-blank, Matching, Ordering, Short Answer, Essay, and Likert types.',
+        content:
+            '# 🔢 Cambridge Class 1 Maths Quiz\n\n' +
+            '> Cambridge Primary Mathematics · Stage 1\n\n' +
+            '{{@Quiz: Cambridge Class 1 Maths\n' +
+            '  @subject: Mathematics\n' +
+            '  @difficulty: Easy\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, id\n' +
+            '  @question[mcq]: How many apples are there? 🍎🍎🍎🍎🍎🍎🍎 | 7 | 5,6,7,8\n' +
+            '  @question[mcq]: What is 3 + 4? | 7 | 5,6,7,8\n' +
+            '  @question[tf]: A triangle has 4 sides. | false\n' +
+            '  @question[fill]: Double 4 is ___ | 8\n' +
+            '  @question[match]: ➕=Addition, ➖=Subtraction, ✖=Multiplication | Match the symbols\n' +
+            '  @question[order]: One,Two,Three,Four,Five | Put the numbers in order\n' +
+            '  @question[short]: Name a shape with no corners. | circle,oval,sphere\n' +
+            '  @question[essay]: 🦆 There are 6 ducks in a pond. 2 swim away. How many are left? Show your working.\n' +
+            '  @question[likert]: I found this quiz easy\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — General Science',
+        category: 'quiz',
+        icon: 'bi-mortarboard',
+        description: 'General Science quiz covering physics, chemistry, and biology basics. 8 questions with MCQ, True/False, Fill-in-blank, Matching, and Short Answer.',
+        content:
+            '# 🔬 General Science Quiz\n\n' +
+            '> Test your knowledge of physics, chemistry, and biology!\n\n' +
+            '{{@Quiz: General Science\n' +
+            '  @subject: Science\n' +
+            '  @difficulty: Medium\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @question[mcq]: What is the chemical symbol for water? | H₂O | CO₂,H₂O,NaCl,O₂\n' +
+            '  @question[mcq]: Which planet is closest to the Sun? | Mercury | Venus,Mercury,Earth,Mars\n' +
+            '  @question[tf]: Sound travels faster than light. | false\n' +
+            '  @question[tf]: The human body has 206 bones. | true\n' +
+            '  @question[fill]: The force of gravity on Earth is approximately ___ m/s² | 9.8\n' +
+            '  @question[fill]: Photosynthesis converts sunlight into ___ | energy,glucose,sugar\n' +
+            '  @question[match]: H₂O=Water, NaCl=Salt, CO₂=Carbon Dioxide, O₂=Oxygen | Match chemical formulas\n' +
+            '  @question[short]: Name two renewable energy sources. | solar,wind,hydro,geothermal,biomass\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — World History',
+        category: 'quiz',
+        icon: 'bi-globe-americas',
+        description: 'World History quiz spanning ancient civilizations to modern events. 8 questions with MCQ, True/False, Ordering, Fill-in-blank, and Essay.',
+        content:
+            '# 🏛️ World History Quiz\n\n' +
+            '> Journey through the ages — from ancient empires to modern history\n\n' +
+            '{{@Quiz: World History\n' +
+            '  @subject: History\n' +
+            '  @difficulty: Medium\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @question[mcq]: Who was the first Emperor of Rome? | Augustus | Julius Caesar,Augustus,Nero,Constantine\n' +
+            '  @question[mcq]: The French Revolution began in which year? | 1789 | 1776,1789,1804,1815\n' +
+            '  @question[tf]: The Great Wall of China was built in a single dynasty. | false\n' +
+            '  @question[tf]: World War I ended in 1918. | true\n' +
+            '  @question[fill]: The ancient city of ___ was buried by the eruption of Mount Vesuvius. | Pompeii\n' +
+            '  @question[order]: Ancient Egypt,Roman Empire,Middle Ages,Renaissance,Industrial Revolution | Arrange eras chronologically\n' +
+            '  @question[match]: Pyramids=Egypt, Colosseum=Rome, Great Wall=China, Machu Picchu=Peru | Match landmarks to countries\n' +
+            '  @question[essay]: 📜 Explain why the fall of the Roman Empire is considered a turning point in world history.\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — English Grammar',
+        category: 'quiz',
+        icon: 'bi-book',
+        description: 'English Grammar quiz covering parts of speech, tenses, punctuation, and sentence structure. 8 questions ideal for language learners.',
+        content:
+            '# 📖 English Grammar Quiz\n\n' +
+            '> Sharpen your grammar skills!\n\n' +
+            '{{@Quiz: English Grammar\n' +
+            '  @subject: English\n' +
+            '  @difficulty: Easy\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @question[mcq]: Which is a proper noun? | London | quickly,beautiful,London,running\n' +
+            '  @question[mcq]: "She ___ to school every day." Choose the correct verb. | goes | go,goes,going,gone\n' +
+            '  @question[tf]: An adjective describes a verb. | false\n' +
+            '  @question[tf]: A sentence must have a subject and a predicate. | true\n' +
+            '  @question[fill]: The plural of "child" is ___ | children\n' +
+            '  @question[fill]: The past tense of "run" is ___ | ran\n' +
+            '  @question[match]: Noun=Person/Place/Thing, Verb=Action Word, Adjective=Describes a Noun, Adverb=Modifies a Verb | Match parts of speech\n' +
+            '  @question[short]: Give an example of a compound sentence. | and,but,or,so,yet\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — Computer Science',
+        category: 'quiz',
+        icon: 'bi-cpu',
+        description: 'Computer Science fundamentals: data structures, algorithms, networking, and programming concepts. 8 questions for CS students.',
+        content:
+            '# 💻 Computer Science Quiz\n\n' +
+            '> Test your CS fundamentals!\n\n' +
+            '{{@Quiz: Computer Science\n' +
+            '  @subject: Computer Science\n' +
+            '  @difficulty: Medium\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @question[mcq]: What is the time complexity of binary search? | O(log n) | O(n),O(log n),O(n²),O(1)\n' +
+            '  @question[mcq]: Which data structure uses FIFO ordering? | Queue | Stack,Queue,Tree,Graph\n' +
+            '  @question[tf]: HTTP is a stateless protocol. | true\n' +
+            '  @question[tf]: RAM is a type of non-volatile memory. | false\n' +
+            '  @question[fill]: The full form of SQL is Structured ___ Language | Query\n' +
+            '  @question[order]: Bits,Bytes,Kilobytes,Megabytes,Gigabytes,Terabytes | Arrange from smallest to largest\n' +
+            '  @question[match]: Python=Interpreted, C++=Compiled, JavaScript=Interpreted, Rust=Compiled | Match languages to types\n' +
+            '  @question[essay]: 🖥️ Explain the difference between a stack and a queue. Give a real-world example of each.\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — World Geography',
+        category: 'quiz',
+        icon: 'bi-geo-alt',
+        description: 'World Geography quiz covering continents, capitals, rivers, and landmarks. 8 questions with diverse question types.',
+        content:
+            '# 🌍 World Geography Quiz\n\n' +
+            '> Explore the world through questions!\n\n' +
+            '{{@Quiz: World Geography\n' +
+            '  @subject: Geography\n' +
+            '  @difficulty: Easy\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @question[mcq]: What is the largest continent by area? | Asia | Africa,Asia,Europe,North America\n' +
+            '  @question[mcq]: Which ocean is the deepest? | Pacific | Atlantic,Pacific,Indian,Arctic\n' +
+            '  @question[tf]: The Amazon is the longest river in the world. | false\n' +
+            '  @question[tf]: Mount Everest is located in the Himalayas. | true\n' +
+            '  @question[fill]: The capital of Japan is ___ | Tokyo\n' +
+            '  @question[fill]: The Sahara Desert is located in ___ | Africa\n' +
+            '  @question[order]: Vatican City,Monaco,San Marino,Liechtenstein,Malta | Arrange countries smallest to largest\n' +
+            '  @question[match]: Nile=Africa, Amazon=South America, Yangtze=Asia, Danube=Europe | Match rivers to continents\n' +
+            '}}\n',
+    },
+    {
+        name: '{{Quiz:}} — Biology',
+        category: 'quiz',
+        icon: 'bi-tree',
+        description: 'Biology quiz covering cells, genetics, ecosystems, and human anatomy. 8 questions for life science students.',
+        content:
+            '# 🧬 Biology Quiz\n\n' +
+            '> Explore the science of life!\n\n' +
+            '{{@Quiz: Biology\n' +
+            '  @subject: Biology\n' +
+            '  @difficulty: Medium\n' +
+            '  @mode: test\n' +
+            '  @userinfo: name, email\n' +
+            '  @question[mcq]: What is the powerhouse of the cell? | Mitochondria | Nucleus,Mitochondria,Ribosome,Golgi Body\n' +
+            '  @question[mcq]: DNA stands for Deoxyribonucleic ___? | Acid | Acid,Agent,Amino,Alkali\n' +
+            '  @question[tf]: Humans share about 60% of their DNA with bananas. | true\n' +
+            '  @question[tf]: Red blood cells carry oxygen. | true\n' +
+            '  @question[fill]: The process by which plants make food using sunlight is called ___ | photosynthesis\n' +
+            '  @question[match]: Heart=Circulatory, Lungs=Respiratory, Brain=Nervous, Kidney=Excretory | Match organs to systems\n' +
+            '  @question[order]: Cell,Tissue,Organ,Organ System,Organism | Arrange biological levels of organization\n' +
+            '  @question[essay]: 🧫 Explain the difference between mitosis and meiosis. Why are both important?\n' +
+            '}}\n',
+    },
+
+    // ── Legacy html-autorun templates (kept for reference) ────────────────────
     {
         name: 'Interactive Quiz',
         category: 'quiz',

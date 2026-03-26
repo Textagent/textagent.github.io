@@ -388,9 +388,9 @@
         return uint8ArrayToBase64Url(new Uint8Array(hashBuffer));
     }
 
-    // Detect if markdown contains {{Form: or {{@Form: tags
+    // Detect if markdown contains {{Form: or {{@Form: or {{Quiz: tags
     function hasFormContent(md) {
-        return /\{\{@?Form:/i.test(md);
+        return /\{\{@?(?:Form|Quiz):/i.test(md);
     }
 
     async function doQuickShare() {
@@ -508,7 +508,7 @@
                 var compressed = await decryptData(key, encrypted);
                 var markdownContent = decompressData(compressed);
                 // Form access gate: block if form doc but no rk or m=fill
-                if (/\{\{@?Form:/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+                if (/\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
                     M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                     M.setViewMode('preview');
                     return;
@@ -579,7 +579,7 @@
             var compressed = await decryptData(key, encrypted);
             var markdownContent = decompressData(compressed);
             // Form access gate: block if form doc but no rk or m=fill
-            if (/\{\{@?Form:/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+            if (/\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                 M.setViewMode('preview');
                 return;
@@ -611,7 +611,7 @@
             var markdownContent = decompressData(compressed);
             hidePassphrasePrompt();
             // Form access gate: block if form doc but no rk or m=fill
-            if (/\{\{@?Form:/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+            if (/\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                 M.setViewMode('preview');
                 return;
@@ -682,7 +682,17 @@
                 // Also block any button inside the preview panel (except form responses & submit)
                 var previewBtn = !target && e.target.closest('#markdown-preview button')
                     && !e.target.closest('.form-dg-responses-btn')
-                    && !e.target.closest('.form-dg-submit');
+                    && !e.target.closest('.form-dg-submit')
+                    && !e.target.closest('.quiz-dg-responses-btn')
+                    && !e.target.closest('.qd-btn')
+                    && !e.target.closest('.qd-choice')
+                    && !e.target.closest('.qd-choice-tf')
+                    && !e.target.closest('.qd-fill-btn')
+                    && !e.target.closest('.qd-short-save')
+                    && !e.target.closest('.qd-likert-btn')
+                    && !e.target.closest('.qd-match-right-item')
+                    && !e.target.closest('.qd-order-item')
+                    && !e.target.closest('.qd-hint-toggle');
                 if (target || previewBtn) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
@@ -1057,7 +1067,9 @@
             formSection.style.display = '';
             lastShareRk = rkString;
             lastShareRespondentUrl = respondentUrl;
-            desc.innerHTML = '<i class="bi bi-ui-checks me-1"></i> Form shared! Use the links below to manage and distribute.';
+            var isQuiz = /\{\{@?Quiz:/i.test(M.markdownEditor.value);
+            var tagLabel = isQuiz ? 'Quiz' : 'Form';
+            desc.innerHTML = '<i class="bi bi-ui-checks me-1"></i> ' + tagLabel + ' shared! Use the links below to manage and distribute.';
             if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends both creator and respondent links to your inbox.';
         } else if (formSection) {
             formSection.style.display = 'none';

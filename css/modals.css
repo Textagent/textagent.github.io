@@ -934,7 +934,11 @@
 }
 
 .form-fill-mode .form-dg-add-btn,
-.form-fill-mode .form-dg-remove {
+.form-fill-mode .form-dg-remove,
+.form-fill-mode .quiz-dg-add-wrap,
+.form-fill-mode .quiz-dg-remove,
+.form-fill-mode .quiz-dg-gen-btn,
+.form-fill-mode .quiz-dg-grade-btn {
   display: none !important;
 }
 

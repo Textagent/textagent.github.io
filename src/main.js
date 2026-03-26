@@ -46,6 +46,7 @@ import '../css/run-preflight.css';
 import '../css/composer.css';
 import '../css/agent-panel.css';
 import '../css/form-engine.css';
+import '../css/quiz-docgen.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -159,6 +160,9 @@ async function loadModules() {
 
     // 3f-ext2: Form DocGen Tag (depends on M.registerFormattingAction, M.wrapSelectionWith)
     await import('../js/form-docgen.js');
+
+    // 3f-ext3: Quiz DocGen Tag (depends on M.registerFormattingAction, M.wrapSelectionWith, M.requestAiTask)
+    await import('../js/quiz-docgen.js');
 
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');

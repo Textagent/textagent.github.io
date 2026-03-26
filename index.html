@@ -657,6 +657,8 @@
                             title="AI Game Builder (Three.js / Canvas / P5.js)">🎮 Game</button>
                         <button class="fmt-btn fmt-form-btn" data-action="form-tag"
                             title="Insert interactive Form (contact, survey, feedback)">📋 Form</button>
+                        <button class="fmt-btn fmt-form-btn" data-action="quiz-tag"
+                            title="Insert interactive Quiz (MCQ, True/False, Fill-in-blank)">📝 Quiz</button>
                         <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
                             title="Fill all AI blocks">Fill</button>
                     </div>
@@ -713,6 +715,8 @@
                             title="Insert Web Search Tag">🔍 Search</button>
                         <button class="fmt-btn fmt-tools-btn fmt-form-btn" data-action="form-tag"
                             title="Insert Interactive Form">📋 Form</button>
+                        <button class="fmt-btn fmt-tools-btn fmt-form-btn" data-action="quiz-tag"
+                            title="Insert Interactive Quiz">📝 Quiz</button>
                     </div>
                 </div>
             </div>
@@ -922,6 +926,7 @@
                     <button class="composer-chip ai-chip" data-insert="{{@Tools: @scrape: }}" data-cursor="-2" title="Web Scrape">🔗 Scrape</button>
                     <button class="composer-chip ai-chip" data-insert="{{@Tools: @search: }}" data-cursor="-2" title="Web Search">🔍 Search</button>
                     <button class="composer-chip ai-chip" data-insert="{{Form: My Form&#10;  @field: name | text | Your name | required&#10;  @field: email | email | your@email.com | required&#10;  @field: message | textarea | Write here...&#10;}}" data-cursor="-2" title="Interactive Form">📋 Form</button>
+                    <button class="composer-chip ai-chip" data-insert="{{Quiz: My Quiz&#10;  @subject: General&#10;  @difficulty: Easy&#10;  @question[mcq]: Sample question? | Answer | Opt1,Answer,Opt2,Opt3&#10;  @question[tf]: Statement here | true&#10;  @question[fill]: The answer is ___ | answer&#10;}}" data-cursor="-2" title="Interactive Quiz">📝 Quiz</button>
                 </div>
                 <!-- Input bar -->
                 <div class="composer-input-bar">

@@ -112,6 +112,17 @@
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
 }
 
+/* TTS voice selector — purple tint, compact */
+.ai-tts-voice-select {
+    min-width: 100px;
+    max-width: 140px;
+}
+
+.ai-tts-voice-select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Play/Stop toggle button */
 .ai-tts-play-toggle {
     font-weight: 600;

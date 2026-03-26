@@ -715,6 +715,8 @@
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '').trim();
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@input|Input):\s*.+$/mi, '').trim();
                 ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '').trim();
+                // Strip @voice: from display
+                ttsDisplayText = ttsDisplayText.replace(/^\s*(?:@voice|Voice):\s*\S+$/mi, '').trim();
 
                 var ttsHasPrompt = /^\s*(?:@prompt|Prompt):\s*/m.test(ttsDisplayText);
                 var ttsPromptMatch = ttsDisplayText.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
@@ -729,6 +731,10 @@
                 // Parse @lang
                 var ttsLangMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
                 var ttsCurrentLang = ttsLangMatch ? ttsLangMatch[1].trim() : 'English';
+
+                // Parse @voice: from raw prompt
+                var ttsVoiceMatch = prompt.match(/^\s*(?:@voice|Voice):\s*(\S+)$/mi);
+                var ttsSelectedVoice = ttsVoiceMatch ? ttsVoiceMatch[1].trim() : '';
 
                 // Language dropdown — Kokoro for 9 languages, Web Speech API for Korean/German
                 var ttsLangOptions = [
@@ -752,6 +758,83 @@
                 });
                 ttsLangHtml += '</select>';
 
+                // Voice options per language code prefix
+                var TTS_VOICE_OPTIONS = {
+                    'en':    [
+                        { id: 'af_bella', label: 'Bella ♀' }, { id: 'af_heart', label: 'Heart ♀' },
+                        { id: 'af_nova', label: 'Nova ♀' }, { id: 'af_sarah', label: 'Sarah ♀' },
+                        { id: 'af_sky', label: 'Sky ♀' }, { id: 'af_nicole', label: 'Nicole ♀' },
+                        { id: 'af_aoede', label: 'Aoede ♀' }, { id: 'af_kore', label: 'Kore ♀' },
+                        { id: 'af_jessica', label: 'Jessica ♀' }, { id: 'af_river', label: 'River ♀' },
+                        { id: 'af_alloy', label: 'Alloy ♀' },
+                        { id: 'am_adam', label: 'Adam ♂' }, { id: 'am_echo', label: 'Echo ♂' },
+                        { id: 'am_eric', label: 'Eric ♂' }, { id: 'am_liam', label: 'Liam ♂' },
+                        { id: 'am_michael', label: 'Michael ♂' }, { id: 'am_onyx', label: 'Onyx ♂' },
+                        { id: 'am_puck', label: 'Puck ♂' }, { id: 'am_fenrir', label: 'Fenrir ♂' },
+                        { id: 'am_santa', label: 'Santa ♂' },
+                    ],
+                    'en-us': null, // shares 'en'
+                    'en-gb': [
+                        { id: 'bf_emma', label: 'Emma ♀' }, { id: 'bf_alice', label: 'Alice ♀' },
+                        { id: 'bf_isabella', label: 'Isabella ♀' }, { id: 'bf_lily', label: 'Lily ♀' },
+                        { id: 'bm_daniel', label: 'Daniel ♂' }, { id: 'bm_fable', label: 'Fable ♂' },
+                        { id: 'bm_george', label: 'George ♂' }, { id: 'bm_lewis', label: 'Lewis ♂' },
+                    ],
+                    'ja':    [
+                        { id: 'jf_alpha', label: 'Alpha ♀' }, { id: 'jf_gongitsune', label: 'Gongitsune ♀' },
+                        { id: 'jf_nezumi', label: 'Nezumi ♀' }, { id: 'jf_tebukuro', label: 'Tebukuro ♀' },
+                        { id: 'jm_kumo', label: 'Kumo ♂' },
+                    ],
+                    'zh':    [
+                        { id: 'zf_xiaobei', label: 'Xiaobei ♀' }, { id: 'zf_xiaoni', label: 'Xiaoni ♀' },
+                        { id: 'zf_xiaoxiao', label: 'Xiaoxiao ♀' }, { id: 'zf_xiaoyi', label: 'Xiaoyi ♀' },
+                        { id: 'zm_yunjian', label: 'Yunjian ♂' }, { id: 'zm_yunxi', label: 'Yunxi ♂' },
+                        { id: 'zm_yunxia', label: 'Yunxia ♂' }, { id: 'zm_yunyang', label: 'Yunyang ♂' },
+                    ],
+                    'es':    [
+                        { id: 'ef_dora', label: 'Dora ♀' }, { id: 'em_alex', label: 'Alex ♂' },
+                        { id: 'em_santa', label: 'Santa ♂' },
+                    ],
+                    'fr':    [
+                        { id: 'ff_siwis', label: 'Siwis ♀' },
+                    ],
+                    'hi':    [
+                        { id: 'hf_alpha', label: 'Alpha ♀' }, { id: 'hf_beta', label: 'Beta ♀' },
+                        { id: 'hm_omega', label: 'Omega ♂' }, { id: 'hm_psi', label: 'Psi ♂' },
+                    ],
+                    'it':    [
+                        { id: 'if_sara', label: 'Sara ♀' }, { id: 'im_nicola', label: 'Nicola ♂' },
+                    ],
+                    'pt':    [
+                        { id: 'pf_dora', label: 'Dora ♀' }, { id: 'pm_alex', label: 'Alex ♂' },
+                        { id: 'pm_santa', label: 'Santa ♂' },
+                    ],
+                };
+
+                // Determine initial language code for voice dropdown
+                var ttsInitLangCode = '';
+                ttsLangOptions.forEach(function (lo) {
+                    if (lo.name.toLowerCase() === ttsCurrentLang.toLowerCase()) ttsInitLangCode = lo.code;
+                });
+                if (!ttsInitLangCode) ttsInitLangCode = 'en';
+
+                // Build voice dropdown HTML
+                var ttsVoices = TTS_VOICE_OPTIONS[ttsInitLangCode] || TTS_VOICE_OPTIONS[ttsInitLangCode.split('-')[0]] || [];
+                // For Web Speech API languages (ko, de) — no Kokoro voices
+                var ttsIsWebSpeech = ttsVoices.length === 0 && !TTS_VOICE_OPTIONS[ttsInitLangCode];
+                var ttsVoiceHtml = '<select class="ai-translate-lang-select ai-tts-voice-select" data-ai-index="' + blockIndex + '" title="Voice type"';
+                if (ttsIsWebSpeech) ttsVoiceHtml += ' disabled';
+                ttsVoiceHtml += '>';
+                if (ttsVoices.length === 0) {
+                    ttsVoiceHtml += '<option value="">Browser Default</option>';
+                } else {
+                    ttsVoices.forEach(function (v) {
+                        var sel = (ttsSelectedVoice && v.id === ttsSelectedVoice) ? ' selected' : '';
+                        ttsVoiceHtml += '<option value="' + v.id + '"' + sel + '>' + v.label + '</option>';
+                    });
+                }
+                ttsVoiceHtml += '</select>';
+
                 result += '<div class="ai-placeholder-card ai-tts-card" data-ai-type="TTS" data-ai-index="' + blockIndex + '" data-target-lang="' + escapeHtml(ttsCurrentLang) + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
@@ -759,6 +842,7 @@
                     + '<span class="ai-tts-model-badge">Kokoro TTS</span>'
                     + '<div class="ai-placeholder-actions">'
                     + ttsLangHtml
+                    + ttsVoiceHtml
                     + '<button class="ai-placeholder-btn ai-fill-one ai-tts-run" data-ai-index="' + blockIndex + '" title="Generate audio">▶ Run</button>'
                     + '<button class="ai-placeholder-btn ai-tts-play-toggle" data-ai-index="' + blockIndex + '" title="Play / Stop audio">▷ Play</button>'
                     + '<button class="ai-placeholder-btn ai-tts-download" data-ai-index="' + blockIndex + '" title="Download audio as WAV">⬇ Save</button>'
@@ -976,6 +1060,8 @@
                         }
                         var ttsLangSel = card.querySelector('.ai-tts-lang-select');
                         var ttsLangName = ttsLangSel ? ttsLangSel.value : 'English';
+                        var ttsVoiceSel = card.querySelector('.ai-tts-voice-select');
+                        var ttsVoiceId = ttsVoiceSel ? ttsVoiceSel.value : null;
                         var ttsLangCode = ttsLangName.toLowerCase();
 
                         if (!ttsText) {
@@ -992,12 +1078,14 @@
                             var playBtn = card.querySelector('.ai-tts-play-toggle');
                             var saveBtn = card.querySelector('.ai-tts-download');
                             var langSel = card.querySelector('.ai-tts-lang-select');
+                            var voiceSel = card.querySelector('.ai-tts-voice-select');
                             var removeBtn = card.querySelector('.ai-remove-tag');
 
                             if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ Generating…'; }
                             if (playBtn) playBtn.disabled = true;
                             if (saveBtn) saveBtn.disabled = true;
                             if (langSel) langSel.disabled = true;
+                            if (voiceSel) voiceSel.disabled = true;
                             if (removeBtn) removeBtn.disabled = true;
                             card.classList.add('ai-tts-generating');
 
@@ -1007,6 +1095,7 @@
                                 if (playBtn) playBtn.disabled = false;
                                 if (saveBtn) saveBtn.disabled = false;
                                 if (langSel) langSel.disabled = false;
+                                if (voiceSel) voiceSel.disabled = false;
                                 if (removeBtn) removeBtn.disabled = false;
                                 card.classList.remove('ai-tts-generating');
 
@@ -1022,7 +1111,7 @@
                                 }
                             });
 
-                            M.tts.generate(ttsText, null, ttsLangCode);
+                            M.tts.generate(ttsText, ttsVoiceId || null, ttsLangCode);
                             M.showToast('🔧 Generating audio…', 'info');
                         }
                     }
@@ -1085,6 +1174,86 @@
                             console.log('[TTS] ⏹ Playback finished — button reset to Play');
                         }
                     }, 300);
+                }
+            });
+        });
+
+        // TTS language-change handler — update voice dropdown when language changes
+        var _ttsVoiceOptions = {
+            'en':    [
+                { id: 'af_bella', label: 'Bella ♀' }, { id: 'af_heart', label: 'Heart ♀' },
+                { id: 'af_nova', label: 'Nova ♀' }, { id: 'af_sarah', label: 'Sarah ♀' },
+                { id: 'af_sky', label: 'Sky ♀' }, { id: 'af_nicole', label: 'Nicole ♀' },
+                { id: 'af_aoede', label: 'Aoede ♀' }, { id: 'af_kore', label: 'Kore ♀' },
+                { id: 'af_jessica', label: 'Jessica ♀' }, { id: 'af_river', label: 'River ♀' },
+                { id: 'af_alloy', label: 'Alloy ♀' },
+                { id: 'am_adam', label: 'Adam ♂' }, { id: 'am_echo', label: 'Echo ♂' },
+                { id: 'am_eric', label: 'Eric ♂' }, { id: 'am_liam', label: 'Liam ♂' },
+                { id: 'am_michael', label: 'Michael ♂' }, { id: 'am_onyx', label: 'Onyx ♂' },
+                { id: 'am_puck', label: 'Puck ♂' }, { id: 'am_fenrir', label: 'Fenrir ♂' },
+                { id: 'am_santa', label: 'Santa ♂' },
+            ],
+            'en-us': null,
+            'en-gb': [
+                { id: 'bf_emma', label: 'Emma ♀' }, { id: 'bf_alice', label: 'Alice ♀' },
+                { id: 'bf_isabella', label: 'Isabella ♀' }, { id: 'bf_lily', label: 'Lily ♀' },
+                { id: 'bm_daniel', label: 'Daniel ♂' }, { id: 'bm_fable', label: 'Fable ♂' },
+                { id: 'bm_george', label: 'George ♂' }, { id: 'bm_lewis', label: 'Lewis ♂' },
+            ],
+            'ja':    [
+                { id: 'jf_alpha', label: 'Alpha ♀' }, { id: 'jf_gongitsune', label: 'Gongitsune ♀' },
+                { id: 'jf_nezumi', label: 'Nezumi ♀' }, { id: 'jf_tebukuro', label: 'Tebukuro ♀' },
+                { id: 'jm_kumo', label: 'Kumo ♂' },
+            ],
+            'zh':    [
+                { id: 'zf_xiaobei', label: 'Xiaobei ♀' }, { id: 'zf_xiaoni', label: 'Xiaoni ♀' },
+                { id: 'zf_xiaoxiao', label: 'Xiaoxiao ♀' }, { id: 'zf_xiaoyi', label: 'Xiaoyi ♀' },
+                { id: 'zm_yunjian', label: 'Yunjian ♂' }, { id: 'zm_yunxi', label: 'Yunxi ♂' },
+                { id: 'zm_yunxia', label: 'Yunxia ♂' }, { id: 'zm_yunyang', label: 'Yunyang ♂' },
+            ],
+            'es':    [
+                { id: 'ef_dora', label: 'Dora ♀' }, { id: 'em_alex', label: 'Alex ♂' },
+                { id: 'em_santa', label: 'Santa ♂' },
+            ],
+            'fr':    [{ id: 'ff_siwis', label: 'Siwis ♀' }],
+            'hi':    [
+                { id: 'hf_alpha', label: 'Alpha ♀' }, { id: 'hf_beta', label: 'Beta ♀' },
+                { id: 'hm_omega', label: 'Omega ♂' }, { id: 'hm_psi', label: 'Psi ♂' },
+            ],
+            'it':    [{ id: 'if_sara', label: 'Sara ♀' }, { id: 'im_nicola', label: 'Nicola ♂' }],
+            'pt':    [
+                { id: 'pf_dora', label: 'Dora ♀' }, { id: 'pm_alex', label: 'Alex ♂' },
+                { id: 'pm_santa', label: 'Santa ♂' },
+            ],
+        };
+
+        container.querySelectorAll('.ai-tts-lang-select').forEach(function (langSel) {
+            langSel.addEventListener('change', function () {
+                var card = this.closest('.ai-tts-card');
+                if (!card) return;
+                var voiceSel = card.querySelector('.ai-tts-voice-select');
+                if (!voiceSel) return;
+
+                var selectedOpt = this.options[this.selectedIndex];
+                var langCode = selectedOpt ? (selectedOpt.dataset.langCode || 'en') : 'en';
+                var voices = _ttsVoiceOptions[langCode] || _ttsVoiceOptions[langCode.split('-')[0]] || [];
+                var isWebSpeech = voices.length === 0 && !_ttsVoiceOptions[langCode];
+
+                voiceSel.innerHTML = '';
+                if (voices.length === 0) {
+                    var opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'Browser Default';
+                    voiceSel.appendChild(opt);
+                    voiceSel.disabled = isWebSpeech;
+                } else {
+                    voices.forEach(function (v) {
+                        var opt = document.createElement('option');
+                        opt.value = v.id;
+                        opt.textContent = v.label;
+                        voiceSel.appendChild(opt);
+                    });
+                    voiceSel.disabled = false;
                 }
             });
         });
