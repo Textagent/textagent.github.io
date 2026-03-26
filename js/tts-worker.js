@@ -11,7 +11,7 @@
 // Instead we load model + tokenizer separately and construct
 // KokoroTTS(model, tokenizer) directly.
 // ============================================
-import { env, StyleTextToSpeech2Model, AutoTokenizer } from '@huggingface/transformers';
+import { env, StyleTextToSpeech2Model, AutoTokenizer, Tensor } from '@huggingface/transformers';
 
 // Model host — downloads ONNX models from textagent HuggingFace org
 const MODEL_HOST = 'https://huggingface.co';
@@ -228,6 +228,44 @@ self.addEventListener('message', async (e) => {
                 return voice.at(0); // Language prefix char for phonemizer
             };
             console.log(`[TTS] Patched _validate_voice for ${ALL_VOICE_IDS.size} voices (9 languages)`);
+
+            // ── Patch generate_from_ids for robust Tensor construction ─────────
+            // kokoro-js (v1.2.1) has issues loading non-English voice files from onnx-community
+            // and passing proper style/speed tensors to our textagent model signature.
+            const voiceCache = new Map();
+            tts.generate_from_ids = async function(input_ids, { voice = 'af_heart', speed = 1 } = {}) {
+                if (!voiceCache.has(voice)) {
+                    // Fetch voice binary from our fallback org or primary org
+                    const voiceUrl = `https://huggingface.co/${modelId}/resolve/main/voices/${voice}.bin`;
+                    try {
+                        let res = await fetch(voiceUrl);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const buf = await res.arrayBuffer();
+                        voiceCache.set(voice, new Float32Array(buf));
+                    } catch (err) {
+                        console.warn(`[TTS] Failed to fetch voice ${voice} from ${modelId}, falling back to onnx-community:`, err);
+                        const fallbackUrl = `https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/voices/${voice}.bin`;
+                        let res = await fetch(fallbackUrl);
+                        if (!res.ok) throw new Error(`HTTP ${res.status} fetching fallback voice`);
+                        const buf = await res.arrayBuffer();
+                        voiceCache.set(voice, new Float32Array(buf));
+                    }
+                }
+
+                const styleFloat32 = voiceCache.get(voice);
+                const l = 256 * Math.min(Math.max(input_ids.dims.at(-1) - 2, 0), 509);
+                const styleSlice = styleFloat32.slice(l, l + 256);
+
+                const inputs = {
+                    input_ids: input_ids,
+                    style: new Tensor('float32', styleSlice, [1, 256]),
+                    speed: new Tensor('float32', [speed], [1])
+                };
+
+                const { waveform } = await this.model(inputs);
+                return { audio: waveform.data, sampling_rate: 24000 };
+            };
+            console.log(`[TTS] Patched generate_from_ids to pass explicit style and speed tensors`);
 
             // Get available voices (send the full registry)
             let voices = {};
