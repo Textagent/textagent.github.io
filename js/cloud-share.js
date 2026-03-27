@@ -463,6 +463,26 @@
         var hash = window.location.hash.substring(1);
         if (!hash) return;
         var params = new URLSearchParams(hash);
+        var spaceSlug = params.get('space');
+
+        // --- Space hub: #space=<slug> ---
+        if (spaceSlug) {
+            try {
+                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-collection"></i> Loading Space...</div>';
+                M.setViewMode('preview');
+                var spaceData = await M.loadSpace(spaceSlug);
+                if (!spaceData) {
+                    M.markdownPreview.innerHTML = '<div style="padding: 60px; text-align: center;"><h2>Space Not Found</h2><p>This space may have been removed or the URL is incorrect.</p></div>';
+                    return;
+                }
+                M.renderSpaceHub(spaceData, spaceSlug);
+            } catch (e) {
+                console.error('Error loading Space:', e);
+                M.markdownPreview.innerHTML = '<div style="padding: 60px; text-align: center;"><h2>Error</h2><p>' + e.message + '</p></div>';
+            }
+            return;
+        }
+
         var compactId = params.get('s');
         var docId = params.get('id');
         var inlineData = params.get('d');
@@ -1078,6 +1098,9 @@
         }
 
         shareResultModal.classList.add('active');
+
+        // Populate "Add to Space" picker if user has spaces
+        if (M.populateShareSpacePicker) M.populateShareSpacePicker();
     }
     M.closeShareResultModal = function () { shareResultModal.classList.remove('active'); };
     document.getElementById('share-result-close').addEventListener('click', M.closeShareResultModal);

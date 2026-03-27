@@ -1,0 +1,544 @@
+/* ============================================
+   spaces.css — Spaces Modal + Hub Page Styles
+   ============================================ */
+
+/* --- Spaces Modal (matches share-modal pattern) --- */
+.spaces-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.spaces-modal.active {
+    display: flex;
+}
+.spaces-modal-content {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    animation: spaces-slide-in 0.2s ease-out;
+}
+@keyframes spaces-slide-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.spaces-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+.spaces-modal-header h5 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+.spaces-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+.spaces-modal-close:hover {
+    background-color: var(--button-hover);
+}
+.spaces-modal-body {
+    padding: 16px 20px;
+}
+.spaces-modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* --- Spaces List --- */
+.spaces-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-color);
+    opacity: 0.6;
+}
+.spaces-empty p {
+    margin: 8px 0 0;
+}
+.spaces-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 4px;
+}
+.spaces-list-row:hover {
+    background-color: var(--button-hover);
+}
+.spaces-list-info {
+    flex: 1;
+    min-width: 0;
+}
+.spaces-list-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.spaces-list-slug {
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.5;
+    font-family: monospace;
+    margin-top: 2px;
+}
+.spaces-list-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.spaces-list-row:hover .spaces-list-actions {
+    opacity: 1;
+}
+.spaces-list-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-color);
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: all 0.15s;
+}
+.spaces-list-btn:hover {
+    opacity: 1;
+    background-color: var(--button-hover);
+    border-color: var(--border-color);
+}
+.spaces-list-delete:hover {
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.1);
+    border-color: rgba(248, 81, 73, 0.3);
+}
+
+/* --- Create Space Form --- */
+.spaces-form-group {
+    margin-bottom: 12px;
+}
+.spaces-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 6px;
+}
+.spaces-form-group input,
+.spaces-form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--editor-bg);
+    color: var(--text-color);
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+}
+.spaces-form-group input:focus,
+.spaces-form-group textarea:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+.spaces-form-group small {
+    display: block;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.5;
+    margin-top: 4px;
+}
+.spaces-form-group .share-error {
+    margin-top: 6px;
+}
+.spaces-slug-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--editor-bg);
+    overflow: hidden;
+}
+.spaces-slug-wrapper:focus-within {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+.spaces-slug-prefix {
+    padding: 8px 2px 8px 12px;
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.45;
+    font-family: monospace;
+    white-space: nowrap;
+    user-select: none;
+}
+.spaces-slug-wrapper input {
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 8px 12px 8px 0;
+}
+
+/* --- Spaces action buttons --- */
+.spaces-btn-primary {
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.spaces-btn-primary:hover {
+    background-color: #4b94e8;
+    transform: translateY(-1px);
+}
+.spaces-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+.spaces-btn-secondary {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.spaces-btn-secondary:hover {
+    background-color: var(--button-hover);
+}
+
+/* --- Space Editor --- */
+.spaces-editor-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.spaces-editor-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    flex: 1;
+}
+.spaces-editor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: var(--button-bg);
+    border: 1px solid var(--border-color);
+    margin-bottom: 4px;
+    transition: background 0.15s;
+}
+.spaces-editor-item:hover {
+    background-color: var(--button-hover);
+}
+.spaces-editor-item-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-color);
+    opacity: 0.5;
+    min-width: 20px;
+    text-align: center;
+}
+.spaces-editor-item-info {
+    flex: 1;
+    min-width: 0;
+}
+.spaces-editor-item-title {
+    font-size: 14px;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.spaces-editor-item-time {
+    font-size: 11px;
+    color: var(--text-color);
+    opacity: 0.5;
+}
+
+/* --- Add item section --- */
+.spaces-add-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+.spaces-add-section label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+.spaces-add-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.spaces-add-row input {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--editor-bg);
+    color: var(--text-color);
+    outline: none;
+    box-sizing: border-box;
+}
+.spaces-add-row input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+/* --- "Add to Space" in Share Result --- */
+.share-add-space-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.share-add-space-section label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+}
+.share-add-space-section select {
+    flex: 1;
+    min-width: 120px;
+    padding: 5px 10px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--editor-bg);
+    color: var(--text-color);
+    outline: none;
+}
+.share-add-space-section button {
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    background-color: rgba(88, 166, 255, 0.1);
+    color: var(--accent-color);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.share-add-space-section button:hover {
+    background-color: rgba(88, 166, 255, 0.2);
+}
+
+/* ============================================
+   SPACE HUB PAGE
+   ============================================ */
+.space-hub {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    min-height: 100vh;
+}
+.space-hub-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 32px 24px;
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(139, 92, 246, 0.08));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+}
+.space-hub-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    color: var(--accent-color);
+}
+.space-hub-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-color);
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+}
+.space-hub-desc {
+    font-size: 16px;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin: 0 0 12px;
+    line-height: 1.5;
+}
+.space-hub-owner {
+    font-size: 14px;
+    color: var(--text-color);
+    opacity: 0.6;
+    margin-bottom: 8px;
+}
+.space-hub-meta {
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.5;
+}
+
+/* --- Hub Grid --- */
+.space-hub-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.space-hub-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.space-hub-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+.space-hub-card-icon {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(88, 166, 255, 0.1);
+    border-radius: 10px;
+}
+.space-hub-card-body {
+    flex: 1;
+    min-width: 0;
+}
+.space-hub-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+}
+.space-hub-card-time {
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.5;
+    margin-top: 3px;
+}
+.space-hub-card-arrow {
+    color: var(--text-color);
+    opacity: 0;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.space-hub-card:hover .space-hub-card-arrow {
+    opacity: 0.6;
+    transform: translateX(4px);
+}
+
+/* --- Hub Empty & Footer --- */
+.space-hub-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-color);
+    opacity: 0.6;
+}
+.space-hub-empty p {
+    margin: 8px 0 0;
+}
+.space-hub-footer {
+    text-align: center;
+    padding: 24px;
+    margin-top: 40px;
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.4;
+}
+.space-hub-manage-btn {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: underline;
+}
+.space-hub-manage-btn:hover {
+    opacity: 0.8;
+}
+
+/* --- Responsive --- */
+@media (min-width: 640px) {
+    .space-hub-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 500px) {
+    .space-hub {
+        padding: 20px 12px;
+    }
+    .space-hub-header {
+        padding: 20px 16px;
+    }
+    .space-hub-title {
+        font-size: 22px;
+    }
+    .spaces-modal-content {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+}

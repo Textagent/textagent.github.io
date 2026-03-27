@@ -179,6 +179,12 @@
                         and .md file directly to your inbox.</small>
                     <div id="share-email-status" class="share-email-status"></div>
                 </div>
+                <!-- Add to Space -->
+                <div id="share-add-to-space" class="share-add-space-section" style="display:none">
+                    <label><i class="bi bi-collection me-1"></i>Add to Space</label>
+                    <select id="share-space-picker"></select>
+                    <button id="share-add-space-btn" class="spaces-btn-primary" style="padding:5px 12px;font-size:13px">+ Add</button>
+                </div>
             </div>
         </div>
     </div>
@@ -701,6 +707,7 @@ const chatResponse = await openai.chat.completions.create({
                     <button class="template-cat-btn" data-category="games">Games</button>
                     <button class="template-cat-btn" data-category="skills">Skills</button>
                     <button class="template-cat-btn" data-category="forms">Forms</button>
+                    <button class="template-cat-btn" data-category="charts">Charts</button>
                 </div>
             </div>
             <div class="template-grid" id="template-grid"></div>
@@ -783,6 +790,115 @@ const chatResponse = await openai.chat.completions.create({
                 <button id="github-auth-connect" class="ai-consent-btn ai-consent-btn-primary" style="background:#24292e">
                     <i class="bi bi-github me-1"></i> Sign in with GitHub
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spaces Modal -->
+    <div id="spaces-modal" class="spaces-modal" role="dialog" aria-modal="true" aria-label="My Spaces">
+        <div class="spaces-modal-content">
+            <div class="spaces-modal-header">
+                <h5><i class="bi bi-collection me-2"></i>My Spaces</h5>
+                <button class="spaces-modal-close" id="spaces-modal-close" title="Close" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="spaces-modal-body">
+                <!-- List View -->
+                <div id="spaces-list-view">
+                    <div id="spaces-list"></div>
+                    <div style="margin-top:12px;text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                        <button class="spaces-btn-primary" id="spaces-new-btn"><i class="bi bi-plus-lg me-1"></i>Create New Space</button>
+                        <button class="spaces-btn-secondary" id="spaces-recover-btn"><i class="bi bi-key me-1"></i>Recover Space</button>
+                    </div>
+                </div>
+
+                <!-- Create View -->
+                <div id="spaces-create-view" style="display:none">
+                    <div style="margin-bottom:12px">
+                        <button class="spaces-btn-secondary spaces-back-btn" style="padding:4px 10px;font-size:12px"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                    </div>
+                    <div class="spaces-form-group">
+                        <label>Space Name</label>
+                        <input type="text" id="spaces-create-name" placeholder="e.g. My Research Notes" maxlength="100" />
+                    </div>
+                    <div class="spaces-form-group">
+                        <label><i class="bi bi-envelope me-1"></i>Email <small>(required — access key sent here)</small></label>
+                        <input type="email" id="spaces-create-email" placeholder="your@email.com" maxlength="100" />
+                        <small>Your access key will be emailed here for recovery on other devices.</small>
+                    </div>
+                    <div class="spaces-form-group">
+                        <label>Description <small>(optional)</small></label>
+                        <textarea id="spaces-create-desc" placeholder="Brief description of this space..." rows="2"></textarea>
+                    </div>
+                    <div class="spaces-form-group">
+                        <label>Your Name <small>(optional)</small></label>
+                        <input type="text" id="spaces-create-owner" placeholder="e.g. Jyoti" maxlength="50" />
+                    </div>
+                    <div class="spaces-form-group">
+                        <label>Custom URL <small>(optional)</small></label>
+                        <div class="spaces-slug-wrapper">
+                            <span class="spaces-slug-prefix">#space=</span>
+                            <input type="text" id="spaces-create-slug" placeholder="auto-generated" maxlength="50" />
+                        </div>
+                        <small>Letters, numbers, hyphens. Leave empty for auto-generated.</small>
+                    </div>
+                    <div id="spaces-create-error" class="share-error" style="display:none"></div>
+                    <div style="margin-top:16px;text-align:center">
+                        <button class="spaces-btn-primary" id="spaces-create-submit"><i class="bi bi-plus-lg me-1"></i>Create Space</button>
+                    </div>
+                </div>
+
+                <!-- Recover View -->
+                <div id="spaces-recover-view" style="display:none">
+                    <div style="margin-bottom:12px">
+                        <button class="spaces-btn-secondary spaces-back-btn" style="padding:4px 10px;font-size:12px"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                    </div>
+                    <div style="text-align:center;margin-bottom:16px">
+                        <i class="bi bi-key" style="font-size:2rem;color:var(--accent-color)"></i>
+                        <p style="margin:8px 0 0;font-size:14px;color:var(--text-color)"><strong>Recover Your Space</strong></p>
+                        <p style="margin:4px 0 0;font-size:13px;opacity:0.6;color:var(--text-color)">Enter your space slug and the access key from your email.</p>
+                    </div>
+                    <div class="spaces-form-group">
+                        <label>Space URL Slug</label>
+                        <div class="spaces-slug-wrapper">
+                            <span class="spaces-slug-prefix">#space=</span>
+                            <input type="text" id="spaces-recover-slug" placeholder="my-research" maxlength="50" />
+                        </div>
+                    </div>
+                    <div class="spaces-form-group">
+                        <label><i class="bi bi-key me-1"></i>Access Key</label>
+                        <input type="text" id="spaces-recover-key" placeholder="Paste the key from your email" />
+                        <small>Check the email you used when creating this space.</small>
+                    </div>
+                    <div id="spaces-recover-error" class="share-error" style="display:none"></div>
+                    <div style="margin-top:16px;text-align:center">
+                        <button class="spaces-btn-primary" id="spaces-recover-submit"><i class="bi bi-key me-1"></i>Recover Space</button>
+                    </div>
+                </div>
+
+                <!-- Editor View -->
+                <div id="spaces-editor-view" style="display:none">
+                    <div class="spaces-editor-header">
+                        <button class="spaces-btn-secondary spaces-back-btn" style="padding:4px 10px;font-size:12px"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                        <span class="spaces-editor-title" id="spaces-editor-title"></span>
+                    </div>
+                    <div id="spaces-editor-items"></div>
+                    <div class="spaces-add-section">
+                        <label><i class="bi bi-plus-circle me-1"></i>Add Documents</label>
+                        <div style="margin-bottom:8px">
+                            <button class="spaces-btn-primary" id="spaces-add-current-btn" style="width:100%"><i class="bi bi-plus-lg me-1"></i>Add Current Doc</button>
+                        </div>
+                        <small style="display:block;margin-bottom:8px;color:var(--text-muted);">Or paste an existing share link:</small>
+                        <div class="spaces-add-row">
+                            <input type="text" id="spaces-add-link-input" placeholder="Paste #s=... link or share ID" />
+                        </div>
+                        <div class="spaces-add-row">
+                            <input type="text" id="spaces-add-link-title" placeholder="Title (optional)" />
+                            <button class="spaces-btn-secondary" id="spaces-add-link-btn" style="padding:6px 12px;white-space:nowrap">+ Add</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -84,6 +84,35 @@ service cloud.firestore {
       }
     }
 
+    // ─── Spaces (personal document hubs) ───────────────
+    match /spaces/{spaceId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(['name', 'items', 'wt', 'eh', 't', 'description', 'owner', 'theme'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 1
+                    && request.resource.data.name.size() <= 100
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() <= 50
+                    && request.resource.data.wt is string
+                    && request.resource.data.wt.size() >= 16
+                    && request.resource.data.wt.size() <= 64
+                    && request.resource.data.t is int;
+
+      allow update: if request.resource.data.keys().hasOnly(['name', 'items', 'wt', 'eh', 't', 'description', 'owner', 'theme'])
+                    && request.resource.data.name is string
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() <= 50
+                    && request.resource.data.wt is string
+                    && request.resource.data.t is int
+                    && (
+                      !('wt' in resource.data)
+                      || request.resource.data.wt == resource.data.wt
+                    );
+
+      allow delete: if false;
+    }
+
     // Deny access to all other collections by default
     match /{document=**} {
       allow read, write: if false;

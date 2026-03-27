@@ -1,0 +1,38 @@
+/* ============================================
+   ECharts Container Styles
+   ============================================ */
+.echarts-container {
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #334155);
+    background: var(--card-bg, #1e293b);
+}
+
+.echarts-chart {
+    min-height: 300px;
+}
+
+.echarts-source {
+    padding: 0 12px 12px;
+}
+
+.echarts-source summary {
+    cursor: pointer;
+    font-size: .85em;
+    color: #94a3b8;
+    padding: 8px 0;
+    user-select: none;
+    transition: color .2s;
+}
+
+.echarts-source summary:hover {
+    color: #e2e8f0;
+}
+
+.echarts-source pre {
+    margin: 8px 0 0;
+    border-radius: 8px;
+    max-height: 300px;
+    overflow: auto;
+}

@@ -237,6 +237,10 @@
                         <i class="bi bi-share"></i>
                     </button>
 
+                    <button id="spaces-btn" class="tool-button" title="My Spaces">
+                        <i class="bi bi-collection"></i>
+                    </button>
+
                     <!-- Overflow group: lower-priority buttons hidden at narrow widths -->
                     <span class="toolbar-separator"></span>
 
@@ -394,6 +398,10 @@
                                 <i class="bi bi-share me-2"></i> Share
                             </button>
 
+                            <button id="mobile-spaces-btn" class="mobile-menu-item" title="My Spaces">
+                                <i class="bi bi-collection me-2"></i> Spaces
+                            </button>
+
                             <button id="mobile-speech-btn" class="mobile-menu-item" title="Voice Dictation">
                                 <i class="bi bi-mic me-2"></i> Voice Dictation
                             </button>
@@ -509,6 +517,9 @@
                 </button>
                 <button id="qab-share" class="qab-btn" title="Share Markdown">
                     <i class="bi bi-share"></i> Share
+                </button>
+                <button id="qab-spaces" class="qab-btn" title="My Spaces">
+                    <i class="bi bi-collection"></i> Spaces
                 </button>
                 <div class="dropdown qab-dropdown">
                     <button class="qab-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
@@ -659,6 +670,8 @@
                             title="Insert interactive Form (contact, survey, feedback)">📋 Form</button>
                         <button class="fmt-btn fmt-form-btn" data-action="quiz-tag"
                             title="Insert interactive Quiz (MCQ, True/False, Fill-in-blank)">📝 Quiz</button>
+                        <button class="fmt-btn fmt-form-btn" data-action="chart-tag"
+                            title="Insert interactive Chart (Bar, Line, Pie, Radar)">📊 Chart</button>
                         <button class="fmt-btn fmt-fill-btn" data-action="fill-all" id="docgen-fill-btn"
                             title="Fill all AI blocks">Fill</button>
                     </div>
@@ -717,6 +730,8 @@
                             title="Insert Interactive Form">📋 Form</button>
                         <button class="fmt-btn fmt-tools-btn fmt-form-btn" data-action="quiz-tag"
                             title="Insert Interactive Quiz">📝 Quiz</button>
+                        <button class="fmt-btn fmt-tools-btn fmt-form-btn" data-action="chart-tag"
+                            title="Insert Interactive Chart">📊 Chart</button>
                     </div>
                 </div>
             </div>
@@ -927,6 +942,7 @@
                     <button class="composer-chip ai-chip" data-insert="{{@Tools: @search: }}" data-cursor="-2" title="Web Search">🔍 Search</button>
                     <button class="composer-chip ai-chip" data-insert="{{Form: My Form&#10;  @field: name | text | Your name | required&#10;  @field: email | email | your@email.com | required&#10;  @field: message | textarea | Write here...&#10;}}" data-cursor="-2" title="Interactive Form">📋 Form</button>
                     <button class="composer-chip ai-chip" data-insert="{{Quiz: My Quiz&#10;  @subject: General&#10;  @difficulty: Easy&#10;  @question[mcq]: Sample question? | Answer | Opt1,Answer,Opt2,Opt3&#10;  @question[tf]: Statement here | true&#10;  @question[fill]: The answer is ___ | answer&#10;}}" data-cursor="-2" title="Interactive Quiz">📝 Quiz</button>
+                    <button class="composer-chip ai-chip" data-insert="{{Chart: My Chart&#10;  @type: bar&#10;  @xAxis: Jan, Feb, Mar, Apr, May, Jun&#10;  @series: Revenue | 120, 200, 150, 280, 190, 340&#10;  @series: Profit | 40, 80, 60, 120, 70, 180&#10;  @color: #6366f1, #22c55e&#10;}}" data-cursor="-2" title="Interactive Chart">📊 Chart</button>
                 </div>
                 <!-- Input bar -->
                 <div class="composer-input-bar">

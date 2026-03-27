@@ -47,6 +47,9 @@ import '../css/composer.css';
 import '../css/agent-panel.css';
 import '../css/form-engine.css';
 import '../css/quiz-docgen.css';
+import '../css/echarts.css';
+import '../css/chart-docgen.css';
+import '../css/spaces.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -70,6 +73,10 @@ async function loadModules() {
         import('../js/cloud-share.js'),
         import('../js/toolbar-overflow.js'),
     ]);
+
+    // Phase 2b: Space Manager (depends on M.db from cloud-share, M.KEYS from storage-keys)
+    // Must load before app-init.js which calls loadSharedMarkdown()
+    await import('../js/space-manager.js');
 
     // app-init.js must load after Phase 2 — it wires event handlers
     // and calls setViewMode('split') at the end.
@@ -137,6 +144,17 @@ async function loadModules() {
         import('../js/templates/skills.js'),
         import('../js/templates/api-explorer.js'),
         import('../js/templates/forms.js'),
+        import('../js/templates/charts.js'),
+        import('../js/templates/charts-line-gallery.js'),
+        import('../js/templates/charts-bar-gallery.js'),
+        import('../js/templates/charts-pie-gallery.js'),
+        import('../js/templates/charts-scatter-gallery.js'),
+        import('../js/templates/charts-sunburst-gallery.js'),
+        import('../js/templates/charts-treemap-gallery.js'),
+        import('../js/templates/charts-advanced-gallery.js'),
+        import('../js/templates/charts-sankey-gallery.js'),
+        import('../js/templates/charts-parallel-gallery.js'),
+        import('../js/templates/charts-graph-gallery.js'),
     ]);
     await import('../js/templates.js');
 
@@ -163,6 +181,9 @@ async function loadModules() {
 
     // 3f-ext3: Quiz DocGen Tag (depends on M.registerFormattingAction, M.wrapSelectionWith, M.requestAiTask)
     await import('../js/quiz-docgen.js');
+
+    // 3f-ext4: Chart DocGen Tag (depends on M.registerFormattingAction, M.wrapSelectionWith)
+    await import('../js/chart-docgen.js');
 
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');

@@ -69,5 +69,8 @@
         AGENT_PROVIDER: 'textagent-agent-provider',
         AGENT_CODESPACE_ID: 'textagent-agent-codespace',
         AGENT_CUSTOM_URL: 'textagent-agent-custom-url',
+
+        // --- Spaces ---
+        SPACES: 'textagent-spaces',
     };
 })();

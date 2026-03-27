@@ -22,7 +22,18 @@
     window.__MDV_TEMPLATES_GAMES || [],
     window.__MDV_TEMPLATES_SKILLS || [],
     window.__MDV_TEMPLATES_API_EXPLORER || [],
-    window.__MDV_TEMPLATES_FORMS || []
+    window.__MDV_TEMPLATES_FORMS || [],
+    window.__MDV_TEMPLATES_CHARTS || [],
+    window.__MDV_TEMPLATES_LINE_GALLERY || [],
+    window.__MDV_TEMPLATES_BAR_GALLERY || [],
+    window.__MDV_TEMPLATES_PIE_GALLERY || [],
+    window.__MDV_TEMPLATES_SCATTER_GALLERY || [],
+    window.__MDV_TEMPLATES_SUNBURST_GALLERY || [],
+    window.__MDV_TEMPLATES_TREEMAP_GALLERY || [],
+    window.__MDV_TEMPLATES_ADVANCED_GALLERY || [],
+    window.__MDV_TEMPLATES_SANKEY_GALLERY || [],
+    window.__MDV_TEMPLATES_PARALLEL_GALLERY || [],
+    window.__MDV_TEMPLATES_GRAPH_GALLERY || []
   );
 
 
@@ -56,6 +67,7 @@
       case 'agents': return 'technical';
       case 'api-explorer': return 'technical';
       case 'forms': return 'project';
+      case 'charts': return 'technical';
       default: return 'doc';
     }
   }
@@ -78,6 +90,7 @@
       case 'agents': return 'bi-robot';
       case 'api-explorer': return 'bi-plug';
       case 'forms': return 'bi-ui-checks-grid';
+      case 'charts': return 'bi-bar-chart-line';
       default: return 'bi-file-earmark';
     }
   }

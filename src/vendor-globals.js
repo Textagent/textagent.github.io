@@ -42,6 +42,18 @@ window.getMermaid = async function () {
     return _mermaid;
 };
 
+// --- ECharts (only when doc has ```echarts blocks) ---
+window.getECharts = function () {
+    if (window.echarts) return Promise.resolve(window.echarts);
+    return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
+        s.onload = function () { resolve(window.echarts); };
+        s.onerror = function () { reject(new Error('Failed to load ECharts from CDN')); };
+        document.head.appendChild(s);
+    });
+};
+
 // === LAZY (loaded on first use) ===
 // Each lazy lib is loaded via a getter that caches the module.
 // Consumer code calls: const lib = await window.getXXX();
