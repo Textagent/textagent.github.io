@@ -33,7 +33,8 @@ let MODEL_LABEL = "Qwen 3.5";
 let MODEL_ARCH = "qwen3_5";      // 'qwen3_5' or 'qwen3'
 let MODEL_DTYPE = "q4";           // 'q4' or 'q4f16'
 
-// Task-specific token limits — industry standard (Qwen 3.5 supports 32K output natively)
+// Task-specific token limits (Qwen 3.5 supports 32K output natively)
+// Circuit breaker handles degeneration — no need to cap limits artificially
 const TOKEN_LIMITS = {
     summarize: 2048,
     expand: 4096,
@@ -52,6 +53,59 @@ const TOKEN_LIMITS = {
     chat: 8192,
     excalidraw_diagram: 16384,
 };
+
+// --- Degenerate output detection (circuit breaker) ---
+// Detects when the model is producing garbage loops and signals to stop.
+const DEGEN_WINDOW = 200;       // characters to check
+const DEGEN_CHECK_INTERVAL = 40; // check every N tokens
+const DEGEN_UNIQUE_RATIO = 0.30; // if unique-word ratio falls below this, abort
+let _degenTokenCount = 0;
+let _degenAborted = false;
+
+function resetDegenDetector() {
+    _degenTokenCount = 0;
+    _degenAborted = false;
+}
+
+/**
+ * Check if recent output text shows signs of degenerate repetition.
+ * Returns true if the model should stop generating.
+ */
+function isDegenerate(fullText) {
+    _degenTokenCount++;
+    if (_degenTokenCount % DEGEN_CHECK_INTERVAL !== 0) return false;
+    if (fullText.length < DEGEN_WINDOW) return false;
+
+    const window = fullText.slice(-DEGEN_WINDOW).toLowerCase();
+    const words = window.split(/\s+/).filter(w => w.length > 0);
+    if (words.length < 15) return false;
+
+    const unique = new Set(words);
+    const ratio = unique.size / words.length;
+
+    if (ratio < DEGEN_UNIQUE_RATIO) {
+        console.warn('[AI Worker] Degenerate output detected (unique ratio=' +
+            ratio.toFixed(2) + '). Aborting generation.');
+        _degenAborted = true;
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Trim degenerate text back to the last coherent sentence boundary.
+ */
+function trimToLastSentence(text) {
+    // Find last sentence-ending punctuation
+    const match = text.match(/.*[.!?\n](?:\s|$)/s);
+    if (match && match[0].trim().length > 50) {
+        return match[0].trim();
+    }
+    // Fallback: cut at ~75% of text length at a word boundary
+    const cutPoint = Math.floor(text.length * 0.75);
+    const spaceIdx = text.lastIndexOf(' ', cutPoint);
+    return spaceIdx > 50 ? text.substring(0, spaceIdx).trim() : text.trim();
+}
 
 let processor = null;
 let model = null;
@@ -265,12 +319,15 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             let fullText = '';
             let inThinkingPhase = !!enableThinking;
             let thinkingBuffer = '';
+            resetDegenDetector();
             const streamer = new TextStreamer(processor.tokenizer, {
                 skip_prompt: true,
                 skip_special_tokens: !enableThinking,
                 callback_function: (token) => {
+                    if (_degenAborted) return; // circuit breaker tripped
                     if (!enableThinking) {
                         fullText += token;
+                        if (isDegenerate(fullText)) return;
                         self.postMessage({ type: "token", token, messageId });
                         return;
                     }
@@ -292,19 +349,24 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                     const cleaned = token.replace(/<\|[^|]*\|>/g, '').replace(/<\/?(?:think|thinking|thought)>/gi, '');
                     if (cleaned) {
                         fullText += cleaned;
+                        if (isDegenerate(fullText)) return;
                         self.postMessage({ type: "token", token: cleaned, messageId });
                     }
                 },
             });
 
-            // Generate — Qwen3 model card: use sampling, NOT greedy, for thinking mode
+            // Generate — per Qwen 3.5 official model card:
+            // Non-thinking: presence_penalty=2.0, repetition_penalty=1.0
+            // Thinking: presence_penalty=1.5, repetition_penalty=1.0
             const genConfig = enableThinking
-                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096), repetition_penalty: 1.2, no_repeat_ngram_size: 4 }
-                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens, repetition_penalty: 1.3, no_repeat_ngram_size: 5 };
+                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096), presence_penalty: 1.5, repetition_penalty: 1.0, no_repeat_ngram_size: 5 }
+                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens, presence_penalty: 2.0, repetition_penalty: 1.0, no_repeat_ngram_size: 6 };
             await model.generate({ ...inputs, ...genConfig, streamer });
 
             // Final cleanup — strip any remaining think tags or special tokens
             let cleanedText = fullText.trim();
+            // If circuit breaker fired, trim to last coherent sentence
+            if (_degenAborted) cleanedText = trimToLastSentence(cleanedText);
             cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*?<\/(?:think|thinking|thought)>/gi, '');
             cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*$/gi, '');
             const closeMatch = cleanedText.match(/<\/(?:think|thinking|thought)>/i);
@@ -341,14 +403,17 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             let fullText = "";
             let inThinkingPhase = !!enableThinking;
             let thinkingBuffer = "";  // buffer thinking content (not forwarded)
+            resetDegenDetector();
 
             const streamer = new TextStreamer(processor.tokenizer, {
                 skip_prompt: true,
                 skip_special_tokens: !enableThinking,  // false when thinking, so we see markers
                 callback_function: (token) => {
+                    if (_degenAborted) return; // circuit breaker tripped
                     if (!enableThinking) {
                         // Normal mode: forward everything
                         fullText += token;
+                        if (isDegenerate(fullText)) return;
                         self.postMessage({ type: "token", token, messageId });
                         return;
                     }
@@ -381,20 +446,24 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
                         .replace(/<\/?(?:think|thinking|thought)>/gi, '');
                     if (cleaned) {
                         fullText += cleaned;
+                        if (isDegenerate(fullText)) return;
                         self.postMessage({ type: "token", token: cleaned, messageId });
                     }
                 },
             });
 
-            // Generate — Qwen3 model card: use sampling, NOT greedy, for thinking mode
-            // Thinking: temp=0.6, top_p=0.95, top_k=20 | Non-thinking: temp=0.7, top_p=0.8, top_k=20
+            // Generate — per Qwen 3.5 official model card:
+            // Non-thinking: presence_penalty=2.0, repetition_penalty=1.0
+            // Thinking: presence_penalty=1.5, repetition_penalty=1.0
             const genConfig = enableThinking
-                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096), repetition_penalty: 1.2, no_repeat_ngram_size: 4 }
-                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens, repetition_penalty: 1.3, no_repeat_ngram_size: 5 };
+                ? { do_sample: true, temperature: 0.6, top_p: 0.95, top_k: 20, max_new_tokens: Math.max(maxTokens, 4096), presence_penalty: 1.5, repetition_penalty: 1.0, no_repeat_ngram_size: 5 }
+                : { do_sample: true, temperature: 0.7, top_p: 0.8, top_k: 20, max_new_tokens: maxTokens, presence_penalty: 2.0, repetition_penalty: 1.0, no_repeat_ngram_size: 6 };
             await model.generate({ ...inputs, ...genConfig, streamer });
 
             // Final cleanup: strip any remaining think tags or reasoning artifacts
             let cleanedText = fullText.trim();
+            // If circuit breaker fired, trim to last coherent sentence
+            if (_degenAborted) cleanedText = trimToLastSentence(cleanedText);
             cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*?<\/(?:think|thinking|thought)>/gi, '');
             cleanedText = cleanedText.replace(/<(?:think|thinking|thought)>[\s\S]*$/gi, '');
             const closeMatch = cleanedText.match(/<\/(?:think|thinking|thought)>/i);
