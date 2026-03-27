@@ -437,7 +437,7 @@
             row.innerHTML =
                 '<span class="spaces-editor-item-num">' + (idx + 1) + '</span>' +
                 '<div class="spaces-editor-item-info">' +
-                    '<span class="spaces-editor-item-title">' + escapeHtml(item.title) + '</span>' +
+                    '<a href="' + (M.SHARE_BASE_URL || 'https://textagent.github.io/') + '#space=' + escapeHtml(slug) + '&s=' + escapeHtml(item.id) + '" target="_blank" class="spaces-editor-item-title">' + escapeHtml(item.title) + '</a>' +
                     '<span class="spaces-editor-item-time">' + timeStr + '</span>' +
                 '</div>' +
                 '<button class="spaces-list-btn spaces-list-delete" data-idx="' + idx + '" title="Remove"><i class="bi bi-x-lg"></i></button>';
@@ -679,29 +679,6 @@
             });
         });
 
-        // "Add to Space" in share result modal
-        var shareAddBtn = document.getElementById('share-add-space-btn');
-        if (shareAddBtn) shareAddBtn.addEventListener('click', async function () {
-            var picker = document.getElementById('share-space-picker');
-            if (!picker || !picker.value) return;
-            var slug = picker.value;
-            var shareUrl = document.getElementById('share-link-input').value;
-            var shareId = '';
-            var match = shareUrl.match(/#s=([^&]+)/);
-            if (match) shareId = match[1];
-            if (!shareId) return;
-
-            var title = 'Untitled';
-            var content = M.markdownEditor.value;
-            var headingMatch = content.match(/^#+\s+(.+)/m);
-            if (headingMatch) title = headingMatch[1].trim().substring(0, 60);
-
-            try {
-                await addItemToSpace(slug, shareId, title);
-            } catch (e) {
-                if (M.showToast) M.showToast('Failed: ' + e.message, 'error');
-            }
-        });
 
         // Escape to close
         document.addEventListener('keydown', function (e) {
@@ -712,10 +689,10 @@
         });
     }
 
-    // --- Populate "Add to Space" picker in Share Result ---
+    // --- Populate "Add to Space" picker in Share Options ---
     function populateShareSpacePicker() {
-        var section = document.getElementById('share-add-to-space');
-        var picker = document.getElementById('share-space-picker');
+        var section = document.getElementById('share-space-section');
+        var picker = document.getElementById('share-space-select');
         if (!section || !picker) return;
 
         var spaces = getMySpaces();
@@ -725,7 +702,7 @@
             return;
         }
 
-        picker.innerHTML = '';
+        picker.innerHTML = '<option value="">\u2014 None \u2014</option>';
         slugs.forEach(function (slug) {
             var opt = document.createElement('option');
             opt.value = slug;

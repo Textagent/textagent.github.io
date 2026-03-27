@@ -464,9 +464,10 @@
         if (!hash) return;
         var params = new URLSearchParams(hash);
         var spaceSlug = params.get('space');
+        var compactId = params.get('s');
 
         // --- Space hub: #space=<slug> ---
-        if (spaceSlug) {
+        if (spaceSlug && !compactId) {
             try {
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-collection"></i> Loading Space...</div>';
                 M.setViewMode('preview');
@@ -894,6 +895,8 @@
         if (hint) hint.style.display = '';
         // Render previously shared versions
         renderSharedVersions();
+        // Populate "Add to Space" picker in options modal
+        if (M.populateShareSpacePicker) M.populateShareSpacePicker();
     }
 
     /** Render the "Previously Shared" list in the share options modal */
@@ -1032,8 +1035,23 @@
             if (shareResult.id) {
                 saveSharedVersion(shareResult.id, shareResult.url, selectedShareView, isSecureShareMode ? 'secure' : 'quick');
             }
+            // Add to selected space (if any)
+            var selectedSpaceSlug = '';
+            var spaceSelect = document.getElementById('share-space-select');
+            if (spaceSelect && spaceSelect.value) {
+                selectedSpaceSlug = spaceSelect.value;
+                try {
+                    var title = 'Untitled';
+                    var content = M.markdownEditor.value;
+                    var headingMatch = content.match(/^#+\s+(.+)/m);
+                    if (headingMatch) title = headingMatch[1].trim().substring(0, 60);
+                    await M.addItemToSpace(selectedSpaceSlug, shareResult.id, title);
+                } catch (spaceErr) {
+                    console.warn('Failed to add to space:', spaceErr);
+                }
+            }
             closeShareOptionsModal();
-            showShareResult(shareResult.url, isSecureShareMode, shareResult.isForm, shareResult.rkString);
+            showShareResult(shareResult.url, isSecureShareMode, shareResult.isForm, shareResult.rkString, selectedSpaceSlug);
         } catch (error) {
             console.error('Share failed:', error);
             // Show custom name errors in the custom name error div
@@ -1054,11 +1072,15 @@
     var shareResultModal = document.getElementById('share-result-modal');
     var lastShareRk = '';
     var lastShareRespondentUrl = '';
-    function showShareResult(url, isSecure, isForm, rkString) {
-        // For form docs, append rk to create the creator link
+    function showShareResult(url, isSecure, isForm, rkString, spaceSlug) {
+        // Build the display URL
         var creatorUrl = url;
         if (isForm && rkString) {
             creatorUrl = url + '&rk=' + rkString;
+        }
+        // Rewrite the hash to include the space before the document ID
+        if (spaceSlug) {
+            creatorUrl = creatorUrl.replace('#s=', '#space=' + spaceSlug + '&s=');
         }
         document.getElementById('share-link-input').value = creatorUrl;
 
@@ -1098,9 +1120,6 @@
         }
 
         shareResultModal.classList.add('active');
-
-        // Populate "Add to Space" picker if user has spaces
-        if (M.populateShareSpacePicker) M.populateShareSpacePicker();
     }
     M.closeShareResultModal = function () { shareResultModal.classList.remove('active'); };
     document.getElementById('share-result-close').addEventListener('click', M.closeShareResultModal);
@@ -1204,8 +1223,8 @@
 
     // Track when the share result modal opens (for time-based bot detection)
     var _origShowShareResult = showShareResult;
-    showShareResult = function (url, isSecure, isForm, rkString) {
-        _origShowShareResult(url, isSecure, isForm, rkString);
+    showShareResult = function (url, isSecure, isForm, rkString, spaceSlug) {
+        _origShowShareResult(url, isSecure, isForm, rkString, spaceSlug);
         emailModalOpenTime = Date.now();
     };
     if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {

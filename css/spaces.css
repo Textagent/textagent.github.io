@@ -288,11 +288,18 @@
     min-width: 0;
 }
 .spaces-editor-item-title {
+    display: block;
     font-size: 14px;
     color: var(--text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+a.spaces-editor-item-title:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
 }
 .spaces-editor-item-time {
     font-size: 11px;
@@ -335,47 +342,22 @@
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
-/* --- "Add to Space" in Share Result --- */
-.share-add-space-section {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-.share-add-space-section label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-color);
-    white-space: nowrap;
-}
-.share-add-space-section select {
-    flex: 1;
-    min-width: 120px;
-    padding: 5px 10px;
-    font-size: 13px;
+/* --- "Add to Space" in Share Options --- */
+.share-space-select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: var(--editor-bg);
     color: var(--text-color);
     outline: none;
-}
-.share-add-space-section button {
-    padding: 5px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1px solid var(--accent-color);
-    border-radius: 6px;
-    background-color: rgba(88, 166, 255, 0.1);
-    color: var(--accent-color);
+    transition: border-color 0.15s;
     cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
 }
-.share-add-space-section button:hover {
-    background-color: rgba(88, 166, 255, 0.2);
+.share-space-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
 /* ============================================

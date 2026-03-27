@@ -99,6 +99,15 @@
                     <small class="share-view-lock-hint">Recipients will only see the selected view and cannot switch modes.</small>
                 </div>
 
+                <!-- Add to Space (pre-share) -->
+                <div id="share-space-section" class="share-form-group" style="display:none">
+                    <label><i class="bi bi-collection me-1"></i>Add to Space</label>
+                    <select id="share-space-select" class="share-space-select">
+                        <option value="">— None —</option>
+                    </select>
+                    <small>Link will open the Space hub instead of the document directly.</small>
+                </div>
+
                 <!-- Previously Shared Versions -->
                 <div id="share-versions-section" class="share-versions-section" style="display:none">
                     <label class="share-view-lock-label"><i class="bi bi-clock-history me-1"></i> Previously Shared</label>
@@ -179,12 +188,7 @@
                         and .md file directly to your inbox.</small>
                     <div id="share-email-status" class="share-email-status"></div>
                 </div>
-                <!-- Add to Space -->
-                <div id="share-add-to-space" class="share-add-space-section" style="display:none">
-                    <label><i class="bi bi-collection me-1"></i>Add to Space</label>
-                    <select id="share-space-picker"></select>
-                    <button id="share-add-space-btn" class="spaces-btn-primary" style="padding:5px 12px;font-size:13px">+ Add</button>
-                </div>
+
             </div>
         </div>
     </div>
