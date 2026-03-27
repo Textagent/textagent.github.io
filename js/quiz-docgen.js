@@ -33,6 +33,93 @@
         return arr;
     }
 
+    // ─── Quiz Syntax Skill — injected into AI prompt for accurate generation ──
+    var QUIZ_SYNTAX_SKILL = 'SKILL — TextAgent Quiz Syntax Reference:\n'
+        + 'You MUST output ONLY @question lines using the EXACT formats below.\n'
+        + 'No markdown, no explanation, no numbering, no extra text.\n'
+        + 'CRITICAL: Every line MUST start with @question[type]: (with a COLON after the bracket).\n\n'
+        + 'QUESTION TYPES — copy the EXACT pipe structure:\n\n'
+        + '1. MCQ — THREE pipe-separated fields: question | correct_answer | four_comma_options\n'
+        + '   @question[mcq]: What is the capital of France? | Paris | London,Paris,Berlin,Madrid\n'
+        + '   PIPE 1 = question text\n'
+        + '   PIPE 2 = the single correct answer (a short string)\n'
+        + '   PIPE 3 = four options separated by commas (MUST include the correct answer)\n\n'
+        + '2. TRUE/FALSE — TWO pipe-separated fields: statement | true_or_false\n'
+        + '   @question[tf]: The Earth orbits the Sun | true\n'
+        + '   PIPE 1 = statement, PIPE 2 = the word true or false\n\n'
+        + '3. FILL — TWO pipe-separated fields: sentence_with_blank | answer\n'
+        + '   @question[fill]: Water boils at ___ degrees Celsius | 100\n'
+        + '   PIPE 1 = sentence with ___ as the blank, PIPE 2 = correct answer\n\n'
+        + '4. MATCH — TWO pipe-separated fields: pairs | instruction\n'
+        + '   @question[match]: H2O=Water, NaCl=Salt, CO2=Carbon Dioxide | Match chemicals to names\n'
+        + '   PIPE 1 = Left=Right pairs separated by commas, PIPE 2 = instruction text\n\n'
+        + '5. ORDER — TWO pipe-separated fields: items_in_correct_order | instruction\n'
+        + '   @question[order]: Mercury,Venus,Earth,Mars | Order planets from Sun\n'
+        + '   PIPE 1 = items in CORRECT order (comma separated), PIPE 2 = instruction\n\n'
+        + '6. SHORT — TWO pipe-separated fields: question | keywords\n'
+        + '   @question[short]: What gas do plants absorb? | carbon dioxide,co2\n\n'
+        + '7. ESSAY — ONE field only (no pipes):\n'
+        + '   @question[essay]: Explain the process of photosynthesis in detail.\n\n'
+        + '8. LIKERT — ONE field only (no pipes):\n'
+        + '   @question[likert]: I found this topic easy to understand\n\n'
+        + 'CRITICAL RULES:\n'
+        + '- ALWAYS include the COLON after the bracket: @question[mcq]: not @question[mcq]\n'
+        + '- For mcq: EXACTLY 3 pipe sections. The SECOND pipe is the correct answer ALONE. The THIRD pipe has 4 comma-separated options.\n'
+        + '- For tf: use @question[tf] NOT @question[mcq]. The answer is the word true or false only.\n'
+        + '- Use a MIX of question types\n'
+        + '- Each @question on its own single line — NO line breaks within a question\n'
+        + '- Do NOT add numbering, bullets, explanations, or code fences';
+
+    /**
+     * Post-process AI-generated quiz lines to fix common syntax errors.
+     * Handles: missing colons, missing type brackets, swapped MCQ pipes, etc.
+     */
+    function postProcessQuizLines(lines) {
+        var fixed = [];
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (!line) continue;
+
+            // Fix: @question[type] text -> @question[type]: text (missing colon)
+            line = line.replace(/^(@question\[[a-z]+\])\s+(?!:)/i, '$1: ');
+            // Fix: @question[type]| -> @question[type]: (pipe instead of colon)
+            line = line.replace(/^(@question\[[a-z]+\])\|\s*/i, '$1: ');
+
+            // Skip lines that still don't match @question or @hint
+            if (!line.match(/^@(question|hint)/i)) continue;
+
+            // Fix MCQ with swapped pipe format:
+            // Wrong: question | opt1, opt2, opt3, opt4 | correct
+            // Right: question | correct | opt1,opt2,opt3,opt4
+            var mcqMatch = line.match(/^@question\[mcq\]:\s*(.+)$/i);
+            if (mcqMatch) {
+                var parts = mcqMatch[1].split('|').map(function(s){ return s.trim(); });
+                if (parts.length >= 3) {
+                    var question = parts[0];
+                    var field2 = parts[1];
+                    var field3 = parts[2];
+                    // Detect swapped: if field2 has commas (options) and field3 doesn't (correct answer)
+                    var f2commas = (field2.match(/,/g) || []).length;
+                    var f3commas = (field3.match(/,/g) || []).length;
+                    if (f2commas >= 2 && f3commas === 0) {
+                        // Swapped — fix it
+                        line = '@question[mcq]: ' + question + ' | ' + field3 + ' | ' + field2;
+                    }
+                } else if (parts.length === 2) {
+                    // Only 2 pipes: question | opt1, opt2, opt3, opt4
+                    // Try to extract correct from options (pick the first)
+                    var opts = parts[1].split(',').map(function(s){ return s.trim(); });
+                    if (opts.length >= 3) {
+                        line = '@question[mcq]: ' + parts[0] + ' | ' + opts[0] + ' | ' + parts[1];
+                    }
+                }
+            }
+
+            fixed.push(line);
+        }
+        return fixed;
+    }
+
     var DIFF_COLORS = {
         easy:   { bg:'#064e3b', color:'#6ee7b7', border:'#059669' },
         medium: { bg:'#1c1917', color:'#fbbf24', border:'#d97706' },
@@ -60,12 +147,12 @@
     // ─── Parser ───────────────────────────────────────────────────────────────
     function parseBlocks(src) {
         var blocks = [], fences = getFencedRanges(src);
-        var re = /\{\{@?Quiz:\s*([\s\S]*?)\}\}/gi, m;
+        var re = /\{\{@?Quiz\s*:\s*([\s\S]*?)\}\}/gi, m;
         while ((m = re.exec(src)) !== null) {
             if (inFence(m.index, fences)) continue;
             var body = m[1].trim(), lines = body.split('\n');
             var b = { title:'Quiz', subject:'General', difficulty:'Medium',
-                      numQuestions:'10', chapter:'', questions:[], customCss:'',
+                      numQuestions:'10', chapter:'', prompt:'', questions:[], customCss:'',
                       userInfo:[], mode:'practice', start:m.index, end:m.index+m[0].length, raw:m[0] };
             var li = 0;
             while (li < lines.length) {
@@ -85,6 +172,11 @@
                     var chunks = [mm[1].trim()];
                     while (li < lines.length && !lines[li].trim().match(/^@/)) { chunks.push(lines[li].trim()); li++; }
                     b.chapter = chunks.join(' '); continue;
+                }
+                if ((mm = line.match(/^@prompt:\s*([\s\S]*)/i))) {
+                    var pchunks = [mm[1].trim()];
+                    while (li < lines.length && !lines[li].trim().match(/^@/)) { pchunks.push(lines[li].trim()); li++; }
+                    b.prompt = pchunks.join(' '); continue;
                 }
                 if ((mm = line.match(/^@question(?:\[([a-z]+)\])?:\s*([\s\S]*)/i))) {
                     var qtype = (mm[1]||'mcq').toLowerCase(), rest = mm[2].trim();
@@ -302,8 +394,9 @@
         var isRespondent = !!M.isFormFillMode;
         QUIZ_STATE[bi] = { results:new Array(questions.length).fill(undefined), xp:0, lives:3, cur:0, matchSlots:{}, ordDrag:null, total:questions.length, questions:questions, userInfoFields:fields, userInfoData:{}, isRespondent:isRespondent, mode:b.mode||'practice' };
 
-        // In test mode Next is always enabled; in practice mode must confirm answer first (Duolingo-style)
-        var navDisabled = (b.mode === 'test') ? '' : 'disabled';
+        // In test mode or for creator preview: Next is always enabled
+        // Only respondents in practice mode must confirm answer first (Duolingo-style)
+        var navDisabled = (!isRespondent || b.mode === 'test') ? '' : 'disabled';
 
         // User info intro screen — only shown for respondents
         var userInfoHtml = isRespondent ? buildUserInfoScreen(fields, bi) : '';
@@ -350,8 +443,26 @@
     // ─── Transform markdown ───────────────────────────────────────────────────
     function transformQuizMarkdown(markdown) {
         var fences = getFencedRanges(markdown);
-        var re = /\{\{@?Quiz:\s*([\s\S]*?)\}\}/gi;
+        var re = /\{\{@?Quiz\s*:\s*([\s\S]*?)\}\}/gi;
         var result = '', last = 0, bi = 0, m;
+
+        // Build model dropdown options (same pattern as game-docgen)
+        var models = window.AI_MODELS || {};
+        var modelIds = Object.keys(models);
+        var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
+        function buildModelOpts() {
+            var opts = '';
+            modelIds.forEach(function (id) {
+                var mo = models[id];
+                if (mo.isImageModel || mo.isTtsModel || mo.isSttModel) return;
+                var name = mo.dropdownName || mo.label || id;
+                var sel = id === currentModel ? ' selected' : '';
+                opts += '<option value="' + id + '"' + sel + '>' + name + '</option>';
+            });
+            return opts;
+        }
+        var modelOptsHtml = buildModelOpts();
+
         while ((m = re.exec(markdown)) !== null) {
             if (inFence(m.index, fences)) continue;
             result += markdown.substring(last, m.index);
@@ -363,7 +474,18 @@
             var dc = DIFF_COLORS[diff]||DIFF_COLORS.medium;
             var hasQ = b.questions && b.questions.length > 0;
             var hasChapter = b.chapter && b.chapter.length > 10;
+            var hasPrompt = b.prompt && b.prompt.length > 3;
+            var canGenerate = hasChapter || hasPrompt;
             var cssStyle = b.customCss ? ' style="'+escHtml(b.customCss)+'"' : '';
+
+            // AI prompt textarea for free-text quiz generation
+            var promptAreaHtml = '';
+            if (!M.isFormFillMode) {
+                promptAreaHtml = '<div class="quiz-dg-prompt-area" data-quiz-index="'+bi+'">'
+                    + '<textarea class="quiz-dg-prompt-input" data-quiz-index="'+bi+'" placeholder="Describe the quiz you want AI to create… e.g. 10 questions on World War 2, mix of MCQ and True/False, hard difficulty" rows="2">' + escHtml(b.prompt || '') + '</textarea>'
+                    + (!canGenerate && !hasQ ? '<button class="quiz-dg-gen-btn quiz-dg-gen-prompt" data-quiz-index="'+bi+'" type="button" disabled>🤖 Generate with AI</button>' : '')
+                    + '</div>';
+            }
 
             result += '<div class="quiz-dg-card" data-quiz-index="'+bi+'"'+cssStyle+'>' +
                 '<div class="quiz-dg-header">'+
@@ -373,20 +495,26 @@
                     '<span class="quiz-dg-subj">'+escHtml(b.subject)+'</span>'+
                     '<span class="quiz-dg-diff" style="background:'+dc.bg+';color:'+dc.color+';border:1px solid '+dc.border+'">'+escHtml(b.difficulty)+'</span>'+
                     (hasQ?'<span class="quiz-dg-subj" style="border-color:#334155">'+b.questions.length+' Qs</span>':'')+
-                    (b.mode==='test'?'<span class="quiz-dg-diff" style="background:#312e81;color:#a5b4fc;border:1px solid #4338ca">📝 Test</span>':'')+
+                    (!M.isFormFillMode
+                      ? '<button class="quiz-dg-mode-toggle" data-quiz-index="'+bi+'" data-mode="'+(b.mode||'practice')+'" type="button" title="Toggle Practice / Test mode">'+(b.mode==='test'?'📝 Test':'🎯 Practice')+'</button>'
+                      : (b.mode==='test'?'<span class="quiz-dg-diff" style="background:#312e81;color:#a5b4fc;border:1px solid #4338ca">📝 Test</span>':''))+
                   '</div>'+
                   '<div class="quiz-dg-actions">'+
+                    (!M.isFormFillMode ? '<select class="quiz-dg-model-select" data-quiz-index="'+bi+'" title="AI model for generation">' + modelOptsHtml + '</select>' : '')+
                     (!M.isFormFillMode && hasChapter?'<span class="quiz-dg-chapter-info">📖 '+b.chapter.length+' chars</span>':'')+
-                    (!M.isFormFillMode && hasChapter?'<button class="quiz-dg-gen-btn" data-quiz-index="'+bi+'" type="button">🤖 Generate Questions</button>':'')+
+                    (!M.isFormFillMode && canGenerate?'<button class="quiz-dg-gen-btn" data-quiz-index="'+bi+'" type="button">🤖 Generate Questions</button>':'')+
                     (!M.isFormFillMode && hasQ?'<button class="quiz-dg-grade-btn" data-quiz-index="'+bi+'" type="button">📊 Grade Answers</button>':'')+
                     (M.formResponseKey || !M.isFormFillMode ? '<button class="quiz-dg-responses-btn" data-quiz-index="'+bi+'" type="button">📋 View Responses</button>' : '')+
                     (!M.isFormFillMode ? '<button class="quiz-dg-remove" data-quiz-index="'+bi+'" type="button" title="Remove quiz">✕</button>' : '')+
                   '</div>'+
                 '</div>'+
+                promptAreaHtml+
                 (hasQ ? buildPlayer(b, bi) :
                     '<div class="quiz-dg-empty">'+ (hasChapter
                         ? '📖 Chapter loaded ('+b.chapter.length+' chars). Click <strong>🤖 Generate Questions</strong> above.'
-                        : '✏️ Add questions using the <strong>➕ Add Question</strong> button below, or paste a chapter using <code>@chapter:</code>') +
+                        : hasPrompt
+                        ? '🤖 AI prompt ready. Click <strong>🤖 Generate Questions</strong> to create your quiz.'
+                        : '✏️ Describe your quiz in the prompt box above, or add questions manually with <strong>➕ Add Question</strong> below.') +
                     '</div>')+
                 (!M.isFormFillMode ? '<div class="quiz-dg-add-wrap" data-quiz-index="'+bi+'">'+
                 '<button class="quiz-dg-add-btn" data-quiz-index="'+bi+'" type="button">➕ Add Question</button>' : '<div class="quiz-dg-add-wrap" style="display:none">')+
@@ -941,6 +1069,36 @@
             });
         });
 
+        // ── Mode toggle: Practice ↔ Test ────────────────────────────────────────
+        container.querySelectorAll('.quiz-dg-mode-toggle').forEach(function(btn){
+            if(btn._qmt) return; btn._qmt=true;
+            btn.addEventListener('click', function(){
+                var idx = parseInt(btn.getAttribute('data-quiz-index'));
+                var currentMode = btn.dataset.mode || 'practice';
+                var newMode = currentMode === 'test' ? 'practice' : 'test';
+
+                // Update button
+                btn.dataset.mode = newMode;
+                btn.textContent = newMode === 'test' ? '📝 Test' : '🎯 Practice';
+
+                // Sync @mode: in editor markdown
+                var blocks = parseBlocks(M.markdownEditor.value);
+                var block = blocks[idx]; if (!block) return;
+                var t = M.markdownEditor.value;
+                var blockContent = t.substring(block.start, block.end);
+                var modeRe = /(@mode:\s*)\S+/i;
+                if (modeRe.test(blockContent)) {
+                    var updated = blockContent.replace(modeRe, '$1' + newMode);
+                    M.markdownEditor.value = t.substring(0, block.start) + updated + t.substring(block.end);
+                } else {
+                    // Insert @mode: before closing }}
+                    var insertPos = block.end - 2;
+                    M.markdownEditor.value = t.substring(0, insertPos) + '\n  @mode: ' + newMode + '\n' + t.substring(insertPos);
+                }
+                if (M.debouncedRender) M.debouncedRender();
+            });
+        });
+
         // ── Card-level buttons: Remove, Generate, Grade ────────────────────────
         container.querySelectorAll('.quiz-dg-remove').forEach(function(btn){
             if(btn._qrb) return; btn._qrb=true;
@@ -957,37 +1115,176 @@
 
         container.querySelectorAll('.quiz-dg-gen-btn').forEach(function(btn){
             if(btn._qgb) return; btn._qgb=true;
-            btn.addEventListener('click', function(){
+            btn.addEventListener('click', async function(){
                 var idx=parseInt(btn.getAttribute('data-quiz-index'));
                 var blocks=parseBlocks(M.markdownEditor.value);
-                var block=blocks[idx]; if(!block||!block.chapter) return;
+                var block=blocks[idx]; if(!block) return;
+
+                // Get prompt from textarea (may have been edited live)
+                var card = btn.closest('.quiz-dg-card');
+                var promptArea = card ? card.querySelector('.quiz-dg-prompt-input') : null;
+                var userPrompt = promptArea ? promptArea.value.trim() : (block.prompt || '');
+                var hasChapter = block.chapter && block.chapter.length > 10;
+                var hasPrompt = userPrompt && userPrompt.length > 3;
+
+                if (!hasChapter && !hasPrompt) {
+                    if(M.showToast) M.showToast('⚠ Please describe the quiz you want, or paste chapter content using @chapter:', 'warning');
+                    return;
+                }
+
                 btn.textContent='⏳ Generating…'; btn.disabled=true;
-                var model=(M.getCurrentAiModel&&M.getCurrentAiModel())||'gemini-flash';
-                var prompt='You are an expert '+block.subject+' teacher.\n'+
-                    'Read the chapter and generate exactly '+block.numQuestions+' questions at **'+block.difficulty+'** difficulty.\n\n'+
-                    'Use a variety of question types. Mix these:\n'+
-                    '@question[mcq]: text? | correct_answer | opt1,opt2,correct_answer,opt3\n'+
-                    '@question[tf]: statement | true  or  false\n'+
-                    '@question[fill]: The ___ is ... | answer\n'+
-                    '@question[match]: A=1, B=2, C=3\n'+
-                    '@question[order]: first,second,third,fourth\n'+
-                    '@question[short]: brief question | keyword1,keyword2\n'+
-                    '@question[essay]: open-ended question\n'+
-                    '@question[likert]: statement to rate\n\n'+
-                    'Output ONLY @question lines, one per line, no extra text.\n\nChapter:\n'+block.chapter;
-                var cb=function(res){
-                    var lines=res.split('\n').filter(function(l){return l.match(/^@question/i);});
-                    if(!lines.length){btn.textContent='🤖 Generate Questions';btn.disabled=false;return;}
-                    var t=M.markdownEditor.value;
-                    var ins=blocks[idx].end-2;
-                    M.markdownEditor.value=t.substring(0,ins)+'\n'+lines.join('\n')+'\n'+t.substring(ins);
-                    if(M.debouncedRender) M.debouncedRender();
+
+                // Use per-card model selector if available
+                var modelSelect = card ? card.querySelector('.quiz-dg-model-select') : null;
+                var perCardModel = modelSelect ? modelSelect.value : null;
+                var originalModel = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+                var model = perCardModel || originalModel || 'gemini-flash';
+
+                // Switch model if per-card selection differs
+                if (perCardModel && perCardModel !== originalModel && M.switchToModel) {
+                    M.switchToModel(perCardModel);
+                }
+
+                // Build prompt with QUIZ_SYNTAX_SKILL injection
+                var fullPrompt = QUIZ_SYNTAX_SKILL + '\n\n---\n\n';
+                fullPrompt += 'You are an expert '+block.subject+' teacher.\n';
+                fullPrompt += 'Generate exactly '+block.numQuestions+' questions at **'+block.difficulty+'** difficulty.\n\n';
+
+                if (hasChapter && hasPrompt) {
+                    fullPrompt += 'USER INSTRUCTIONS: ' + userPrompt + '\n\n';
+                    fullPrompt += 'SOURCE MATERIAL (generate questions from this):\n' + block.chapter;
+                } else if (hasChapter) {
+                    fullPrompt += 'Read the following chapter and generate questions from it.\n\n';
+                    fullPrompt += 'Chapter:\n' + block.chapter;
+                } else {
+                    fullPrompt += 'Create a quiz based on this description:\n' + userPrompt;
+                }
+
+                function resetBtn() {
                     btn.textContent='🤖 Generate Questions'; btn.disabled=false;
-                };
-                if(M.requestAiTask)    M.requestAiTask({prompt:prompt,model:model},cb);
-                else if(M.runAiPrompt) M.runAiPrompt({prompt:prompt,model:model},cb);
-                else{btn.textContent='⚠ No AI model';btn.disabled=false;}
+                    if (perCardModel && perCardModel !== originalModel && originalModel && M.switchToModel) {
+                        setTimeout(function(){ M.switchToModel(originalModel); }, 300);
+                    }
+                }
+
+                function handleResult(res) {
+                    var rawLines = res.split('\n');
+                    var lines = postProcessQuizLines(rawLines);
+                    if (!lines.length) {
+                        resetBtn();
+                        if(M.showToast) M.showToast('⚠ AI did not return valid questions. Try a different prompt or model.', 'warning');
+                        return;
+                    }
+                    // Re-parse blocks (editor may have changed during generation)
+                    var freshBlocks = parseBlocks(M.markdownEditor.value);
+                    var freshBlock = freshBlocks[idx];
+                    if (freshBlock) {
+                        var t = M.markdownEditor.value;
+                        var ins = freshBlock.end - 2;
+                        M.markdownEditor.value = t.substring(0, ins) + '\n' + lines.join('\n') + '\n' + t.substring(ins);
+                        if (M.debouncedRender) M.debouncedRender();
+                    }
+                    resetBtn();
+                    if(M.showToast) M.showToast('✅ Generated ' + lines.filter(function(l){ return l.match(/^@question/i); }).length + ' questions!', 'success');
+                }
+
+                function handleError(err) {
+                    console.error('🤖 [Quiz Generate] Error:', err);
+                    resetBtn();
+                    if(M.showToast) M.showToast('⚠ ' + (err.message || err || 'Generation failed. Check your AI model.'), 'warning');
+                }
+
+                // Try requestAiTask (Promise-based) first, fall back to callback-based
+                if (M.requestAiTask) {
+                    try {
+                        var result = await M.requestAiTask({
+                            taskType: 'generate',
+                            context: '',
+                            userPrompt: fullPrompt,
+                            enableThinking: false,
+                            silent: true
+                        });
+                        handleResult(result);
+                    } catch(err) {
+                        handleError(err);
+                    }
+                } else if (M.runAiPrompt) {
+                    M.runAiPrompt({prompt: fullPrompt, model: model}, function(res) {
+                        handleResult(res);
+                    });
+                } else {
+                    resetBtn();
+                    if(M.showToast) M.showToast('⚠ No AI model available. Please configure an AI model first.', 'warning');
+                }
             });
+        });
+
+        // ── Model select: handle local model loading / API key prompts ───────
+        container.querySelectorAll('.quiz-dg-model-select').forEach(function(sel){
+            if(sel._qms) return; sel._qms=true;
+            sel.addEventListener('change', function(){
+                var modelId = this.value;
+                if (!modelId) return;
+                var models = window.AI_MODELS || {};
+                var modelInfo = models[modelId];
+                // Trigger local model download if needed
+                if (modelInfo && modelInfo.isLocal && M._ai && M._ai.isLocalModel && M._ai.isLocalModel(modelId)) {
+                    var ls = M._ai.getLocalState(modelId);
+                    if (!ls.loaded && !ls.worker) {
+                        var consentKey = M.KEYS.AI_CONSENTED_PREFIX + modelId;
+                        var hasConsent = localStorage.getItem(consentKey);
+                        if (hasConsent) { M._ai.initAiWorker(modelId); }
+                        else if (M.showModelDownloadPopup) { M.showModelDownloadPopup(modelId); }
+                    }
+                }
+                // Prompt for API key if cloud model needs one
+                var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+                var cloudProvider = providers[modelId];
+                if (cloudProvider && !cloudProvider.getKey()) {
+                    M.showApiKeyModal(modelId);
+                }
+            });
+        });
+
+        // ── Prompt textarea: sync to editor + enable Generate button ──────────
+        container.querySelectorAll('.quiz-dg-prompt-input').forEach(function(ta){
+            if(ta._qpi) return; ta._qpi=true;
+            var syncTimer=null;
+            ta.addEventListener('input', function(){
+                var self=this;
+                // Auto-resize
+                self.style.height='auto'; self.style.height=self.scrollHeight+'px';
+                // Enable/disable the inline Generate button (for prompt-only cards)
+                var card=self.closest('.quiz-dg-card');
+                if(card){
+                    var inlineBtn=card.querySelector('.quiz-dg-gen-prompt');
+                    if(inlineBtn) inlineBtn.disabled = self.value.trim().length < 4;
+                    // Also enable header Generate button
+                    var headerBtn=card.querySelector('.quiz-dg-gen-btn:not(.quiz-dg-gen-prompt)');
+                    if(headerBtn) headerBtn.disabled = false;
+                }
+                // Sync @prompt: field to editor markdown (debounced)
+                clearTimeout(syncTimer);
+                syncTimer=setTimeout(function(){
+                    var idx=parseInt(self.dataset.quizIndex);
+                    var blocks=parseBlocks(M.markdownEditor.value);
+                    var block=blocks[idx]; if(!block) return;
+                    var t=M.markdownEditor.value;
+                    var blockContent = t.substring(block.start, block.end);
+                    var promptRe = /(?:^|\n)(\s*@prompt:\s*[^\n@]*(?:\n(?!\s*@)[^\n]*)*)/i;
+                    var newPromptLine = '  @prompt: ' + self.value.trim();
+                    if (promptRe.test(blockContent)) {
+                        var updated = blockContent.replace(promptRe, '\n' + newPromptLine);
+                        M.markdownEditor.value = t.substring(0, block.start) + updated + t.substring(block.end);
+                    } else {
+                        // Insert @prompt before closing }}
+                        var insertPos = block.end - 2;
+                        M.markdownEditor.value = t.substring(0, insertPos) + '\n' + newPromptLine + '\n' + t.substring(insertPos);
+                    }
+                }, 600);
+            });
+            // Auto-resize on load
+            ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
         });
 
         container.querySelectorAll('.quiz-dg-grade-btn').forEach(function(btn){
