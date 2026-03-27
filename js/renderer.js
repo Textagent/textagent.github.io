@@ -23,6 +23,17 @@
             return `<div class="mermaid-container"><div class="mermaid" id="${uniqueId}">${code}</div></div>`;
         }
 
+        // ECharts: render JSON option as interactive chart
+        if (language === 'echarts') {
+            const uniqueId = 'echarts-' + Math.random().toString(36).substr(2, 9);
+            const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const encoded = btoa(unescape(encodeURIComponent(code)));
+            return `<div class="echarts-container" id="${uniqueId}" data-echarts-option="${encoded}">` +
+                `<div class="echarts-chart" style="width:100%;height:400px;"></div>` +
+                `<details class="echarts-source"><summary>📊 Chart Source (JSON)</summary>` +
+                `<pre><code class="hljs json">${escapedCode}</code></pre></details></div>`;
+        }
+
         // Detect embed grid code blocks
         // Syntax: ```embed cols=2 height=400
         //         https://example.com "My Site"
@@ -117,7 +128,7 @@
         ...M.markedOptions,
         renderer: renderer,
         highlight: function (code, language) {
-            if (language === 'mermaid') return code;
+            if (language === 'mermaid' || language === 'echarts') return code;
             const validLanguage = hljs.getLanguage(language) ? language : "plaintext";
             return hljs.highlight(code, { language: validLanguage }).value;
         },
@@ -224,15 +235,19 @@
         var finalMarkdown = M.transformQuizMarkdown
             ? M.transformQuizMarkdown(formMarkdown)
             : formMarkdown;
+        // Chain Chart tag transform
+        var chartMarkdown = M.transformChartMarkdown
+            ? M.transformChartMarkdown(finalMarkdown)
+            : finalMarkdown;
         // Convert <!-- pagebreak --> comments into visible div markers
-        finalMarkdown = finalMarkdown.replace(
+        chartMarkdown = chartMarkdown.replace(
             /<!--\s*pagebreak\s*-->/gi,
             '\n<div class="page-break-marker" data-pagebreak="true"></div>\n'
         );
-        var html = marked.parse(finalMarkdown);
+        var html = marked.parse(chartMarkdown);
         var sanitizedHtml = DOMPurify.sanitize(html, {
             ADD_TAGS: ['mjx-container', 'button', 'select', 'option', 'video', 'source', 'iframe', 'video-player', 'video-skin'],
-            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action', 'data-pagebreak', 'data-draw-index', 'data-draw-tool', 'data-tool', 'data-skill', 'spellcheck', 'rows', 'data-tools-index', 'data-tools-action', 'data-tools-copy', 'data-form-index', 'data-name', 'novalidate', 'min', 'max', 'placeholder', 'for', 'data-quiz-index', 'data-bi', 'data-q', 'data-val', 'data-correct', 'data-goto', 'data-right', 'data-pair', 'data-pi', 'data-item', 'data-label', 'data-q-type', 'data-q-template', 'draggable', 'disabled', 'data-field', 'required']
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action', 'data-pagebreak', 'data-draw-index', 'data-draw-tool', 'data-tool', 'data-skill', 'spellcheck', 'rows', 'data-tools-index', 'data-tools-action', 'data-tools-copy', 'data-form-index', 'data-name', 'novalidate', 'min', 'max', 'placeholder', 'for', 'data-quiz-index', 'data-bi', 'data-q', 'data-val', 'data-correct', 'data-goto', 'data-right', 'data-pair', 'data-pi', 'data-item', 'data-label', 'data-q-type', 'data-q-template', 'draggable', 'disabled', 'data-field', 'required', 'data-echarts-option', 'data-echarts-code', 'data-rendered', 'data-chart-index', 'data-series-type', 'data-series-template']
         });
         container.innerHTML = sanitizedHtml;
 
@@ -277,6 +292,89 @@
                 }
             } catch (e) {
                 console.warn("Mermaid rendering failed:", e);
+            }
+
+            // ECharts: render chart containers
+            try {
+                // Dispose old ECharts instances to prevent memory leak
+                if (M._activeCharts) {
+                    M._activeCharts.forEach(function(c) {
+                        try { c.dispose(); } catch(e) {}
+                    });
+                }
+                M._activeCharts = [];
+                const echartsNodes = M.markdownPreview.querySelectorAll('.echarts-container');
+                if (echartsNodes.length > 0) {
+                    const ec = await window.getECharts();
+                    echartsNodes.forEach(function (node) {
+                        const chartDiv = node.querySelector('.echarts-chart');
+                        if (!chartDiv || chartDiv.dataset.rendered) return;
+                        chartDiv.dataset.rendered = 'true'; // Mark early to prevent re-entry
+                        try {
+                            if (node.dataset.echartsCode) {
+                                // Code mode: execute JS to get option
+                                var code = decodeURIComponent(escape(atob(node.dataset.echartsCode)));
+                                // Detect advanced mode: code uses registerMap, fetch, $.get, or myChart
+                                var needsAdvanced = /registerMap|fetch\s*\(|\$\.(get|post|ajax)\s*\(|myChart\s*\./i.test(code);
+                                if (needsAdvanced) {
+                                    // Advanced async mode: give code access to echarts lib & chart instance
+                                    var chart = ec.init(chartDiv, 'dark');
+                                    M._activeCharts.push(chart);
+                                    new ResizeObserver(function () { chart.resize(); }).observe(chartDiv);
+                                    // Build async execution context
+                                    var asyncCode = '(async function(echarts, myChart, chartDom) {\n'
+                                        + code + '\n'
+                                        + '})';
+                                    try {
+                                        var asyncFn = eval(asyncCode);
+                                        asyncFn(ec, chart, chartDiv).catch(function(err) {
+                                            console.warn('[Chart DocGen] Async code error:', err.message);
+                                            chartDiv.textContent = '⚠️ ECharts async error: ' + err.message;
+                                            chartDiv.style.color = '#f87171';
+                                            chartDiv.style.padding = '16px';
+                                        });
+                                    } catch (e2) {
+                                        chartDiv.textContent = '⚠️ ECharts code error: ' + e2.message;
+                                        chartDiv.style.color = '#f87171';
+                                        chartDiv.style.padding = '16px';
+                                    }
+                                } else {
+                                    // Simple sync mode: just extract option
+                                    var option = null;
+                                    if (M.executeEChartCode) {
+                                        option = M.executeEChartCode(code);
+                                    }
+                                    if (!option) {
+                                        chartDiv.textContent = '⚠️ ECharts code error: could not produce option';
+                                        chartDiv.style.color = '#f87171';
+                                        chartDiv.style.padding = '16px';
+                                        return;
+                                    }
+                                    if (!option.backgroundColor) option.backgroundColor = 'transparent';
+                                    var chart = ec.init(chartDiv, 'dark');
+                                    M._activeCharts.push(chart);
+                                    chart.setOption(option);
+                                    new ResizeObserver(function () { chart.resize(); }).observe(chartDiv);
+                                }
+                            } else if (node.dataset.echartsOption) {
+                                // Declarative mode: parse JSON option
+                                const json = decodeURIComponent(escape(atob(node.dataset.echartsOption)));
+                                var option = JSON.parse(json);
+                                if (!option.backgroundColor) option.backgroundColor = 'transparent';
+                                const chart = ec.init(chartDiv, 'dark');
+                                M._activeCharts.push(chart);
+                                chart.setOption(option);
+                                new ResizeObserver(function () { chart.resize(); }).observe(chartDiv);
+                            }
+                        } catch (e) {
+                            chartDiv.textContent = '⚠️ ECharts error: ' + e.message;
+                            chartDiv.style.color = '#f87171';
+                            chartDiv.style.padding = '16px';
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('ECharts rendering failed:', e);
             }
 
             // Feature 25: Render PlantUML diagrams
@@ -347,6 +445,9 @@
 
             // Quiz: bind quiz card action handlers
             if (M.bindQuizPreviewActions) M.bindQuizPreviewActions(M.markdownPreview);
+
+            // Charts: bind chart card action handlers
+            if (M.bindChartPreviewActions) M.bindChartPreviewActions(M.markdownPreview);
 
             // Finance: render TradingView stock widgets
             if (M.renderStockWidgets) M.renderStockWidgets(M.markdownPreview);
