@@ -411,8 +411,9 @@
     // ─── HUD helpers ──────────────────────────────────────────────────────────
     function updateHUD(bi) {
         var st = getState(bi);
-        var done = st.results.filter(function(r){return r!==undefined;}).length;
-        var prog = document.getElementById('qd-prog'+bi); if(prog) prog.style.width=(done/st.total*100)+'%';
+        // Progress bar tracks current question position (how far the respondent has navigated)
+        var progressPct = st.total > 0 ? ((st.cur + 1) / st.total * 100) : 0;
+        var prog = document.getElementById('qd-prog'+bi); if(prog) prog.style.width = progressPct + '%';
         var xpEl = document.getElementById('qd-xp'+bi);   if(xpEl) xpEl.textContent='⭐ '+st.xp+' XP';
         var livEl= document.getElementById('qd-liv'+bi);  if(livEl) livEl.textContent='❤️'.repeat(st.lives)+'🖤'.repeat(3-st.lives);
     }
@@ -441,6 +442,7 @@
         screens.forEach(function(s){ s.style.display='none'; });
         var t = document.getElementById('qd-s'+bi+'-'+qi); if(t) t.style.display='block';
         getState(bi).cur = qi;
+        updateHUD(bi);
     }
     function showComplete(bi) {
         var st = getState(bi);
