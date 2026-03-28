@@ -73,7 +73,7 @@ test('Contains at least 3 hasOnly() field lists (quick create, secure create, up
 // Expected field sets (sorted for comparison)
 const QUICK_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash', 'ekHash', 'eWt'].sort();
 const SECURE_FIELDS = ['d', 't', 'salt', 'secure', 'wt', 'view', 'rkHash', 'ekHash', 'eWt'].sort();
-const UPDATE_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash', 'ekHash', 'eWt'].sort();
+const UPDATE_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash', 'ekHash', 'eWt', 'salt', 'secure'].sort();
 
 test('Quick share create rule allows fields: d, t, wt, view, k, rkHash', () => {
     const found = allLists.some(l => JSON.stringify(l) === JSON.stringify(QUICK_FIELDS));
@@ -85,10 +85,9 @@ test('Secure share create rule allows fields: d, t, salt, secure, wt, view, rkHa
     assert.ok(found, `No hasOnly() list matches ${JSON.stringify(SECURE_FIELDS)}. Found: ${JSON.stringify(allLists)}`);
 });
 
-test('Update rule allows fields: d, t, wt, view, k, rkHash', () => {
-    // There should be at least TWO lists matching QUICK_FIELDS (create + update)
+test('Update rule allows fields: d, t, wt, view, k, rkHash, ekHash, eWt, salt, secure', () => {
     const count = allLists.filter(l => JSON.stringify(l) === JSON.stringify(UPDATE_FIELDS)).length;
-    assert.ok(count >= 2, `Expected at least 2 hasOnly() lists for ${JSON.stringify(UPDATE_FIELDS)} (create + update), found ${count}`);
+    assert.ok(count >= 1, `Expected at least 1 hasOnly() list for ${JSON.stringify(UPDATE_FIELDS)} (update), found ${count}`);
 });
 
 // ── 3. validView() helper ───────────────────────────────────

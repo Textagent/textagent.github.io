@@ -335,7 +335,7 @@
                 var wt = localStorage.getItem(CLOUD_WT_KEY) || '';
                 var updateData = { d: dataString, t: Date.now(), wt: wt };
                 if (isCompact) updateData.k = keyString;
-                // Preserve edit key fields (ekHash, eWt) so editor links keep working
+                // Preserve ALL original fields so .set() doesn't wipe them
                 try {
                     var existingDoc = await db.collection('shares').doc(existingDocId).get();
                     if (existingDoc.exists) {
@@ -343,6 +343,9 @@
                         if (existingData.ekHash) updateData.ekHash = existingData.ekHash;
                         if (existingData.eWt) updateData.eWt = existingData.eWt;
                         if (existingData.rkHash) updateData.rkHash = existingData.rkHash;
+                        if (existingData.view) updateData.view = existingData.view;
+                        if (existingData.salt) updateData.salt = existingData.salt;
+                        if (existingData.secure) updateData.secure = existingData.secure;
                     }
                 } catch (readErr) { /* best-effort — save anyway */ }
                 await db.collection('shares').doc(existingDocId).set(updateData);
@@ -594,6 +597,7 @@
                 if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
                     M.sharedViewLock = data.view;
                 }
+                if (!data.k) throw new Error('Missing encryption key — document may have been corrupted.');
                 var encrypted = base64UrlToUint8Array(data.d);
                 var key = await base64UrlToKey(data.k);
                 var compressed = await decryptData(key, encrypted);
