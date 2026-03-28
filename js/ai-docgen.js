@@ -1921,7 +1921,9 @@
                 btn.disabled = true;
                 btn.textContent = '⏳ Reading...';
                 M._memory.attachFiles(name).then(function (info) {
-                    M.showToast('📚 Added ' + info.addedChunks + ' chunks', 'success');
+                    var label = info.fileNames && info.fileNames.length > 0
+                        ? info.fileNames.join(', ') : '';
+                    M.showToast('📚 Added ' + info.addedChunks + ' chunks' + (label ? ' from ' + label : ''), 'success');
                     M._memory.getExternalStats(name).then(function (stats) {
                         var statsEl = container.querySelector('.ai-memory-stats[data-memory-name="' + name + '"]');
                         if (statsEl) statsEl.textContent = stats.files + ' files — ' + stats.chunks + ' chunks';
@@ -2524,9 +2526,10 @@
                         var checked = currentSources.indexOf(src.name) !== -1 ? ' checked' : '';
                         var badge = src.origin === 'document' ? ' <small class="ai-mem-badge">doc</small>'
                             : src.origin === 'stored' ? ' <small class="ai-mem-badge">saved</small>' : '';
+                        var label = src.displayName || src.name;
                         html += '<label class="ai-memory-checkbox-item">'
                             + '<input type="checkbox" value="' + escapeHtml(src.name) + '"' + checked + '> '
-                            + escapeHtml(src.name) + badge + '</label>';
+                            + escapeHtml(label) + badge + '</label>';
                     });
                     listEl.innerHTML = html || '<span class="ai-memory-loading">No sources available</span>';
 
@@ -2598,15 +2601,18 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 if (!M._memory) { M.showToast('Memory engine not loaded yet.', 'warning'); return; }
 
-                var name = 'files-' + Math.random().toString(36).substring(2, 7);
+                var tempName = 'files-' + Math.random().toString(36).substring(2, 7);
 
                 btn.disabled = true;
                 btn.textContent = '⏳ Reading...';
                 _memoryAttaching = true;
-                M._memory.attachFiles(name).then(function (info) {
-                    M.showToast('📚 Added ' + info.addedChunks + ' chunks', 'success');
+                M._memory.attachFiles(tempName).then(function (info) {
+                    var label = info.fileNames && info.fileNames.length > 0
+                        ? info.fileNames.join(', ')
+                        : tempName;
+                    M.showToast('📚 Added ' + info.addedChunks + ' chunks from ' + label, 'success');
                     var current = getBlockUseSources(idx);
-                    if (current.indexOf(name) === -1) current.push(name);
+                    if (current.indexOf(tempName) === -1) current.push(tempName);
                     updateBlockUseField(idx, current);
                     var selBtn = container.querySelector('.ai-memory-select-btn[data-ai-index="' + idx + '"]');
                     if (selBtn) selBtn.click();

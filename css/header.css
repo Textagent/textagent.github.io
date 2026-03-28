@@ -713,6 +713,11 @@ a:focus {
     flex-wrap: nowrap;
   }
 
+  /* Allow Bootstrap dropdowns to render when open */
+  .quick-action-bar:has(.dropdown-menu.show) {
+    overflow: visible;
+  }
+
   .quick-action-bar::-webkit-scrollbar {
     display: none;
     /* Chrome/Safari */
@@ -725,6 +730,8 @@ a:focus {
 
   .qab-btn {
     flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   .qab-view-modes {
@@ -742,6 +749,15 @@ a:focus {
   .header-container {
     overflow-x: hidden;
     max-width: 100vw;
+  }
+
+  /* Ensure QAB dropdown menus have good touch targets */
+  .qab-dropdown .dropdown-item {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 }
 

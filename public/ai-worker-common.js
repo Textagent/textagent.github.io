@@ -3,6 +3,11 @@
  *
  * Contains TOKEN_LIMITS and buildMessages() so they are defined in one place.
  * Each worker imports from this module and passes its own contextLimit override.
+ *
+ * Context Limit Tiers (chars):
+ *   Cloud (default):   128,000 / 64,000 (summarize) — for Groq, OpenRouter, Gemini
+ *   Local-Medium:       32,000 / 16,000 — for Qwen 0.8B/2B/4B (overridden in ai-worker.js)
+ *   Local-Tiny:          2,500 /  1,500 — for LFM 1.2B (overridden in ai-worker-lfm.js)
  */
 
 // Task-specific token limits — industry standard
@@ -114,14 +119,14 @@ const SYSTEM_PROMPTS = {
  * @param {string} context - The document context or selected text
  * @param {string} userPrompt - The user's prompt
  * @param {object} [opts] - Options
- * @param {number} [opts.contextLimit] - Max characters for context (default: 2500)
+ * @param {number} [opts.contextLimit] - Max characters for context (default: 128000 for cloud)
  * @param {number} [opts.autocompleteLimit] - Max trailing chars for autocomplete (default: 800)
  * @param {Array<{role:string, content:string}>} [opts.chatHistory] - Prior conversation turns
  * @returns {Array<{role: string, content: string}>}
  */
 export function buildMessages(taskType, context, userPrompt, opts = {}) {
     const contextLimit = opts.contextLimit ||
-        (taskType === 'summarize' || taskType === 'grammar' ? 16000 : 32000);
+        (taskType === 'summarize' || taskType === 'grammar' ? 64000 : 128000);
     const autocompleteLimit = opts.autocompleteLimit || 800;
 
     const systemMessage = SYSTEM_PROMPTS[taskType] || SYSTEM_PROMPTS.chat;
@@ -131,12 +136,12 @@ export function buildMessages(taskType, context, userPrompt, opts = {}) {
     const chatHistory = opts.chatHistory;
     if (chatHistory && chatHistory.length > 0 &&
         ['generate', 'qa', 'chat', 'explain', 'markdown'].includes(taskType)) {
-        // Add up to 30 recent history messages, trimming each to 4000 chars
+        // Add up to 30 recent history messages, trimming each to 8000 chars
         const recent = chatHistory.slice(-30);
         recent.forEach(function (m) {
             messages.push({
                 role: m.role,
-                content: m.content.substring(0, 4000)
+                content: m.content.substring(0, 8000)
             });
         });
     }

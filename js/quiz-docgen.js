@@ -153,7 +153,8 @@
             var body = m[1].trim(), lines = body.split('\n');
             var b = { title:'Quiz', subject:'General', difficulty:'Medium',
                       numQuestions:'10', chapter:'', prompt:'', questions:[], customCss:'',
-                      userInfo:[], mode:'practice', start:m.index, end:m.index+m[0].length, raw:m[0] };
+                      userInfo:[], mode:'practice', searchProviders:[], useMemory:[],
+                      start:m.index, end:m.index+m[0].length, raw:m[0] };
             var li = 0;
             while (li < lines.length) {
                 var line = lines[li].trim(); li++;
@@ -162,8 +163,22 @@
                 if ((mm = line.match(/^@subject:\s*(.+)/i)))   { b.subject     = mm[1].trim(); continue; }
                 if ((mm = line.match(/^@difficulty:\s*(.+)/i))) { b.difficulty  = mm[1].trim(); continue; }
                 if ((mm = line.match(/^@questions:\s*(\d+)/i))) { b.numQuestions= mm[1]; continue; }
-                if ((mm = line.match(/^@css:\s*(.+)/i)))        { b.customCss   = mm[1].replace(/^"|"$/g,'').trim(); continue; }
+                // @field: css | ... (same format as forms — merge with @css:)
+                if ((mm = line.match(/^@field:\s*css\s*\|\s*(.+)/i))) {
+                    var fieldCss = mm[1].replace(/^"|"$/g,'').trim();
+                    b.customCss = b.customCss ? b.customCss + '; ' + fieldCss : fieldCss;
+                    continue;
+                }
+                if ((mm = line.match(/^@css:\s*(.+)/i)))        { var cssPart = mm[1].replace(/^"|"$/g,'').trim(); b.customCss = b.customCss ? b.customCss + '; ' + cssPart : cssPart; continue; }
                 if ((mm = line.match(/^@mode:\s*(.+)/i)))       { b.mode = mm[1].trim().toLowerCase()==='test'?'test':'practice'; continue; }
+                if ((mm = line.match(/^@search:\s*(.+)/i))) {
+                    b.searchProviders = mm[1].split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
+                    continue;
+                }
+                if ((mm = line.match(/^@use:\s*(.+)/i))) {
+                    b.useMemory = mm[1].split(',').map(function(s){return s.trim();}).filter(Boolean);
+                    continue;
+                }
                 if ((mm = line.match(/^@userinfo:\s*(.+)/i)))  {
                     b.userInfo = mm[1].split(',').map(function(f){return f.trim().toLowerCase();}).filter(Boolean);
                     continue;
@@ -463,6 +478,30 @@
         }
         var modelOptsHtml = buildModelOpts();
 
+        // Search provider pill config (same as ai-docgen)
+        var SEARCH_PILL_CONFIG = [
+            { id: 'duckduckgo', icon: '🦆', label: 'DDG', title: 'DuckDuckGo · Free · No API key' },
+            { id: 'brave', icon: '🦁', label: 'Brave', title: 'Brave Search · 2,000/month free' },
+            { id: 'serper', icon: '🔎', label: 'Serper', title: 'Serper.dev · 2,500 queries free' },
+            { id: 'tavily', icon: '🤖', label: 'Tavily', title: 'Tavily · AI-optimized · 1,000/month free' },
+            { id: 'google_cse', icon: '🔍', label: 'Google', title: 'Google CSE · 100/day free' },
+            { id: 'wikipedia', icon: '📖', label: 'Wiki', title: 'Wikipedia · Free encyclopedia' },
+            { id: 'wikidata', icon: '📊', label: 'Wikidata', title: 'Wikidata · Free structured data' },
+        ];
+        function buildSearchPillsHtml(quizIndex, activeProviders) {
+            var html = '<div class="quiz-dg-search-panel" data-quiz-index="'+quizIndex+'" style="display:none">' +
+                '<div class="quiz-dg-search-pills">';
+            SEARCH_PILL_CONFIG.forEach(function(p) {
+                var isActive = activeProviders.indexOf(p.id) !== -1;
+                html += '<label class="quiz-dg-search-pill'+(isActive?' active':'')+'" data-provider="'+p.id+'" title="'+p.title+'">' +
+                    '<input type="checkbox" class="quiz-dg-search-check" value="'+p.id+'" data-quiz-index="'+quizIndex+'"'+(isActive?' checked':'')+'>' +
+                    '<span class="quiz-dg-search-pill-label">'+p.icon+' '+p.label+'</span>' +
+                    '</label>';
+            });
+            html += '</div></div>';
+            return html;
+        }
+
         while ((m = re.exec(markdown)) !== null) {
             if (inFence(m.index, fences)) continue;
             result += markdown.substring(last, m.index);
@@ -475,6 +514,8 @@
             var hasQ = b.questions && b.questions.length > 0;
             var hasChapter = b.chapter && b.chapter.length > 10;
             var hasPrompt = b.prompt && b.prompt.length > 3;
+            var hasSearch = b.searchProviders && b.searchProviders.length > 0;
+            var hasMemory = b.useMemory && b.useMemory.length > 0;
             var canGenerate = hasChapter || hasPrompt;
             var cssStyle = b.customCss ? ' style="'+escHtml(b.customCss)+'"' : '';
 
@@ -500,12 +541,23 @@
                       : (b.mode==='test'?'<span class="quiz-dg-diff" style="background:#312e81;color:#a5b4fc;border:1px solid #4338ca">📝 Test</span>':''))+
                   '</div>'+
                   '<div class="quiz-dg-actions">'+
+                    (!M.isFormFillMode ? '<button class="quiz-dg-search-btn'+(hasSearch?' active':'')+'" data-quiz-index="'+bi+'" type="button" title="Web search for source material">🔍'+(hasSearch?' '+b.searchProviders.length:'')+'</button>' : '')+
+                    (!M.isFormFillMode ? '<button class="quiz-dg-memory-btn'+(hasMemory?' active':'')+'" data-quiz-index="'+bi+'" type="button" title="Memory context for source material">📚'+(hasMemory?' ✓':'')+'</button>' : '')+
                     (!M.isFormFillMode ? '<select class="quiz-dg-model-select" data-quiz-index="'+bi+'" title="AI model for generation">' + modelOptsHtml + '</select>' : '')+
                     (!M.isFormFillMode && hasChapter?'<span class="quiz-dg-chapter-info">📖 '+b.chapter.length+' chars</span>':'')+
                     (!M.isFormFillMode && canGenerate?'<button class="quiz-dg-gen-btn" data-quiz-index="'+bi+'" type="button">🤖 Generate Questions</button>':'')+
                     (!M.isFormFillMode && hasQ?'<button class="quiz-dg-grade-btn" data-quiz-index="'+bi+'" type="button">📊 Grade Answers</button>':'')+
                     (M.formResponseKey || !M.isFormFillMode ? '<button class="quiz-dg-responses-btn" data-quiz-index="'+bi+'" type="button">📋 View Responses</button>' : '')+
                     (!M.isFormFillMode ? '<button class="quiz-dg-remove" data-quiz-index="'+bi+'" type="button" title="Remove quiz">✕</button>' : '')+
+                  '</div>'+
+                '</div>'+
+                buildSearchPillsHtml(bi, b.searchProviders || [])+
+                '<div class="quiz-dg-memory-dropdown" data-quiz-index="'+bi+'" style="display:none">'+
+                  '<div class="quiz-dg-memory-dropdown-header">📚 Memory Sources</div>'+
+                  '<div class="quiz-dg-memory-source-list" data-quiz-index="'+bi+'"><span class="quiz-dg-memory-loading">Loading…</span></div>'+
+                  '<div class="quiz-dg-memory-attach-row">'+
+                    '<button class="quiz-dg-memory-attach-folder" data-quiz-index="'+bi+'" type="button" title="Attach folder">📂 Folder</button>'+
+                    '<button class="quiz-dg-memory-attach-files" data-quiz-index="'+bi+'" type="button" title="Attach files">📄 Files</button>'+
                   '</div>'+
                 '</div>'+
                 promptAreaHtml+
@@ -1145,10 +1197,99 @@
                     M.switchToModel(perCardModel);
                 }
 
+                // Check model readiness (trigger download/consent/API key if needed)
+                var currentModelId = perCardModel || originalModel || model;
+                var modelsCfg = window.AI_MODELS || {};
+                var modelInfo = modelsCfg[currentModelId];
+                if (modelInfo) {
+                    if (modelInfo.isLocal && M._ai && M._ai.isLocalModel && M._ai.isLocalModel(currentModelId)) {
+                        var ls = M._ai.getLocalState(currentModelId);
+                        if (!ls.loaded && !ls.worker) {
+                            var consentKey = (M.KEYS && M.KEYS.AI_CONSENTED_PREFIX ? M.KEYS.AI_CONSENTED_PREFIX : 'ai-consented-') + currentModelId;
+                            var hasConsent = localStorage.getItem(consentKey);
+                            if (hasConsent) {
+                                M._ai.initAiWorker(currentModelId);
+                            } else if (M.showModelDownloadPopup) {
+                                M.showModelDownloadPopup(currentModelId);
+                            }
+                            btn.textContent='🤖 Generate Questions'; btn.disabled=false;
+                            if(M.showToast) M.showToast('📦 Model needs to download first. Please click Generate again after the model is ready.', 'info');
+                            return;
+                        }
+                    }
+                    // Cloud model — check API key
+                    var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+                    var cloudProvider = providers[currentModelId];
+                    if (cloudProvider && !cloudProvider.getKey()) {
+                        if (M.showApiKeyModal) M.showApiKeyModal(currentModelId);
+                        btn.textContent='🤖 Generate Questions'; btn.disabled=false;
+                        if(M.showToast) M.showToast('🔑 Please enter your API key for this model.', 'info');
+                        return;
+                    }
+                }
+
+                // ── Fetch web search context ──
+                var searchContext = '';
+                var searchPanel = card ? card.querySelector('.quiz-dg-search-panel') : null;
+                if (searchPanel) {
+                    var searchProviders = [];
+                    searchPanel.querySelectorAll('.quiz-dg-search-check:checked').forEach(function(cb) {
+                        searchProviders.push(cb.value);
+                    });
+                    if (searchProviders.length > 0 && M.webSearch) {
+                        try {
+                            btn.textContent='🔍 Searching…';
+                            var searchQuery = userPrompt || block.subject + ' ' + block.title;
+                            var searchResults = await M.webSearch.performMultiSearch(searchQuery, 5, searchProviders);
+                            searchContext = M.webSearch.formatResultsForLLM(searchResults);
+                        } catch(e) { console.warn('[Quiz] Search failed:', e); }
+                    }
+                }
+
+                // ── Fetch memory context ──
+                var memoryContext = '';
+                if (block.useMemory && block.useMemory.length > 0 && block.useMemory.indexOf('none') === -1 && M._memory) {
+                    try {
+                        btn.textContent='📚 Getting context…';
+                        var memQuery = userPrompt || block.subject + ' ' + block.title;
+                        var memChunks = await M._memory.search(block.useMemory, memQuery, 5);
+                        memoryContext = M._memory.formatForContext(memChunks);
+                    } catch(e) { console.warn('[Quiz] Memory search failed:', e); }
+                } else {
+                    // Auto-discover memory sources from document if no explicit @use:
+                    var editorText = M.markdownEditor.value;
+                    var autoSources = [];
+                    var memRegex = /\{\{Memory:[^}]*Name:\s*([^\s}]+)/gi;
+                    var memMatch;
+                    while ((memMatch = memRegex.exec(editorText)) !== null) {
+                        var name = memMatch[1].replace(/[,}]/g, '').trim();
+                        if (name && autoSources.indexOf(name) === -1) autoSources.push(name);
+                    }
+                    if (autoSources.length > 0 && M._memory) {
+                        try {
+                            btn.textContent='📚 Getting context…';
+                            var autoQuery = userPrompt || block.subject + ' ' + block.title;
+                            var autoChunks = await M._memory.search(autoSources, autoQuery, 5);
+                            memoryContext = M._memory.formatForContext(autoChunks);
+                        } catch(e) { /* auto-discover failed, proceed without */ }
+                    }
+                }
+
+                btn.textContent='⏳ Generating…';
+
                 // Build prompt with QUIZ_SYNTAX_SKILL injection
                 var fullPrompt = QUIZ_SYNTAX_SKILL + '\n\n---\n\n';
                 fullPrompt += 'You are an expert '+block.subject+' teacher.\n';
                 fullPrompt += 'Generate exactly '+block.numQuestions+' questions at **'+block.difficulty+'** difficulty.\n\n';
+
+                // Inject search results as source material
+                if (searchContext) {
+                    fullPrompt += 'WEB RESEARCH RESULTS (use as source material for questions):\n' + searchContext + '\n\n';
+                }
+                // Inject memory context as source material
+                if (memoryContext) {
+                    fullPrompt += 'RELEVANT CONTEXT FROM ATTACHED DOCUMENTS (use as source material for questions):\n' + memoryContext + '\n---\n\n';
+                }
 
                 if (hasChapter && hasPrompt) {
                     fullPrompt += 'USER INSTRUCTIONS: ' + userPrompt + '\n\n';
@@ -1243,6 +1384,263 @@
                 if (cloudProvider && !cloudProvider.getKey()) {
                     M.showApiKeyModal(modelId);
                 }
+            });
+        });
+
+        // ── Search toggle: show/hide search pills panel ──────────────────────
+        container.querySelectorAll('.quiz-dg-search-btn').forEach(function(btn){
+            if(btn._qsb) return; btn._qsb=true;
+            btn.addEventListener('click', function(e){
+                e.stopPropagation();
+                var card = this.closest('.quiz-dg-card');
+                if (!card) return;
+                var panel = card.querySelector('.quiz-dg-search-panel');
+                if (panel) {
+                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                }
+                // Hide memory dropdown if open
+                var memDrop = card.querySelector('.quiz-dg-memory-dropdown');
+                if (memDrop) memDrop.style.display = 'none';
+            });
+        });
+
+        // ── Search pill checkbox: sync to editor @search: field ──────────────
+        container.querySelectorAll('.quiz-dg-search-check').forEach(function(cb){
+            if(cb._qsc) return; cb._qsc=true;
+            cb.addEventListener('change', function(){
+                var pill = this.closest('.quiz-dg-search-pill');
+                if (pill) pill.classList.toggle('active', this.checked);
+                // Count active and update button badge
+                var card = this.closest('.quiz-dg-card');
+                if (!card) return;
+                var panel = card.querySelector('.quiz-dg-search-panel');
+                var count = panel ? panel.querySelectorAll('.quiz-dg-search-check:checked').length : 0;
+                var searchBtn = card.querySelector('.quiz-dg-search-btn');
+                if (searchBtn) {
+                    searchBtn.textContent = '🔍' + (count > 0 ? ' ' + count : '');
+                    searchBtn.classList.toggle('active', count > 0);
+                }
+                // Sync to editor
+                var idx = parseInt(this.dataset.quizIndex);
+                var blocks = parseBlocks(M.markdownEditor.value);
+                var block = blocks[idx]; if(!block) return;
+                var t = M.markdownEditor.value;
+                var inner = t.substring(block.start, block.end);
+                // Remove existing @search: line
+                inner = inner.replace(/^\s*@search:\s*.+$/mi, '').trim();
+                // Build new search line
+                var providers = [];
+                panel.querySelectorAll('.quiz-dg-search-check:checked').forEach(function(c){ providers.push(c.value); });
+                if (providers.length > 0) {
+                    var searchLine = '  @search: ' + providers.join(', ');
+                    // Insert after title line (first line)
+                    var closeBraces = inner.lastIndexOf('}}');
+                    if (closeBraces > 0) {
+                        inner = inner.substring(0, closeBraces) + '\n' + searchLine + '\n' + inner.substring(closeBraces);
+                    }
+                }
+                M.markdownEditor.value = t.substring(0, block.start) + inner + t.substring(block.end);
+            });
+        });
+
+        // ── Helper: get current @use: sources for a quiz block ──────────────────
+        function getQuizUseSources(quizIndex) {
+            var blocks = parseBlocks(M.markdownEditor.value);
+            if (quizIndex < blocks.length && blocks[quizIndex].useMemory) {
+                return blocks[quizIndex].useMemory.slice();
+            }
+            return [];
+        }
+        // ── Helper: update @use: field in editor for a quiz block ────────────
+        function updateQuizUseField(quizIndex, selectedSources) {
+            var blocks = parseBlocks(M.markdownEditor.value);
+            if (quizIndex >= blocks.length) return;
+            var block = blocks[quizIndex];
+            var t = M.markdownEditor.value;
+            var inner = t.substring(block.start, block.end);
+            // Remove existing @use: line
+            inner = inner.replace(/^\s*@use:\s*.+$/mi, '').trim();
+            // Build new @use: line
+            if (selectedSources.length > 0) {
+                var useLine = '  @use: ' + selectedSources.join(', ');
+                var cb = inner.lastIndexOf('}}');
+                if (cb > 0) {
+                    inner = inner.substring(0, cb) + '\n' + useLine + '\n' + inner.substring(cb);
+                }
+            }
+            M.markdownEditor.value = t.substring(0, block.start) + inner + t.substring(block.end);
+            // Update button badge
+            var card = container.querySelector('.quiz-dg-card[data-quiz-index="'+quizIndex+'"]');
+            if (card) {
+                var memBtn = card.querySelector('.quiz-dg-memory-btn');
+                if (memBtn) {
+                    memBtn.textContent = '📚' + (selectedSources.length > 0 ? ' ✓' : '');
+                    memBtn.classList.toggle('active', selectedSources.length > 0);
+                }
+            }
+        }
+        // ── Helper: get doc Memory names ─────────────────────────────────────
+        function getDocMemoryNames() {
+            var text = M.markdownEditor ? M.markdownEditor.value : '';
+            var names = [];
+            var re = /\{\{@?Memory:[^}]*(?:@name|Name):\s*([^\s}]+)/gi;
+            var m2;
+            while ((m2 = re.exec(text)) !== null) {
+                var n = m2[1].replace(/[,}]/g, '').trim();
+                if (n && names.indexOf(n) === -1) names.push(n);
+            }
+            return names;
+        }
+
+        var _quizMemAttaching = false;
+
+        // ── Memory toggle: show/hide memory source dropdown ──────────────────
+        container.querySelectorAll('.quiz-dg-memory-btn').forEach(function(btn){
+            if(btn._qmb) return; btn._qmb=true;
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                var card = this.closest('.quiz-dg-card');
+                if (!card) return;
+                var dropdown = card.querySelector('.quiz-dg-memory-dropdown');
+                if (!dropdown) return;
+                // Toggle
+                var wasHidden = dropdown.style.display === 'none';
+                dropdown.style.display = wasHidden ? 'block' : 'none';
+                // Hide search panel if open
+                var searchPanel = card.querySelector('.quiz-dg-search-panel');
+                if (searchPanel) searchPanel.style.display = 'none';
+
+                if (!wasHidden) return;
+
+                // Populate memory sources list
+                var sourceList = dropdown.querySelector('.quiz-dg-memory-source-list');
+                if (!sourceList) return;
+                sourceList.innerHTML = '<span class="quiz-dg-memory-loading">Loading…</span>';
+
+                var idx = parseInt(card.dataset.quizIndex);
+                var currentSources = getQuizUseSources(idx);
+                var docNames = getDocMemoryNames();
+
+                function renderSources(sources) {
+                    var html = '';
+                    sources.forEach(function(src) {
+                        var name = typeof src === 'string' ? src : src.name;
+                        var label = (typeof src === 'object' && src.displayName) ? src.displayName : name;
+                        var badge = (typeof src === 'object' && src.origin === 'document') ? ' <small class="quiz-dg-mem-badge">doc</small>'
+                            : (typeof src === 'object' && src.origin === 'stored') ? ' <small class="quiz-dg-mem-badge">saved</small>' : '';
+                        var checked = currentSources.indexOf(name) !== -1 ? ' checked' : '';
+                        html += '<label class="quiz-dg-memory-source'+(checked?' active':'')+'">' +
+                            '<input type="checkbox" class="quiz-dg-memory-check" value="'+escHtml(name)+'" data-quiz-index="'+idx+'"'+checked+'>' +
+                            ' '+escHtml(label)+badge +
+                            '</label>';
+                    });
+                    sourceList.innerHTML = html || '<span class="quiz-dg-memory-loading">No sources available. Use 📂 Folder or 📄 Files below.</span>';
+                    // Bind checkbox change handlers
+                    sourceList.querySelectorAll('.quiz-dg-memory-check').forEach(function(mcb) {
+                        mcb.addEventListener('change', function() {
+                            var label = this.closest('.quiz-dg-memory-source');
+                            if (label) label.classList.toggle('active', this.checked);
+                            var selected = [];
+                            sourceList.querySelectorAll('.quiz-dg-memory-check:checked').forEach(function(c){ selected.push(c.value); });
+                            updateQuizUseField(idx, selected);
+                        });
+                    });
+                }
+
+                if (M._memory && M._memory.listAllSources) {
+                    M._memory.listAllSources(docNames).then(function(sources) {
+                        renderSources(sources);
+                    }).catch(function() {
+                        // Fallback: show workspace + doc names
+                        var fallback = [{ name: 'workspace', origin: 'stored' }];
+                        docNames.forEach(function(dn) { fallback.push({ name: dn, origin: 'document' }); });
+                        renderSources(fallback);
+                    });
+                } else {
+                    // No M._memory — show workspace + doc names as fallback
+                    var fallback = [{ name: 'workspace', origin: 'stored' }];
+                    docNames.forEach(function(dn) { fallback.push({ name: dn, origin: 'document' }); });
+                    renderSources(fallback);
+                }
+            });
+        });
+
+        // Close memory dropdown on outside click
+        document.addEventListener('click', function(e) {
+            if (_quizMemAttaching) return;
+            if (!e.target.closest('.quiz-dg-memory-dropdown') && !e.target.closest('.quiz-dg-memory-btn')) {
+                container.querySelectorAll('.quiz-dg-memory-dropdown').forEach(function(d) { d.style.display = 'none'; });
+            }
+        });
+
+        // ── Quick-attach Folder from quiz card ──────────────────────────────
+        container.querySelectorAll('.quiz-dg-memory-attach-folder').forEach(function(btn){
+            if(btn._qmaf) return; btn._qmaf=true;
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.quizIndex);
+                if (!M._memory) { if(M.showToast) M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+                var tempName = 'folder-' + Date.now();
+                btn.disabled = true;
+                btn.textContent = '⏳ Scanning...';
+                _quizMemAttaching = true;
+                M._memory.attachFolder(tempName).then(function(info) {
+                    var name = info.folderName.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9\-_]/g, '');
+                    if (!name) name = tempName;
+                    if(M.showToast) M.showToast('📚 Indexed ' + info.chunkCount + ' chunks from "' + info.folderName + '"', 'success');
+                    var current = getQuizUseSources(idx);
+                    if (current.indexOf(name) === -1) current.push(name);
+                    updateQuizUseField(idx, current);
+                    // Re-open dropdown to show new source
+                    var card = container.querySelector('.quiz-dg-card[data-quiz-index="'+idx+'"]');
+                    if (card) {
+                        var memBtn = card.querySelector('.quiz-dg-memory-btn');
+                        if (memBtn) { memBtn.click(); }
+                    }
+                }).catch(function(err) {
+                    if (err.name !== 'AbortError' && M.showToast) M.showToast('Failed: ' + err.message, 'error');
+                }).finally(function() {
+                    _quizMemAttaching = false;
+                    btn.disabled = false;
+                    btn.textContent = '📂 Folder';
+                });
+            });
+        });
+
+        // ── Quick-attach Files from quiz card ───────────────────────────────
+        container.querySelectorAll('.quiz-dg-memory-attach-files').forEach(function(btn){
+            if(btn._qmafi) return; btn._qmafi=true;
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.quizIndex);
+                if (!M._memory) { if(M.showToast) M.showToast('Memory engine not loaded yet.', 'warning'); return; }
+                var tempName = 'files-' + Math.random().toString(36).substring(2, 7);
+                btn.disabled = true;
+                btn.textContent = '⏳ Reading...';
+                _quizMemAttaching = true;
+                M._memory.attachFiles(tempName).then(function(info) {
+                    var label = info.fileNames && info.fileNames.length > 0
+                        ? info.fileNames.join(', ')
+                        : tempName;
+                    if(M.showToast) M.showToast('📚 Added ' + info.addedChunks + ' chunks from ' + label, 'success');
+                    var current = getQuizUseSources(idx);
+                    if (current.indexOf(tempName) === -1) current.push(tempName);
+                    updateQuizUseField(idx, current);
+                    var card = container.querySelector('.quiz-dg-card[data-quiz-index="'+idx+'"]');
+                    if (card) {
+                        var memBtn = card.querySelector('.quiz-dg-memory-btn');
+                        if (memBtn) { memBtn.click(); }
+                    }
+                }).catch(function(err) {
+                    if (err.name !== 'AbortError' && M.showToast) M.showToast('Failed: ' + err.message, 'error');
+                }).finally(function() {
+                    _quizMemAttaching = false;
+                    btn.disabled = false;
+                    btn.textContent = '📄 Files';
+                });
             });
         });
 
@@ -1371,12 +1769,13 @@
     function insertQuizTag(){
         if(!M.markdownEditor) return;
         var tmpl=[
-            '{{Quiz: 🌍 Ultimate Science Challenge',
+            '{{Quiz: 🌍 Science Challenge (Dark)',
             '  @subject: Science',
+            '  @field: css | --bg-primary: #0c1222; --bg-secondary: #1a1a2e; --text-primary: #e2e8f0; --border-color: #0f3460;',
+            '  @css: --quiz-accent: #e94560; --quiz-accent-bg: #1a1a2e; --quiz-btn-gradient: linear-gradient(135deg, #e94560, #0f3460);',
             '  @difficulty: Medium',
             '  @mode: test',
             '  @userinfo: name, email',
-            '  @css: --quiz-bg: linear-gradient(135deg, #0c1222 0%, #1a1a2e 100%); --quiz-header: linear-gradient(135deg, #16213e, #0f3460); --quiz-border: #0f3460; --quiz-accent: #e94560; --quiz-accent-bg: #1a1a2e; --quiz-btn-gradient: linear-gradient(135deg, #e94560, #0f3460);',
             '  @question[mcq]: What is the chemical symbol for Gold? | Au | Ag,Au,Fe,Cu',
             '  @hint: Gold\'s symbol comes from the Latin word "Aurum"',
             '  @hint: https://en.wikipedia.org/wiki/Gold',
@@ -1395,6 +1794,23 @@
             '  @hint: It has to do with how sunlight interacts with Earth\'s atmosphere',
             '  @hint: https://en.wikipedia.org/wiki/Rayleigh_scattering',
             '  @question[likert]: I find science topics interesting and engaging',
+            '  @question[mcq]: Which planet is known as the Red Planet? | Mars | Venus,Mars,Jupiter,Saturn',
+            '  @hint: This planet has the largest volcano in the solar system — Olympus Mons',
+            '}}',
+            '',
+            '{{Quiz: 🌍 Science Challenge (Light)',
+            '  @subject: Science',
+            '  @field: css | --bg-primary: #ffffff; --bg-secondary: #f8fafc; --text-primary: #0f172a; --border-color: #cbd5e1;',
+            '  @css: --quiz-accent: #6366f1; --quiz-accent-bg: #eef2ff; --quiz-btn-gradient: linear-gradient(135deg, #6366f1, #8b5cf6); --quiz-correct: #16a34a; --quiz-correct-bg: #dcfce7; --quiz-correct-text: #166534; --quiz-wrong: #dc2626; --quiz-wrong-bg: #fee2e2; --quiz-wrong-text: #991b1b;',
+            '  @difficulty: Medium',
+            '  @mode: test',
+            '  @userinfo: name, email',
+            '  @question[mcq]: What is the chemical symbol for Gold? | Au | Ag,Au,Fe,Cu',
+            '  @hint: Gold\'s symbol comes from the Latin word "Aurum"',
+            '  @question[tf]: The speed of light is approximately 300,000 km/s | true',
+            '  @hint: Light travels fast enough to circle Earth 7.5 times per second',
+            '  @question[fill]: Water boils at ___ degrees Celsius at sea level | 100',
+            '  @hint: Think about the Celsius scale — it was designed around water!',
             '  @question[mcq]: Which planet is known as the Red Planet? | Mars | Venus,Mars,Jupiter,Saturn',
             '  @hint: This planet has the largest volcano in the solar system — Olympus Mons',
             '}}'

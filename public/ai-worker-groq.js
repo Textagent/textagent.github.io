@@ -192,10 +192,9 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
  * Build chat messages array based on task type
  * (Same logic as ai-worker.js)
  */
-// Cloud worker: larger context limits than local worker
+// Cloud worker: use common defaults (128K context for Llama 3.3 70B's 128K token window)
 function buildMessages(taskType, context, userPrompt, chatHistory) {
-    const contextLimit = taskType === 'summarize' || taskType === 'grammar' ? 4000 : 6000;
-    return _buildMessages(taskType, context, userPrompt, { contextLimit, autocompleteLimit: 2000, chatHistory });
+    return _buildMessages(taskType, context, userPrompt, { autocompleteLimit: 2000, chatHistory });
 }
 
 // Listen for messages from the main thread

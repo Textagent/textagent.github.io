@@ -35,39 +35,133 @@
         });
     });
 
+    // --- Helper: check if we're in mobile layout ---
+    function isMobileToolbar() {
+        return window.innerWidth <= 767;
+    }
+
+    // --- Helper: position dropdown using fixed coords on mobile ---
+    function positionDropdownFixed(overflow) {
+        var dropdown = overflow.querySelector('.fmt-group-dropdown');
+        if (!dropdown) return;
+        if (!isMobileToolbar()) {
+            // Desktop: clear any inline fixed styles, rely on CSS absolute positioning
+            dropdown.style.position = '';
+            dropdown.style.top = '';
+            dropdown.style.left = '';
+            dropdown.style.right = '';
+            dropdown.style.transform = '';
+            dropdown.style.display = '';
+            return;
+        }
+        
+        // Mobile: move to body to escape all clipping containers and transforms
+        document.body.appendChild(dropdown);
+        
+        var group = overflow.parentElement;
+        var groupRect = group ? group.getBoundingClientRect() : overflow.getBoundingClientRect();
+        
+        dropdown.style.position = 'fixed';
+        dropdown.style.animation = 'none'; // prevent CSS transform animations from breaking fixed positioning
+        dropdown.style.display = 'flex'; // override none since it's outside .open parent
+        dropdown.style.top = (groupRect.bottom + 4) + 'px';
+        dropdown.style.transform = 'none';
+        
+        // Center horizontally on the group, but clamp to viewport
+        var dropW = dropdown.offsetWidth || 140;
+        var centerX = groupRect.left + groupRect.width / 2 - dropW / 2;
+        var maxX = window.innerWidth - dropW - 8;
+        
+        dropdown.style.left = Math.max(8, Math.min(centerX, maxX)) + 'px';
+        dropdown.style.right = 'auto';
+        
+        // Store reference to parent so we can restore it on close
+        dropdown.dataset.parentOverflowId = overflow.id || (overflow.id = 'fmt-overflow-' + Math.random().toString(36).substr(2, 9));
+    }
+
+    // --- Helper: clear fixed positioning on close ---
+    function clearDropdownFixed(overflow) {
+        // Find dropdown either inside overflow OR in body if it was moved
+        var overflowId = overflow.id;
+        var dropdown = overflow.querySelector('.fmt-group-dropdown');
+        if (!dropdown && overflowId) {
+            dropdown = document.querySelector('.fmt-group-dropdown[data-parent-overflow-id="' + overflowId + '"]');
+            if (dropdown) {
+                // Move it back to original parent
+                overflow.appendChild(dropdown);
+            }
+        }
+        if (!dropdown) return;
+        
+        dropdown.style.position = '';
+        dropdown.style.top = '';
+        dropdown.style.left = '';
+        dropdown.style.right = '';
+        dropdown.style.transform = '';
+        dropdown.style.animation = '';
+        dropdown.style.display = '';
+        delete dropdown.dataset.parentOverflowId;
+    }
+
+    // --- Safe Close Helper ---
+    // Closes dropdowns and returns them to toolbar
+    function closeAllDropdowns() {
+        var openDropdowns = document.querySelectorAll('.fmt-group-overflow.open');
+        openDropdowns.forEach(function (el) {
+            el.classList.remove('open');
+            clearDropdownFixed(el);
+        });
+    }
+
     // --- Overflow "…" toggle for AI Tags / Coding groups ---
+    var lastTouchTime = 0;
     document.querySelectorAll('.fmt-group-more-btn').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
+        // Use touchend + click for reliable mobile handling
+        function handleToggle(e) {
             e.preventDefault();
             e.stopPropagation();
             var overflow = btn.closest('.fmt-group-overflow');
             var wasOpen = overflow.classList.contains('open');
 
-            // Close all other open dropdowns first
-            document.querySelectorAll('.fmt-group-overflow.open').forEach(function (el) {
-                el.classList.remove('open');
-            });
+            // Close all other open dropdowns first safely
+            closeAllDropdowns();
 
-            if (!wasOpen) overflow.classList.add('open');
+            if (!wasOpen) {
+                overflow.classList.add('open');
+                positionDropdownFixed(overflow);
+            }
+        }
+        btn.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            lastTouchTime = Date.now();
+            handleToggle(e);
+        });
+        btn.addEventListener('click', function (e) {
+            // Skip if touchend just handled this (prevents double-toggle on mobile)
+            if (Date.now() - lastTouchTime < 400) return;
+            handleToggle(e);
         });
     });
 
-    // Close dropdown on outside click
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.fmt-group-overflow')) {
-            document.querySelectorAll('.fmt-group-overflow.open').forEach(function (el) {
-                el.classList.remove('open');
-            });
+    // Close dropdown on outside click / touch
+    function handleOutsideClose(e) {
+        if (!e.target.closest('.fmt-group-overflow') && !e.target.closest('.fmt-group-dropdown')) {
+            closeAllDropdowns();
         }
-    });
+    }
+    document.addEventListener('click', handleOutsideClose);
+    document.addEventListener('touchend', handleOutsideClose);
 
-    // Close dropdown after any dropdown button is clicked.
-    // NOTE: The formatting action itself is already fired by editor-features.js
-    // which binds ALL .fmt-btn[data-action] elements. We only handle closing here.
+    // Close dropdown after any dropdown button is clicked/tapped.
     document.querySelectorAll('.fmt-group-dropdown .fmt-btn[data-action]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var overflow = btn.closest('.fmt-group-overflow');
-            if (overflow) overflow.classList.remove('open');
+        function handleClose() {
+            closeAllDropdowns();
+        }
+        btn.addEventListener('click', handleClose);
+        btn.addEventListener('touchend', function (e) {
+            e.stopPropagation();
+            handleClose();
         });
     });
 

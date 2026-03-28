@@ -758,10 +758,12 @@
         var db = _externalDbs[name] || await createExternalMemory(name);
 
         var totalChunks = 0;
+        var fileNames = [];
         for (var i = 0; i < fileHandles.length; i++) {
             var fh = fileHandles[i];
             try {
                 var file = await fh.getFile();
+                fileNames.push(file.name);
                 var content;
                 var ext = file.name.split('.').pop().toLowerCase();
                 var BINARY_EXTS = ['docx', 'xlsx', 'xls', 'numbers', 'pdf'];
@@ -780,11 +782,13 @@
         }
 
         db.run("INSERT OR REPLACE INTO memory_meta (key, value) VALUES ('lastIndexedAt', ?)", [new Date().toISOString()]);
+        // Store file names for display purposes
+        db.run("INSERT OR REPLACE INTO memory_meta (key, value) VALUES ('fileNames', ?)", [JSON.stringify(fileNames)]);
 
         _externalDbs[name] = db;
         await saveExternalMemory(name);
 
-        return { addedChunks: totalChunks };
+        return { addedChunks: totalChunks, fileNames: fileNames };
     }
 
     // --- Search ---
@@ -993,12 +997,39 @@
         // From IndexedDB (previously attached external memories)
         try {
             var extNames = await memory.listExternalMemories();
-            extNames.forEach(function (n) {
+            for (var i = 0; i < extNames.length; i++) {
+                var n = extNames[i];
                 // Avoid duplicates
-                if (!sources.some(function (s) { return s.name === n; })) {
-                    sources.push({ name: n, origin: 'stored' });
-                }
-            });
+                if (sources.some(function (s) { return s.name === n; })) continue;
+
+                // Try to load display info from the DB metadata
+                var displayName = n;
+                try {
+                    var db = await loadExternalMemory(n);
+                    if (db) {
+                        // Check for folder name
+                        var folderRes = db.exec("SELECT value FROM memory_meta WHERE key = 'folderName'");
+                        if (folderRes.length > 0 && folderRes[0].values[0][0]) {
+                            displayName = '📂 ' + folderRes[0].values[0][0];
+                        } else {
+                            // Check for file names
+                            var filesRes = db.exec("SELECT value FROM memory_meta WHERE key = 'fileNames'");
+                            if (filesRes.length > 0 && filesRes[0].values[0][0]) {
+                                try {
+                                    var fNames = JSON.parse(filesRes[0].values[0][0]);
+                                    if (fNames.length === 1) {
+                                        displayName = '📄 ' + fNames[0];
+                                    } else if (fNames.length > 1) {
+                                        displayName = '📄 ' + fNames[0] + ' +' + (fNames.length - 1);
+                                    }
+                                } catch (_) { /* ignore */ }
+                            }
+                        }
+                    }
+                } catch (_) { /* ignore, use raw name */ }
+
+                sources.push({ name: n, origin: 'stored', displayName: displayName });
+            }
         } catch (_) { /* ignore */ }
         return sources;
     };

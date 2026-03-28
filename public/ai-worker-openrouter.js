@@ -168,10 +168,9 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
     }
 }
 
-// Cloud worker: larger context limits
+// Cloud worker: use common defaults (128K context for 128K-1M token cloud models)
 function buildMessages(taskType, context, userPrompt, chatHistory) {
-    const contextLimit = taskType === 'summarize' || taskType === 'grammar' ? 4000 : 6000;
-    return _buildMessages(taskType, context, userPrompt, { contextLimit, autocompleteLimit: 2000, chatHistory });
+    return _buildMessages(taskType, context, userPrompt, { autocompleteLimit: 2000, chatHistory });
 }
 
 self.addEventListener('message', async (event) => {
