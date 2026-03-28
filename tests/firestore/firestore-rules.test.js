@@ -71,9 +71,9 @@ test('Contains at least 3 hasOnly() field lists (quick create, secure create, up
 });
 
 // Expected field sets (sorted for comparison)
-const QUICK_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash'].sort();
-const SECURE_FIELDS = ['d', 't', 'salt', 'secure', 'wt', 'view', 'rkHash'].sort();
-const UPDATE_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash'].sort();
+const QUICK_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash', 'ekHash', 'eWt'].sort();
+const SECURE_FIELDS = ['d', 't', 'salt', 'secure', 'wt', 'view', 'rkHash', 'ekHash', 'eWt'].sort();
+const UPDATE_FIELDS = ['d', 't', 'wt', 'view', 'k', 'rkHash', 'ekHash', 'eWt'].sort();
 
 test('Quick share create rule allows fields: d, t, wt, view, k, rkHash', () => {
     const found = allLists.some(l => JSON.stringify(l) === JSON.stringify(QUICK_FIELDS));

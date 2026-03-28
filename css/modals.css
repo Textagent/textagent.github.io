@@ -428,6 +428,17 @@
   border-style: solid;
 }
 
+/* --- Editor Link Section (secure edit) --- */
+.share-editor-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.share-editor-section .share-link-container {
+  margin-bottom: 8px;
+}
+
 /* --- Email to Self --- */
 #share-email-section {
   margin-top: 16px;

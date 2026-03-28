@@ -142,6 +142,18 @@
                         <i class="bi bi-clipboard"></i>
                     </button>
                 </div>
+                <!-- Secure Edit: editor link section (hidden by default) -->
+                <div id="share-editor-section" class="share-editor-section" style="display:none">
+                    <div class="share-form-badge" style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(139,92,246,0.1));border-color:rgba(168,85,247,0.3);color:#c4b5fd"><i class="bi bi-pencil-square me-1"></i>Editor access available</div>
+                    <label class="share-form-label"><i class="bi bi-key me-1"></i>Editor Link <small>(grants write access)</small></label>
+                    <div class="share-link-container">
+                        <input type="text" id="share-editor-link-input" readonly>
+                        <button id="copy-editor-link" class="share-btn-primary" title="Copy editor link">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <small class="share-link-note"><i class="bi bi-shield-exclamation me-1"></i>Anyone with this link can edit the document. Share it only with trusted collaborators.</small>
+                </div>
                 <!-- Form-detected: respondent link section (hidden by default) -->
                 <div id="share-form-section" class="share-form-section" style="display:none">
                     <div class="share-form-badge"><i class="bi bi-ui-checks me-1"></i>This document contains a form</div>
@@ -153,8 +165,8 @@
                         </button>
                     </div>
                     <small class="share-link-note"><i class="bi bi-info-circle me-1"></i>Respondents can fill &amp; submit the form but cannot view other responses.</small>
-                    <button id="copy-both-links" class="share-btn-copy-both" title="Copy both links">
-                        <i class="bi bi-files me-1"></i> Copy Both Links
+                    <button id="copy-both-links" class="share-btn-copy-both" title="Copy all links">
+                        <i class="bi bi-files me-1"></i> Copy All Links
                     </button>
                 </div>
                 <small class="share-link-note" id="share-result-note"><i class="bi bi-info-circle me-1"></i>The

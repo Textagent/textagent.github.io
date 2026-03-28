@@ -72,5 +72,8 @@
 
         // --- Spaces ---
         SPACES: 'textagent-spaces',
+
+        // --- Secure Edit ---
+        EDIT_KEY: 'textagent-edit-key',
     };
 })();

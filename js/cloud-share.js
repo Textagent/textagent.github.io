@@ -110,7 +110,7 @@
     /**
      * Create a compact share document in Firestore.
      * Encrypts content, generates a short ID, stores key in Firestore.
-     * Returns { url, id } on success.
+     * Returns { url, id, wt, keyString, ekString } on success.
      */
     async function createCompactShare(content, options) {
         options = options || {};
@@ -124,6 +124,11 @@
         if (options.view) docData.view = options.view;
         if (options.rkHash) docData.rkHash = options.rkHash;
 
+        // --- Secure Edit Key ---
+        var ekString = generateEditKey();
+        docData.ekHash = await hashEditKey(ekString);
+        docData.eWt = await encryptWriteToken(wt, ekString);
+
         // --- Custom slug support ---
         if (options.customSlug) {
             var slug = options.customSlug;
@@ -132,7 +137,7 @@
             if (existing.exists) throw new Error('This name is currently unavailable. Please choose another.');
             await docRef.set(docData);
             var shareUrl = SHARE_BASE_URL + '#s=' + slug;
-            return { url: shareUrl, id: slug, wt: wt, keyString: keyString };
+            return { url: shareUrl, id: slug, wt: wt, keyString: keyString, ekString: ekString };
         }
 
         // Retry with new ID on collision (Firestore .set with merge:false)
@@ -144,7 +149,7 @@
                 if (existing.exists) continue; // collision, retry
                 await docRef.set(docData);
                 var shareUrl = SHARE_BASE_URL + '#s=' + shortId;
-                return { url: shareUrl, id: shortId, wt: wt, keyString: keyString };
+                return { url: shareUrl, id: shortId, wt: wt, keyString: keyString, ekString: ekString };
             } catch (e) {
                 if (attempt === 2) throw e;
             }
@@ -240,6 +245,7 @@
     var CLOUD_DOC_KEY = M.KEYS.CLOUD_DOC_ID;
     var CLOUD_KEY_KEY = M.KEYS.CLOUD_ENC_KEY;
     var CLOUD_WT_KEY = M.KEYS.CLOUD_WRITE_TOKEN;
+    var EDIT_KEY_KEY = M.KEYS.EDIT_KEY;
     var cloudSaveTimer = null;
     var cloudSaveDirty = false;
     var lastCloudContent = '';
@@ -248,6 +254,55 @@
     function generateWriteToken() {
         var arr = crypto.getRandomValues(new Uint8Array(24));
         return Array.from(arr, function (b) { return b.toString(36); }).join('').substring(0, 32);
+    }
+
+    // --- Secure Edit Key Helpers ---
+    // Generate a random edit key (24 chars, base62)
+    function generateEditKey() {
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var ek = '';
+        for (var i = 0; i < 24; i++) ek += chars[Math.floor(Math.random() * chars.length)];
+        return ek;
+    }
+
+    // SHA-256 hash of the edit key for secure storage in Firestore
+    async function hashEditKey(ek) {
+        var encoded = new TextEncoder().encode(ek);
+        var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+        return uint8ArrayToBase64Url(new Uint8Array(hashBuffer));
+    }
+
+    // Encrypt the write-token using a key derived from the edit key
+    async function encryptWriteToken(wt, ek) {
+        var salt = new TextEncoder().encode('textagent-ek-salt');
+        var keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(ek), 'PBKDF2', false, ['deriveKey']);
+        var derivedKey = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 }, false, ['encrypt']
+        );
+        var iv = crypto.getRandomValues(new Uint8Array(12));
+        var encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, derivedKey, new TextEncoder().encode(wt));
+        var packed = new Uint8Array(iv.length + encrypted.byteLength);
+        packed.set(iv);
+        packed.set(new Uint8Array(encrypted), iv.length);
+        return uint8ArrayToBase64Url(packed);
+    }
+
+    // Decrypt the write-token using the edit key
+    async function decryptWriteToken(eWt, ek) {
+        var salt = new TextEncoder().encode('textagent-ek-salt');
+        var keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(ek), 'PBKDF2', false, ['deriveKey']);
+        var derivedKey = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+        );
+        var packed = base64UrlToUint8Array(eWt);
+        var iv = packed.slice(0, 12);
+        var ciphertext = packed.slice(12);
+        var decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, derivedKey, ciphertext);
+        return new TextDecoder().decode(decrypted);
     }
 
     function scheduleCloudSave() {
@@ -280,6 +335,16 @@
                 var wt = localStorage.getItem(CLOUD_WT_KEY) || '';
                 var updateData = { d: dataString, t: Date.now(), wt: wt };
                 if (isCompact) updateData.k = keyString;
+                // Preserve edit key fields (ekHash, eWt) so editor links keep working
+                try {
+                    var existingDoc = await db.collection('shares').doc(existingDocId).get();
+                    if (existingDoc.exists) {
+                        var existingData = existingDoc.data();
+                        if (existingData.ekHash) updateData.ekHash = existingData.ekHash;
+                        if (existingData.eWt) updateData.eWt = existingData.eWt;
+                        if (existingData.rkHash) updateData.rkHash = existingData.rkHash;
+                    }
+                } catch (readErr) { /* best-effort — save anyway */ }
                 await db.collection('shares').doc(existingDocId).set(updateData);
             } else {
                 var wt = generateWriteToken();
@@ -401,7 +466,7 @@
         var rkHash = rkString ? await hashResponseKey(rkString) : '';
         try {
             var result = await createCompactShare(markdownContent, { view: selectedShareView || undefined, customSlug: customSlug, rkHash: rkHash });
-            return { url: result.url, id: result.id, isForm: isForm, rkString: rkString };
+            return { url: result.url, id: result.id, isForm: isForm, rkString: rkString, ekString: result.ekString };
         } catch (fbError) {
             // If it's a custom name error, re-throw immediately
             if (customSlug && (fbError.message.indexOf('unavailable') !== -1 || fbError.message.indexOf('reserved') !== -1 || fbError.message.indexOf('characters') !== -1 || fbError.message.indexOf('letters') !== -1)) {
@@ -417,7 +482,7 @@
             var shareUrl = SHARE_BASE_URL + '#d=' + dataString + '&k=' + keyString;
             if (shareUrl.length > 65000) throw new Error('Content too large to share. Try a smaller document.');
             if (selectedShareView) shareUrl += '&view=' + selectedShareView;
-            return { url: shareUrl, id: '', isForm: isForm, rkString: rkString };
+            return { url: shareUrl, id: '', isForm: isForm, rkString: rkString, ekString: '' };
         }
     }
 
@@ -438,6 +503,11 @@
         if (selectedShareView) docData.view = selectedShareView;
         if (rkHash) docData.rkHash = rkHash;
 
+        // --- Secure Edit Key ---
+        var ekString = generateEditKey();
+        docData.ekHash = await hashEditKey(ekString);
+        docData.eWt = await encryptWriteToken(wt, ekString);
+
         var docId;
         if (customSlug) {
             var docRef = db.collection('shares').doc(customSlug);
@@ -451,7 +521,7 @@
         }
         var secureUrl = SHARE_BASE_URL + '#id=' + docId + '&secure=1';
         if (selectedShareView) secureUrl += '&view=' + selectedShareView;
-        return { url: secureUrl, id: docId, isForm: isForm, rkString: rkString };
+        return { url: secureUrl, id: docId, isForm: isForm, rkString: rkString, ekString: ekString };
     }
 
     // ========================================
@@ -528,19 +598,57 @@
                 var key = await base64UrlToKey(data.k);
                 var compressed = await decryptData(key, encrypted);
                 var markdownContent = decompressData(compressed);
-                // Form access gate: block if form doc but no rk or m=fill
-                if (/\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+
+                // --- Secure Edit Key Verification ---
+                var editKeyParam = params.get('ek');
+                var isEditMode = false;
+                if (editKeyParam && data.ekHash && data.eWt) {
+                    try {
+                        var computedEkHash = await hashEditKey(editKeyParam);
+                        if (computedEkHash === data.ekHash) {
+                            // Edit key verified — decrypt the write-token
+                            var recoveredWt = await decryptWriteToken(data.eWt, editKeyParam);
+                            // Establish cloud session for this document
+                            localStorage.setItem(CLOUD_DOC_KEY, compactId);
+                            localStorage.setItem(CLOUD_KEY_KEY, data.k);
+                            localStorage.setItem(CLOUD_WT_KEY, recoveredWt);
+                            localStorage.setItem(EDIT_KEY_KEY, editKeyParam);
+                            isEditMode = true;
+                            console.log('🔑 Edit key verified — editing enabled for:', compactId);
+                        } else {
+                            console.warn('Edit key hash mismatch — read-only mode');
+                        }
+                    } catch (ekError) {
+                        console.warn('Edit key verification failed:', ekError);
+                    }
+                }
+
+                // Form access gate: block if form doc but no rk or m=fill (unless editor)
+                if (!isEditMode && /\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
                     M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                     M.setViewMode('preview');
                     return;
                 }
                 M.markdownEditor.value = markdownContent;
                 M.renderMarkdown();
-                var sharedMode = M.sharedViewLock || 'preview';
-                M.setViewMode(sharedMode);
-                M.isViewingSharedDoc = true;
-                showSharedBanner();
-                if (sharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+
+                if (isEditMode) {
+                    // Editor mode: full editing enabled, cloud auto-save to same doc
+                    M.sharedViewLock = null; // Override any view lock for editors
+                    M.setViewMode('split');
+                    M.isViewingSharedDoc = false;
+                    M.markdownEditor.readOnly = false;
+                    document.body.classList.remove('editor-readonly');
+                    lastCloudContent = markdownContent; // Prevent immediate re-save
+                    scheduleCloudSave();
+                    if (M.showToast) M.showToast('🔑 Editor access — changes will sync to this document', 'success');
+                } else {
+                    var sharedMode = M.sharedViewLock || 'preview';
+                    M.setViewMode(sharedMode);
+                    M.isViewingSharedDoc = true;
+                    showSharedBanner();
+                    if (sharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+                }
             } catch (error) {
                 console.error('Failed to load compact shared markdown:', error);
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
@@ -562,7 +670,7 @@
                 if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
                     M.sharedViewLock = data.view;
                 }
-                pendingSecureDoc = { dataString: data.d, saltString: data.salt, docId: docId };
+                pendingSecureDoc = { dataString: data.d, saltString: data.salt, docId: docId, ekHash: data.ekHash || '', eWt: data.eWt || '' };
                 showPassphrasePrompt();
             } catch (error) {
                 console.error('Failed to load secure shared markdown:', error);
@@ -631,20 +739,56 @@
             var compressed = await decryptData(key, encrypted);
             var markdownContent = decompressData(compressed);
             hidePassphrasePrompt();
-            // Form access gate: block if form doc but no rk or m=fill
-            if (/\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+
+            // --- Secure Edit Key Verification ---
+            var hash = window.location.hash.substring(1);
+            var params = new URLSearchParams(hash);
+            var editKeyParam = params.get('ek');
+            var isEditMode = false;
+            if (editKeyParam && pendingSecureDoc.ekHash && pendingSecureDoc.eWt) {
+                try {
+                    var computedEkHash = await hashEditKey(editKeyParam);
+                    if (computedEkHash === pendingSecureDoc.ekHash) {
+                        var recoveredWt = await decryptWriteToken(pendingSecureDoc.eWt, editKeyParam);
+                        localStorage.setItem(CLOUD_DOC_KEY, pendingSecureDoc.docId);
+                        localStorage.setItem(CLOUD_WT_KEY, recoveredWt);
+                        localStorage.setItem(EDIT_KEY_KEY, editKeyParam);
+                        isEditMode = true;
+                        console.log('🔑 Edit key verified — editing enabled for secure doc:', pendingSecureDoc.docId);
+                    } else {
+                        console.warn('Edit key hash mismatch — read-only mode');
+                    }
+                } catch (ekError) {
+                    console.warn('Edit key verification failed:', ekError);
+                }
+            }
+
+            // Form access gate: block if form doc but no rk or m=fill (unless editor)
+            if (!isEditMode && /\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                 M.setViewMode('preview');
                 return;
             }
             M.markdownEditor.value = markdownContent;
             M.renderMarkdown();
-            var secureSharedMode = M.sharedViewLock || 'preview';
-            M.setViewMode(secureSharedMode);
-            M.isViewingSharedDoc = true;
-            showSharedBanner();
-            // Auto-hide full header for preview mode shared links
-            if (secureSharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+
+            if (isEditMode) {
+                // Editor mode: full editing enabled, cloud auto-save to same doc
+                M.sharedViewLock = null;
+                M.setViewMode('split');
+                M.isViewingSharedDoc = false;
+                M.markdownEditor.readOnly = false;
+                document.body.classList.remove('editor-readonly');
+                lastCloudContent = markdownContent;
+                scheduleCloudSave();
+                if (M.showToast) M.showToast('🔑 Editor access — changes will sync to this document', 'success');
+            } else {
+                var secureSharedMode = M.sharedViewLock || 'preview';
+                M.setViewMode(secureSharedMode);
+                M.isViewingSharedDoc = true;
+                showSharedBanner();
+                if (secureSharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+            }
             pendingSecureDoc = null;
         } catch (e) {
             throw new Error('Wrong password. Please try again.');
@@ -827,6 +971,7 @@
         localStorage.removeItem(CLOUD_DOC_KEY);
         localStorage.removeItem(CLOUD_KEY_KEY);
         localStorage.removeItem(CLOUD_WT_KEY);
+        localStorage.removeItem(EDIT_KEY_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
         // Stop the cloud-save timer so it doesn't re-inject the session hash
         if (cloudSaveTimer) { clearInterval(cloudSaveTimer); cloudSaveTimer = null; }
@@ -844,6 +989,7 @@
         localStorage.removeItem(CLOUD_DOC_KEY);
         localStorage.removeItem(CLOUD_KEY_KEY);
         localStorage.removeItem(CLOUD_WT_KEY);
+        localStorage.removeItem(EDIT_KEY_KEY);
         lastCloudContent = '';
         cloudSaveDirty = false;
         // Clear hash so it doesn't show stale cloud doc URL
@@ -1051,7 +1197,7 @@
                 }
             }
             closeShareOptionsModal();
-            showShareResult(shareResult.url, isSecureShareMode, shareResult.isForm, shareResult.rkString, selectedSpaceSlug);
+            showShareResult(shareResult.url, isSecureShareMode, shareResult.isForm, shareResult.rkString, selectedSpaceSlug, shareResult.ekString);
         } catch (error) {
             console.error('Share failed:', error);
             // Show custom name errors in the custom name error div
@@ -1072,7 +1218,8 @@
     var shareResultModal = document.getElementById('share-result-modal');
     var lastShareRk = '';
     var lastShareRespondentUrl = '';
-    function showShareResult(url, isSecure, isForm, rkString, spaceSlug) {
+    var lastShareEditorUrl = '';
+    function showShareResult(url, isSecure, isForm, rkString, spaceSlug, ekString) {
         // Build the display URL
         var creatorUrl = url;
         if (isForm && rkString) {
@@ -1089,6 +1236,7 @@
         var dlSection = document.getElementById('share-download-section');
         var emailNote = document.getElementById('share-email-note');
         var formSection = document.getElementById('share-form-section');
+        var editorSection = document.getElementById('share-editor-section');
 
         if (isSecure) {
             desc.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Password-protected. The link alone cannot decrypt the content.';
@@ -1100,6 +1248,20 @@
             note.innerHTML = '<i class="bi bi-info-circle me-1"></i>For maximum security, use password-protected sharing.';
             dlSection.style.display = 'none';
             if (emailNote) emailNote.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sends the share link and .md file directly to your inbox.';
+        }
+
+        // --- Editor Link Section ---
+        if (ekString && editorSection) {
+            var editorUrl = url + '&ek=' + ekString;
+            if (spaceSlug) {
+                editorUrl = editorUrl.replace('#s=', '#space=' + spaceSlug + '&s=');
+            }
+            document.getElementById('share-editor-link-input').value = editorUrl;
+            editorSection.style.display = '';
+            lastShareEditorUrl = editorUrl;
+        } else if (editorSection) {
+            editorSection.style.display = 'none';
+            lastShareEditorUrl = '';
         }
 
         // Form-detected: show respondent link section
@@ -1140,17 +1302,29 @@
         catch (e) { linkInput.select(); document.execCommand('copy'); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
         setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
     });
-    // Copy both links button
+    // Copy editor link button
+    var copyEditorBtn = document.getElementById('copy-editor-link');
+    if (copyEditorBtn) copyEditorBtn.addEventListener('click', async function () {
+        var linkInput = document.getElementById('share-editor-link-input');
+        var btn = this;
+        try { await navigator.clipboard.writeText(linkInput.value); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
+        catch (e) { linkInput.select(); document.execCommand('copy'); btn.innerHTML = '<i class="bi bi-check-lg"></i>'; }
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+    });
+    // Copy both/all links button
     var copyBothBtn = document.getElementById('copy-both-links');
     if (copyBothBtn) copyBothBtn.addEventListener('click', async function () {
         var creatorLink = document.getElementById('share-link-input').value;
         var respondentLink = document.getElementById('share-respondent-link-input').value;
         var text = '🔧 Creator Link (edit + responses):\n' + creatorLink + '\n\n🔗 Respondent Link (share with people):\n' + respondentLink;
+        if (lastShareEditorUrl) {
+            text += '\n\n🔑 Editor Link (grants write access):\n' + lastShareEditorUrl;
+        }
         var btn = this;
         try { await navigator.clipboard.writeText(text); }
         catch (e) { /* fallback not needed for textarea copy */ }
         btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Copied!';
-        setTimeout(function () { btn.innerHTML = '<i class="bi bi-files me-1"></i> Copy Both Links'; }, 1500);
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-files me-1"></i> Copy All Links'; }, 1500);
     });
 
     // --- Download Credentials ---
@@ -1178,6 +1352,12 @@
         fileContent += '• Share the URL and password SEPARATELY for maximum security.\n';
         fileContent += '• Anyone with both the URL and password can view the document.\n';
         fileContent += '• Delete this file after sharing the credentials.\n';
+        if (lastShareEditorUrl) {
+            fileContent += '\n-----------------------------------\n';
+            fileContent += 'Editor Link (grants write access):\n' + lastShareEditorUrl + '\n';
+            fileContent += '-----------------------------------\n\n';
+            fileContent += '⚠️ The editor link grants FULL edit access. Share only with trusted collaborators.\n';
+        }
         var blob = new Blob([fileContent], { type: 'text/plain' });
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -1191,6 +1371,9 @@
         var url = document.getElementById('share-link-input').value;
         var pass = lastSharePassphrase;
         var text = 'Link:\n' + url + '\n\nPassword:\n' + pass;
+        if (lastShareEditorUrl) {
+            text += '\n\n🔑 Editor Link (write access):\n' + lastShareEditorUrl;
+        }
         var btn = this;
         try {
             await navigator.clipboard.writeText(text);
@@ -1223,8 +1406,8 @@
 
     // Track when the share result modal opens (for time-based bot detection)
     var _origShowShareResult = showShareResult;
-    showShareResult = function (url, isSecure, isForm, rkString, spaceSlug) {
-        _origShowShareResult(url, isSecure, isForm, rkString, spaceSlug);
+    showShareResult = function (url, isSecure, isForm, rkString, spaceSlug, ekString) {
+        _origShowShareResult(url, isSecure, isForm, rkString, spaceSlug, ekString);
         emailModalOpenTime = Date.now();
     };
     if (emailSendBtn) emailSendBtn.addEventListener('click', async function () {
@@ -1285,6 +1468,10 @@
             if (lastShareRespondentUrl) {
                 emailPayload.respondentLink = lastShareRespondentUrl;
                 emailPayload.isForm = true;
+            }
+            // Include editor link if available
+            if (lastShareEditorUrl) {
+                emailPayload.editorLink = lastShareEditorUrl;
             }
             await fetch(EMAIL_SCRIPT_URL, {
                 method: 'POST',
