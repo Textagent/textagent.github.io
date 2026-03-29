@@ -13,6 +13,9 @@
             <button id="shared-banner-edit" class="shared-banner-btn" title="Edit a copy">
                 <i class="bi bi-pencil me-1"></i> Edit Copy
             </button>
+            <button id="shared-banner-study" class="shared-banner-btn" title="Create study copy with annotations">
+                <i class="bi bi-journal-bookmark me-1"></i> Study Copy
+            </button>
             <button id="shared-banner-close" class="shared-banner-btn" title="Close">
                 <i class="bi bi-x-lg"></i>
             </button>
@@ -452,19 +455,35 @@
 
     <!-- AI Editor Context Menu -->
     <div id="ai-context-menu" class="ai-context-menu" style="display:none">
-        <div class="ai-ctx-col">
-            <button class="ai-ctx-btn" data-action="summarize"><i class="bi bi-card-text"></i> Summarize</button>
-            <button class="ai-ctx-btn" data-action="explain"><i class="bi bi-lightbulb"></i> Explain</button>
-            <button class="ai-ctx-btn" data-action="simplify"><i class="bi bi-funnel"></i> Simplify</button>
-            <button class="ai-ctx-btn" data-action="rephrase"><i class="bi bi-arrow-repeat"></i> Rephrase</button>
-            <button class="ai-ctx-btn" data-action="grammar"><i class="bi bi-spellcheck"></i> Fix Grammar</button>
-            <button class="ai-ctx-btn" data-action="expand"><i class="bi bi-arrows-angle-expand"></i> Expand</button>
+        <!-- EDITOR section: writing tools → AI panel -->
+        <div class="ai-ctx-editor-section">
+            <div class="ai-ctx-col">
+                <button class="ai-ctx-btn" data-action="summarize"><i class="bi bi-card-text"></i> Summarize</button>
+                <button class="ai-ctx-btn" data-action="explain"><i class="bi bi-lightbulb"></i> Explain</button>
+                <button class="ai-ctx-btn" data-action="simplify"><i class="bi bi-funnel"></i> Simplify</button>
+                <button class="ai-ctx-btn" data-action="rephrase"><i class="bi bi-arrow-repeat"></i> Rephrase</button>
+                <button class="ai-ctx-btn" data-action="grammar"><i class="bi bi-spellcheck"></i> Fix Grammar</button>
+                <button class="ai-ctx-btn" data-action="expand"><i class="bi bi-arrows-angle-expand"></i> Expand</button>
+            </div>
+            <div class="ai-ctx-col ai-ctx-col-writing">
+                <button class="ai-ctx-btn" data-action="polish"><i class="bi bi-brush"></i> Polish</button>
+                <button class="ai-ctx-btn" data-action="formalize"><i class="bi bi-mortarboard"></i> Formalize</button>
+                <button class="ai-ctx-btn" data-action="elaborate"><i class="bi bi-textarea-resize"></i> Elaborate</button>
+                <button class="ai-ctx-btn" data-action="shorten"><i class="bi bi-scissors"></i> Shorten</button>
+            </div>
         </div>
-        <div class="ai-ctx-col ai-ctx-col-writing">
-            <button class="ai-ctx-btn" data-action="polish"><i class="bi bi-brush"></i> Polish</button>
-            <button class="ai-ctx-btn" data-action="formalize"><i class="bi bi-mortarboard"></i> Formalize</button>
-            <button class="ai-ctx-btn" data-action="elaborate"><i class="bi bi-textarea-resize"></i> Elaborate</button>
-            <button class="ai-ctx-btn" data-action="shorten"><i class="bi bi-scissors"></i> Shorten</button>
+        <!-- PREVIEW section: study/annotation tools → inline pills -->
+        <div class="ai-ctx-annotate-section" style="display:none">
+            <div class="ai-ctx-col">
+                <button class="ai-ctx-btn ai-ctx-annotate" data-action="deep-dive"><i class="bi bi-stars"></i> Ask AI</button>
+                <button class="ai-ctx-btn ai-ctx-annotate" data-action="highlight"><i class="bi bi-star-fill"></i> Important</button>
+                <button class="ai-ctx-btn ai-ctx-annotate" data-action="add-note"><i class="bi bi-sticky"></i> Note</button>
+            </div>
+            <div class="ai-ctx-col">
+                <button class="ai-ctx-btn ai-ctx-annotate" data-action="define"><i class="bi bi-book"></i> Define</button>
+                <button class="ai-ctx-btn ai-ctx-annotate" data-action="add-label"><i class="bi bi-tag"></i> Label</button>
+                <button class="ai-ctx-btn ai-ctx-annotate" data-action="disagree"><i class="bi bi-x-circle"></i> Disagree</button>
+            </div>
         </div>
     </div>
 

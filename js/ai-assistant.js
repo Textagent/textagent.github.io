@@ -797,6 +797,8 @@
           break;
 
         case 'complete':
+          // Skip if this message belongs to a requestAiTask (has its own listener)
+          if (M._ai._taskMessageIds && M._ai._taskMessageIds.has(msg.messageId)) break;
           // Use handleGroqComplete (not handleAiResponse) because this worker
           // also streams tokens. handleGroqComplete reuses the existing streaming
           // bubble; handleAiResponse would create a duplicate.
@@ -804,6 +806,8 @@
           break;
 
         case 'token':
+          // Skip if this message belongs to a requestAiTask (has its own listener)
+          if (M._ai._taskMessageIds && M._ai._taskMessageIds.has(msg.messageId)) break;
           M._ai.handleStreamingToken(msg.token, msg.messageId);
           break;
 
@@ -891,10 +895,14 @@
           break;
 
         case 'token':
+          // Skip if this message belongs to a requestAiTask (has its own listener)
+          if (M._ai._taskMessageIds && M._ai._taskMessageIds.has(msg.messageId)) break;
           M._ai.handleStreamingToken(msg.token, msg.messageId);
           break;
 
         case 'complete':
+          // Skip if this message belongs to a requestAiTask (has its own listener)
+          if (M._ai._taskMessageIds && M._ai._taskMessageIds.has(msg.messageId)) break;
           M._ai.handleGroqComplete(msg.text, msg.messageId);
           break;
 
@@ -1216,6 +1224,11 @@
         switch (msg.type) {
           case 'token':
             accumulated += msg.token;
+            // Reset safety timeout — model is actively generating
+            // Once tokens start flowing, use the shorter inter-token timeout
+            if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = setTimeout(function () {
+              if (!finished) { cleanup(); reject(new Error('AI generation timed out (no response for 60s). Try again or switch models.')); }
+            }, INTER_TOKEN_TIMEOUT); }
             if (onToken) {
               try { onToken(msg.token, accumulated); } catch (_) { /* ignore callback errors */ }
             }
@@ -1239,7 +1252,28 @@
         aiIsGenerating = false;
         if (aiSendBtn) aiSendBtn.disabled = false;
         activeWorker.removeEventListener('message', onWorkerMessage);
+        if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+        // Remove from tracking set so global listener won't filter this ID forever
+        if (M._ai._taskMessageIds) M._ai._taskMessageIds.delete(messageId);
       }
+
+      // Safety timeout — local models (especially 4B) can take a long time to
+      // produce their first token due to model prefill.  Use a generous initial
+      // timeout for local models (180s) and a shorter inter-token timeout (60s)
+      // once tokens start flowing.  Cloud models keep the shorter 60s initial.
+      var INTER_TOKEN_TIMEOUT = 60000;  // 60s between tokens
+      var INITIAL_TIMEOUT = isLocalModel(currentAiModel) ? 180000 : 60000;  // 180s / 60s first token
+      var safetyTimer = setTimeout(function () {
+        if (!finished) {
+          cleanup();
+          reject(new Error('AI generation timed out. The model may be overloaded or not responding. Try again or switch models.'));
+        }
+      }, INITIAL_TIMEOUT);
+
+      // Track this messageId so the global worker listener in initAiWorker /
+      // initCloudWorker skips it (prevents cross-talk / double-handling).
+      if (!M._ai._taskMessageIds) M._ai._taskMessageIds = new Set();
+      M._ai._taskMessageIds.add(messageId);
 
       activeWorker.addEventListener('message', onWorkerMessage);
 

@@ -105,11 +105,70 @@
         }
     });
 
-    // --- Context Menu (on text selection in editor OR preview) ---
+    // --- Unified Selection Menu (2-step trigger) ---
+    // Step 1: mouseup → tiny ✨ pill at selection edge (non-intrusive, auto-hides 3s)
+    // Step 2: click pill → pane-aware context menu (editor = writing tools, preview = study tools)
     var contextMenuTimeout = null;
     var savedContextText = '';
+    var selectionTrigger = null;
 
-    // Editor text selection
+    function createTrigger() {
+        if (selectionTrigger) return selectionTrigger;
+        selectionTrigger = document.createElement('button');
+        selectionTrigger.id = 'ai-selection-trigger';
+        selectionTrigger.className = 'ai-selection-trigger';
+        selectionTrigger.innerHTML = '<i class="bi bi-stars"></i>';
+        selectionTrigger.title = 'AI Actions & Annotations';
+        document.body.appendChild(selectionTrigger);
+        return selectionTrigger;
+    }
+
+    function showSelectionTrigger(e, selectedText, isPreview) {
+        if (!selectedText || selectedText.length < 3) { hideSelectionTrigger(); return; }
+
+        var trigger = createTrigger();
+        trigger.style.left = Math.min(e.clientX + 8, window.innerWidth - 40) + 'px';
+        trigger.style.top = Math.min(e.clientY - 16, window.innerHeight - 40) + 'px';
+        trigger.style.display = 'flex';
+        trigger.className = 'ai-selection-trigger ai-trigger-appear';
+        trigger._text = selectedText;
+        trigger._isPreview = isPreview;
+        trigger._pos = { x: e.clientX, y: e.clientY };
+
+        // Auto-hide after 3 seconds
+        clearTimeout(trigger._timer);
+        trigger._timer = setTimeout(hideSelectionTrigger, 3000);
+
+        // Click → expand context menu
+        trigger.onclick = function (ev) {
+            ev.stopPropagation();
+            clearTimeout(trigger._timer);
+            hideSelectionTrigger();
+            showContextMenu(trigger._pos, trigger._text, trigger._isPreview);
+        };
+    }
+
+    function hideSelectionTrigger() {
+        if (selectionTrigger) selectionTrigger.style.display = 'none';
+    }
+
+    function showContextMenu(pos, selectedText, isPreview) {
+        savedContextText = selectedText;
+
+        // Show/hide pane-specific sections
+        var editorSection = aiContextMenu.querySelector('.ai-ctx-editor-section');
+        var annotateSection = aiContextMenu.querySelector('.ai-ctx-annotate-section');
+        if (editorSection) editorSection.style.display = isPreview ? 'none' : '';
+        if (annotateSection) annotateSection.style.display = isPreview ? '' : 'none';
+
+        var menuWidth = isPreview ? 260 : 280;
+        var menuHeight = isPreview ? 200 : 280;
+        aiContextMenu.style.left = Math.min(pos.x, window.innerWidth - menuWidth) + 'px';
+        aiContextMenu.style.top = Math.min(pos.y - 10, window.innerHeight - menuHeight) + 'px';
+        aiContextMenu.style.display = 'flex';
+    }
+
+    // Editor text selection → trigger pill
     markdownEditor.addEventListener('mouseup', function (e) {
         clearTimeout(contextMenuTimeout);
         contextMenuTimeout = setTimeout(function () {
@@ -117,36 +176,20 @@
                 markdownEditor.selectionStart,
                 markdownEditor.selectionEnd
             );
-
-            var isReady = _ai.isCurrentModelReady();
-            if (selectedText && selectedText.length > 2 && isReady) {
-                savedContextText = selectedText;
-                aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-                aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
-                aiContextMenu.style.display = 'flex';
-            } else {
-                aiContextMenu.style.display = 'none';
-            }
+            showSelectionTrigger(e, selectedText, false);
         }, 300);
     });
 
-    // Preview pane text selection
+    // Preview pane text selection → trigger pill
     if (previewPane) {
         previewPane.addEventListener('mouseup', function (e) {
+            // Don't trigger on pill clicks or thread panel
+            if (e.target.closest('.ai-tag-pill') || e.target.closest('.ai-tag-thread-panel')) return;
             clearTimeout(contextMenuTimeout);
             contextMenuTimeout = setTimeout(function () {
                 var selection = window.getSelection();
                 var selectedText = selection ? selection.toString().trim() : '';
-
-                var isReady = _ai.isCurrentModelReady();
-                if (selectedText && selectedText.length > 2 && isReady) {
-                    savedContextText = selectedText;
-                    aiContextMenu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-                    aiContextMenu.style.top = Math.min(e.clientY - 10, window.innerHeight - 250) + 'px';
-                    aiContextMenu.style.display = 'flex';
-                } else {
-                    aiContextMenu.style.display = 'none';
-                }
+                showSelectionTrigger(e, selectedText, true);
             }, 300);
         });
     }
@@ -156,9 +199,13 @@
         if (aiContextMenu && aiContextMenu.style.display !== 'none' && !aiContextMenu.contains(e.target)) {
             aiContextMenu.style.display = 'none';
         }
+        // Also hide trigger if clicking elsewhere
+        if (selectionTrigger && selectionTrigger.style.display !== 'none' && e.target !== selectionTrigger && !selectionTrigger.contains(e.target)) {
+            hideSelectionTrigger();
+        }
     });
 
-    // Context menu actions
+    // Context menu: editor AI actions → AI panel
     function handleContextAction(action) {
         clearTimeout(contextMenuTimeout);
         aiContextMenu.style.display = 'none';
@@ -183,14 +230,29 @@
         }
     }
 
-    var ctxBtns = aiContextMenu.querySelectorAll('.ai-ctx-btn');
-    ctxBtns.forEach(function (btn) {
+    // Bind editor section buttons (writing tools → AI panel)
+    var editorBtns = aiContextMenu.querySelectorAll('.ai-ctx-editor-section .ai-ctx-btn');
+    editorBtns.forEach(function (btn) {
         btn.addEventListener('mousedown', function (e) {
             e.preventDefault();
             e.stopPropagation();
             var action = this.dataset.action;
             if (action) {
                 setTimeout(function () { handleContextAction(action); }, 0);
+            }
+        });
+    });
+
+    // Bind annotate section buttons (study tools → inline pills)
+    var annotateBtns = aiContextMenu.querySelectorAll('.ai-ctx-annotate');
+    annotateBtns.forEach(function (btn) {
+        btn.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var action = this.dataset.action;
+            aiContextMenu.style.display = 'none';
+            if (action && M.handleAiTagAction) {
+                setTimeout(function () { M.handleAiTagAction(action, savedContextText); }, 0);
             }
         });
     });

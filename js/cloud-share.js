@@ -317,8 +317,10 @@
         if (!content.trim() || content === lastCloudContent) { cloudSaveDirty = false; return; }
         if (M.markdownEditor.readOnly) return;
         // Don't auto-save if we're on someone else's shared URL and haven't established our own cloud doc
+        // Exception: study copies (have &study= in URL) should create their own cloud doc
         var hash = window.location.hash;
-        if (hash && hash.includes('s=') && !localStorage.getItem(CLOUD_DOC_KEY)) return;
+        var isStudyCopy = hash && hash.includes('study=');
+        if (!isStudyCopy && hash && hash.includes('s=') && !localStorage.getItem(CLOUD_DOC_KEY)) return;
         if (hash && (hash.includes('id=') || hash.includes('d=')) && !localStorage.getItem(CLOUD_DOC_KEY)) return;
         try {
             var compressed = compressData(content);
@@ -359,6 +361,10 @@
             }
             var docId = existingDocId || localStorage.getItem(CLOUD_DOC_KEY);
             var shareUrl = '#s=' + docId;
+            // Preserve parent reference for study copies
+            var curParams = new URLSearchParams(window.location.hash.substring(1));
+            var parentId = curParams.get('parent') || (curParams.get('study') ? curParams.get('s') : null);
+            if (parentId && parentId !== docId) shareUrl += '&parent=' + parentId;
             if (window.location.hash !== shareUrl) history.replaceState(null, '', shareUrl);
             lastCloudContent = content; cloudSaveDirty = false;
             if (autosaveText) {
@@ -536,6 +542,11 @@
         var hash = window.location.hash.substring(1);
         if (!hash) return;
         var params = new URLSearchParams(hash);
+
+        // Study Copy mode: URL has #s=parentId&study=sc_xxx
+        // The content has already been set by the Study Copy handler — don't re-fetch.
+        if (params.get('study')) return;
+
         var spaceSlug = params.get('space');
         var compactId = params.get('s');
 
@@ -861,7 +872,9 @@
                     && !e.target.closest('.qd-likert-btn')
                     && !e.target.closest('.qd-match-right-item')
                     && !e.target.closest('.qd-order-item')
-                    && !e.target.closest('.qd-hint-toggle');
+                    && !e.target.closest('.qd-hint-toggle')
+                    && !e.target.closest('.ai-tag-pill')
+                    && !e.target.closest('.ai-tag-thread-panel');
                 if (target || previewBtn) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
@@ -947,6 +960,47 @@
     // Clicking the pill expands back to full banner
     document.getElementById('shared-view-pill').addEventListener('click', function () {
         expandPillToBanner();
+    });
+
+    // Study Copy button — fork shared doc into annotatable copy
+    // Preserves the parent #s= in the URL and adds &study= so the user
+    // can always navigate back to the original by removing the study param.
+    document.getElementById('shared-banner-study').addEventListener('click', function () {
+        var content = M.markdownEditor.value;
+        var sourceId = '';
+        try {
+            var hash = window.location.hash.substring(1);
+            var params = new URLSearchParams(hash);
+            sourceId = params.get('s') || '';
+        } catch (_e) { /* ignore */ }
+        var header = '<!-- @source: #s=' + sourceId + ' -->\n\n';
+
+        // Generate a unique study copy ID
+        var studyId = 'sc_' + Math.random().toString(36).substring(2, 9);
+
+        // Don't call clearCloudSession() — we want to keep the parent hash.
+        // Instead, manually do the parts we need:
+        hideSharedBanner();
+        M.isViewingSharedDoc = false;
+        M.sharedViewLock = null;
+        removeViewLockUI();
+        localStorage.removeItem(CLOUD_DOC_KEY);
+        localStorage.removeItem(CLOUD_KEY_KEY);
+        localStorage.removeItem(CLOUD_WT_KEY);
+        localStorage.removeItem(EDIT_KEY_KEY);
+        if (cloudSaveTimer) { clearInterval(cloudSaveTimer); cloudSaveTimer = null; }
+        cloudSaveDirty = false;
+        lastCloudContent = '';
+
+        // Update URL: keep parent #s= and append &study=
+        var newHash = '#s=' + encodeURIComponent(sourceId) + '&study=' + studyId;
+        window.history.replaceState({}, document.title, window.location.pathname + newHash);
+
+        M.markdownEditor.value = header + content;
+        M.markdownEditor.dispatchEvent(new Event('input'));
+        M.renderMarkdown();
+        if (M.setViewMode) M.setViewMode('split');
+        if (M.showToast) M.showToast('📝 Study Copy created — remove &study= from URL to return to original', 'success');
     });
 
     // Clicking/focusing the editor while read-only → re-show banner

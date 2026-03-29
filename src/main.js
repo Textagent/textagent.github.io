@@ -49,6 +49,7 @@ import '../css/form-engine.css';
 import '../css/quiz-docgen.css';
 import '../css/echarts.css';
 import '../css/chart-docgen.css';
+import '../css/ai-tags.css';
 import '../css/spaces.css';
 
 // 3. Local modules — must use dynamic import so they
@@ -184,6 +185,9 @@ async function loadModules() {
 
     // 3f-ext4: Chart DocGen Tag (depends on M.registerFormattingAction, M.wrapSelectionWith)
     await import('../js/chart-docgen.js');
+
+    // 3f-ext5: AI Annotation Tags (depends on M.requestAiTask, M.webSearch)
+    await import('../js/ai-tags.js');
 
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');
