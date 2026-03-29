@@ -1,18 +1,26 @@
 // ============================================
-// file-converters.js — Import Converters (DOCX, XLSX, CSV, HTML, JSON, XML, PDF)
+// file-converters.js — Import Converters (TXT, DOCX, XLSX, CSV, HTML, JSON, XML, YAML, TOML, TSV, PDF)
 // ============================================
 (function (M) {
     'use strict';
 
     var SUPPORTED_EXTENSIONS = {
         md: 'markdown', markdown: 'markdown',
+        txt: 'text', text: 'text',
+        log: 'text',
+        rst: 'text',
+        ini: 'text', conf: 'text', cfg: 'text',
+        env: 'text', properties: 'text',
         docx: 'docx',
         xlsx: 'xlsx', xls: 'xlsx',
         numbers: 'xlsx',
         csv: 'csv',
+        tsv: 'tsv',
         html: 'html', htm: 'html',
         json: 'json',
         xml: 'xml',
+        yaml: 'yaml', yml: 'yaml',
+        toml: 'toml',
         pdf: 'pdf'
     };
 
@@ -39,11 +47,11 @@
         var type = SUPPORTED_EXTENSIONS[ext];
 
         if (!type) {
-            M.showToast('Unsupported file format: .' + ext + '. Supported: MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF', 'error');
+            M.showToast('Unsupported file format: .' + ext + '. Supported: TXT, MD, DOCX, XLSX, CSV, TSV, HTML, JSON, XML, YAML, TOML, PDF', 'error');
             return;
         }
 
-        if (type === 'markdown') {
+        if (type === 'markdown' || type === 'text') {
             M.importMarkdownFile(file);
             return;
         }
@@ -56,9 +64,12 @@
                 case 'docx': markdown = await convertDocxToMarkdown(file); break;
                 case 'xlsx': markdown = await convertXlsxToMarkdown(file); break;
                 case 'csv': markdown = await convertCsvToMarkdown(file); break;
+                case 'tsv': markdown = await convertTsvToMarkdown(file); break;
                 case 'html': markdown = await convertHtmlToMarkdown(file); break;
                 case 'json': markdown = await convertJsonToMarkdown(file); break;
                 case 'xml': markdown = await convertXmlToMarkdown(file); break;
+                case 'yaml': markdown = await convertYamlToMarkdown(file); break;
+                case 'toml': markdown = await convertTomlToMarkdown(file); break;
                 case 'pdf': markdown = await convertPdfToMarkdown(file); break;
                 default:
                     throw new Error('No converter found for type: ' + type);
@@ -386,6 +397,32 @@
         return arrayToMarkdownTable(rows);
     }
 
+    // --- TSV Converter (native) ---
+    async function convertTsvToMarkdown(file) {
+        var text = await file.text();
+        var rows = text.split('\n').filter(function (line) { return line.trim(); }).map(function (line) {
+            return line.split('\t');
+        });
+
+        if (rows.length === 0) return '> *Empty TSV file: ' + file.name + '*';
+
+        var markdown = '> *Converted from: ' + file.name + '*\n\n';
+        markdown += arrayToMarkdownTable(rows);
+        return markdown;
+    }
+
+    // --- YAML Converter (native) ---
+    async function convertYamlToMarkdown(file) {
+        var text = await file.text();
+        return '> *Converted from: ' + file.name + '*\n\n```yaml\n' + text + '\n```';
+    }
+
+    // --- TOML Converter (native) ---
+    async function convertTomlToMarkdown(file) {
+        var text = await file.text();
+        return '> *Converted from: ' + file.name + '*\n\n```toml\n' + text + '\n```';
+    }
+
     // ============================================
     // Public API: Convert a File to Markdown text
     // Used by the Memory indexer to convert binary files before chunking
@@ -393,15 +430,18 @@
     M.convertFileToMarkdown = async function (file) {
         var ext = getFileExtension(file.name);
         var type = SUPPORTED_EXTENSIONS[ext];
-        if (!type || type === 'markdown') return null; // null = use raw text
+        if (!type || type === 'markdown' || type === 'text') return null; // null = use raw text
 
         switch (type) {
             case 'docx': return await convertDocxToMarkdown(file);
             case 'xlsx': return await convertXlsxToMarkdown(file);
             case 'csv':  return await convertCsvToMarkdown(file);
+            case 'tsv':  return await convertTsvToMarkdown(file);
             case 'html': return await convertHtmlToMarkdown(file);
             case 'json': return await convertJsonToMarkdown(file);
             case 'xml':  return await convertXmlToMarkdown(file);
+            case 'yaml': return await convertYamlToMarkdown(file);
+            case 'toml': return await convertTomlToMarkdown(file);
             case 'pdf':  return await convertPdfToMarkdown(file);
             default:     return null;
         }

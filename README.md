@@ -30,7 +30,7 @@
 | **📌 AI Annotations** | Right-click context menu on selected text → 5 annotation types: ⭐ Highlight, 📝 Sticky Note, ❓ Ask AI, 🔖 Bookmark, 📖 Define; color-coded pills render inline in preview; sliding thread panel for multi-turn AI Q&A with document context, web search, and model selector; annotations stored as HTML comments in markdown source (portable, no external DB); **Study Copy** workflow for annotating shared read-only documents; `findBlockEnd()` structural insertion prevents markdown syntax breakage |
 | **🎤 Voice Dictation** | Dual-engine speech-to-text: **Voxtral Mini 3B** (WebGPU, primary, 13 languages, ~2.7 GB) or **Whisper Large V3 Turbo** (WASM fallback, ~800 MB) with consensus scoring; download consent popup with model info before first use; 50+ Markdown-aware voice commands — natural phrases ("heading one", "bold…end bold", "add table", "undo"); auto-punctuation via AI refinement or built-in fallback; streaming partial results |
 | **🔊 Text-to-Speech** | Hybrid Kokoro TTS engine — 9 languages (English, Japanese, Chinese, Spanish, French, Hindi, Italian, Portuguese) via [Kokoro 82M v1.0 ONNX](https://huggingface.co/textagent/Kokoro-82M-v1.0-ONNX) (~80 MB, off-thread WebWorker), Korean, German & others via Web Speech API fallback; **chunked synthesis** for long text (sentence-boundary splitting, ~500 chars/chunk, sequential synthesis with per-chunk progress); TTS card with separate ▶ Run (generate audio) / ▷ Play (replay) / 💾 Save (WAV download) buttons; hover any preview text and click 🔊 to hear pronunciation; voice auto-selection by language |
-| **Import** | MD, DOCX, XLSX/XLS, CSV, HTML, JSON, XML, PDF — drag & drop or click Upload to import |
+| **Import** | TXT, MD, DOCX, XLSX/XLS, CSV, TSV, HTML, JSON, XML, YAML, TOML, PDF — drag & drop or click Upload to import |
 | **Export** | Markdown, self-contained styled HTML, PDF (smart page-breaks, shared rendering pipeline), LLM Memory (5 formats: XML, JSON, Compact JSON, Markdown, Plain Text + shareable link) |
 | **Sharing** | AES-256-GCM encrypted sharing via Firebase; **compact share links** (`#s=<id>`, ~36 chars vs ~111 chars) with encryption key stored server-side; **custom named links** — optionally choose your own memorable name (e.g. `#s=mynotes`) with case-insensitive uniqueness, slug validation, and reserved-word protection; read-only shared links with auto-dismiss banner + floating "Read-only" pill indicator, **clean read-only view** (composer FAB + agent panel hidden when header collapsed), optional password protection (zero-knowledge — passphrase-derived key never stored); **view-locked links** (lock recipients to PPT or Preview mode, stored in Firestore to prevent URL tampering); **editor links** — cryptographic edit key system (`&ek=<token>`) grants write access to trusted collaborators (SHA-256 verified, AES-GCM encrypted write-token, auto-save to same document); **shared versions tracking** ("Previously Shared" panel with timestamps, view-mode badges, copy/delete actions); backward-compatible with legacy `#id=...&k=...` links |
 | **Presentation** | Slide mode using `---` separators, keyboard navigation, multiple layouts & transitions, speaker notes, overview grid, 20+ PPT templates with image backgrounds |
@@ -80,12 +80,16 @@ Import files directly — they're auto-converted to Markdown client-side:
 
 | Format | Library | Notes |
 |:-------|:--------|:------|
+| **TXT / LOG / RST / INI / CONF** | Native | Loaded directly as text (same as .md) |
 | **DOCX** | Mammoth.js + Turndown.js | Preserves formatting, tables, images |
 | **XLSX / XLS** | SheetJS | Multi-sheet support with markdown tables |
 | **CSV** | Native parser | Auto-detection of delimiters |
+| **TSV** | Native parser | Tab-separated values → Markdown table |
 | **HTML** | Turndown.js | Extracts body content from full pages |
 | **JSON** | Native | Pretty-printed code block |
 | **XML** | Native | Formatted code block |
+| **YAML / YML** | Native | Wrapped in yaml code block |
+| **TOML** | Native | Wrapped in toml code block |
 | **PDF** | pdf.js | Page-by-page text extraction |
 
 ## 📤 Export Options
@@ -197,9 +201,9 @@ Import files directly — they're auto-converted to Markdown client-side:
 </details>
 
 <details open>
-<summary><strong>📂 Import & Export — 8 Formats In, PDF/HTML Out</strong></summary>
+<summary><strong>📂 Import & Export — 15 Formats In, PDF/HTML Out</strong></summary>
 
-**Import anything, export everything.** Drag and drop files in 8 formats (MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF) — all converted to Markdown client-side. Export as Markdown, HTML, or smart PDF with intelligent page breaks.
+**Import anything, export everything.** Drag and drop files in 15+ formats (TXT, MD, DOCX, XLSX, CSV, TSV, HTML, JSON, XML, YAML, TOML, PDF, and more) — all converted to Markdown client-side. Export as Markdown, HTML, or smart PDF with intelligent page breaks.
 
 <img src="public/assets/demos/08_import_export.webp" alt="Import & Export — dropzone with 8 supported formats and export options" width="100%">
 
@@ -442,7 +446,7 @@ graph LR
 |:-------|:----|
 | **Write** | Type or paste Markdown in the left editor panel |
 | **Preview** | See live rendered output in the right panel |
-| **Import** | Click ☁️ Upload or drag & drop — supports MD, DOCX, XLSX, CSV, HTML, JSON, XML, PDF |
+| **Import** | Click ☁️ Upload or drag & drop — supports TXT, MD, DOCX, XLSX, CSV, TSV, HTML, JSON, XML, YAML, TOML, PDF |
 | **Export** | Use the ⬇️ Export dropdown → Markdown, HTML, PDF, or LLM Memory |
 | **AI Assistant** | Click ✨ AI → choose a model → ask questions or use quick actions |
 | **Dark Mode** | Click the 🌙 moon icon |
@@ -539,7 +543,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Commits | Feature / Update |
 |------|---------|-----------------:|
-| **2026-03-30** | | 📌 **AI Annotations** — new `ai-tags.js` module (1129 lines) with 5 annotation types (Highlight, Sticky Note, Ask AI, Bookmark, Define) via right-click context menu; color-coded pills in preview (⭐📝❓🔖📖); sliding thread panel for multi-turn AI Q&A on selected passages with document context, web search, and model selector; annotations stored as portable `<!-- @ai-tag: ... -->` HTML comments; Study Copy workflow for annotating shared read-only docs; `findBlockEnd()` structural block boundary detection prevents tag insertion from breaking markdown syntax (lists, tables, headings); tiered `requestAiTask` safety timeout (180s local / 60s cloud) with `_taskMessageIds` message isolation to prevent global worker listener cross-talk |
+| **2026-03-30** | | 📂 **File Import Expansion** — added 15 new file extensions to the import pipeline: `.txt`, `.text`, `.log`, `.rst`, `.ini`, `.conf`, `.cfg`, `.env`, `.properties` as plain text; `.yaml`/`.yml` wrapped in yaml code block; `.toml` wrapped in toml code block; `.tsv` parsed as tab-separated Markdown table; updated file input `accept` attribute with all new extensions and MIME types; updated dropzone label and error toast; total supported extensions now 25 |
 | **2026-03-29** | | 🔑 **Secure Session Editing** — cryptographic Edit Key (`ek`) system for collaborative editing of shared documents; 24-char random edit key hashed via SHA-256 and stored as `ekHash` in Firestore; write-token encrypted with edit key via AES-GCM stored as `eWt`; editor links (`&ek=<token>`) grant write access without exposing raw write-tokens; verification in both compact (`#s=`) and secure (`#id=&secure=1`) share paths; edit mode bypasses form/quiz access gate; auto-save preserves `ekHash`/`eWt` fields; "Editor Link" section in share result modal with purple badge; "Copy All Links" includes editor link; email/download credentials include editor link; Firestore rules updated for new fields |
 | **2026-03-29** | | 🚀 **21× Cloud Context Window** — raised cloud AI worker context limits from 6K to 128K chars for Groq (Llama 3.3 70B) and OpenRouter (GPT-5.4, Claude, Qwen 35B); Gemini raised from 32K to 128K (4×); chat history per-message doubled from 4K to 8K chars; Gemini worker migrated to shared `ai-worker-common.js` (eliminated ~80 lines of duplicate system prompts); local Qwen workers deliberately kept at 32K chars — Qwen 3.5 hybrid GDN architecture degrades beyond 25-50K tokens for small (0.8B-4B) models; existing degenerate output circuit breaker and `presence_penalty: 2.0` safety nets preserved |
 | **2026-03-28** | | 🤖 **AI-Assisted Quiz Generation** — new Skill Injection system for `{{Quiz:}}` tags: `QUIZ_SYNTAX_SKILL` constant injected into AI prompts with exact pipe-format documentation for all 8 question types; `postProcessQuizLines()` auto-fixes common AI output errors (missing colons, swapped MCQ pipes, wrong types); `@prompt:` field with prompt textarea for natural-language quiz creation; per-card AI model selector dropdown; Practice/Test mode toggle button; creator Next button always enabled; flexible `{{Quiz :}}` parsing (space before colon); `requestAiTask` with try/catch and toast error handling |
