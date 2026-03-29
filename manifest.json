@@ -1,0 +1,57 @@
+{
+    "name": "TextAgent",
+    "short_name": "TextAgent",
+    "description": "Write with AI Agents — Markdown Editor & Viewer. 100% client-side, private, and secure.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#0d1117",
+    "theme_color": "#58a6ff",
+    "orientation": "any",
+    "categories": ["productivity", "utilities"],
+    "icons": [
+        {
+            "src": "/assets/icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/icons/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/icons/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/assets/split-view-editor.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Split-View Editor with live Markdown preview"
+        },
+        {
+            "src": "/assets/ai-assistant.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "AI Writing Assistant with local and cloud models"
+        }
+    ]
+}

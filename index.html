@@ -52,6 +52,14 @@
     <title>TextAgent</title>
     <link href="assets/icon.png" rel="icon" type="image/png">
 
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#58a6ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TextAgent">
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+
     <!-- Anti-flicker: set theme BEFORE any CSS/JS loads -->
     <script>
         (function () {
@@ -300,6 +308,9 @@
 
                             <button id="theme-toggle" class="tool-button" title="Toggle Dark Mode">
                                 <i class="bi bi-moon"></i>
+                            </button>
+                            <button id="pwa-install-btn" class="tool-button" title="Install TextAgent App" style="display:none">
+                                <i class="bi bi-download"></i> Install
                             </button>
                         </div>
                         <button id="toolbar-overflow-btn" class="tool-button toolbar-overflow-toggle"
@@ -1120,6 +1131,19 @@
 
 
     <script type="module" src="/src/main.js"></script>
+
+    <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').then(function (reg) {
+                    console.log('[PWA] Service Worker registered (scope: ' + reg.scope + ')');
+                }).catch(function (err) {
+                    console.warn('[PWA] Service Worker registration failed:', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

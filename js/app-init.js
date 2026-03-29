@@ -603,4 +603,35 @@
         });
     }
 
+    // ========================================
+    // PWA INSTALL PROMPT
+    // ========================================
+    var _deferredInstallPrompt = null;
+    var pwaInstallBtn = document.getElementById('pwa-install-btn');
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        _deferredInstallPrompt = e;
+        if (pwaInstallBtn) pwaInstallBtn.style.display = '';
+    });
+
+    if (pwaInstallBtn) {
+        pwaInstallBtn.addEventListener('click', function () {
+            if (!_deferredInstallPrompt) return;
+            _deferredInstallPrompt.prompt();
+            _deferredInstallPrompt.userChoice.then(function (choice) {
+                if (choice.outcome === 'accepted') {
+                    M.showToast('✓ TextAgent installed! Find it in your apps.', 'success');
+                }
+                _deferredInstallPrompt = null;
+                pwaInstallBtn.style.display = 'none';
+            });
+        });
+    }
+
+    window.addEventListener('appinstalled', function () {
+        _deferredInstallPrompt = null;
+        if (pwaInstallBtn) pwaInstallBtn.style.display = 'none';
+    });
+
 })(window.MDView);
