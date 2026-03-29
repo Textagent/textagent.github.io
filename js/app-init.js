@@ -625,32 +625,104 @@
     // ========================================
     // PWA INSTALL PROMPT
     // ========================================
-    var _deferredInstallPrompt = null;
-    var pwaInstallBtn = document.getElementById('pwa-install-btn');
-
+    // Pick up early-captured prompt from <head> script, plus keep listening
+    var _deferredInstallPrompt = window.__pwaPrompt || null;
     window.addEventListener('beforeinstallprompt', function (e) {
         e.preventDefault();
         _deferredInstallPrompt = e;
-        if (pwaInstallBtn) pwaInstallBtn.style.display = '';
+        window.__pwaPrompt = e;
     });
 
-    if (pwaInstallBtn) {
-        pwaInstallBtn.addEventListener('click', function () {
-            if (!_deferredInstallPrompt) return;
+    var pwaInstallBtn = document.getElementById('pwa-install-btn');
+    var mobilePwaInstallBtn = document.getElementById('mobile-pwa-install-btn');
+    var pwaInstallModal = document.getElementById('pwa-install-modal');
+    var pwaInstallModalClose = document.getElementById('pwa-install-modal-close');
+    var pwaInstallModalBody = document.getElementById('pwa-install-modal-body');
+    var pwaInstallConfirmBtn = document.getElementById('pwa-install-confirm-btn');
+    var pwaInstallSkipBtn = document.getElementById('pwa-install-skip-btn');
+
+    // Detect if already running as installed PWA
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+
+    function hidePwaButtons() {
+        if (pwaInstallBtn) pwaInstallBtn.style.display = 'none';
+        if (mobilePwaInstallBtn) mobilePwaInstallBtn.style.display = 'none';
+    }
+
+    if (isStandalone) {
+        hidePwaButtons();
+    }
+
+    function closePwaModal() {
+        if (pwaInstallModal) pwaInstallModal.style.display = 'none';
+    }
+
+    function showPwaModal() {
+        if (!pwaInstallModal) return;
+        if (pwaInstallModalBody) pwaInstallModalBody.innerHTML = '';
+        pwaInstallModal.style.display = 'flex';
+    }
+
+    function triggerInstall() {
+        if (_deferredInstallPrompt) {
             _deferredInstallPrompt.prompt();
             _deferredInstallPrompt.userChoice.then(function (choice) {
                 if (choice.outcome === 'accepted') {
                     M.showToast('✓ TextAgent installed! Find it in your apps.', 'success');
+                    hidePwaButtons();
                 }
                 _deferredInstallPrompt = null;
-                pwaInstallBtn.style.display = 'none';
+                window.__pwaPrompt = null;
+                closePwaModal();
             });
+        } else {
+            var ua = navigator.userAgent;
+            var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+            var hint = '';
+            if (isIOS) {
+                hint = 'Tap <strong>Share</strong> <i class="bi bi-box-arrow-up"></i> then <strong>Add to Home Screen</strong>';
+            } else if (isSafari) {
+                hint = 'Click <strong>File</strong> menu then <strong>Add to Dock</strong>';
+            } else {
+                hint = 'Use your browser menu to <strong>Install TextAgent</strong>';
+            }
+            if (pwaInstallModalBody) {
+                pwaInstallModalBody.innerHTML = '<p class="pwa-install-hint"><i class="bi bi-info-circle"></i> ' + hint + '</p>';
+            }
+        }
+    }
+
+    if (pwaInstallBtn) {
+        pwaInstallBtn.addEventListener('click', showPwaModal);
+    }
+    if (mobilePwaInstallBtn) {
+        mobilePwaInstallBtn.addEventListener('click', function () {
+            M.closeMobileMenu();
+            showPwaModal();
+        });
+    }
+    if (pwaInstallConfirmBtn) {
+        pwaInstallConfirmBtn.addEventListener('click', triggerInstall);
+    }
+    if (pwaInstallSkipBtn) {
+        pwaInstallSkipBtn.addEventListener('click', closePwaModal);
+    }
+    if (pwaInstallModalClose) {
+        pwaInstallModalClose.addEventListener('click', closePwaModal);
+    }
+    if (pwaInstallModal) {
+        pwaInstallModal.addEventListener('click', function (e) {
+            if (e.target === pwaInstallModal) closePwaModal();
         });
     }
 
     window.addEventListener('appinstalled', function () {
         _deferredInstallPrompt = null;
-        if (pwaInstallBtn) pwaInstallBtn.style.display = 'none';
+        window.__pwaPrompt = null;
+        hidePwaButtons();
+        closePwaModal();
     });
 
 })(window.MDView);

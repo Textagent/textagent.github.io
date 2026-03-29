@@ -59,7 +59,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TextAgent">
     <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
-
+    <!-- Capture PWA install prompt as early as possible (before any scripts load) -->
+    <script>
+        window.__pwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            window.__pwaPrompt = e;
+        });
+    </script>
     <!-- Anti-flicker: set theme BEFORE any CSS/JS loads -->
     <script>
         (function () {
@@ -309,15 +316,15 @@
                             <button id="theme-toggle" class="tool-button" title="Toggle Dark Mode">
                                 <i class="bi bi-moon"></i>
                             </button>
-                            <button id="pwa-install-btn" class="tool-button" title="Install TextAgent App" style="display:none">
-                                <i class="bi bi-download"></i> Install
-                            </button>
                         </div>
                         <button id="toolbar-overflow-btn" class="tool-button toolbar-overflow-toggle"
                             title="More tools">
                             <i class="bi bi-three-dots-vertical"></i>
                         </button>
                     </div>
+                    <button id="pwa-install-btn" class="tool-button pwa-install-pill" title="Install TextAgent App">
+                        <i class="bi bi-download"></i> Install
+                    </button>
                 </div>
 
                 <!-- Hamburger menu for mobile -->
@@ -423,6 +430,10 @@
 
                             <button id="mobile-theme-toggle" class="mobile-menu-item" title="Toggle Dark Mode">
                                 <i class="bi bi-moon me-2"></i> Dark Mode
+                            </button>
+
+                            <button id="mobile-pwa-install-btn" class="mobile-menu-item" title="Install TextAgent App">
+                                <i class="bi bi-download me-2"></i> Install App
                             </button>
                         </div>
                     </div>
@@ -1129,6 +1140,27 @@
     </div>
 
 
+
+    <!-- PWA Install Modal -->
+    <div id="pwa-install-modal" class="pwa-install-modal-overlay" style="display:none">
+        <div class="pwa-install-modal">
+            <button class="pwa-install-modal-close" id="pwa-install-modal-close" title="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="pwa-install-modal-icon">
+                <img src="/assets/icons/icon-192x192.png" alt="TextAgent" width="72" height="72">
+            </div>
+            <h3 class="pwa-install-modal-title">Install TextAgent</h3>
+            <p class="pwa-install-modal-desc">Works offline, launches instantly, no app store needed.</p>
+            <div id="pwa-install-modal-body"></div>
+            <div class="pwa-install-modal-actions">
+                <button id="pwa-install-confirm-btn" class="pwa-install-confirm-btn">
+                    <i class="bi bi-download"></i> Install
+                </button>
+                <button id="pwa-install-skip-btn" class="pwa-install-skip-btn">Skip</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
 

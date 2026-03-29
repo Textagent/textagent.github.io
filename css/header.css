@@ -848,10 +848,216 @@ a:focus {
   font-size: 1.5rem;
 }
 
+/* ========================================
+   PWA INSTALL BUTTON
+   ======================================== */
+
+.pwa-install-pill {
+  background: linear-gradient(135deg, var(--accent-color), #2ea043) !important;
+  color: #fff !important;
+  border-radius: 100px !important;
+  padding: 5px 14px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  gap: 5px;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(88, 166, 255, 0.3);
+  transition: all 0.25s ease;
+  animation: pwa-pulse 2.5s ease-in-out 3;
+  flex-shrink: 0;
+}
+
+.pwa-install-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(88, 166, 255, 0.45) !important;
+  background: linear-gradient(135deg, #79c0ff, #3fb950) !important;
+}
+
+@keyframes pwa-pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(88, 166, 255, 0.3); }
+  50% { box-shadow: 0 2px 16px rgba(88, 166, 255, 0.55); }
+}
+
+/* Mobile menu install button — accent highlight */
+#mobile-pwa-install-btn {
+  background: linear-gradient(135deg, var(--accent-color), #2ea043);
+  color: #fff !important;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+#mobile-pwa-install-btn:hover {
+  background: linear-gradient(135deg, #79c0ff, #3fb950);
+}
+
+/* ========================================
+   PWA INSTALL INSTRUCTIONS MODAL
+   ======================================== */
+
+.pwa-install-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: pwa-modal-fadein 0.2s ease;
+}
+
+@keyframes pwa-modal-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pwa-install-modal {
+  position: relative;
+  width: 90%;
+  max-width: 420px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 32px 28px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: pwa-modal-slidein 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pwa-modal-slidein {
+  from { transform: translateY(24px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.pwa-install-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0.5;
+  transition: all 0.15s;
+}
+
+.pwa-install-modal-close:hover {
+  opacity: 1;
+  background: var(--button-hover);
+}
+
+.pwa-install-modal-icon {
+  margin-bottom: 16px;
+}
+
+.pwa-install-modal-icon img {
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.pwa-install-modal-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 8px;
+}
+
+.pwa-install-modal-desc {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  opacity: 0.65;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.pwa-install-modal-steps {
+  text-align: left;
+}
+
+.pwa-steps-browser {
+  font-size: 0.82rem;
+  color: var(--text-color);
+  opacity: 0.55;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+/* Install / Skip actions row */
+.pwa-install-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.pwa-install-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 32px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-color), #2ea043);
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(88, 166, 255, 0.3);
+}
+
+.pwa-install-confirm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(88, 166, 255, 0.45);
+  background: linear-gradient(135deg, #79c0ff, #3fb950);
+}
+
+.pwa-install-skip-btn {
+  padding: 11px 28px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.pwa-install-skip-btn:hover {
+  opacity: 1;
+  background: var(--button-hover);
+}
+
+/* Fallback hint (shown when native prompt isn't available) */
+.pwa-install-hint {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  background: var(--button-hover);
+  border-radius: 8px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.pwa-install-hint i {
+  margin-right: 4px;
+  opacity: 0.6;
+}
+
 
 /* ========================================
    TOOLBAR OVERFLOW MENU (kebab ⋮)
    ======================================== */
+
 
 .toolbar-overflow-wrapper {
   position: relative;
