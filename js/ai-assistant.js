@@ -173,6 +173,9 @@
       if (aiModelLabel) aiModelLabel.textContent = cfg.label;
       if (aiModelBtnIcon) { aiModelBtnIcon.className = cfg.icon; }
       if (aiModelBadge) aiModelBadge.textContent = cfg.badge;
+      // Sync mobile inline model icon
+      const mobileIcon = document.getElementById('ai-mobile-model-icon');
+      if (mobileIcon) mobileIcon.className = cfg.icon;
     }
   }
 
@@ -378,6 +381,26 @@
   });
   if (aiPanelCloseBtn) aiPanelCloseBtn.addEventListener('click', closeAiPanel);
   // Overlay is pass-through — panel closes via the X button only
+
+  // --- Mobile Options Toggle (show/hide quick actions ONLY) ---
+  const aiMobileOptionsToggle = document.getElementById('ai-mobile-options-toggle');
+  if (aiMobileOptionsToggle) {
+    aiMobileOptionsToggle.addEventListener('click', () => {
+      const isExpanded = aiPanel.classList.toggle('ai-mobile-expanded');
+      aiMobileOptionsToggle.classList.toggle('active', isExpanded);
+      aiMobileOptionsToggle.title = isExpanded ? 'Hide quick actions' : 'Show quick actions';
+    });
+  }
+
+  // --- Mobile Inline Model Button (opens model dropdown on mobile) ---
+  const aiMobileModelBtn = document.getElementById('ai-mobile-model-btn');
+  const aiMobileModelIcon = document.getElementById('ai-mobile-model-icon');
+  if (aiMobileModelBtn && aiModelSelector) {
+    aiMobileModelBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      aiModelSelector.classList.toggle('open');
+    });
+  }
 
   // --- AI Panel Resize (drag left edge) ---
   const aiResizeDivider = document.getElementById('ai-resize-divider');

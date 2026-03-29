@@ -78,6 +78,13 @@
         ? '<i class="bi bi-sun"></i>'
         : '<i class="bi bi-moon"></i>';
 
+    // Sync mobile theme toggle icon + label on init
+    if (M.mobileThemeToggle) {
+        var mi = M.mobileThemeToggle.querySelector('i');
+        if (mi) mi.className = initialTheme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon me-2';
+        M.mobileThemeToggle.lastChild.textContent = initialTheme === 'dark' ? ' Light Mode' : ' Dark Mode';
+    }
+
     // --- Mermaid Initialization ---
     M.initMermaid = async function () {
         const mermaidLib = await window.getMermaid();

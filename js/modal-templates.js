@@ -250,6 +250,7 @@
                     <i class="bi bi-globe-americas"></i>
                     <span class="ai-search-label">Search</span>
                 </label>
+                <button class="ai-mobile-options-toggle" id="ai-mobile-options-toggle" title="Show quick actions"><i class="bi bi-grid-3x3-gap"></i></button>
                 <button class="ai-panel-btn" id="ai-clear-chat" title="Clear chat"><i class="bi bi-trash3"></i></button>
                 <button class="ai-panel-btn" id="ai-panel-close" title="Close"><i class="bi bi-x-lg"></i></button>
             </div>
@@ -351,6 +352,9 @@
             </div>
             <div class="ai-attachments-strip" id="ai-attachments-strip" style="display:none"></div>
             <div class="ai-input-wrapper">
+                <button id="ai-mobile-model-btn" class="ai-mobile-model-btn" title="Switch AI model" type="button">
+                    <i class="bi bi-pc-display" id="ai-mobile-model-icon"></i>
+                </button>
                 <button id="ai-attach-btn" class="ai-attach-button" title="Attach files or images" type="button">
                     <i class="bi bi-paperclip"></i>
                 </button>

@@ -887,7 +887,10 @@
         if (!searchToggle || !M.webSearch) return;
 
         searchToggle.checked = M.webSearch.isSearchEnabled();
-        if (searchToggle.checked && providerBar) providerBar.style.display = '';
+        if (searchToggle.checked && providerBar) {
+            providerBar.style.display = '';
+            providerBar.classList.add('ai-mobile-show');
+        }
 
         // Sync checkbox state from saved providers
         function syncPillState() {
@@ -903,7 +906,11 @@
 
         searchToggle.addEventListener('change', function () {
             M.webSearch.setSearchEnabled(searchToggle.checked);
-            if (providerBar) providerBar.style.display = searchToggle.checked ? '' : 'none';
+            if (providerBar) {
+                providerBar.style.display = searchToggle.checked ? '' : 'none';
+                // On mobile, CSS uses !important to hide — use class to override
+                providerBar.classList.toggle('ai-mobile-show', searchToggle.checked);
+            }
         });
 
         // Checkbox toggle handler

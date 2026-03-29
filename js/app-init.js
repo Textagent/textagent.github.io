@@ -481,8 +481,27 @@
             this.querySelector('i').className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
             localStorage.setItem(M.KEYS.THEME, newTheme);
             M.isDarkMode = newTheme === 'dark';
+            // Sync mobile theme toggle icon + label
+            if (M.mobileThemeToggle) {
+                var mi = M.mobileThemeToggle.querySelector('i');
+                if (mi) mi.className = newTheme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon me-2';
+                M.mobileThemeToggle.lastChild.textContent = newTheme === 'dark' ? ' Light Mode' : ' Dark Mode';
+            }
+            // Sync QAB theme icon + label
+            var qi = document.getElementById('qab-theme-icon');
+            var ql = document.getElementById('qab-theme-label');
+            if (qi) qi.className = newTheme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon me-2';
+            if (ql) ql.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
             M.initMermaid();
             M.renderMarkdown();
+        });
+    }
+
+    // Mobile theme toggle — delegate to desktop toggle
+    if (M.mobileThemeToggle) {
+        M.mobileThemeToggle.addEventListener('click', function () {
+            if (M.themeToggle) M.themeToggle.click();
+            M.closeMobileMenu();
         });
     }
 
