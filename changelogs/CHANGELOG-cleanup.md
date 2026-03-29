@@ -1,2 +1,3 @@
-# Cleanup
-- Removed duplicate assets/demos/ folder (kept public/assets/demos/ only)
+# Cleanup — Remove Duplicate Changelog
+
+- Removed stale `CHANGELOG-file-import.md` from project root (already exists in `changelogs/`)
