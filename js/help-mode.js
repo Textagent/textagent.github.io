@@ -550,6 +550,12 @@
             shortcut: null,
             demo: 'assets/demos/31_media_embedding.webp'
         },
+        '[data-action="rec-studio"]': {
+            name: 'Recording Studio',
+            desc: 'Record your screen, camera, or whiteboard directly in the browser. Supports PiP, pause/resume, device selection, countdown, and local download — fully client-side, no backend needed.',
+            shortcut: null,
+            demo: null
+        },
 
         // ─── Additional Coding & Execution ───
         '[data-action="coding-latex"]': {

@@ -41,6 +41,7 @@ import '../css/doc-vars-panel.css';
 import '../css/game-docgen.css';
 import '../css/git-docgen.css';
 import '../css/draw-docgen.css';
+import '../css/rec-studio.css';
 import '../css/tools-docgen.css';
 import '../css/run-preflight.css';
 import '../css/composer.css';
@@ -209,6 +210,9 @@ async function loadModules() {
     await import('../js/github-auth.js');
     await import('../js/agent-cloud.js');
     await import('../js/agent-panel.js');
+
+    // 3m: Recording Studio (standalone — remove to disable feature)
+    await import('../js/rec-studio.js');
 }
 
 loadModules();
