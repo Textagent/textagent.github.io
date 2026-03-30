@@ -731,11 +731,125 @@
 html[data-theme="light"] .rec-overlay { background: #e8eaed; }
 html[data-theme="light"] .rec-preview-frame { background: #fff; }
 html[data-theme="light"] .rec-placeholder h3 { color: #333; }
-html[data-theme="light"] .rec-share-btn { border-color: #333; }
+html[data-theme="light"] .rec-share-btn { border-color: #333; color: #333; }
 html[data-theme="light"] .rec-mode-bar { background: rgba(0,0,0,0.8); }
 html[data-theme="light"] .rec-topbar-title { color: rgba(0,0,0,0.8); }
 html[data-theme="light"] .rec-close-btn { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.5); border-color: rgba(0,0,0,0.1); }
+html[data-theme="light"] .rec-close-btn:hover { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.8); }
 html[data-theme="light"] .rec-wb-canvas-wrap { background: #fff; }
+
+/* Footer buttons — dark borders/text on light background */
+html[data-theme="light"] .rec-footer-btn {
+    border-color: rgba(0,0,0,0.2);
+    color: rgba(0,0,0,0.55);
+}
+html[data-theme="light"] .rec-footer-btn:hover {
+    border-color: rgba(0,0,0,0.4);
+    color: rgba(0,0,0,0.8);
+}
+html[data-theme="light"] .rec-footer-btn.active {
+    background: rgba(255,80,101,0.1);
+    border-color: rgba(255,80,101,0.3);
+    color: #e8304a;
+}
+
+/* Dropdowns — light background with dark text */
+html[data-theme="light"] .rec-dropdown {
+    background: #fff;
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+html[data-theme="light"] .rec-dropdown-item {
+    color: rgba(0,0,0,0.7);
+}
+html[data-theme="light"] .rec-dropdown-item:hover {
+    background: rgba(0,0,0,0.06);
+}
+html[data-theme="light"] .rec-dropdown-item.selected {
+    color: #e8304a;
+}
+
+/* Teleprompter — light background variant */
+html[data-theme="light"] .rec-teleprompter {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+}
+html[data-theme="light"] .rec-tp-header {
+    background: rgba(0,0,0,0.06);
+}
+html[data-theme="light"] .rec-tp-title {
+    color: rgba(0,0,0,0.7);
+}
+html[data-theme="light"] .rec-tp-btn {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.55);
+}
+html[data-theme="light"] .rec-tp-btn:hover {
+    background: rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.8);
+}
+html[data-theme="light"] .rec-tp-speed {
+    color: rgba(0,0,0,0.5);
+}
+html[data-theme="light"] .rec-tp-divider {
+    background: rgba(0,0,0,0.15);
+}
+html[data-theme="light"] .rec-tp-text textarea {
+    color: rgba(0,0,0,0.85);
+}
+html[data-theme="light"] .rec-tp-text textarea::placeholder {
+    color: rgba(0,0,0,0.3);
+}
+html[data-theme="light"] .rec-tp-scroll-content {
+    color: rgba(0,0,0,0.85);
+}
+
+/* Teleprompter fade states in light mode */
+html[data-theme="light"] .rec-teleprompter.fade-1 {
+    background: rgba(255, 255, 255, 0.5);
+}
+html[data-theme="light"] .rec-teleprompter.fade-2 {
+    background: rgba(255, 255, 255, 0.15);
+}
+html[data-theme="light"] .rec-teleprompter.fade-1 .rec-tp-header {
+    background: rgba(0, 0, 0, 0.08);
+}
+html[data-theme="light"] .rec-teleprompter.fade-2 .rec-tp-header {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* Whiteboard toolbar in light mode */
+html[data-theme="light"] .rec-wb-toolbar {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+html[data-theme="light"] .rec-wb-tool {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.08);
+    color: rgba(0,0,0,0.55);
+}
+html[data-theme="light"] .rec-wb-tool:hover {
+    background: rgba(0,0,0,0.08);
+    color: rgba(0,0,0,0.8);
+}
+html[data-theme="light"] .rec-wb-tool.active {
+    background: rgba(255,80,101,0.1);
+    border-color: rgba(255,80,101,0.3);
+    color: #e8304a;
+}
+
+/* Settings/timer in light mode */
+html[data-theme="light"] .rec-settings-btn {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.5);
+}
+html[data-theme="light"] .rec-timer {
+    color: rgba(0,0,0,0.7);
+}
 
 /* --- Responsive --- */
 @media (max-width: 640px) {
