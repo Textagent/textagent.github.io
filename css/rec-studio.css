@@ -435,7 +435,7 @@
     display: none;
     flex-direction: column;
     z-index: 10010;
-    overflow: auto;
+    overflow: hidden;
     box-shadow: 0 8px 40px rgba(0,0,0,0.4);
     resize: both;
 }
@@ -541,11 +541,14 @@
 .rec-tp-text {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 16px;
+    padding: 4px 10px;
+    min-height: 0;
 }
 .rec-tp-text textarea {
     width: 100%;
-    min-height: 80px;
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
     background: transparent;
     border: none;
     color: rgba(255,255,255,0.85);
@@ -554,11 +557,12 @@
     line-height: 1.8;
     resize: none;
     outline: none;
+    padding: 0;
 }
 .rec-tp-text textarea::placeholder { color: rgba(255,255,255,0.25); }
 .rec-tp-scroll-container {
     display: none;
-    padding: 12px 16px;
+    padding: 4px 10px;
     overflow: hidden;
     flex: 1;
     min-height: 0;
@@ -731,7 +735,8 @@
 html[data-theme="light"] .rec-overlay { background: #e8eaed; }
 html[data-theme="light"] .rec-preview-frame { background: #fff; }
 html[data-theme="light"] .rec-placeholder h3 { color: #333; }
-html[data-theme="light"] .rec-share-btn { border-color: #333; color: #333; }
+html[data-theme="light"] .rec-share-btn { background: #fff; border-color: #333; color: #333; }
+html[data-theme="light"] .rec-share-btn:hover { background: #f0f0f0; border-color: #111; }
 html[data-theme="light"] .rec-mode-bar { background: rgba(0,0,0,0.8); }
 html[data-theme="light"] .rec-topbar-title { color: rgba(0,0,0,0.8); }
 html[data-theme="light"] .rec-close-btn { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.5); border-color: rgba(0,0,0,0.1); }
