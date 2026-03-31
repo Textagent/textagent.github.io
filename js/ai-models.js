@@ -319,6 +319,27 @@
             supportsVision: true,
         },
 
+        // ── Cloud: Qwen 3.6 Plus Preview (Free) via OpenRouter ─
+        'openrouter-qwen-36plus': {
+            label: 'Qwen 3.6 Plus · Alibaba',
+            badge: 'Qwen 3.6 Plus · Alibaba',
+            icon: 'bi bi-wind',
+            statusReady: 'Qwen 3.6 Plus Preview · Alibaba via OpenRouter',
+            workerFile: 'ai-worker-openrouter.js',
+            workerModelId: 'qwen/qwen3.6-plus-preview:free',
+            keyStorageKey: window.MDView.KEYS.API_KEY_OPENROUTER,
+            dialogTitle: 'Connect to OpenRouter',
+            dialogDesc: 'Enter your API key to use <strong>Qwen 3.6 Plus Preview</strong> via OpenRouter',
+            dialogPlaceholder: 'sk-or-xxxxxxxxxxxxxxxxxxxx',
+            dialogLink: 'https://openrouter.ai/keys',
+            dialogLinkText: 'openrouter.ai/keys',
+            dialogIcon: 'bi bi-wind',
+            dropdownName: 'Qwen 3.6 Plus Preview',
+            dropdownDesc: 'Alibaba · Free · via OpenRouter',
+            category: 'cloud-text',
+            supportsVision: true,
+        },
+
         // ── Cloud: DeepSeek V3.2 via OpenRouter ───────────────
         'openrouter-deepseek': {
             label: 'DeepSeek V3.2 · DeepSeek',
