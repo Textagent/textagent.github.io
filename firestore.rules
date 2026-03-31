@@ -115,6 +115,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ─── Link Analytics (global click counters & live presence) ──────
+    match /link_clicks/{docId} {
+      // Anyone can read click counts (public analytics)
+      allow read: if true;
+
+      // Allow write: click increment or presence parent doc creation
+      // Fields: { url, clicks, lastClicked } — clicks must be a number
+      allow write: if true;
+
+      // Presence subcollection: each session writes its own heartbeat doc
+      match /readers/{sessionId} {
+        allow read: if true;
+        // Each session can write only { lastSeen: number }
+        allow write: if request.resource.data.keys().hasOnly(['lastSeen'])
+                     && request.resource.data.lastSeen is int;
+        allow delete: if true;
+      }
+    }
+
     // Deny access to all other collections by default
     match /{document=**} {
       allow read, write: if false;

@@ -1,0 +1,484 @@
+/* ============================================================
+   link-analytics.css — Link click badges & analytics panel
+   ============================================================ */
+
+/* ── Floating Like Widget ──────────────────────────────────── */
+.la-like-widget {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    pointer-events: none; /* widget itself transparent, button handles events */
+}
+
+.la-like-btn {
+    pointer-events: all;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border-radius: 30px;
+    border: 1.5px solid var(--border-color, #30363d);
+    background: var(--modal-bg, #161b22);
+    color: var(--text-color, #c9d1d9);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.18s cubic-bezier(.34,1.56,.64,1),
+                background 0.18s, border-color 0.18s, box-shadow 0.18s;
+    user-select: none;
+    min-width: 64px;
+    justify-content: center;
+}
+
+.la-like-btn:hover {
+    background: rgba(88, 166, 255, 0.1);
+    border-color: var(--accent-color, #58a6ff);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 28px rgba(88, 166, 255, 0.2);
+}
+
+.la-like-btn.la-liked {
+    background: rgba(63, 185, 80, 0.12);
+    border-color: #3fb950;
+    color: #3fb950;
+    cursor: default;
+}
+
+.la-like-btn.la-like-bump {
+    transform: scale(1.25) translateY(-3px);
+}
+
+.la-like-icon {
+    font-size: 18px;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.la-like-btn:hover .la-like-icon {
+    transform: rotate(-10deg) scale(1.15);
+}
+
+.la-like-btn.la-liked .la-like-icon {
+    transform: none;
+}
+
+.la-like-count {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    min-width: 12px;
+    color: inherit;
+}
+
+/* Hide like widget in editor-only view mode */
+body.view-mode-editor .la-like-widget { display: none; }
+
+/* Lift above the shared-view pill (bottom: 10px + ~32px pill height + gap) */
+body.shared-view-active .la-like-widget {
+    bottom: 72px;
+}
+
+/* Lift above composer FAB on small screens */
+@media (max-width: 768px) {
+    .la-like-widget {
+        bottom: 80px;
+        right: 16px;
+    }
+}
+
+/* Fade out after liked */
+.la-like-widget.la-like-done {
+    opacity: 0;
+    transform: scale(0.7) translateY(12px);
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1);
+    pointer-events: none;
+}
+
+/* ── Click count badges on preview links ───────────────────── */
+.la-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 16px;
+    padding: 0 4px;
+    margin-left: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 10px;
+    background: var(--accent-color, #58a6ff);
+    color: #fff;
+    vertical-align: middle;
+    opacity: 0.85;
+    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), opacity 0.2s;
+    cursor: default;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.la-badge:empty {
+    display: none;
+}
+
+.la-badge-bump {
+    transform: scale(1.45);
+    opacity: 1;
+}
+
+/* ── Panel overlay ─────────────────────────────────────────── */
+.la-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1099;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+/* ── Panel container ───────────────────────────────────────── */
+.la-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 420px;
+    max-width: 96vw;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    background: var(--modal-bg, #161b22);
+    border-left: 1px solid var(--border-color, #30363d);
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(.22,1,.36,1);
+    font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.la-panel.la-panel-open {
+    transform: translateX(0);
+}
+
+/* ── Panel header ──────────────────────────────────────────── */
+.la-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color, #30363d);
+    flex-shrink: 0;
+    gap: 8px;
+    background: var(--header-bg, #0d1117);
+}
+
+.la-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color, #c9d1d9);
+    flex: 1;
+    min-width: 0;
+}
+
+.la-panel-title i {
+    color: var(--accent-color, #58a6ff);
+    font-size: 15px;
+}
+
+/* ── Live readers pill ─────────────────────────────────────── */
+.la-live-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(63, 185, 80, 0.12);
+    border: 1px solid rgba(63, 185, 80, 0.35);
+    border-radius: 20px;
+    padding: 2px 9px 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #3fb950;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.la-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3fb950;
+    animation: la-pulse 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes la-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.45; transform: scale(0.75); }
+}
+
+/* ── Panel action buttons ──────────────────────────────────── */
+.la-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.la-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--border-color, #30363d);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted, #8b949e);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.la-action-btn:hover {
+    background: var(--hover-bg, rgba(255,255,255,0.06));
+    color: var(--text-color, #c9d1d9);
+    border-color: var(--accent-color, #58a6ff);
+}
+
+.la-close-btn:hover {
+    background: rgba(248, 81, 73, 0.15);
+    border-color: #f85149;
+    color: #f85149;
+}
+
+/* ── Doc summary row (views + live readers) ────────────────── */
+.la-doc-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+    margin: 0 12px 10px;
+    border-radius: 8px;
+    background: rgba(88, 166, 255, 0.07);
+    border: 1px solid rgba(88, 166, 255, 0.18);
+}
+
+.la-doc-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color, #c9d1d9);
+}
+
+.la-doc-live {
+    color: #3fb950;
+}
+
+.la-dot-sm {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3fb950;
+    animation: la-pulse 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+/* ── Panel body ────────────────────────────────────────────── */
+.la-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+    scroll-behavior: smooth;
+}
+
+.la-panel-body::-webkit-scrollbar { width: 5px; }
+.la-panel-body::-webkit-scrollbar-track { background: transparent; }
+.la-panel-body::-webkit-scrollbar-thumb { background: var(--border-color, #30363d); border-radius: 3px; }
+
+/* ── Stats meta row ────────────────────────────────────────── */
+.la-stats-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 16px 12px;
+    font-size: 12px;
+    color: var(--text-muted, #8b949e);
+}
+
+.la-stats-meta i { color: var(--accent-color, #58a6ff); }
+
+/* ── Link list ─────────────────────────────────────────────── */
+.la-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.la-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--code-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--border-color, #30363d);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.la-item:hover {
+    border-color: var(--accent-color, #58a6ff);
+    background: rgba(88, 166, 255, 0.06);
+}
+
+/* Trophy tiers */
+.la-rank-1 { border-left: 3px solid #f79400; }
+.la-rank-2 { border-left: 3px solid #8b949e; }
+.la-rank-3 { border-left: 3px solid #c96d3a; }
+
+.la-item-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.la-item-rank {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted, #8b949e);
+    width: 18px;
+    text-align: center;
+}
+
+.la-item-href {
+    flex: 1;
+    font-size: 12px;
+    color: var(--link-color, #58a6ff);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.la-item-href:hover { text-decoration: underline; }
+
+.la-item-count {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color, #c9d1d9);
+}
+
+.la-item-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted, #8b949e);
+    margin-left: 2px;
+}
+
+/* Progress bar */
+.la-bar-track {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border-color, #30363d);
+    overflow: hidden;
+}
+
+.la-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-color, #58a6ff) 0%, #a371f7 100%);
+    transition: width 0.6s cubic-bezier(.22,1,.36,1);
+}
+
+.la-rank-1 .la-bar-fill { background: linear-gradient(90deg, #f79400, #f1e05a); }
+.la-rank-2 .la-bar-fill { background: linear-gradient(90deg, #8b949e, #c9d1d9); }
+.la-rank-3 .la-bar-fill { background: linear-gradient(90deg, #c96d3a, #e3a87c); }
+
+.la-item-meta {
+    margin-top: 5px;
+}
+
+.la-item-time {
+    font-size: 10px;
+    color: var(--text-muted, #8b949e);
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+.la-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-muted, #8b949e);
+}
+
+.la-empty-icon {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.la-empty p { margin: 6px 0; font-size: 13px; }
+.la-empty-hint { font-size: 11px; opacity: 0.7; }
+
+/* ── Loading spinner ───────────────────────────────────────── */
+.la-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 48px 24px;
+    color: var(--text-muted, #8b949e);
+    font-size: 13px;
+}
+
+@keyframes la-spin {
+    to { transform: rotate(360deg); }
+}
+.la-spin {
+    display: inline-block;
+    animation: la-spin 0.8s linear infinite;
+}
+
+/* ── Toolbar button ────────────────────────────────────────── */
+#la-toolbar-btn {
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Light theme overrides ─────────────────────────────────── */
+[data-theme="light"] .la-panel {
+    background: #ffffff;
+    border-left-color: #d0d7de;
+}
+
+[data-theme="light"] .la-panel-header {
+    background: #f6f8fa;
+    border-bottom-color: #d0d7de;
+}
+
+[data-theme="light"] .la-item {
+    background: #f6f8fa;
+    border-color: #d0d7de;
+}
+
+[data-theme="light"] .la-badge {
+    background: var(--accent-color, #0969da);
+}
+
+[data-theme="light"] .la-bar-track {
+    background: #e1e4e8;
+}

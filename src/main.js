@@ -52,6 +52,7 @@ import '../css/echarts.css';
 import '../css/chart-docgen.css';
 import '../css/ai-tags.css';
 import '../css/spaces.css';
+import '../css/link-analytics.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -105,6 +106,13 @@ async function loadModules() {
         import('../js/page-view.js'),
         import('../js/composer.js'),
     ]);
+
+    // 3a-ext: Link Analytics (standalone — loaded after 3a so M.db and M.renderMarkdown are ready)
+    try {
+        await import('../js/link-analytics.js');
+    } catch (e) {
+        console.warn('[TextAgent] link-analytics.js failed to load:', e);
+    }
 
     // 3b-pre: Document Variables façade (must load before exec-sandbox, templates, ai-docgen, api-docgen)
     await import('../js/doc-vars.js');
