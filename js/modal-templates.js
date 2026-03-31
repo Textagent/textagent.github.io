@@ -359,6 +359,27 @@
                     <i class="bi bi-paperclip"></i>
                 </button>
                 <input type="file" id="ai-file-input" multiple accept="image/*,.txt,.md,.csv,.json,.pdf,.xml,.yaml,.yml,.log,.js,.ts,.py,.html,.css" style="display:none" />
+                <!-- Screenshot → AI button -->
+                <div class="ai-screenshot-wrapper" style="position:relative">
+                    <button id="ai-screenshot-btn" class="ai-attach-button ai-screenshot-btn" title="Screenshot → AI" type="button">
+                        <i class="bi bi-camera"></i>
+                    </button>
+                    <div id="ai-screenshot-menu" class="ai-screenshot-menu">
+                        <button id="ai-screenshot-page" class="ai-screenshot-item" type="button">
+                            <i class="bi bi-window"></i>
+                            <span>Capture Page</span>
+                        </button>
+                        <button id="ai-screenshot-screen" class="ai-screenshot-item" type="button">
+                            <i class="bi bi-display"></i>
+                            <span>Capture Screen</span>
+                        </button>
+                        <button id="ai-screenshot-upload" class="ai-screenshot-item" type="button">
+                            <i class="bi bi-image"></i>
+                            <span>Upload Image</span>
+                        </button>
+                    </div>
+                    <input type="file" id="ai-screenshot-file-input" accept="image/*" style="display:none" />
+                </div>
                 <textarea id="ai-input" placeholder="Ask AI anything... (e.g. 'Write a README intro')"
                     rows="1"></textarea>
                 <button id="ai-send-btn" class="ai-send-button" title="Send">

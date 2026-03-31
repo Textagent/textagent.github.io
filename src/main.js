@@ -166,6 +166,11 @@ async function loadModules() {
     await import('../js/ai-chat.js');
     await import('../js/ai-actions.js');
     await import('../js/ai-image.js');
+    try {
+        await import('../js/ai-screenshot.js'); // Screenshot to AI Chat
+    } catch (e) {
+        console.warn('[TextAgent] ai-screenshot.js failed to load:', e);
+    }
 
     // 3e: DocGen (depends on ai-assistant's requestAiTask API)
     await import('../js/ai-docgen.js');
