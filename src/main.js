@@ -53,6 +53,7 @@ import '../css/chart-docgen.css';
 import '../css/ai-tags.css';
 import '../css/spaces.css';
 import '../css/link-analytics.css';
+import '../css/research-loop.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -205,6 +206,9 @@ async function loadModules() {
 
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');
+
+    // 3g-ext: Research Loop Component (depends on M.requestAiTask, Pyodide runtime)
+    await import('../js/research-loop.js');
 
     // 3h: Game Builder Component (standalone — remove to disable feature)
     await import('../js/game-prebuilts.js');

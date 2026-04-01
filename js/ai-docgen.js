@@ -154,7 +154,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT|Research):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -377,7 +377,7 @@
         // Auto-rename duplicate Memory names in editor + input
         markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT|Research):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -446,6 +446,15 @@
             result += markdown.substring(lastIndex, match.index);
 
             var type = match[1];
+
+            // Research tags are handled by research-loop.js — pass through unchanged
+            if (type === 'Research') {
+                result += match[0];
+                blockIndex++;
+                lastIndex = match.index + match[0].length;
+                continue;
+            }
+
             var prompt = match[2].trim();
             var thinkFieldMatch = prompt.match(/^(?:@think|Think):\s*(yes|no)$/mi);
             var hasThink = thinkFieldMatch ? thinkFieldMatch[1].toLowerCase() === 'yes' : false;

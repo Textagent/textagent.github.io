@@ -242,15 +242,19 @@
         var aiTagMarkdown = M.transformAiTagMarkdown
             ? M.transformAiTagMarkdown(chartMarkdown)
             : chartMarkdown;
+        // Chain Research Loop transform
+        var researchMarkdown = M.transformResearchMarkdown
+            ? M.transformResearchMarkdown(aiTagMarkdown)
+            : aiTagMarkdown;
         // Convert <!-- pagebreak --> comments into visible div markers
-        aiTagMarkdown = aiTagMarkdown.replace(
+        researchMarkdown = researchMarkdown.replace(
             /<!--\s*pagebreak\s*-->/gi,
             '\n<div class="page-break-marker" data-pagebreak="true"></div>\n'
         );
-        var html = marked.parse(aiTagMarkdown);
+        var html = marked.parse(researchMarkdown);
         var sanitizedHtml = DOMPurify.sanitize(html, {
             ADD_TAGS: ['mjx-container', 'button', 'select', 'option', 'video', 'source', 'iframe', 'video-player', 'video-skin'],
-            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action', 'data-pagebreak', 'data-draw-index', 'data-draw-tool', 'data-tool', 'data-skill', 'spellcheck', 'rows', 'data-tools-index', 'data-tools-action', 'data-tools-copy', 'data-form-index', 'data-name', 'novalidate', 'min', 'max', 'placeholder', 'for', 'data-quiz-index', 'data-bi', 'data-q', 'data-val', 'data-correct', 'data-goto', 'data-right', 'data-pair', 'data-pi', 'data-item', 'data-label', 'data-q-type', 'data-q-template', 'draggable', 'disabled', 'data-field', 'required', 'data-echarts-option', 'data-echarts-code', 'data-rendered', 'data-chart-index', 'data-series-type', 'data-series-template', 'data-tag-id', 'data-tag-type', 'data-tag-color', 'data-tag-count', 'data-tag-anchor', 'data-tag-label', 'data-tag-data']
+            ADD_ATTR: ['id', 'class', 'data-lang', 'data-autorun', 'data-ai-type', 'data-ai-index', 'data-ai-block', 'data-api-index', 'data-linux-index', 'data-linux-lang', 'value', 'title', 'selected', 'data-model-id', 'data-memory-name', 'data-step', 'data-symbol', 'data-widget-loaded', 'data-var-prefix', 'data-range', 'data-interval', 'data-ema', 'data-video-src', 'controls', 'preload', 'playsinline', 'src', 'srcdoc', 'type', 'slot', 'poster', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'sandbox', 'loading', 'data-cols', 'target', 'rel', 'width', 'height', 'data-ocr-mode', 'data-mode', 'data-upload-index', 'data-var-name', 'data-game-index', 'data-game-engine', 'data-engine', 'data-git-index', 'data-git-action', 'data-git-repo', 'data-git-copy', 'data-action', 'data-pagebreak', 'data-draw-index', 'data-draw-tool', 'data-tool', 'data-skill', 'spellcheck', 'rows', 'data-tools-index', 'data-tools-action', 'data-tools-copy', 'data-form-index', 'data-name', 'novalidate', 'min', 'max', 'placeholder', 'for', 'data-quiz-index', 'data-bi', 'data-q', 'data-val', 'data-correct', 'data-goto', 'data-right', 'data-pair', 'data-pi', 'data-item', 'data-label', 'data-q-type', 'data-q-template', 'draggable', 'disabled', 'data-field', 'required', 'data-echarts-option', 'data-echarts-code', 'data-rendered', 'data-chart-index', 'data-series-type', 'data-series-template', 'data-tag-id', 'data-tag-type', 'data-tag-color', 'data-tag-count', 'data-tag-anchor', 'data-tag-label', 'data-tag-data', 'data-research-index']
         });
         container.innerHTML = sanitizedHtml;
 
@@ -454,6 +458,9 @@
 
             // AI Tags: bind pill click handlers
             if (M.bindAiTagPreviewActions) M.bindAiTagPreviewActions(M.markdownPreview);
+
+            // Research: bind research loop card actions
+            if (M.bindResearchPreviewActions) M.bindResearchPreviewActions(M.markdownPreview);
 
             // Finance: render TradingView stock widgets
             if (M.renderStockWidgets) M.renderStockWidgets(M.markdownPreview);
