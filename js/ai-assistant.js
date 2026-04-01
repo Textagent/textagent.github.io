@@ -942,9 +942,9 @@
             if (onError) { onError(msg.message); onError = null; }
             else {
               addAiStatusBar('error', msg.message);
-              // Show clickable "Change API Key" link in status bar for auth errors
+              // Show clickable "Change API Key" link in header status for auth errors
               if (msg.message.includes('API key') || msg.message.includes('Invalid') || msg.message.includes('401')) {
-                const bar = aiPanel.querySelector('.ai-status-bar');
+                const bar = document.getElementById('ai-header-status');
                 if (bar) {
                   const link = document.createElement('a');
                   link.href = '#';
@@ -986,19 +986,19 @@
 
   // --- Send to AI (routes to active model's worker) ---
 
-  // --- Status Bar ---
+  // --- Status Bar (inline in header) ---
   function addAiStatusBar(status, text) {
-    // Remove existing status bar
-    const existing = aiPanel.querySelector('.ai-status-bar');
-    if (existing) existing.remove();
-
-    const bar = document.createElement('div');
-    bar.className = 'ai-status-bar';
-    bar.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
-
-    // Insert after header
-    const header = aiPanel.querySelector('.ai-panel-header');
-    header.insertAdjacentElement('afterend', bar);
+    // Update the inline status inside the header
+    const headerStatus = document.getElementById('ai-header-status');
+    if (headerStatus) {
+      headerStatus.innerHTML = `<span class="ai-status-dot ${status}"></span> ${text}`;
+    }
+    // Remove the standalone download progress bar when model is ready or errored
+    // (keep it alive during 'loading' so the progress bar continues updating)
+    if (status === 'ready' || status === 'error') {
+      const allBars = aiPanel.querySelectorAll('.ai-status-bar');
+      allBars.forEach(bar => bar.remove());
+    }
   }
 
   // Show inline consent bar for Qwen download (falls through to popup)

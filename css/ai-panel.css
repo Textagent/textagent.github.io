@@ -122,10 +122,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 10px 18px;
   border-bottom: 1px solid var(--border-color);
   background: var(--header-bg);
   flex-shrink: 0;
+  min-height: 0;
 }
 
 .ai-panel-title {
@@ -135,14 +136,50 @@
   font-weight: 600;
   font-size: 15px;
   color: var(--text-color);
+  min-width: 0;
+  overflow: hidden;
 }
 
-.ai-panel-title i {
+.ai-panel-title > i {
   font-size: 18px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  flex-shrink: 0;
+}
+
+.ai-panel-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ai-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Inline status (merged into header) */
+.ai-header-status {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-color);
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 14px;
+  transition: opacity 0.2s;
+}
+
+.ai-header-status:empty {
+  display: none;
 }
 
 .ai-badge {
@@ -164,6 +201,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 /* Input options row (below textarea) */
@@ -317,6 +355,66 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  justify-content: center;
+  align-items: center;
+  min-height: 0;
+  transition: justify-content 0.3s ease, align-items 0.3s ease;
+}
+
+/* When messages exist, switch to top-aligned scrollable conversation */
+.ai-chat-area:has(.ai-message) {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+/* ========================================
+   CENTERED INITIAL STATE (Claude-like)
+   When welcome message is showing, center
+   the greeting + input together in the panel
+   ======================================== */
+
+/* Both areas split remaining flex space equally —
+   chat pushes content down, input pushes content up,
+   so they meet in the center */
+.ai-panel:has(.ai-welcome-message) .ai-chat-area {
+  flex: 1 1 0;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 4px;
+  overflow-y: hidden;
+}
+
+.ai-panel:has(.ai-welcome-message) .ai-input-area {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  border-top: none;
+  background: transparent;
+  padding-top: 8px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Constrain input children width within centered area */
+.ai-panel:has(.ai-welcome-message) .ai-input-area > .ai-model-selector,
+.ai-panel:has(.ai-welcome-message) .ai-input-area > .ai-attachments-strip,
+.ai-panel:has(.ai-welcome-message) .ai-input-area > .ai-input-wrapper {
+  max-width: 440px;
+  width: 100%;
+}
+
+/* Style the model selector in centered state */
+.ai-panel:has(.ai-welcome-message) .ai-input-area > .ai-model-selector {
+  max-width: 440px;
+  width: 100%;
+  order: 1; /* Push below input wrapper */
+  margin-top: 8px;
+}
+
+/* Also hide quick actions in initial state for cleaner look */
+.ai-panel:has(.ai-welcome-message) .ai-quick-actions {
+  display: none;
 }
 
 .ai-chat-area::-webkit-scrollbar {
@@ -557,6 +655,7 @@
   border-top: 1px solid var(--border-color);
   background: var(--header-bg);
   flex-shrink: 0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* --- Model Selector --- */
@@ -865,7 +964,12 @@
 
 .ai-attach-button i {
   font-size: 15px;
-  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+/* Rotate '+' to 'x' when menu is open */
+.ai-attach-wrapper:has(.ai-screenshot-menu.active) .ai-attach-button i {
+  transform: rotate(45deg);
 }
 
 /* --- Attachments Preview Strip --- */
@@ -1531,6 +1635,7 @@
   /* Compact input area on mobile */
   .ai-input-area {
     padding: 8px 10px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 
   /* --- Merge model selector into chat bar on mobile --- */
@@ -1641,15 +1746,35 @@
   .ai-action-chip i {
     font-size: 11px;
   }
+
+  /* Mobile centered initial state overrides */
+  .ai-panel:has(.ai-welcome-message) .ai-input-area {
+    padding: 8px 10px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .ai-panel:has(.ai-welcome-message) .ai-input-area > .ai-input-wrapper {
+    max-width: 100%;
+  }
+
+  /* Reset model selector absolute positioning in centered state */
+  .ai-panel:has(.ai-welcome-message) .ai-model-selector {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    right: auto;
+  }
 }
 
-/* --- AI Status Indicator (in-panel) --- */
+/* --- AI Status Indicator (in-panel) ---
+   Regular status now shown inline in header.
+   Download progress bar still uses standalone bar. */
 .ai-status-bar {
   padding: 8px 16px;
   font-size: 12px;
   color: var(--text-color);
   opacity: 0.6;
-  display: flex;
+  display: none; /* Hidden by default — only shown for downloads */
   align-items: center;
   gap: 6px;
   border-bottom: 1px solid var(--border-color);
@@ -1658,6 +1783,7 @@
 }
 
 .ai-status-bar.downloading {
+  display: flex; /* Override default display:none for downloads */
   opacity: 1;
   flex-direction: column;
   align-items: stretch;

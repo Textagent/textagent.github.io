@@ -10,69 +10,47 @@
     // ---- State ----
     var _busy = false;
 
-    // ---- Self-heal: inject button HTML if modal-templates.js was cached ----
-    // This runs at module-load time (Phase 3d) — #ai-file-input is already in DOM
+    // ---- Self-heal: inject menu items if modal-templates.js was cached ----
+    // Checks if the screenshot items exist inside the merged attach menu
     (function injectButtonIfMissing() {
-        if (document.getElementById('ai-screenshot-btn')) return; // already there
-        var attachInput = document.getElementById('ai-file-input');
-        if (!attachInput) return; // AI panel not ready — skip
-        var wrapper = document.createElement('div');
-        wrapper.className = 'ai-screenshot-wrapper';
-        wrapper.style.cssText = 'position:relative; display:inline-flex; align-items:center;';
-        wrapper.innerHTML =
-            '<button id="ai-screenshot-btn" class="ai-attach-button ai-screenshot-btn" title="Screenshot to AI" type="button">' +
-            '  <i class="bi bi-camera"></i>' +
-            '</button>' +
-            '<div id="ai-screenshot-menu" class="ai-screenshot-menu" style="display:none; position:absolute; bottom:calc(100% + 6px); left:0; z-index:9999; background:#1e2030; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px; min-width:160px; box-shadow:0 8px 24px rgba(0,0,0,0.4);">' +
-            '  <button id="ai-screenshot-page" class="ai-screenshot-item" type="button" style="display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; background:none; border:none; color:#e0e0e0; cursor:pointer; border-radius:6px; font-size:13px;"><i class="bi bi-window"></i><span>Capture Page</span></button>' +
-            '  <button id="ai-screenshot-screen" class="ai-screenshot-item" type="button" style="display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; background:none; border:none; color:#e0e0e0; cursor:pointer; border-radius:6px; font-size:13px;"><i class="bi bi-display"></i><span>Capture Screen</span></button>' +
-            '  <button id="ai-screenshot-upload" class="ai-screenshot-item" type="button" style="display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; background:none; border:none; color:#e0e0e0; cursor:pointer; border-radius:6px; font-size:13px;"><i class="bi bi-image"></i><span>Upload Image</span></button>' +
-            '</div>' +
-            '<input type="file" id="ai-screenshot-file-input" accept="image/*" style="display:none" />';
-        attachInput.insertAdjacentElement('afterend', wrapper);
-        console.log('[Screenshot] Button injected (cache-heal)');
+        if (document.getElementById('ai-screenshot-page')) return; // already there
+        var attachMenu = document.getElementById('ai-attach-menu');
+        if (!attachMenu) return; // merged menu not ready — skip
+        // Add screenshot items to the merged menu
+        var items =
+            '<button id="ai-screenshot-page" class="ai-screenshot-item" type="button"><i class="bi bi-window"></i><span>Capture Page</span></button>' +
+            '<button id="ai-screenshot-screen" class="ai-screenshot-item" type="button"><i class="bi bi-display"></i><span>Capture Screen</span></button>' +
+            '<button id="ai-screenshot-upload" class="ai-screenshot-item" type="button"><i class="bi bi-image"></i><span>Upload Image</span></button>';
+        attachMenu.insertAdjacentHTML('beforeend', items);
+        // Ensure file input exists
+        if (!document.getElementById('ai-screenshot-file-input')) {
+            attachMenu.insertAdjacentHTML('afterend', '<input type="file" id="ai-screenshot-file-input" accept="image/*" style="display:none" />');
+        }
+        console.log('[Screenshot] Menu items injected (cache-heal)');
     })();
 
     // ---- Event delegation — works regardless of when panel HTML renders ----
     document.addEventListener('click', function (e) {
-        // Toggle camera dropdown
-        if (e.target.closest('#ai-screenshot-btn')) {
-            e.stopPropagation();
-            var menu = document.getElementById('ai-screenshot-menu');
-            if (menu) {
-                var isOpen = menu.style.display !== 'none';
-                menu.style.display = isOpen ? 'none' : 'block';
-                menu.classList.toggle('active', !isOpen);
-            }
-            return;
-        }
-
-        // Close dropdown on outside click
-        if (!e.target.closest('#ai-screenshot-menu') && !e.target.closest('#ai-screenshot-btn')) {
-            var menu2 = document.getElementById('ai-screenshot-menu');
-            if (menu2) { menu2.style.display = 'none'; menu2.classList.remove('active'); }
-        }
-
         // Capture Page
         if (e.target.closest('#ai-screenshot-page')) {
-            var menu3 = document.getElementById('ai-screenshot-menu');
-            if (menu3) { menu3.style.display = 'none'; menu3.classList.remove('active'); }
+            var menu = document.getElementById('ai-attach-menu');
+            if (menu) { menu.style.display = 'none'; menu.classList.remove('active'); }
             capturePageScreenshot();
             return;
         }
 
         // Capture Screen
         if (e.target.closest('#ai-screenshot-screen')) {
-            var menu4 = document.getElementById('ai-screenshot-menu');
-            if (menu4) { menu4.style.display = 'none'; menu4.classList.remove('active'); }
+            var menu2 = document.getElementById('ai-attach-menu');
+            if (menu2) { menu2.style.display = 'none'; menu2.classList.remove('active'); }
             captureScreenScreenshot();
             return;
         }
 
         // Upload Image
         if (e.target.closest('#ai-screenshot-upload')) {
-            var menu5 = document.getElementById('ai-screenshot-menu');
-            if (menu5) { menu5.style.display = 'none'; menu5.classList.remove('active'); }
+            var menu3 = document.getElementById('ai-attach-menu');
+            if (menu3) { menu3.style.display = 'none'; menu3.classList.remove('active'); }
             var input = document.getElementById('ai-screenshot-file-input');
             if (input) input.click();
             return;

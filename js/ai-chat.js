@@ -1086,11 +1086,35 @@
         });
     }
 
-    // --- Attach Button ---
-    if (aiAttachBtn && aiFileInput) {
-        aiAttachBtn.addEventListener('click', function () {
-            aiFileInput.click();
+    // --- Unified Attach Button (merged attach + screenshot) ---
+    if (aiAttachBtn) {
+        aiAttachBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var menu = document.getElementById('ai-attach-menu');
+            if (menu) {
+                var isOpen = menu.classList.contains('active');
+                menu.style.display = isOpen ? 'none' : 'flex';
+                menu.classList.toggle('active', !isOpen);
+            }
         });
+    }
+
+    // "Attach File" menu item opens file picker
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('#ai-attach-file-item')) {
+            var menu = document.getElementById('ai-attach-menu');
+            if (menu) { menu.style.display = 'none'; menu.classList.remove('active'); }
+            if (aiFileInput) aiFileInput.click();
+            return;
+        }
+        // Close menu on outside click (but not if clicking the toggle button itself)
+        if (!e.target.closest('#ai-attach-menu') && !e.target.closest('#ai-attach-btn')) {
+            var menu2 = document.getElementById('ai-attach-menu');
+            if (menu2) { menu2.style.display = 'none'; menu2.classList.remove('active'); }
+        }
+    });
+
+    if (aiFileInput) {
         aiFileInput.addEventListener('change', function () {
             if (aiFileInput.files && aiFileInput.files.length > 0) {
                 addFilesToPending(aiFileInput.files);

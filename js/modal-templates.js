@@ -240,8 +240,13 @@
         <div class="ai-panel-header">
             <div class="ai-panel-title">
                 <i class="bi bi-stars"></i>
-                <span>AI Assistant</span>
-                <span class="ai-badge" id="ai-model-badge">Qwen 3.5 · Local</span>
+                <div class="ai-panel-title-group">
+                    <div class="ai-panel-title-row">
+                        <span>AI Assistant</span>
+                        <span class="ai-badge" id="ai-model-badge">Qwen 3.5 · Local</span>
+                    </div>
+                    <div class="ai-header-status" id="ai-header-status"></div>
+                </div>
             </div>
             <div class="ai-panel-controls">
                 <label class="ai-search-toggle" title="Toggle Web Search">
@@ -355,16 +360,15 @@
                 <button id="ai-mobile-model-btn" class="ai-mobile-model-btn" title="Switch AI model" type="button">
                     <i class="bi bi-pc-display" id="ai-mobile-model-icon"></i>
                 </button>
-                <button id="ai-attach-btn" class="ai-attach-button" title="Attach files or images" type="button">
-                    <i class="bi bi-paperclip"></i>
-                </button>
-                <input type="file" id="ai-file-input" multiple accept="image/*,.txt,.md,.csv,.json,.pdf,.xml,.yaml,.yml,.log,.js,.ts,.py,.html,.css" style="display:none" />
-                <!-- Screenshot → AI button -->
-                <div class="ai-screenshot-wrapper" style="position:relative">
-                    <button id="ai-screenshot-btn" class="ai-attach-button ai-screenshot-btn" title="Screenshot → AI" type="button">
-                        <i class="bi bi-camera"></i>
+                <div class="ai-attach-wrapper" style="position:relative">
+                    <button id="ai-attach-btn" class="ai-attach-button" title="Attach files, images, or screenshots" type="button">
+                        <i class="bi bi-plus-lg"></i>
                     </button>
-                    <div id="ai-screenshot-menu" class="ai-screenshot-menu">
+                    <div id="ai-attach-menu" class="ai-screenshot-menu">
+                        <button id="ai-attach-file-item" class="ai-screenshot-item" type="button">
+                            <i class="bi bi-paperclip"></i>
+                            <span>Attach File</span>
+                        </button>
                         <button id="ai-screenshot-page" class="ai-screenshot-item" type="button">
                             <i class="bi bi-window"></i>
                             <span>Capture Page</span>
@@ -378,6 +382,7 @@
                             <span>Upload Image</span>
                         </button>
                     </div>
+                    <input type="file" id="ai-file-input" multiple accept="image/*,.txt,.md,.csv,.json,.pdf,.xml,.yaml,.yml,.log,.js,.ts,.py,.html,.css" style="display:none" />
                     <input type="file" id="ai-screenshot-file-input" accept="image/*" style="display:none" />
                 </div>
                 <textarea id="ai-input" placeholder="Ask AI anything... (e.g. 'Write a README intro')"
