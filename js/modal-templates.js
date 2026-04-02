@@ -922,19 +922,40 @@ const chatResponse = await openai.chat.completions.create({
                     <div style="text-align:center;margin-bottom:16px">
                         <i class="bi bi-key" style="font-size:2rem;color:var(--accent-color)"></i>
                         <p style="margin:8px 0 0;font-size:14px;color:var(--text-color)"><strong>Recover Your Space</strong></p>
-                        <p style="margin:4px 0 0;font-size:13px;opacity:0.6;color:var(--text-color)">Enter your space slug and the access key from your email.</p>
+                        <p style="margin:4px 0 0;font-size:13px;opacity:0.6;color:var(--text-color)">Enter your email and access key from your confirmation email.</p>
                     </div>
-                    <div class="spaces-form-group">
-                        <label>Space URL Slug</label>
-                        <div class="spaces-slug-wrapper">
-                            <span class="spaces-slug-prefix">#space=</span>
-                            <input type="text" id="spaces-recover-slug" placeholder="my-research" maxlength="50" />
+                    <!-- Recover mode tabs -->
+                    <div style="display:flex;gap:6px;margin-bottom:14px">
+                        <button class="spaces-btn-primary spaces-recover-mode-btn" data-mode="email" id="spaces-recover-mode-email" style="flex:1;font-size:12px;padding:6px 8px"><i class="bi bi-envelope me-1"></i>By Email</button>
+                        <button class="spaces-btn-secondary spaces-recover-mode-btn" data-mode="slug" id="spaces-recover-mode-slug" style="flex:1;font-size:12px;padding:6px 8px"><i class="bi bi-link-45deg me-1"></i>By Slug</button>
+                    </div>
+                    <!-- Email mode -->
+                    <div id="spaces-recover-email-mode">
+                        <div class="spaces-form-group">
+                            <label><i class="bi bi-envelope me-1"></i>Your Email</label>
+                            <input type="email" id="spaces-recover-email" placeholder="your@email.com" maxlength="200" />
+                            <small>The email you used when creating the space.</small>
+                        </div>
+                        <div class="spaces-form-group">
+                            <label><i class="bi bi-key me-1"></i>Access Key</label>
+                            <input type="text" id="spaces-recover-key-email" placeholder="Paste the key from your email" />
+                            <small>Check the email you received when creating this space.</small>
                         </div>
                     </div>
-                    <div class="spaces-form-group">
-                        <label><i class="bi bi-key me-1"></i>Access Key</label>
-                        <input type="text" id="spaces-recover-key" placeholder="Paste the key from your email" />
-                        <small>Check the email you used when creating this space.</small>
+                    <!-- Slug mode (hidden by default) -->
+                    <div id="spaces-recover-slug-mode" style="display:none">
+                        <div class="spaces-form-group">
+                            <label>Space URL Slug</label>
+                            <div class="spaces-slug-wrapper">
+                                <span class="spaces-slug-prefix">#space=</span>
+                                <input type="text" id="spaces-recover-slug" placeholder="my-research" maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="spaces-form-group">
+                            <label><i class="bi bi-key me-1"></i>Access Key</label>
+                            <input type="text" id="spaces-recover-key" placeholder="Paste the key from your email" />
+                            <small>Check the email you used when creating this space.</small>
+                        </div>
                     </div>
                     <div id="spaces-recover-error" class="share-error" style="display:none"></div>
                     <div style="margin-top:16px;text-align:center">

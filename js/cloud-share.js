@@ -1509,11 +1509,32 @@
             // Google Apps Script redirects (302) without CORS headers,
             // so we use no-cors mode. The response is opaque (can't read body),
             // but the email is sent server-side regardless.
+
+            // Build email body with all relevant links embedded directly
+            // so the GAS renders them regardless of field-level handling.
+            var emailBody = '# ' + heading + '\n\n';
+            emailBody += '## 🔗 Share Links\n\n';
+            emailBody += '**Share Link (view):**\n' + shareUrl + '\n\n';
+            if (lastSharePassphrase) {
+                emailBody += '**Password:** `' + lastSharePassphrase + '`\n\n';
+                emailBody += '> ⚠️ Share the password separately from the link for maximum security.\n\n';
+            }
+            if (lastShareEditorUrl) {
+                emailBody += '**Editor Link (grants write access):**\n' + lastShareEditorUrl + '\n\n';
+                emailBody += '> ⚠️ Anyone with the editor link can edit the document. Share only with trusted collaborators.\n\n';
+            }
+            if (lastShareRespondentUrl) {
+                emailBody += '**Respondent Link (fill-only):**\n' + lastShareRespondentUrl + '\n\n';
+            }
+            emailBody += '---\n\n';
+            emailBody += '## 📄 Document Content\n\n';
+            emailBody += content;
+
             var emailPayload = {
                     email: email,
                     subject: subject,
                     title: heading,
-                    content: content,
+                    content: emailBody,
                     shareLink: shareUrl,
                     hp: emailHoneypot ? emailHoneypot.value : '',
                     ts: elapsed

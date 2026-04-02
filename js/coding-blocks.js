@@ -11,6 +11,7 @@
         'coding-math': '```math\nx = 5\nx^2 + 2*x + 1\n```\n',
         'coding-python': '```python\n# Your Python code\nprint("Hello, World!")\n```\n',
         'coding-html': '```html\n<!-- Your HTML -->\n<h3>Hello, World!</h3>\n<p>Edit this HTML and click <strong>Preview</strong> to see it rendered.</p>\n```\n',
+        'coding-html-autorun': '```html-autorun\n<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>HTML Viewer</title>\n<style>body{margin:0;padding:24px;font-family:system-ui,sans-serif;color:#555;background:#fff}</style>\n</head>\n<body>\n  <p style="opacity:0.6;font-size:14px">👆 Hover this block and click <strong>Load File</strong> in the toolbar to render your HTML document here.</p>\n</body>\n</html>\n```\n',
         'coding-js': '```javascript\n// Your JavaScript\nconsole.log("Hello, World!");\n```\n',
         'coding-sql': '```sql\nCREATE TABLE IF NOT EXISTS greetings (id INTEGER PRIMARY KEY, message TEXT);\nINSERT INTO greetings VALUES (1, \'Hello, World!\');\nSELECT * FROM greetings;\n```\n',
         'coding-latex': '$$\n\\frac{\\sqrt{2025} + \\sqrt{3025}}{\\sqrt{25}}\n$$\n'

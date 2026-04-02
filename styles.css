@@ -856,6 +856,49 @@ a:focus {
   background-color: #14b8a6;
 }
 
+/* Load File button — indigo accent */
+.html-load-file-btn {
+  background-color: #4f46e5;
+  border-color: rgba(79, 70, 229, 0.6);
+  color: #fff;
+}
+
+.html-load-file-btn:hover {
+  background-color: #6366f1;
+}
+
+[data-theme="dark"] .html-load-file-btn {
+  background-color: #4f46e5;
+  border-color: rgba(79, 70, 229, 0.5);
+}
+
+[data-theme="dark"] .html-load-file-btn:hover {
+  background-color: #6366f1;
+}
+
+/* Expand / Collapse button — neutral ghost */
+.html-expand-btn {
+  background-color: transparent;
+  border-color: var(--border-color);
+  color: var(--text-color);
+  padding: 4px 7px;
+}
+
+.html-expand-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--accent-color, #58a6ff);
+}
+
+[data-theme="dark"] .html-expand-btn {
+  color: #c9d1d9;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .html-expand-btn:hover {
+  background-color: #30363d;
+  border-color: #58a6ff;
+}
+
 /* HTML preview output area */
 .html-preview-output {
   display: none;
@@ -873,11 +916,18 @@ a:focus {
 
 .html-preview-frame {
   width: 100%;
-  min-height: 60px;
-  height: 200px;
+  min-height: 200px;
+  height: 600px;
   border: none;
   display: block;
   background-color: #fff;
+  transition: height 0.3s ease;
+}
+
+/* Expanded state — fills the preview pane */
+.html-preview-frame.html-frame-expanded {
+  height: 90vh !important;
+  min-height: 90vh;
 }
 
 /* When preview is open, remove bottom rounding from pre */

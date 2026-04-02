@@ -125,7 +125,7 @@
             .substring(0, 50);
     }
 
-    // --- Recover Space with Access Key ---
+    // --- Recover Space with Access Key (by slug) ---
     async function recoverSpace(slug, accessKey) {
         if (!slug || !slug.trim()) throw new Error('Space URL slug is required.');
         if (!accessKey || !accessKey.trim()) throw new Error('Access key is required.');
@@ -145,6 +145,41 @@
         saveMySpaces(spaces);
 
         return data;
+    }
+
+    // --- Recover Space by Email + Access Key ---
+    async function recoverSpaceByEmail(email, accessKey) {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('A valid email is required.');
+        if (!accessKey || !accessKey.trim()) throw new Error('Access key is required.');
+
+        accessKey = accessKey.trim();
+        var eh = await hashEmail(email);
+
+        // Query Firestore for all spaces with this email hash
+        var snapshot = await db.collection('spaces').where('eh', '==', eh).get();
+        if (snapshot.empty) throw new Error('No spaces found for that email address.');
+
+        // Find the space(s) that match the access key
+        var recovered = [];
+        snapshot.forEach(function (doc) {
+            var data = doc.data();
+            if (data.wt === accessKey) {
+                recovered.push({ slug: doc.id, data: data });
+            }
+        });
+
+        if (recovered.length === 0) {
+            throw new Error('Access key did not match any spaces for that email. Check the key from your email.');
+        }
+
+        // Restore all matching spaces to localStorage
+        var spaces = getMySpaces();
+        recovered.forEach(function (r) {
+            spaces[r.slug] = { wt: accessKey, name: r.data.name, t: Date.now() };
+        });
+        saveMySpaces(spaces);
+
+        return recovered;
     }
 
     async function addItemToSpace(slug, shareId, title) {
@@ -494,13 +529,49 @@
         if (createView) createView.style.display = 'none';
         if (recoverView) recoverView.style.display = '';
 
+        // Default to email mode
+        switchRecoverMode('email');
+
+        var emailInput = document.getElementById('spaces-recover-email');
+        var keyEmailInput = document.getElementById('spaces-recover-key-email');
         var slugInput = document.getElementById('spaces-recover-slug');
         var keyInput = document.getElementById('spaces-recover-key');
         var errorEl = document.getElementById('spaces-recover-error');
+        if (emailInput) emailInput.value = '';
+        if (keyEmailInput) keyEmailInput.value = '';
         if (slugInput) slugInput.value = '';
         if (keyInput) keyInput.value = '';
         if (errorEl) errorEl.style.display = 'none';
-        setTimeout(function () { if (slugInput) slugInput.focus(); }, 100);
+
+        // Pre-fill email from localStorage
+        var savedEmail = '';
+        try { savedEmail = localStorage.getItem(M.KEYS.EMAIL_SELF) || ''; } catch (e) { /* ignore */ }
+        if (emailInput && savedEmail) emailInput.value = savedEmail;
+
+        setTimeout(function () { if (emailInput) emailInput.focus(); }, 100);
+    }
+
+    var currentRecoverMode = 'email';
+    function switchRecoverMode(mode) {
+        currentRecoverMode = mode;
+        var emailModeEl = document.getElementById('spaces-recover-email-mode');
+        var slugModeEl = document.getElementById('spaces-recover-slug-mode');
+        var emailBtn = document.getElementById('spaces-recover-mode-email');
+        var slugBtn = document.getElementById('spaces-recover-mode-slug');
+
+        if (emailModeEl) emailModeEl.style.display = (mode === 'email') ? '' : 'none';
+        if (slugModeEl) slugModeEl.style.display = (mode === 'slug') ? '' : 'none';
+
+        if (emailBtn) {
+            emailBtn.className = (mode === 'email')
+                ? 'spaces-btn-primary spaces-recover-mode-btn'
+                : 'spaces-btn-secondary spaces-recover-mode-btn';
+        }
+        if (slugBtn) {
+            slugBtn.className = (mode === 'slug')
+                ? 'spaces-btn-primary spaces-recover-mode-btn'
+                : 'spaces-btn-secondary spaces-recover-mode-btn';
+        }
     }
 
     // --- Wire Modal Events ---
@@ -570,37 +641,85 @@
         // Recover form submit
         var recoverSubmitBtn = document.getElementById('spaces-recover-submit');
         if (recoverSubmitBtn) recoverSubmitBtn.addEventListener('click', async function () {
-            var slugInput = document.getElementById('spaces-recover-slug');
-            var keyInput = document.getElementById('spaces-recover-key');
             var errorEl = document.getElementById('spaces-recover-error');
             var btn = this;
 
-            var slug = slugInput ? slugInput.value.trim() : '';
-            var key = keyInput ? keyInput.value.trim() : '';
-
-            if (!slug) {
-                if (errorEl) { errorEl.textContent = 'Space URL slug is required.'; errorEl.style.display = ''; }
-                return;
-            }
-            if (!key) {
-                if (errorEl) { errorEl.textContent = 'Access key is required. Check the email we sent when you created this space.'; errorEl.style.display = ''; }
-                return;
-            }
-
+            if (errorEl) errorEl.style.display = 'none';
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Recovering...';
-            if (errorEl) errorEl.style.display = 'none';
 
             try {
-                var data = await recoverSpace(slug, key);
-                if (M.showToast) M.showToast('✅ Space "' + data.name + '" recovered!', 'success');
-                showSpaceEditor(slug);
+                if (currentRecoverMode === 'email') {
+                    // Email + access key mode
+                    var emailInput = document.getElementById('spaces-recover-email');
+                    var keyEmailInput = document.getElementById('spaces-recover-key-email');
+                    var email = emailInput ? emailInput.value.trim() : '';
+                    var key = keyEmailInput ? keyEmailInput.value.trim() : '';
+
+                    if (!email) {
+                        if (errorEl) { errorEl.textContent = 'Email is required.'; errorEl.style.display = ''; }
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-key me-1"></i>Recover Space';
+                        return;
+                    }
+                    if (!key) {
+                        if (errorEl) { errorEl.textContent = 'Access key is required. Check the email we sent when you created this space.'; errorEl.style.display = ''; }
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-key me-1"></i>Recover Space';
+                        return;
+                    }
+
+                    var recovered = await recoverSpaceByEmail(email, key);
+                    // Persist email for convenience
+                    try { localStorage.setItem(M.KEYS.EMAIL_SELF, email); } catch (e) { /* ignore */ }
+
+                    if (recovered.length === 1) {
+                        if (M.showToast) M.showToast('✅ Space "' + recovered[0].data.name + '" recovered!', 'success');
+                        showSpaceEditor(recovered[0].slug);
+                    } else {
+                        if (M.showToast) M.showToast('✅ ' + recovered.length + ' spaces recovered!', 'success');
+                        showSpacesList();
+                    }
+
+                } else {
+                    // Slug + access key mode
+                    var slugInput = document.getElementById('spaces-recover-slug');
+                    var keyInput = document.getElementById('spaces-recover-key');
+                    var slug = slugInput ? slugInput.value.trim() : '';
+                    var key = keyInput ? keyInput.value.trim() : '';
+
+                    if (!slug) {
+                        if (errorEl) { errorEl.textContent = 'Space URL slug is required.'; errorEl.style.display = ''; }
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-key me-1"></i>Recover Space';
+                        return;
+                    }
+                    if (!key) {
+                        if (errorEl) { errorEl.textContent = 'Access key is required. Check the email we sent when you created this space.'; errorEl.style.display = ''; }
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-key me-1"></i>Recover Space';
+                        return;
+                    }
+
+                    var data = await recoverSpace(slug, key);
+                    if (M.showToast) M.showToast('✅ Space "' + data.name + '" recovered!', 'success');
+                    showSpaceEditor(slug);
+                }
             } catch (e) {
                 if (errorEl) { errorEl.textContent = e.message; errorEl.style.display = ''; }
             }
 
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-key me-1"></i>Recover Space';
+        });
+
+        // Recover mode tabs
+        document.querySelectorAll('.spaces-recover-mode-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var errorEl = document.getElementById('spaces-recover-error');
+                if (errorEl) errorEl.style.display = 'none';
+                switchRecoverMode(btn.getAttribute('data-mode'));
+            });
         });
 
         // Add current doc button
@@ -736,5 +855,6 @@
     M.closeSpacesModal = closeSpacesModal;
     M.populateShareSpacePicker = populateShareSpacePicker;
     M.recoverSpace = recoverSpace;
+    M.recoverSpaceByEmail = recoverSpaceByEmail;
 
 })(window.MDView);

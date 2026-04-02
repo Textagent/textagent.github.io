@@ -25,6 +25,7 @@
                 var preEl = container.querySelector('pre');
                 if (preEl) preEl.style.display = 'none';
 
+                // Show / hide source code
                 var btnToggle = document.createElement('button');
                 btnToggle.className = 'code-toolbar-btn code-copy-btn';
                 btnToggle.title = 'Show / hide source code';
@@ -39,6 +40,101 @@
                     }
                 });
                 toolbar.appendChild(btnToggle);
+
+                // ── Load HTML File button ──────────────────────────────────
+                var fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.html,.htm';
+                fileInput.style.display = 'none';
+                container.appendChild(fileInput);
+
+                var btnLoad = document.createElement('button');
+                btnLoad.className = 'code-toolbar-btn html-load-file-btn';
+                btnLoad.title = 'Load an HTML file into this block';
+                btnLoad.innerHTML = '<i class="bi bi-folder2-open"></i> Load File';
+                btnLoad.addEventListener('click', function () {
+                    fileInput.value = ''; // reset so same file can be re-selected
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', function () {
+                    var file = fileInput.files[0];
+                    if (!file) return;
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var htmlContent = e.target.result;
+
+                        // 1. Update the rendered iframe immediately
+                        var iframe = container.querySelector('.html-preview-frame');
+                        if (iframe) {
+                            iframe.srcdoc = injectLinkHandler(htmlContent);
+                            btnLoad.innerHTML = '<i class="bi bi-check-lg"></i> ' + file.name;
+                            setTimeout(function () {
+                                btnLoad.innerHTML = '<i class="bi bi-folder2-open"></i> Load File';
+                            }, 3000);
+                        }
+
+                        // 2. Write the HTML back into the markdown editor source
+                        // so the left pane shows the full file content
+                        var allContainers = Array.from(
+                            M.markdownPreview.querySelectorAll('.executable-html-container[data-autorun="true"]')
+                        );
+                        var blockIndex = allContainers.indexOf(container);
+                        if (blockIndex >= 0 && M.markdownEditor) {
+                            var src = M.markdownEditor.value;
+                            // Match all ```html-autorun ... ``` blocks
+                            var pattern = /(```html-autorun\n)([\s\S]*?)(```)/g;
+                            var count = 0;
+                            var newSrc = src.replace(pattern, function (match, open, body, close) {
+                                if (count === blockIndex) {
+                                    count++;
+                                    return open + htmlContent + '\n' + close;
+                                }
+                                count++;
+                                return match;
+                            });
+                            if (newSrc !== src) {
+                                M.markdownEditor.value = newSrc;
+                                // Trigger input event so word/char counts update
+                                M.markdownEditor.dispatchEvent(new Event('input'));
+                            }
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+
+                toolbar.appendChild(btnLoad);
+                // ─────────────────────────────────────────────────────────
+
+                // ── Expand / Collapse button ───────────────────────────────
+                var isExpanded = false;
+                var btnExpand = document.createElement('button');
+                btnExpand.className = 'code-toolbar-btn html-expand-btn';
+                btnExpand.title = 'Expand iframe to full height';
+                btnExpand.innerHTML = '<i class="bi bi-arrows-expand"></i>';
+                btnExpand.addEventListener('click', function () {
+                    var iframe = container.querySelector('.html-preview-frame');
+                    if (!iframe) return;
+                    isExpanded = !isExpanded;
+                    if (isExpanded) {
+                        iframe.classList.add('html-frame-expanded');
+                        btnExpand.innerHTML = '<i class="bi bi-arrows-collapse"></i>';
+                        btnExpand.title = 'Collapse iframe';
+                    } else {
+                        iframe.classList.remove('html-frame-expanded');
+                        btnExpand.innerHTML = '<i class="bi bi-arrows-expand"></i>';
+                        btnExpand.title = 'Expand iframe to full height';
+                        // Re-fit to content height
+                        try {
+                            var doc = iframe.contentDocument || iframe.contentWindow.document;
+                            var h = Math.min(doc.body.scrollHeight + 20, 5000);
+                            iframe.style.height = Math.max(h, 200) + 'px';
+                        } catch (e) { iframe.style.height = '600px'; }
+                    }
+                });
+                toolbar.appendChild(btnExpand);
+                // ─────────────────────────────────────────────────────────
+
                 container.insertBefore(toolbar, container.firstChild);
 
                 autorunHtmlBlock(container);
@@ -74,6 +170,42 @@
         });
     };
 
+    // ─────────────────────────────────────────────────────────────────────
+    // injectLinkHandler: fixes link behaviour inside iframe srcdoc
+    //   • Anchor-only links (#section) → smooth scroll within the iframe
+    //   • All other links             → open in a new tab (_blank)
+    // ─────────────────────────────────────────────────────────────────────
+    function injectLinkHandler(html) {
+        // Don't double-inject
+        if (/data-ta-links-injected/.test(html)) return html;
+
+        var injection = [
+            '<base target="_blank" rel="noopener noreferrer" data-ta-links-injected="1">',
+            '<script>',
+            'document.addEventListener("click", function(e) {',
+            '  var a = e.target.closest("a");',
+            '  if (!a) return;',
+            '  var href = a.getAttribute("href");',
+            '  if (!href) return;',
+            '  // Anchor-only link: scroll within the iframe',
+            '  if (href.charAt(0) === "#") {',
+            '    e.preventDefault();',
+            '    var el = document.querySelector(href);',
+            '    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });',
+            '  }',
+            '  // External / relative links: <base target="_blank"> handles them',
+            '}, true);',
+            '<\/script>'
+        ].join('\n');
+
+        // Inject right after <head> opening tag
+        if (/<head[^>]*>/i.test(html)) {
+            return html.replace(/(<head[^>]*>)/i, '$1\n' + injection);
+        }
+        // Fallback: prepend before everything
+        return injection + '\n' + html;
+    }
+
     function autorunHtmlBlock(container) {
         var codeEl = container.querySelector('code');
         if (!codeEl) return;
@@ -85,21 +217,32 @@
 
         var iframe = document.createElement('iframe');
         iframe.className = 'html-preview-frame';
-        iframe.setAttribute('sandbox', 'allow-scripts');
+        // allow-same-origin lets rich docs (charts, etc.) read their own DOM dimensions
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
         iframe.setAttribute('loading', 'lazy');
-        iframe.srcdoc = code;
+        iframe.srcdoc = injectLinkHandler(code);
         outputEl.appendChild(iframe);
         outputEl.style.display = 'block';
 
-        iframe.addEventListener('load', function () {
+        function fitHeight() {
+            if (iframe.classList.contains('html-frame-expanded')) return;
             try {
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
-                var height = Math.min(doc.body.scrollHeight + 20, 5000);
-                iframe.style.height = Math.max(height, 60) + 'px';
-            } catch (e) {
-                iframe.style.height = '400px';
-            }
+                var h = Math.min(doc.body.scrollHeight + 20, 5000);
+                if (h > 80) iframe.style.height = Math.max(h, 200) + 'px';
+            } catch (e) { /* cross-origin guard */ }
+        }
+
+        iframe.addEventListener('load', function () {
+            // Immediate fit
+            fitHeight();
+            // Retry after 800ms — catches Chart.js renders & font loads
+            setTimeout(fitHeight, 800);
+            // Final retry after 2s — catches slow CDN resources
+            setTimeout(fitHeight, 2000);
         });
+
+        return iframe;
     }
 
     function previewHtmlBlock(container, btnPreview) {
@@ -124,19 +267,19 @@
         outputEl.innerHTML = '';
         var iframe = document.createElement('iframe');
         iframe.className = 'html-preview-frame';
-        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
         iframe.setAttribute('loading', 'lazy');
-        iframe.srcdoc = code;
+        iframe.srcdoc = injectLinkHandler(code);
         outputEl.appendChild(iframe);
         outputEl.style.display = 'block';
 
         iframe.addEventListener('load', function () {
             try {
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
-                var height = Math.min(doc.body.scrollHeight + 20, 500);
-                iframe.style.height = Math.max(height, 60) + 'px';
+                var height = Math.min(doc.body.scrollHeight + 20, 5000);
+                iframe.style.height = Math.max(height, 200) + 'px';
             } catch (e) {
-                iframe.style.height = '200px';
+                iframe.style.height = '400px';
             }
         });
 
