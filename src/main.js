@@ -137,6 +137,14 @@ async function loadModules() {
     await import('../js/exec-controller.js');
     await import('../js/run-requirements.js');
 
+    // 3b-ext3: Research Loop Component (early load — depends on M.requestAiTask not being ready yet, but registers hooks)
+    try {
+        await import('../js/research-loop.js');
+        console.log('[TextAgent] ✅ research-loop.js loaded');
+    } catch (e) {
+        console.warn('[TextAgent] research-loop.js failed to load:', e);
+    }
+
     // 3c: Templates (parallel — all independent data modules)
     await Promise.all([
         import('../js/templates/documentation.js'),
@@ -207,8 +215,7 @@ async function loadModules() {
     // 3g: Linux Terminal Component (depends on M._showToast)
     await import('../js/linux-docgen.js');
 
-    // 3g-ext: Research Loop Component (depends on M.requestAiTask, Pyodide runtime)
-    await import('../js/research-loop.js');
+    // (research-loop.js moved to phase 3b-ext3 for early load)
 
     // 3h: Game Builder Component (standalone — remove to disable feature)
     await import('../js/game-prebuilts.js');

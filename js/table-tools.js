@@ -71,6 +71,8 @@
             seen.add(table);
             // Skip if already wrapped
             if (table.parentElement && table.parentElement.classList.contains('table-tools-container')) return;
+            // Skip research results tables — they have their own row-expand interaction
+            if (table.classList.contains('research-results-table')) return;
             // Skip tiny tables (1 row or less)
             if (table.querySelectorAll('tr').length < 2) return;
 

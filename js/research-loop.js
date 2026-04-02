@@ -45,11 +45,132 @@
         return false;
     }
 
+    /**
+     * Ensure AI model is loaded and ready before starting the research loop.
+     * Auto-triggers local model download consent or cloud API key prompt.
+     * Polls until ready or times out after 120s.
+     */
+    async function ensureResearchModelReady(modelId) {
+        var currentModel = modelId || (M.getCurrentAiModel ? M.getCurrentAiModel() : null);
+        if (!currentModel) {
+            throw new Error('No AI model selected. Please choose a model from the dropdown.');
+        }
+
+        // Already ready — fast path
+        if (M.isCurrentModelReady && M.isCurrentModelReady()) return true;
+
+        // Switch to the target model first
+        if (M.switchToModel) M.switchToModel(currentModel);
+
+        // Local model — auto-trigger loading
+        if (M._ai && M._ai.isLocalModel && M._ai.isLocalModel(currentModel)) {
+            var ls = M._ai.getLocalState(currentModel);
+            var consentKey = (M.KEYS && M.KEYS.AI_CONSENTED_PREFIX)
+                ? M.KEYS.AI_CONSENTED_PREFIX + currentModel
+                : 'ai-consented-' + currentModel;
+            var hasConsent = localStorage.getItem(consentKey)
+                || (currentModel === 'qwen-local' && localStorage.getItem('ai-consented'));
+
+            if (!ls.loaded && !ls.worker) {
+                if (hasConsent) {
+                    M._ai.initAiWorker(currentModel);
+                    showToast('⏳ Loading AI model from cache...', 'info');
+                } else {
+                    // Show download popup
+                    if (M.showModelDownloadPopup) M.showModelDownloadPopup(currentModel);
+                    throw new Error('AI model needs to be downloaded first. Please accept the download and click Start again.');
+                }
+            }
+        }
+
+        // Cloud model — trigger API key or worker
+        var providers = M.getCloudProviders ? M.getCloudProviders() : {};
+        var cloudProvider = providers[currentModel];
+        if (cloudProvider) {
+            if (!cloudProvider.getKey()) {
+                if (M.showApiKeyModal) M.showApiKeyModal(currentModel);
+                throw new Error('API key required for ' + currentModel + '. Please enter your key and click Start again.');
+            }
+            if (!cloudProvider.isLoaded() && !cloudProvider.getWorker()) {
+                if (M.initCloudWorker) M.initCloudWorker(currentModel);
+                showToast('⏳ Connecting to cloud model...', 'info');
+            }
+        }
+
+        // Poll until ready (120s timeout)
+        var start = Date.now();
+        var timeoutMs = 120000;
+        while (Date.now() - start < timeoutMs) {
+            // Check if ready
+            if (M.isCurrentModelReady && M.isCurrentModelReady()) {
+                showToast('✅ AI model ready!', 'success');
+                return true;
+            }
+            // Also check local state directly
+            if (M._ai && M._ai.getLocalState) {
+                var lsNow = M._ai.getLocalState(currentModel);
+                if (lsNow && lsNow.loaded) {
+                    showToast('✅ AI model ready!', 'success');
+                    return true;
+                }
+            }
+            await new Promise(function (r) { setTimeout(r, 1000); });
+        }
+
+        throw new Error('AI model did not become ready within 120s. Please try again.');
+    }
+
     // ==============================================
     // STATE
     // ==============================================
 
     var _activeLoops = new Map();  // blockIndex → { abort: false, history: [], bestCode, bestMetric }
+
+    // ==============================================
+    // CARD RENDERING
+    // ==============================================
+
+    // Search provider pill config (matches ai-docgen.js)
+    var RESEARCH_SEARCH_PILLS = [
+        { id: 'duckduckgo', icon: '🦆', label: 'DDG', title: 'DuckDuckGo · Free · No API key' },
+        { id: 'brave', icon: '🦁', label: 'Brave', title: 'Brave Search · 2,000/month free' },
+        { id: 'serper', icon: '🔎', label: 'Serper', title: 'Serper.dev · 2,500 queries free' },
+        { id: 'tavily', icon: '🤖', label: 'Tavily', title: 'Tavily · AI-optimized · 1,000/month free' },
+        { id: 'google_cse', icon: '🔍', label: 'Google', title: 'Google CSE · 100/day free' },
+        { id: 'wikipedia', icon: '📖', label: 'Wiki', title: 'Wikipedia · Free encyclopedia' },
+    ];
+
+    function buildResearchSearchPillsHtml(blockIndex, activeProvider) {
+        var html = '<div class="research-search-pills-panel" data-research-index="' + blockIndex + '" style="display:none">'
+            + '<div class="research-search-pills-row">';
+        RESEARCH_SEARCH_PILLS.forEach(function (p) {
+            var isActive = activeProvider === p.id;
+            // Check if this provider requires an API key and if one is configured
+            var keyIndicator = '';
+            if (M.webSearch && M.webSearch.PROVIDERS && M.webSearch.PROVIDERS[p.id] && M.webSearch.PROVIDERS[p.id].requiresKey) {
+                var hasKey = M.webSearch.getProviderKey && M.webSearch.getProviderKey(p.id);
+                keyIndicator = hasKey
+                    ? ' <span class="research-key-ok" title="API key configured">🔑</span>'
+                    : ' <span class="research-key-missing" title="API key required — click to configure">⚠️</span>';
+            }
+            html += '<label class="ai-card-search-pill' + (isActive ? ' active' : '') + '" data-provider="' + p.id + '" title="' + p.title + '">'
+                + '<input type="checkbox" class="research-search-check" value="' + p.id + '" data-research-index="' + blockIndex + '"' + (isActive ? ' checked' : '') + '>'
+                + '<span class="ai-card-search-pill-label">' + p.icon + ' ' + p.label + keyIndicator + '</span>'
+                + '</label>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function getResearchSearchProviders(container, blockIndex) {
+        var panel = container.querySelector('.research-search-pills-panel[data-research-index="' + blockIndex + '"]');
+        if (!panel) return [];
+        var providers = [];
+        panel.querySelectorAll('.research-search-check:checked').forEach(function (cb) {
+            providers.push(cb.value);
+        });
+        return providers;
+    }
 
     // ==============================================
     // PARSING
@@ -127,6 +248,9 @@
 
             var goalMatch = trimmed.match(/^@goal\s*:\s*(.+)/i);
             if (goalMatch) { config.goal = goalMatch[1].trim(); continue; }
+
+            var searchMatch = trimmed.match(/^@search\s*:\s*(.+)/i);
+            if (searchMatch) { config.search = searchMatch[1].trim().toLowerCase(); continue; }
 
             // Multiline fields: @code: | and @test: |
             var codeStart = trimmed.match(/^@code\s*:\s*\|?\s*$/i);
@@ -224,12 +348,8 @@
             // Direction arrow
             var dirArrow = cfg.direction === 'lower' ? '↓ lower' : '↑ higher';
 
-            // Code preview (first 8 lines)
+            // Code preview (full code, CSS handles overflow)
             var codePreview = cfg.code || '(no code provided)';
-            var codeLines = codePreview.split('\n');
-            var truncated = codeLines.length > 8;
-            codePreview = codeLines.slice(0, 8).join('\n');
-            if (truncated) codePreview += '\n# ... (' + (codeLines.length - 8) + ' more lines)';
 
             // Check if this loop is active
             var isRunning = _activeLoops.has(blockIndex);
@@ -265,10 +385,13 @@
                 + '<span class="research-header-label">Research Lab</span>'
                 + '<div class="research-header-actions">'
                 + '<select class="ai-card-model-select" data-research-index="' + blockIndex + '" title="AI Model">' + modelOpts + '</select>'
+                + '<button class="research-btn research-search-toggle' + (cfg.search && cfg.search !== 'no' ? ' active' : '') + '" data-research-index="' + blockIndex + '" title="Search engines">🔍</button>'
                 + '<button class="research-btn research-btn-start" data-research-index="' + blockIndex + '" title="Start experiment loop">▶ Start</button>'
                 + '<button class="research-btn research-btn-stop" data-research-index="' + blockIndex + '" title="Stop experiment loop">⏹ Stop</button>'
                 + '<button class="research-btn" data-research-index="' + blockIndex + '" data-action="remove" title="Remove tag">✕</button>'
                 + '</div></div>'
+
+                + buildResearchSearchPillsHtml(blockIndex, cfg.search && cfg.search !== 'no' && cfg.search !== 'yes' ? cfg.search : '')
 
                 + '<div class="research-info">'
                 + '<div class="research-goal"><strong>Goal:</strong> ' + escapeHtml(cfg.goal || 'No goal specified') + '</div>'
@@ -276,6 +399,7 @@
                 + '<span class="research-config-badge">🐍 Python (Pyodide)</span>'
                 + '<span class="research-config-badge">📊 ' + escapeHtml(cfg.metric) + ' (' + dirArrow + ')</span>'
                 + '<span class="research-config-badge">🔄 Max ' + cfg.maxIterations + ' iterations</span>'
+                + (cfg.search && cfg.search !== 'no' ? '<span class="research-config-badge research-search-active">🔍 Search: ' + escapeHtml(cfg.search) + '</span>' : '')
                 + '</div>'
                 + '</div>'
 
@@ -329,13 +453,39 @@
             var metricDisplay = h.metric !== null ? h.metric.toFixed(4) : '—';
             var statusIcon = h.status === 'keep' ? '✅' : h.status === 'discard' ? '🔄' : h.status === 'crash' ? '💥' : h.status === 'baseline' ? '📊' : '⏳';
 
-            html += '<tr class="' + (isBest ? 'research-row-best' : '') + '">'
+            html += '<tr class="' + (isBest ? 'research-row-best' : '') + ' research-row-expandable" data-research-row="' + i + '">'
                 + '<td>' + h.iteration + '</td>'
                 + '<td>' + metricDisplay + '</td>'
                 + '<td><span class="research-delta ' + deltaClass + '">' + delta + '</span></td>'
                 + '<td><span class="research-badge ' + badgeClass + '">' + statusIcon + ' ' + h.status + '</span></td>'
-                + '<td>' + escapeHtml(h.description || '') + '</td>'
+                + '<td title="Click to expand prompt">' + escapeHtml(h.description || '') + '</td>'
                 + '</tr>';
+
+            // Expandable prompt row — extract only the PROMPT text, not the full scorer code
+            if (h.code) {
+                var promptText = '';
+                var promptMatch = h.code.match(/PROMPT\s*=\s*={0,0}"""([\s\S]*?)"""/);
+                if (!promptMatch) promptMatch = h.code.match(/PROMPT\s*=\s*'''([\s\S]*?)'''/);
+                if (!promptMatch) promptMatch = h.code.match(/PROMPT\s*=\s*"([\s\S]*?)(?<!\\)"/);
+                if (promptMatch) {
+                    promptText = promptMatch[1].trim();
+                } else {
+                    // Fallback: show first 40 lines of code
+                    promptText = h.code.split('\n').slice(0, 40).join('\n');
+                }
+                var escapedPrompt = escapeHtml(promptText);
+                html += '<tr class="research-code-row" data-research-code-row="' + i + '" style="display:none;">'
+                    + '<td colspan="5">'
+                    + '<div class="research-prompt-expand">'
+                    + '<div class="research-prompt-expand-header">'
+                    + '<span class="research-prompt-expand-label">✨ Optimized Prompt — Score: ' + metricDisplay + '</span>'
+                    + '<button class="research-btn research-prompt-copy-btn" data-prompt-idx="' + i + '" title="Copy prompt to clipboard">📋 Copy</button>'
+                    + '</div>'
+                    + '<pre class="research-prompt-text" data-prompt-idx="' + i + '">' + escapedPrompt + '</pre>'
+                    + '</div>'
+                    + '</td>'
+                    + '</tr>';
+            }
         }
 
         html += '</tbody></table>';
@@ -386,7 +536,7 @@
     // AI PROMPT — Ask AI for code modifications
     // ==============================================
 
-    function buildResearchPrompt(cfg, currentCode, history) {
+    function buildResearchPrompt(cfg, currentCode, history, searchContext) {
         var recentHistory = history.slice(-10);
         var historyText = recentHistory.map(function (h) {
             return '#' + h.iteration + ': ' + cfg.metric + '=' + (h.metric !== null ? h.metric.toFixed(4) : 'CRASH')
@@ -400,7 +550,7 @@
             ? '\nIMPORTANT: The last 3 experiments all failed or got worse. Try a COMPLETELY DIFFERENT approach or algorithm.\n'
             : '';
 
-        return 'You are an autonomous research agent optimizing Python code.\n\n'
+        var prompt = 'You are an autonomous research agent optimizing Python code.\n\n'
             + 'GOAL: ' + cfg.goal + '\n\n'
             + 'CURRENT BEST CODE:\n```python\n' + currentCode + '\n```\n\n'
             + 'METRIC: ' + cfg.metric + ' (' + cfg.direction + ' is better)\n'
@@ -408,11 +558,22 @@
             + 'EXPERIMENT HISTORY:\n' + historyText + '\n'
             + strategyHint + '\n'
             + 'Suggest ONE targeted modification to improve the metric.\n'
+            + 'FORMAT YOUR RESPONSE EXACTLY LIKE THIS:\n'
+            + 'DESCRIPTION: <one-line summary of what you changed>\n'
+            + '```python\n<complete modified code>\n```\n\n'
+            + 'Rules:\n'
+            + '- Start with DESCRIPTION: line explaining your change\n'
+            + '- Then the complete modified Python code in a python code fence\n'
             + '- Make incremental, specific changes\n'
-            + '- Add a brief comment at the top explaining your change\n'
             + '- The code MUST be valid Python\n'
-            + '- Do NOT modify the test harness — only the code block\n\n'
-            + 'Output ONLY the complete modified Python code. No markdown fences, no explanations outside the code.';
+            + '- Do NOT modify the test harness — only the code block';
+
+        // Inject web search results if available
+        if (searchContext) {
+            prompt = 'WEB RESEARCH RESULTS:\n' + searchContext + '\n\nUse the above research to inform your approach. Cite techniques from the search results when applicable.\n\n' + prompt;
+        }
+
+        return prompt;
     }
 
     function extractCodeFromAiResponse(text) {
@@ -421,7 +582,43 @@
         if (fenceMatch) return fenceMatch[1].trim();
 
         // Otherwise use the raw text (strip leading/trailing whitespace)
-        return text.trim();
+        // But remove any DESCRIPTION: line at the top
+        var cleaned = text.replace(/^DESCRIPTION:.*\n?/im, '').trim();
+        return cleaned;
+    }
+
+    /**
+     * Extract a description from the AI's full response text.
+     * Checks: DESCRIPTION: line > text before code fence > # comment in code > fallback.
+     */
+    function extractDescriptionFromAiResponse(fullResponse, code, iter) {
+        // 1. Look for explicit DESCRIPTION: line
+        var descLine = fullResponse.match(/DESCRIPTION:\s*(.+)/i);
+        if (descLine && descLine[1].trim().length > 5) {
+            return descLine[1].trim().substring(0, 120);
+        }
+
+        // 2. Look for text before the code fence (AI explanation)
+        var beforeFence = fullResponse.split(/```/)[0].trim();
+        if (beforeFence.length > 10 && beforeFence.length < 200) {
+            // Clean up common prefixes
+            var cleaned = beforeFence
+                .replace(/^(here'?s?|i'?ve?|the|my|this)\s+(is\s+)?(the\s+)?(modified|updated|new|improved)?\s*/i, '')
+                .replace(/^(code|version|modification|change):?\s*/i, '')
+                .trim();
+            if (cleaned.length > 5) return cleaned.substring(0, 120);
+        }
+
+        // 3. Look for # comment at top of code
+        if (code) {
+            var commentMatch = code.match(/^#\s*(.+)/m);
+            if (commentMatch && commentMatch[1].trim().length > 3) {
+                return commentMatch[1].trim().substring(0, 120);
+            }
+        }
+
+        // 4. Fallback
+        return 'AI modification #' + iter;
     }
 
     // ==============================================
@@ -452,6 +649,20 @@
         // Read model from card's dropdown (user may have changed it)
         var cardModelSelect = document.querySelector('.ai-card-model-select[data-research-index="' + blockIndex + '"]');
         var selectedModel = cardModelSelect ? cardModelSelect.value : cfg.model;
+
+        // ── Ensure AI model is ready before starting ──
+        showToast('⏳ Checking AI model readiness...', 'info');
+        try {
+            await ensureResearchModelReady(selectedModel);
+        } catch (modelErr) {
+            showToast('❌ ' + modelErr.message, 'error');
+            return;
+        }
+
+        // Switch to the selected model
+        if (selectedModel && M.switchToModel) {
+            M.switchToModel(selectedModel);
+        }
 
         // Initialize loop state
         var state = {
@@ -530,17 +741,48 @@
                 }
 
                 state.iteration = iter;
+                // ── Read search providers from UI or fall back to @search field ──
+                var searchProviders = getResearchSearchProviders(document, blockIndex);
+                var searchContext = '';
+                if (searchProviders.length > 0 && M.webSearch) {
+                    try {
+                        updateStatus(blockIndex, '🔍 Searching the web...', state.bestMetric);
+                        var searchQuery = cfg.goal + ' python ' + cfg.metric + ' optimization';
+                        var lastThreeLoop = state.history.slice(-3);
+                        var recentFailsLoop = lastThreeLoop.filter(function (h) { return h.status === 'discard' || h.status === 'crash'; }).length;
+                        if (recentFailsLoop >= 3) {
+                            searchQuery = cfg.goal + ' alternative algorithm python';
+                        }
+                        var searchResults = await M.webSearch.performMultiSearch(searchQuery, 3, searchProviders);
+                        searchContext = M.webSearch.formatResultsForLLM(searchResults);
+                        console.log('[Research] 🔍 Web search returned', searchResults.length, 'results from', searchProviders.join(', '));
+                    } catch (_searchErr) {
+                        console.warn('[Research] Search failed:', _searchErr);
+                    }
+                } else if (cfg.search && cfg.search !== 'no' && M.webSearch) {
+                    try {
+                        var searchQuery = cfg.goal + ' python ' + cfg.metric + ' optimization';
+                        // After 3 consecutive failures, search for different approaches
+                        var lastThreeLoop = state.history.slice(-3);
+                        var recentFailsLoop = lastThreeLoop.filter(function (h) { return h.status === 'discard' || h.status === 'crash'; }).length;
+                        if (recentFailsLoop >= 3) {
+                            searchQuery = cfg.goal + ' alternative algorithm python';
+                        }
+                        var searchProvider = cfg.search === 'yes' ? 'duckduckgo' : cfg.search;
+                        var searchResults = await M.webSearch.performMultiSearch(searchQuery, 3, [searchProvider]);
+                        searchContext = M.webSearch.formatResultsForLLM(searchResults);
+                        console.log('[Research] 🔍 Web search returned', searchResults.length, 'results');
+                    } catch (_searchErr) {
+                        console.warn('[Research] Search failed:', _searchErr);
+                    }
+                }
+
                 updateStatus(blockIndex, '🧠 AI suggesting experiment #' + iter + '...', state.bestMetric);
 
                 // Ask AI for a code modification
-                var aiPrompt = buildResearchPrompt(cfg, state.bestCode, state.history);
+                var aiPrompt = buildResearchPrompt(cfg, state.bestCode, state.history, searchContext);
                 var aiResponse;
                 try {
-                    // Switch model if needed
-                    if (selectedModel && M.switchToModel) {
-                        M.switchToModel(selectedModel);
-                    }
-
                     aiResponse = await M.requestAiTask({
                         taskType: 'generate',
                         context: '',
@@ -579,9 +821,8 @@
                     continue;
                 }
 
-                // Extract a brief description from the code (first comment line)
-                var descMatch = newCode.match(/^#\s*(.+)/m);
-                var description = descMatch ? descMatch[1].trim().substring(0, 80) : 'AI modification #' + iter;
+                // Extract description from AI response text (not just code comments)
+                var description = extractDescriptionFromAiResponse(aiResponse, newCode, iter);
 
                 // Execute the new code
                 updateStatus(blockIndex, '🐍 Running experiment #' + iter + '...', state.bestMetric);
@@ -590,12 +831,29 @@
                 try {
                     experimentOutput = await executeExperiment(newCode, cfg.test);
                 } catch (execErr) {
+                    // Robust error message extraction
+                    var errMsg = '';
+                    if (typeof execErr === 'string') {
+                        errMsg = execErr;
+                    } else if (execErr && execErr.message) {
+                        errMsg = execErr.message;
+                    } else if (execErr && execErr.stderr) {
+                        errMsg = execErr.stderr;
+                    } else if (execErr && typeof execErr.toString === 'function') {
+                        errMsg = execErr.toString();
+                    } else {
+                        errMsg = String(execErr || 'Unknown runtime error');
+                    }
+                    if (!errMsg || errMsg === '[object Object]') errMsg = 'Code execution failed';
+                    // Extract last meaningful line (often the actual error)
+                    var errLines = errMsg.trim().split('\n');
+                    var lastLine = errLines[errLines.length - 1] || errMsg;
                     state.history.push({
                         iteration: iter,
                         code: newCode,
                         metric: null,
                         status: 'crash',
-                        description: 'Runtime error: ' + execErr.message.substring(0, 60),
+                        description: 'Runtime: ' + lastLine.substring(0, 100),
                         timestamp: Date.now()
                     });
                     updateCardUI(blockIndex);
@@ -755,6 +1013,111 @@
                     M.markdownEditor.value = before + after;
                     M.renderMarkdown();
                     showToast('Research tag removed.', 'info');
+                }
+            });
+        });
+
+        // Row click → expand/collapse prompt
+        container.querySelectorAll('.research-row-expandable').forEach(function (row) {
+            row.addEventListener('click', function () {
+                var rowIdx = this.dataset.researchRow;
+                var codeRow = this.parentNode.querySelector('[data-research-code-row="' + rowIdx + '"]');
+                if (codeRow) {
+                    var isVisible = codeRow.style.display !== 'none';
+                    codeRow.style.display = isVisible ? 'none' : 'table-row';
+                    this.classList.toggle('research-row-expanded', !isVisible);
+                }
+            });
+
+        // Copy prompt button
+        container.querySelectorAll('.research-prompt-copy-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = this.dataset.promptIdx;
+                var pre = container.querySelector('.research-prompt-text[data-prompt-idx="' + idx + '"]');
+                if (pre) {
+                    navigator.clipboard.writeText(pre.textContent).then(function () {
+                        btn.textContent = '✅ Copied!';
+                        setTimeout(function () { btn.textContent = '📋 Copy'; }, 2000);
+                    }).catch(function () {
+                        btn.textContent = '❌ Failed';
+                        setTimeout(function () { btn.textContent = '📋 Copy'; }, 2000);
+                    });
+                }
+            });
+        });
+            row.style.cursor = 'pointer';
+        });
+
+        // 🔍 Search toggle — show/hide search pills panel
+        container.querySelectorAll('.research-search-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var idx = this.dataset.researchIndex;
+                var panel = container.querySelector('.research-search-pills-panel[data-research-index="' + idx + '"]');
+                if (panel) {
+                    var isVisible = panel.style.display !== 'none';
+                    panel.style.display = isVisible ? 'none' : '';
+                }
+            });
+        });
+
+        // Search pill checkbox change — update toggle button active state + prompt for API key
+        container.querySelectorAll('.research-search-check').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var checkboxEl = this;
+                var providerId = checkboxEl.value;
+                var idx = checkboxEl.dataset.researchIndex;
+                var panel = container.querySelector('.research-search-pills-panel[data-research-index="' + idx + '"]');
+                if (!panel) return;
+
+                // If checking a provider that requires an API key, prompt for it
+                if (checkboxEl.checked && M.webSearch && M.webSearch.PROVIDERS && M.webSearch.PROVIDERS[providerId]) {
+                    var provCfg = M.webSearch.PROVIDERS[providerId];
+                    if (provCfg.requiresKey) {
+                        var existingKey = M.webSearch.getProviderKey(providerId);
+                        if (!existingKey) {
+                            // Show prompt for API key
+                            var key = window.prompt(
+                                (provCfg.dialogTitle || ('API Key for ' + provCfg.name)) + '\n\n'
+                                + (provCfg.dialogDesc || 'Enter your API key:') + '\n\n'
+                                + 'Get your key at: ' + (provCfg.dialogLink || ''),
+                                ''
+                            );
+                            if (key && key.trim()) {
+                                M.webSearch.setProviderKey(providerId, key.trim());
+                                showToast('🔑 ' + provCfg.name + ' API key saved!', 'success');
+                                // Update the key indicator icon
+                                var pill = checkboxEl.closest('.ai-card-search-pill');
+                                if (pill) {
+                                    var missingIcon = pill.querySelector('.research-key-missing');
+                                    if (missingIcon) {
+                                        missingIcon.className = 'research-key-ok';
+                                        missingIcon.title = 'API key configured';
+                                        missingIcon.textContent = '🔑';
+                                    }
+                                }
+                            } else {
+                                // No key entered — uncheck
+                                checkboxEl.checked = false;
+                                showToast('⚠️ ' + provCfg.name + ' requires an API key', 'warning');
+                            }
+                        }
+                    }
+                }
+
+                // Update pill active class
+                var pill = checkboxEl.closest('.ai-card-search-pill');
+                if (pill) pill.classList.toggle('active', checkboxEl.checked);
+                // Count checked
+                var count = panel.querySelectorAll('.research-search-check:checked').length;
+                // Update toggle button
+                var toggleBtn = container.querySelector('.research-search-toggle[data-research-index="' + idx + '"]');
+                if (toggleBtn) {
+                    toggleBtn.classList.toggle('active', count > 0);
+                    toggleBtn.textContent = count > 0 ? '🔍 ' + count : '🔍';
                 }
             });
         });

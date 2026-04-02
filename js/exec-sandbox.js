@@ -94,7 +94,7 @@
         iframe.addEventListener('load', function () {
             try {
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
-                var height = Math.min(doc.body.scrollHeight + 20, 800);
+                var height = Math.min(doc.body.scrollHeight + 20, 5000);
                 iframe.style.height = Math.max(height, 60) + 'px';
             } catch (e) {
                 iframe.style.height = '400px';
