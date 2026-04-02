@@ -13,6 +13,16 @@
     M.sharedViewLock = null;   // null = no lock, 'ppt' | 'preview' = locked
     var readonlyClickHandlerInstalled = false;
 
+    // --- Share-link loading overlay dismissal ---
+    function hideShareLoader() {
+        var overlay = document.getElementById('share-loading-overlay');
+        if (!overlay || !overlay.classList.contains('slo-active')) return;
+        overlay.classList.add('slo-fade-out');
+        setTimeout(function () {
+            overlay.classList.remove('slo-active', 'slo-fade-out');
+        }, 380);
+    }
+
     // --- Firebase Config ---
     var firebaseConfig = {
         apiKey: 'AIzaSyC_5pgtZ-mZvHmIUH9X7MkObPwDLw8nyfw',
@@ -553,16 +563,18 @@
         // --- Space hub: #space=<slug> ---
         if (spaceSlug && !compactId) {
             try {
-                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-collection"></i> Loading Space...</div>';
                 M.setViewMode('preview');
                 var spaceData = await M.loadSpace(spaceSlug);
                 if (!spaceData) {
+                    hideShareLoader();
                     M.markdownPreview.innerHTML = '<div style="padding: 60px; text-align: center;"><h2>Space Not Found</h2><p>This space may have been removed or the URL is incorrect.</p></div>';
                     return;
                 }
+                hideShareLoader();
                 M.renderSpaceHub(spaceData, spaceSlug);
             } catch (e) {
                 console.error('Error loading Space:', e);
+                hideShareLoader();
                 M.markdownPreview.innerHTML = '<div style="padding: 60px; text-align: center;"><h2>Error</h2><p>' + e.message + '</p></div>';
             }
             return;
@@ -640,6 +652,7 @@
 
                 // Form access gate: block if form doc but no rk or m=fill (unless editor)
                 if (!isEditMode && /\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+                    hideShareLoader();
                     M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                     M.setViewMode('preview');
                     return;
@@ -656,6 +669,7 @@
                     document.body.classList.remove('editor-readonly');
                     lastCloudContent = markdownContent; // Prevent immediate re-save
                     scheduleCloudSave();
+                    hideShareLoader();
                     if (M.showToast) M.showToast('🔑 Editor access — changes will sync to this document', 'success');
                 } else {
                     var sharedMode = M.sharedViewLock || 'preview';
@@ -663,9 +677,11 @@
                     M.isViewingSharedDoc = true;
                     showSharedBanner();
                     if (sharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+                    hideShareLoader();
                 }
             } catch (error) {
                 console.error('Failed to load compact shared markdown:', error);
+                hideShareLoader();
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
                 M.markdownPreview.querySelector('p:last-child').textContent = error.message;
                 M.setViewMode('split');
@@ -676,7 +692,6 @@
         // --- Secure share: no key in URL, passphrase needed ---
         if (isSecure && docId && !keyString) {
             try {
-                M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-shield-lock"></i> Loading protected document...</div>';
                 M.setViewMode('split');
                 var doc = await db.collection('shares').doc(docId).get();
                 if (!doc.exists) throw new Error('Shared document not found.');
@@ -686,9 +701,11 @@
                     M.sharedViewLock = data.view;
                 }
                 pendingSecureDoc = { dataString: data.d, saltString: data.salt, docId: docId, ekHash: data.ekHash || '', eWt: data.eWt || '' };
+                hideShareLoader();
                 showPassphrasePrompt();
             } catch (error) {
                 console.error('Failed to load secure shared markdown:', error);
+                hideShareLoader();
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Document Not Found</h3><p style="opacity: 0.7;">The shared document may have been deleted or the link is invalid.</p></div>';
                 M.setViewMode('split');
             }
@@ -698,7 +715,6 @@
         // --- Legacy quick share: key in URL (#id=...&k=...) ---
         if (!keyString || (!docId && !inlineData)) return;
         try {
-            M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.6;"><i class="bi bi-lock"></i> Decrypting shared content...</div>';
             M.setViewMode('split');
             var dataString;
             if (docId) {
@@ -724,6 +740,7 @@
             var markdownContent = decompressData(compressed);
             // Form access gate: block if form doc but no rk or m=fill
             if (/\{\{@?(?:Form|Quiz):/i.test(markdownContent) && !M.formResponseKey && !M.isFormFillMode) {
+                hideShareLoader();
                 M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-lock"></i> Access Denied</h3><p style="opacity: 0.7;">This form requires a valid access link.</p><p style="font-size: 13px; opacity: 0.5;">Please use the link provided by the form creator.</p></div>';
                 M.setViewMode('preview');
                 return;
@@ -737,8 +754,10 @@
             showSharedBanner();
             // Auto-hide full header for preview mode shared links
             if (sharedMode === 'preview' && M.setHeaderLevel) M.setHeaderLevel(2);
+            hideShareLoader();
         } catch (error) {
             console.error('Failed to load shared markdown:', error);
+            hideShareLoader();
             M.markdownPreview.innerHTML = '<div style="padding: 40px; text-align: center;"><h3 style="color: var(--color-danger-fg);"><i class="bi bi-shield-exclamation"></i> Decryption Failed</h3><p style="opacity: 0.7;">The link may be invalid or the document may not exist.</p><p style="font-size: 13px; opacity: 0.5;"></p></div>';
             M.markdownPreview.querySelector('p:last-child').textContent = error.message;
             M.setViewMode('split');

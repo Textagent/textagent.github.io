@@ -91,7 +91,79 @@
             background: inherit;
             color: inherit;
         }
+
+        /* =========================================
+           SHARE LINK LOADING OVERLAY
+           Shows only when a share hash is in the URL
+           ========================================= */
+        #share-loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            background: var(--bg-color, #0d1117);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            opacity: 1;
+        }
+        #share-loading-overlay.slo-active {
+            display: flex;
+        }
+        #share-loading-overlay.slo-fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .slo-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #58a6ff;
+            opacity: 0.95;
+        }
+        .slo-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+        .slo-spinner {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid rgba(88,166,255,0.15);
+            border-top-color: #58a6ff;
+            animation: slo-spin 0.75s linear infinite;
+        }
+        @keyframes slo-spin {
+            to { transform: rotate(360deg); }
+        }
+        .slo-label {
+            font-size: 0.85rem;
+            color: rgba(201,209,217,0.55);
+            letter-spacing: 0.04em;
+        }
+        html[data-theme="light"] #share-loading-overlay {
+            background: #f6f8fa;
+        }
+        html[data-theme="light"] .slo-label {
+            color: rgba(31,35,40,0.45);
+        }
     </style>
+    <!-- Share-link splash: detect hash BEFORE any JS so overlay shows instantly -->
+    <script>
+        (function () {
+            var h = window.location.hash;
+            if (h && (h.indexOf('s=') !== -1 || h.indexOf('id=') !== -1 || h.indexOf('d=') !== -1 || h.indexOf('space=') !== -1)) {
+                // Will be activated once the overlay element exists (see body)
+                window.__showShareLoader = true;
+            }
+        })();
+    </script>
 
     <!-- Updated libraries to latest versions -->
 
@@ -134,6 +206,28 @@
 </head>
 
 <body>
+    <!-- Share link loading overlay (hidden by default, shown via JS below) -->
+    <div id="share-loading-overlay" aria-live="polite" aria-label="Loading shared document">
+        <div class="slo-logo">
+            <img src="/assets/icon.png" alt="TextAgent" onerror="this.style.display='none'">
+            TextAgent
+        </div>
+        <div class="slo-spinner"></div>
+        <div class="slo-label">Loading shared content&hellip;</div>
+    </div>
+    <script>
+        if (window.__showShareLoader) {
+            var _sloEl = document.getElementById('share-loading-overlay');
+            _sloEl.classList.add('slo-active');
+            // Safety net: auto-dismiss after 15s in case JS loading fails
+            setTimeout(function () {
+                if (_sloEl.classList.contains('slo-active')) {
+                    _sloEl.classList.add('slo-fade-out');
+                    setTimeout(function () { _sloEl.classList.remove('slo-active', 'slo-fade-out'); }, 400);
+                }
+            }, 15000);
+        }
+    </script>
     <div class="app-container">
         <header class="app-header">
             <div class="container-fluid d-flex justify-content-between align-items-center header-container">
