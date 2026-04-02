@@ -1043,19 +1043,24 @@
         var file = findFileById(workspace.activeFileId);
         if (!file) return;
 
-        var content = M.markdownEditor.value || '';
-        var stripped = content.replace(/^#+\s*/, '').trim(); // strip leading # headings
+        // Only auto-name files that are still genuinely untitled.
+        // Any file with a real name (set by user or loaded from storage) keeps it.
+        var baseName = file.name.split('/').pop();
+        if (!/^untitled(\s*\d*)?\.md$/i.test(baseName)) return;
 
-        if (!stripped) {
-            // Empty content → revert to Untitled
-            if (file.name !== 'Untitled.md') {
-                file.name = 'Untitled.md';
-                saveWorkspace();
-                renderFileList();
-                updatePageTitle(file.name);
-            }
-            return;
+        var content = M.markdownEditor.value || '';
+        // Strip fenced code blocks so ```html-autorun doesn't leak into the name
+        var strippedContent = content.replace(/^```[^\n]*\n[\s\S]*?```\n?/gm, '').trim();
+        // Find first heading or non-empty line
+        var firstMeaningfulLine = '';
+        var lines = strippedContent.split('\n');
+        for (var li = 0; li < lines.length; li++) {
+            var l = lines[li].trim();
+            if (l) { firstMeaningfulLine = l; break; }
         }
+        var stripped = firstMeaningfulLine.replace(/^#+\s*/, '').trim();
+
+        if (!stripped) return; // No content yet — keep "Untitled.md"
 
         // Take first 10 chars, keep only ASCII letters and spaces
         var autoName = stripped.substring(0, 10).replace(/[^a-zA-Z ]/g, '').trim();
