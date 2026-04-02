@@ -441,8 +441,8 @@
             reviewCard.className = 'ai-inline-review';
             reviewCard.dataset.aiType = block.type;
 
-            var icon = block.type === 'Think' ? '🧠' : '✨';
-            var typeLabel = block.type === 'Think' ? 'Think' : 'AI Generate';
+            var icon = block.type === 'Think' ? '🧠' : block.type === 'Translate' ? '🌐' : block.type === 'OCR' ? '🔍' : block.type === 'TTS' ? '🔊' : block.type === 'STT' ? '🎤' : block.type === 'Image' ? '🖼️' : '✨';
+            var typeLabel = block.type === 'Think' ? 'Think' : block.type === 'Translate' ? 'Translate' : block.type === 'OCR' ? 'OCR Scan' : block.type === 'TTS' ? 'Text to Speech' : block.type === 'STT' ? 'Speech to Text' : block.type === 'Image' ? 'Image Generate' : 'AI Generate';
 
             reviewCard.innerHTML =
                 '<div class="ai-inline-review-header">'
@@ -476,32 +476,33 @@
                 resolved = true;
                 resolve(decision);
                 if (decision === 'reject' && placeholderCard) {
-                    var models = window.AI_MODELS || {};
-                    var modelIds = Object.keys(models);
-                    var currentModel = (M.getCurrentAiModel ? M.getCurrentAiModel() : modelIds[0]) || modelIds[0];
-                    var modelOptionsHtml = '';
-                    modelIds.forEach(function (id) {
-                        var m = models[id];
-                        var name = m.dropdownName || m.label || id;
-                        var sel = id === currentModel ? ' selected' : '';
-                        modelOptionsHtml += '<option value="' + id + '"' + sel + '>' + name + '</option>';
-                    });
-                    var newCard = document.createElement('div');
-                    newCard.className = 'ai-placeholder-card';
-                    newCard.dataset.aiType = block.type;
-                    newCard.dataset.aiIndex = blockIndex;
-                    var icon = block.type === 'Think' ? '🧠' : '✨';
-                    var label = block.type === 'Think' ? 'Think' : 'AI Generate';
-                    newCard.innerHTML =
-                        '<div class="ai-placeholder-header">'
-                        + '<span class="ai-placeholder-icon">' + icon + '</span>'
-                        + '<span class="ai-placeholder-label">' + label + '</span>'
-                        + '<div class="ai-placeholder-actions">'
-                        + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Model for this generation">' + modelOptionsHtml + '</select>'
-                        + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Generate this block">▶</button>'
-                        + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
-                        + '</div></div>'
-                        + '<div class="ai-placeholder-prompt">' + block.prompt + '</div>';
+                    // Re-render the original block's full markdown back into its proper typed card
+                    // (preserves language dropdown for Translate, steps for Agent, etc.)
+                    var restoredHtml = M.transformDocgenMarkdown(block.fullMatch);
+                    var tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = restoredHtml;
+                    var newCard = tempDiv.querySelector('.ai-placeholder-card') || tempDiv.firstElementChild;
+                    if (!newCard) {
+                        // Fallback: build a minimal generic card if transform fails
+                        newCard = document.createElement('div');
+                        newCard.className = 'ai-placeholder-card';
+                        newCard.dataset.aiType = block.type;
+                        newCard.dataset.aiIndex = String(blockIndex);
+                        var icon = block.type === 'Think' ? '🧠' : block.type === 'Translate' ? '🌐' : '✨';
+                        var label = block.type === 'Think' ? 'Think' : block.type === 'Translate' ? 'Translate' : 'AI Generate';
+                        newCard.innerHTML =
+                            '<div class="ai-placeholder-header">'
+                            + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                            + '<span class="ai-placeholder-label">' + label + '</span>'
+                            + '</div>'
+                            + '<div class="ai-placeholder-prompt">' + block.prompt + '</div>';
+                    } else {
+                        // Fix up the block index in case transformDocgenMarkdown assigned index 0
+                        newCard.dataset.aiIndex = String(blockIndex);
+                        newCard.querySelectorAll('[data-ai-index]').forEach(function (el) {
+                            el.dataset.aiIndex = String(blockIndex);
+                        });
+                    }
                     reviewCard.parentNode.replaceChild(newCard, reviewCard);
                     M.bindDocgenPreviewActions(newCard.parentNode);
                 } else if (decision === 'accept') {
