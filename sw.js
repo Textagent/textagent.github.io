@@ -4,7 +4,7 @@
 // Strategy: Cache app shell for offline use, network-first for everything else.
 // CDN libraries are cached on first fetch for full offline capability.
 
-const CACHE_NAME = 'textagent-v1';
+const CACHE_NAME = 'textagent-v2';
 
 // Core app shell files to precache on install
 const APP_SHELL = [
@@ -17,7 +17,7 @@ const APP_SHELL = [
 ];
 
 // CDN libraries to cache on first fetch (runtime caching)
-const CDN_CACHE_NAME = 'textagent-cdn-v1';
+const CDN_CACHE_NAME = 'textagent-cdn-v2';
 const CDN_HOSTS = [
     'cdnjs.cloudflare.com',
     'cdn.jsdelivr.net',
@@ -97,15 +97,32 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // App shell (same-origin): cache-first, network as fallback
+    // App shell (same-origin): network-first for HTML nav (to always get fresh index.html),
+    // cache-first for JS/CSS/images (stable assets).
     if (url.origin === self.location.origin) {
+        // Always network-first for HTML navigation so new deployments take effect immediately
+        if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+            event.respondWith(
+                fetch(event.request)
+                    .then((response) => {
+                        if (response.ok) {
+                            const clone = response.clone();
+                            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                        }
+                        return response;
+                    })
+                    .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+            );
+            return;
+        }
+
+        // Cache-first for JS/CSS/images (stable versioned assets)
         event.respondWith(
             caches.match(event.request)
                 .then((cached) => {
                     if (cached) return cached;
 
                     return fetch(event.request).then((response) => {
-                        // Cache JS, CSS, HTML, and image files from our origin
                         if (response.ok && shouldCacheResponse(url)) {
                             const clone = response.clone();
                             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
@@ -113,13 +130,7 @@ self.addEventListener('fetch', (event) => {
                         return response;
                     });
                 })
-                .catch(() => {
-                    // Offline fallback for navigation requests
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('/');
-                    }
-                    return new Response('Offline', { status: 503, statusText: 'Offline' });
-                })
+                .catch(() => new Response('Offline', { status: 503, statusText: 'Offline' }))
         );
         return;
     }

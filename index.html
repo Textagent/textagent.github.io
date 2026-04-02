@@ -158,9 +158,17 @@
     <script>
         (function () {
             var h = window.location.hash;
-            if (h && (h.indexOf('s=') !== -1 || h.indexOf('id=') !== -1 || h.indexOf('d=') !== -1 || h.indexOf('space=') !== -1)) {
-                // Will be activated once the overlay element exists (see body)
-                window.__showShareLoader = true;
+            if (h && h.length > 1) {
+                // Use URLSearchParams for precise matching — avoid false positives
+                try {
+                    var params = new URLSearchParams(h.substring(1));
+                    var hasShare = params.has('s') || params.has('id') || params.has('d') || params.has('space');
+                    if (hasShare) {
+                        window.__showShareLoader = true;
+                        // Hide body early to eliminate flash — overlay will unhide it
+                        document.documentElement.style.overflow = 'hidden';
+                    }
+                } catch (e) { /* ignore parse errors */ }
             }
         })();
     </script>
@@ -223,7 +231,10 @@
             setTimeout(function () {
                 if (_sloEl.classList.contains('slo-active')) {
                     _sloEl.classList.add('slo-fade-out');
-                    setTimeout(function () { _sloEl.classList.remove('slo-active', 'slo-fade-out'); }, 400);
+                    setTimeout(function () {
+                        _sloEl.classList.remove('slo-active', 'slo-fade-out');
+                        document.documentElement.style.overflow = '';
+                    }, 400);
                 }
             }, 15000);
         }

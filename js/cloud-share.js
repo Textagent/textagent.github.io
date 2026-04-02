@@ -18,6 +18,7 @@
         var overlay = document.getElementById('share-loading-overlay');
         if (!overlay || !overlay.classList.contains('slo-active')) return;
         overlay.classList.add('slo-fade-out');
+        document.documentElement.style.overflow = '';
         setTimeout(function () {
             overlay.classList.remove('slo-active', 'slo-fade-out');
         }, 380);
