@@ -884,6 +884,7 @@
             }
         });
         textarea.addEventListener('input', function () {
+            if (M.pretextResize) { M.pretextResize(this, 80); return; }
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 80) + 'px';
         });

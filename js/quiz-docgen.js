@@ -1651,7 +1651,7 @@
             ta.addEventListener('input', function(){
                 var self=this;
                 // Auto-resize
-                self.style.height='auto'; self.style.height=self.scrollHeight+'px';
+                if (M.pretextResize) { M.pretextResize(self); } else { self.style.height='auto'; self.style.height=self.scrollHeight+'px'; }
                 // Enable/disable the inline Generate button (for prompt-only cards)
                 var card=self.closest('.quiz-dg-card');
                 if(card){
@@ -1682,7 +1682,7 @@
                 }, 600);
             });
             // Auto-resize on load
-            ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+            if (M.pretextResize) { M.pretextResize(ta); } else { ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
         });
 
         container.querySelectorAll('.quiz-dg-grade-btn').forEach(function(btn){

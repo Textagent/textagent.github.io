@@ -388,11 +388,11 @@
             });
             // Auto-resize
             ta.addEventListener('input', function () {
+                if (M.pretextResize) { M.pretextResize(this); return; }
                 this.style.height = 'auto';
                 this.style.height = this.scrollHeight + 'px';
             });
-            ta.style.height = 'auto';
-            ta.style.height = ta.scrollHeight + 'px';
+            if (M.pretextResize) { M.pretextResize(ta); } else { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
         });
 
         // Accept

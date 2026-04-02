@@ -783,8 +783,7 @@
                 var textarea = container.querySelector('.draw-mermaid-input[data-draw-index="' + blockIndex + '"]');
                 if (textarea) {
                     textarea.value = mermaidCode;
-                    textarea.style.height = 'auto';
-                    textarea.style.height = textarea.scrollHeight + 'px';
+                    if (M.pretextResize) { M.pretextResize(textarea); } else { textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
                 }
                 saveMermaidSource(blockIndex, mermaidCode);
                 if (statusEl) {
@@ -1102,11 +1101,11 @@
             });
             // Auto-resize
             ta.addEventListener('input', function () {
+                if (M.pretextResize) { M.pretextResize(this); return; }
                 this.style.height = 'auto';
                 this.style.height = this.scrollHeight + 'px';
             });
-            ta.style.height = 'auto';
-            ta.style.height = ta.scrollHeight + 'px';
+            if (M.pretextResize) { M.pretextResize(ta); } else { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
         });
 
         // Re-attach existing iframes that survived re-render

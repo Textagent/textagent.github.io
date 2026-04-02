@@ -182,6 +182,7 @@
 
     // ---- Auto-resize input ----
     function autoResize() {
+        if (M.pretextResize) { M.pretextResize(inputEl, 120); return; }
         inputEl.style.height = 'auto';
         inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
     }

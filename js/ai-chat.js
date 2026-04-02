@@ -481,6 +481,7 @@
     });
 
     aiInput.addEventListener('input', function () {
+        if (M.pretextResize) { M.pretextResize(aiInput, 120); return; }
         aiInput.style.height = 'auto';
         aiInput.style.height = Math.min(aiInput.scrollHeight, 120) + 'px';
     });

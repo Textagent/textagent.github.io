@@ -41,6 +41,7 @@ import '../css/doc-vars-panel.css';
 import '../css/game-docgen.css';
 import '../css/git-docgen.css';
 import '../css/draw-docgen.css';
+import '../css/annotate-docgen.css';
 import '../css/rec-studio.css';
 import '../css/tools-docgen.css';
 import '../css/run-preflight.css';
@@ -64,6 +65,7 @@ async function loadModules() {
     await import('../js/toast.js');
     await import('../js/modal-templates.js');
     await import('../js/app-core.js');
+    await import('../js/pretext-resize.js'); // Pretext: reflow-free textarea resize (M.pretextResize)
     await import('../js/renderer.js');
     await import('../js/workspace.js');
     await import('../js/disk-workspace.js');
@@ -226,6 +228,9 @@ async function loadModules() {
 
     // 3j: Draw Component — Excalidraw + Mermaid (standalone — remove to disable feature)
     await import('../js/draw-docgen.js');
+
+    // 3j-ext: Annotate Component — canvas annotation overlay on images/URLs
+    await import('../js/annotate-docgen.js');
 
     // 3k: Web Tools Component — Scrape & Search via Jina (standalone — remove to disable feature)
     await import('../js/tools-docgen.js');
