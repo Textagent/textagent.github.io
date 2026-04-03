@@ -55,13 +55,14 @@
 
 ## 🤖 AI Assistant
 
-TextAgent includes a built-in AI assistant panel with **three local model sizes** and cloud providers:
+TextAgent includes a built-in AI assistant panel with **four local model sizes** and cloud providers:
 
 | Model | Provider | Type | Speed |
 |:------|:---------|:-----|:------|
 | **Qwen 3.5 Small (0.8B)** | Local (WebGPU/WASM) | 🔒 Private — no data leaves browser | ⚡ Fast |
 | **Qwen 3.5 Medium (2B)** | Local (WebGPU/WASM) | 🔒 Private — smarter, ~1.2 GB | ⚡ Fast |
 | **Qwen 3.5 Large (4B)** | Local (WebGPU/WASM) | 🔒 Private — best quality, ~2.5 GB | ⚡ High-end |
+| **Qwen 3.5 XL (9B)** | Local (WebGPU/WASM) | 🔒 Private — multimodal vision, ~16 GB | 🧠 High-end |
 | **Gemini 3.1 Flash Lite** | Google (free tier) | ☁️ Cloud — 1M tokens/min | 🚀 Very Fast |
 | **Llama 3.3 70B** | Groq (free tier) | ☁️ Cloud — ultra-low latency | ⚡ Ultra Fast |
 | **Auto · Best Free** | OpenRouter (free tier) | ☁️ Cloud — multi-model routing | 🧠 Powerful |
@@ -547,6 +548,7 @@ TextAgent has undergone significant evolution since its inception. What started 
 
 | Date | Commits | Feature / Update |
 |------|---------|-----------------:|
+| **2026-04-03** | — | 🤖 **Qwen 3.5 XL (9B) Local Model** — added `textagent/Qwen3.5-9B-Onnx` (~16 GB) as the largest local multimodal Qwen model; supports vision (image-text-to-text); marked `requiresHighEnd`; placed after 4B in size progression (0.8B → 2B → 4B → 9B) |
 | **2026-04-03** | — | 🔌 **Connector AI Pipeline** — new "My Connectors" system for plugging third-party data sources into the AI assistant; Hacker News connector fetches top stories with full URLs, author metadata, self-post body text, and top community comments; connector toggle in AI panel header with green active indicator; unified parallel fetch pipeline (`Promise.all`) merges connector + web search context; grounding instruction header ("LIVE DATA...Answer using this data") forces models to use fetched data; **Fixed:** Gemma 4 E4B worker completely discarded `context` parameter — only `userPrompt` was used in the messages array; context now injected as `context + "\n---\nUser question: " + userText`; Gemma 4 system prompt enhanced with "data is real and live" grounding instruction; context trimmed to 6000 chars for WebGPU memory safety; connector label click bug fixed (`e.preventDefault()` stops checkbox toggle via event bubbling); `hasActiveConnectors()` decoupled from DOM — reads `localStorage` directly; auto-repair re-enables connected-but-paused connectors on init; default HN stories 10→5; connector registry extensible for Slack, Notion, GitHub, Confluence |
 | **2026-04-03** | — | 👁️ **Gemma 4 Vision Tag** — new `{{@Vision:}}` DocGen tag backed by Gemma 4 E2B/E4B running locally via WebGPU/WASM; `ai-worker-gemma4.js` Web Worker with `Gemma4Processor` instantiation (bypasses `AutoProcessor` which lacks `image_processor_type`) and system-prompt persona fix; primary `onnx-community/gemma-4-E2B-it-ONNX` with `textagent/gemma-4-E4B-it-ONNX` fallback; cyan-themed Vision card with 📷 camera capture + 📎 omni-modal upload (image/audio/video); **video frame extraction** — `extractVideoFrames()` seeks 4 evenly-spaced timestamps in a hidden `<video>` element, draws each to Canvas at max 1280px, stores as JPEG 0.85; audio stored as direct base64; upload handler detects Vision card type, sets `accept="image/*,audio/*,video/*"`; generation handler maps attachments to typed inputs and calls `switchToModel('gemma4-e2b')` before execution, restores prior model after; 👁️ Vision toolbar button in AI Tags dropdown; Fixed: Vision card double-rendering raw `@upload:` / `@prompt:` lines caused by broken `\\s*` regex (quadruple-escaped) — now correct `\s*`; removed duplicate static text row; `gemma4-e2b` / `gemma4-e4b` entries in `ai-models.js` with `isDocModel: true` + `supportsVision: true` |
 | **2026-04-02** | `55538f3` | 🔧 **DocGen Reject Block Fix** — fixed: rejecting a generated Translate/OCR/TTS/STT/Image/AI block restored a generic hardcoded "AI Generate" card, losing all type-specific UI (language dropdown, mode pills, camera button, step inputs, etc.); reject handler now calls `M.transformDocgenMarkdown(block.fullMatch)` to re-render the exact original typed card with all controls intact; `data-ai-index` patched on restored card and all children; review panel header label+icon now shows correct type for all blocks ("🌐 Translate — Review", "🔍 OCR Scan — Review", etc.) instead of always "✨ AI Generate — Review" |

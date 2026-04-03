@@ -56,6 +56,22 @@
             requiresHighEnd: true,
         },
 
+        // ── Local: Qwen 3.5 XL (9B) ──────────────────────────
+        'qwen-local-9b': {
+            label: 'Qwen 3.5 9B · Local',
+            badge: 'Qwen 3.5 9B · Local',
+            icon: 'bi bi-pc-display',
+            statusReady: 'Qwen 3.5 9B · Local',
+            dropdownName: 'Qwen 3.5 XL (9B)',
+            dropdownDesc: 'Local · Multimodal · ~16 GB · High-end',
+            isLocal: true,
+            category: 'local-multimodal',
+            localModelId: 'textagent/Qwen3.5-9B-Onnx',
+            downloadSize: '~16 GB',
+            requiresHighEnd: true,
+            supportsVision: true,
+        },
+
         // ── Local: Qwen 3 4B Thinking ────────────────────────
         'qwen3-thinking-4b': {
             label: 'Qwen 3 Thinking · Local',
