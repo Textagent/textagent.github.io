@@ -147,6 +147,7 @@
             authType: 'none',
             badge: 'Free · No key',
             configFields: [
+                { key: 'city', label: 'City name', placeholder: 'Tokyo', hint: 'Name of your city (appears in weather report header)' },
                 { key: 'lat', label: 'Latitude', placeholder: '35.6762', hint: 'Your city latitude (e.g. Tokyo: 35.6762, NYC: 40.7128, London: 51.5074)' },
                 { key: 'lon', label: 'Longitude', placeholder: '139.6503', hint: 'Your city longitude (e.g. Tokyo: 139.6503, NYC: -74.0060, London: -0.1278)' }
             ],
@@ -422,6 +423,7 @@
     async function fetchWeatherContext(config) {
         var lat = parseFloat(config.lat) || 35.6762;  // default Tokyo
         var lon = parseFloat(config.lon) || 139.6503;
+        var city = config.city || 'Tokyo';
         try {
             var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
                 '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m' +
@@ -437,27 +439,46 @@
                 95:'Thunderstorm', 96:'Thunderstorm with hail', 99:'Thunderstorm with heavy hail'
             };
             var condition = wmo[cur.weather_code] || ('Code ' + cur.weather_code);
+            var fetchTime = new Date().toUTCString();
             var lines = [
-                '[Weather — Open-Meteo (lat:' + lat + ', lon:' + lon + ')]',
-                '  Condition: ' + condition,
+                '[Live Weather Report — ' + city + ' (via Open-Meteo API)]',
+                'Fetched: ' + fetchTime,
+                'Location: ' + city + ' (lat:' + lat + ', lon:' + lon + ')',
+                '',
+                'Current Conditions:',
+                '  Weather: ' + condition,
                 '  Temperature: ' + cur.temperature_2m + '°C (feels like ' + cur.apparent_temperature + '°C)',
                 '  Humidity: ' + cur.relative_humidity_2m + '%',
-                '  Wind: ' + cur.wind_speed_10m + ' km/h',
-                '  Precipitation: ' + cur.precipitation + ' mm'
+                '  Wind Speed: ' + cur.wind_speed_10m + ' km/h',
+                '  Precipitation: ' + cur.precipitation + ' mm',
             ];
+            // Add hourly forecast if available
+            if (data.hourly && data.hourly.temperature_2m) {
+                lines.push('');
+                lines.push('Hourly Forecast (next 24h):');
+                var hours = data.hourly.time || [];
+                var temps = data.hourly.temperature_2m || [];
+                for (var i = 0; i < Math.min(hours.length, 24); i += 3) {
+                    var hr = hours[i] ? hours[i].split('T')[1] || hours[i] : '??';
+                    lines.push('  ' + hr + ' → ' + temps[i] + '°C');
+                }
+            }
             return lines.join('\n');
         } catch (e) {
             return '[Weather] Failed to fetch: ' + e.message;
         }
     }
 
+
     // --- Get Combined Context from All Enabled Connectors ---
     async function getActiveContext(query) {
         var parts = [];
         var promises = [];
+        var enabledIds = [];
 
         Object.keys(REGISTRY).forEach(function (id) {
             if (!isEnabled(id)) return;
+            enabledIds.push(id);
             var token = getToken(id);
             var config = getConfig(id);
 
@@ -474,11 +495,18 @@
                 default: fetchPromise = Promise.resolve(null);
             }
 
-            promises.push(fetchPromise.catch(function (e) { return null; }));
+            promises.push(fetchPromise.catch(function (e) {
+                console.error('[Connectors] Fetch failed for', id, ':', e.message);
+                return null;
+            }));
         });
 
+        console.log('[Connectors] Enabled connectors:', enabledIds);
         var results = await Promise.all(promises);
-        results.forEach(function (r) { if (r) parts.push(r); });
+        results.forEach(function (r, i) {
+            console.log('[Connectors] Result', enabledIds[i], ':', r ? r.substring(0, 100) : 'NULL');
+            if (r) parts.push(r);
+        });
 
         if (parts.length === 0) return null;
 
