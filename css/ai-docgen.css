@@ -349,6 +349,138 @@
     color: rgba(43, 108, 176, 0.6);
 }
 
+/* --- RT-DETR Detection Panel (inside Vision cards) --- */
+.ai-vision-detections {
+    margin: 0 12px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 179, 237, 0.2);
+    background: rgba(10, 22, 40, 0.6);
+    overflow: hidden;
+    animation: fadeInDown 0.25s ease;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Canvas with bounding box overlays */
+.ai-detr-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid rgba(99, 179, 237, 0.15);
+}
+
+/* Detection count + model badge header */
+.ai-detr-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px 4px;
+    font-size: 0.78em;
+    color: #bee3f8;
+}
+
+.ai-detr-model-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(99, 179, 237, 0.18);
+    border: 1px solid rgba(99, 179, 237, 0.3);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #63b3ed;
+}
+
+/* Pill strip — one pill per detected class */
+.ai-detr-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 4px 10px 10px;
+}
+
+.ai-detr-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.74em;
+    border: 1px solid;
+    border-color: color-mix(in srgb, var(--detr-color, #63b3ed) 50%, transparent);
+    background: color-mix(in srgb, var(--detr-color, #63b3ed) 12%, transparent);
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 2px 10px 2px 7px;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.ai-detr-pill:hover {
+    background: color-mix(in srgb, var(--detr-color, #63b3ed) 22%, transparent);
+}
+
+.ai-detr-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Loading progress bar */
+.ai-detr-progress {
+    height: 3px;
+    background: rgba(99, 179, 237, 0.1);
+    margin: 4px 12px 12px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.ai-detr-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00d4ff, #63b3ed);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* Status text during loading */
+.ai-detr-status {
+    padding: 10px 12px;
+    font-size: 0.78em;
+    color: rgba(99, 179, 237, 0.75);
+    font-style: italic;
+}
+
+/* No detections fallback */
+.ai-detr-empty {
+    padding: 10px 12px;
+    font-size: 0.78em;
+    color: rgba(99, 179, 237, 0.5);
+}
+
+/* 🔍 Detect toggle button — active state */
+.ai-vision-detect-toggle.active {
+    background: rgba(99, 179, 237, 0.28) !important;
+    border-color: rgba(99, 179, 237, 0.55) !important;
+    color: #00d4ff !important;
+    font-weight: 700;
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .ai-vision-detections {
+    background: rgba(235, 248, 255, 0.8);
+    border-color: rgba(43, 108, 176, 0.25);
+}
+
+[data-theme="light"] .ai-detr-header,
+[data-theme="light"] .ai-detr-status,
+[data-theme="light"] .ai-detr-pill {
+    color: #2c5282;
+}
+
+
 
 /* --- OCR Mode Pills --- */
 .ai-ocr-mode-pills {

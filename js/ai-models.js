@@ -91,6 +91,27 @@
             dtype: 'q4',
         },
 
+        // ── Local: RT-DETR r18 (Roboflow / Baidu) — Object Detection ──
+        'rt-detr': {
+            label: 'RT-DETR · Local',
+            badge: 'RT-DETR · Local',
+            icon: 'bi bi-bounding-box',
+            statusReady: 'RT-DETR Object Detector · Local',
+            dropdownName: 'RT-DETR (Object Detection)',
+            dropdownDesc: 'Local · 80-class COCO detection · WebGPU · ~85 MB',
+            isLocal: true,
+            isDocModel: true,
+            category: 'local-vision',
+            localModelId: 'onnx-community/rt-detr-r18-enc3-coco',
+            workerFile: 'ai-worker-detr.js',
+            downloadSize: '~85 MB',
+            requiresWebGPU: false,
+            supportsVision: true,
+            architecture: 'rt-detr',
+            dtype: 'fp32',
+            hidden: true, // Not shown in main model selector — only used internally by Vision cards
+        },
+
         // ── Local: Gemma 4 E2B (Google DeepMind) — Omni-modal, lighter ──
         'gemma4-e2b': {
             label: 'Gemma 4 E2B · Local',
