@@ -358,7 +358,23 @@
                     <i class="bi bi-chevron-up ai-model-chevron"></i>
                 </button>
                 <div class="ai-model-dropdown" id="ai-model-dropdown">
-                    <!-- Built dynamically from js/ai-models.js -->
+                    <div class="ai-model-tabs">
+                        <button class="ai-model-tab active" data-tab="models"><i class="bi bi-cpu me-1"></i>Models</button>
+                        <button class="ai-model-tab" data-tab="manager"><i class="bi bi-hdd me-1"></i>Manager</button>
+                    </div>
+                    <div class="ai-model-tab-content active" id="ai-model-tab-models">
+                        <!-- Built dynamically from js/ai-models.js -->
+                    </div>
+                    <div class="ai-model-tab-content" id="ai-model-tab-manager">
+                        <div class="ai-manager-header">
+                            <div class="ai-manager-title"><i class="bi bi-hdd-stack me-1"></i>Model Storage</div>
+                            <small class="ai-manager-hint">Save models to disk for offline use</small>
+                        </div>
+                        <div class="ai-manager-list" id="ai-manager-list">
+                            <!-- Built dynamically -->
+                        </div>
+                        <div class="ai-manager-footer" id="ai-manager-footer"></div>
+                    </div>
                 </div>
             </div>
             <div class="ai-attachments-strip" id="ai-attachments-strip" style="display:none"></div>
@@ -776,6 +792,7 @@ const chatResponse = await openai.chat.completions.create({
                     <button class="template-cat-btn" data-category="tables">Tables</button>
                     <button class="template-cat-btn" data-category="finance">Finance</button>
                     <button class="template-cat-btn" data-category="games">Games</button>
+                    <button class="template-cat-btn" data-category="science">Science</button>
                     <button class="template-cat-btn" data-category="skills">Skills</button>
                     <button class="template-cat-btn" data-category="forms">Forms</button>
                     <button class="template-cat-btn" data-category="charts">Charts</button>

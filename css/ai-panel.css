@@ -797,6 +797,351 @@
   line-height: 1.2;
 }
 
+/* --- Model Dropdown Tabs --- */
+.ai-model-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 3px;
+  gap: 2px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-color);
+  z-index: 2;
+}
+
+.ai-model-tab {
+  flex: 1;
+  padding: 7px 8px;
+  border: none;
+  background: none;
+  color: var(--text-color);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.15s;
+  opacity: 0.55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ai-model-tab:hover {
+  opacity: 0.85;
+  background: rgba(102, 126, 234, 0.06);
+}
+
+.ai-model-tab.active {
+  opacity: 1;
+  border-bottom: 2px solid #667eea;
+  color: #667eea;
+}
+
+[data-theme="dark"] .ai-model-tab.active {
+  color: #a5b4fc;
+  border-bottom-color: #a5b4fc;
+}
+
+.ai-model-tab i {
+  font-size: 12px;
+}
+
+.ai-model-tab-content {
+  display: none;
+}
+
+.ai-model-tab-content.active {
+  display: block;
+}
+
+/* --- Model Manager Tab --- */
+.ai-manager-header {
+  padding: 10px 12px 6px;
+}
+
+.ai-manager-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+}
+
+.ai-manager-hint {
+  display: block;
+  font-size: 10px;
+  opacity: 0.5;
+  margin-top: 2px;
+  color: var(--text-color);
+}
+
+.ai-manager-loading {
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ai-manager-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.5;
+}
+
+.ai-manager-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 12px;
+  margin: 6px;
+  border-radius: 8px;
+  background: rgba(240, 180, 41, 0.08);
+  border: 1px solid rgba(240, 180, 41, 0.2);
+}
+
+.ai-manager-notice strong {
+  display: block;
+  font-size: 12px;
+  color: var(--text-color);
+  margin-bottom: 2px;
+}
+
+.ai-manager-notice small {
+  font-size: 11px;
+  color: var(--text-color);
+  opacity: 0.65;
+  line-height: 1.4;
+}
+
+.ai-manager-list {
+  padding: 2px 4px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.ai-manager-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+
+.ai-manager-card:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-color: var(--border-color);
+}
+
+.ai-manager-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-manager-card-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.ai-manager-card-name i {
+  font-size: 12px;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .ai-manager-card-name i {
+  color: #a5b4fc;
+}
+
+.ai-manager-card-name strong {
+  font-size: 11px;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-manager-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-manager-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9.5px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.ai-manager-status-cached {
+  background: rgba(46, 160, 67, 0.12);
+  color: #2ea043;
+}
+
+[data-theme="dark"] .ai-manager-status-cached {
+  color: #56d364;
+  background: rgba(86, 211, 100, 0.12);
+}
+
+.ai-manager-status-exported {
+  background: rgba(102, 126, 234, 0.12);
+  color: #667eea;
+}
+
+[data-theme="dark"] .ai-manager-status-exported {
+  color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.12);
+}
+
+.ai-manager-status-none {
+  background: rgba(139, 148, 158, 0.1);
+  color: #8b949e;
+}
+
+.ai-manager-size {
+  font-size: 9.5px;
+  color: var(--text-color);
+  opacity: 0.5;
+}
+
+.ai-manager-export-date {
+  font-size: 9px;
+  color: var(--text-color);
+  opacity: 0.4;
+}
+
+.ai-manager-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ai-manager-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--button-bg);
+  color: var(--text-color);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.ai-manager-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.08);
+}
+
+[data-theme="dark"] .ai-manager-btn:hover {
+  color: #a5b4fc;
+  border-color: #a5b4fc;
+}
+
+.ai-manager-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.ai-manager-btn i {
+  font-size: 11px;
+}
+
+.ai-manager-btn-export {
+  border-color: rgba(46, 160, 67, 0.3);
+  color: #2ea043;
+}
+
+.ai-manager-btn-export:hover {
+  border-color: #2ea043;
+  background: rgba(46, 160, 67, 0.1);
+  color: #2ea043;
+}
+
+[data-theme="dark"] .ai-manager-btn-export {
+  color: #56d364;
+  border-color: rgba(86, 211, 100, 0.3);
+}
+
+[data-theme="dark"] .ai-manager-btn-export:hover {
+  color: #56d364;
+  border-color: #56d364;
+  background: rgba(86, 211, 100, 0.1);
+}
+
+.ai-manager-btn-import {
+  border-color: rgba(102, 126, 234, 0.3);
+  color: #667eea;
+}
+
+.ai-manager-btn-import:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+[data-theme="dark"] .ai-manager-btn-import {
+  color: #a5b4fc;
+  border-color: rgba(165, 180, 252, 0.3);
+}
+
+[data-theme="dark"] .ai-manager-btn-import:hover {
+  color: #a5b4fc;
+  border-color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.1);
+}
+
+.ai-manager-btn-delete {
+  border-color: rgba(248, 113, 113, 0.25);
+  color: #8b949e;
+}
+
+.ai-manager-btn-delete:hover {
+  border-color: #f87171;
+  color: #ef4444;
+  background: rgba(248, 113, 113, 0.08);
+}
+
+[data-theme="dark"] .ai-manager-btn-delete:hover {
+  color: #fca5a5;
+  border-color: #fca5a5;
+}
+
+.ai-manager-footer {
+  padding: 4px 12px 8px;
+  text-align: center;
+}
+
+.ai-manager-footer small {
+  font-size: 10px;
+  color: var(--text-color);
+  opacity: 0.45;
+}
+
 /* --- API Key Modal --- */
 .ai-apikey-input-group {
   display: flex;

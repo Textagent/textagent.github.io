@@ -190,6 +190,7 @@ async function loadModules() {
 
     // 3d: AI (depends on ai-models from 3a)
     await import('../js/ai-web-search.js');
+    await import('../js/ai-model-storage.js');
     await import('../js/ai-assistant.js');
     await import('../js/ai-chat.js');
     await import('../js/ai-actions.js');

@@ -132,8 +132,10 @@
 
   // Build dropdown buttons dynamically from AI_MODELS
   function buildModelDropdown() {
-    if (!aiModelDropdown) return;
-    aiModelDropdown.innerHTML = '';
+    // Target the Models tab container (not the dropdown root)
+    const modelsTab = document.getElementById('ai-model-tab-models');
+    if (!modelsTab) return;
+    modelsTab.innerHTML = '';
     Object.keys(_models).forEach(id => {
       const cfg = _models[id];
       if (cfg.isImageModel) return; // image models only in per-card selectors
@@ -162,10 +164,228 @@
           switchToModel(id);  // local model
         }
       });
-      aiModelDropdown.appendChild(btn);
+      modelsTab.appendChild(btn);
     });
   }
+
+  // --- Model Dropdown Tab Switching ---
+  function initModelDropdownTabs() {
+    if (!aiModelDropdown) return;
+    const tabs = aiModelDropdown.querySelectorAll('.ai-model-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetTab = tab.dataset.tab;
+        // Update tab active states
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        // Update content visibility
+        aiModelDropdown.querySelectorAll('.ai-model-tab-content').forEach(tc => {
+          tc.classList.toggle('active', tc.id === 'ai-model-tab-' + targetTab);
+        });
+        // Populate manager tab when switching to it
+        if (targetTab === 'manager') {
+          buildManagerTab();
+        }
+      });
+    });
+  }
+
+  // --- Model Manager Tab ---
+  function buildManagerTab() {
+    const listEl = document.getElementById('ai-manager-list');
+    const footerEl = document.getElementById('ai-manager-footer');
+    if (!listEl) return;
+
+    const storage = M._ai && M._ai.modelStorage;
+    if (!storage) {
+      listEl.innerHTML = '<div class="ai-manager-empty">Model storage module not loaded</div>';
+      return;
+    }
+
+    // Show loading state
+    listEl.innerHTML = '<div class="ai-manager-loading"><span class="ai-status-spinner"></span> Scanning model storage...</div>';
+
+    // Populate asynchronously
+    storage.getAllStatuses().then(models => {
+      listEl.innerHTML = '';
+      if (models.length === 0) {
+        listEl.innerHTML = '<div class="ai-manager-empty">No local models configured</div>';
+        return;
+      }
+
+      models.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'ai-manager-card';
+        card.dataset.modelId = m.id;
+
+        // Status badge
+        let statusIcon, statusLabel, statusClass;
+        if (m.status === 'downloaded') {
+          statusIcon = 'bi-hdd-fill';
+          statusLabel = 'Downloaded to disk';
+          statusClass = 'exported';
+        } else if (m.status === 'cached') {
+          statusIcon = 'bi-cloud-check';
+          statusLabel = 'In browser cache';
+          statusClass = 'cached';
+        } else {
+          statusIcon = 'bi-cloud-slash';
+          statusLabel = 'Not downloaded';
+          statusClass = 'none';
+        }
+
+        const sizeStr = m.cachedSize > 0 ? storage.formatBytes(m.cachedSize) : (m.cfg.downloadSize || '—');
+        const dlDate = m.downloadInfo ? new Date(m.downloadInfo.date).toLocaleDateString() : '';
+
+        card.innerHTML = `
+          <div class="ai-manager-card-info">
+            <div class="ai-manager-card-name">
+              <i class="${m.cfg.icon}"></i>
+              <strong>${m.cfg.dropdownName}</strong>
+            </div>
+            <div class="ai-manager-card-meta">
+              <span class="ai-manager-status ai-manager-status-${statusClass}">
+                <i class="bi ${statusIcon}"></i> ${statusLabel}
+              </span>
+              <span class="ai-manager-size">${sizeStr}</span>
+              ${dlDate ? '<span class="ai-manager-export-date">Downloaded ' + dlDate + '</span>' : ''}
+            </div>
+          </div>
+          <div class="ai-manager-card-actions">
+            <button class="ai-manager-btn ai-manager-btn-export" data-model="${m.id}" title="Export cached model as a ZIP file for offline backup">
+              <i class="bi bi-box-arrow-down"></i> Export
+            </button>
+            <button class="ai-manager-btn ai-manager-btn-import" data-model="${m.id}" title="Import a previously exported model ZIP into browser cache">
+              <i class="bi bi-box-arrow-in-up"></i> Import
+            </button>
+            <button class="ai-manager-btn ai-manager-btn-delete" data-model="${m.id}" title="Delete cached model from browser">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>`;
+        listEl.appendChild(card);
+      });
+
+      // Wire up buttons
+      listEl.querySelectorAll('.ai-manager-btn-export').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleManagerExport(btn.dataset.model, btn);
+        });
+      });
+      listEl.querySelectorAll('.ai-manager-btn-import').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleManagerImport(btn.dataset.model, btn);
+        });
+      });
+      listEl.querySelectorAll('.ai-manager-btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleManagerDelete(btn.dataset.model, btn);
+        });
+      });
+
+      // Footer with total storage used
+      if (footerEl) {
+        const totalCached = models.reduce((sum, m) => sum + m.cachedSize, 0);
+        const cachedCount = models.filter(m => m.status !== 'none').length;
+        footerEl.innerHTML = totalCached > 0
+          ? `<small><i class="bi bi-info-circle me-1"></i>${cachedCount} model${cachedCount !== 1 ? 's' : ''} cached · ${storage.formatBytes(totalCached)} total</small>`
+          : '';
+      }
+    }).catch(err => {
+      listEl.innerHTML = '<div class="ai-manager-empty">Failed to scan models: ' + err.message + '</div>';
+    });
+  }
+
+  // --- Manager Download Handler ---
+  async function handleManagerExport(modelId, btn) {
+    const storage = M._ai && M._ai.modelStorage;
+    if (!storage) return;
+    const cfg = _models[modelId];
+    const modelName = cfg ? cfg.dropdownName : modelId;
+
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ai-status-spinner"></span>';
+
+    try {
+      const result = await storage.downloadFromHF(modelId, (pct, msg) => {
+        btn.innerHTML = '<span class="ai-status-spinner"></span> ' + pct + '%';
+        btn.title = msg;
+      });
+      if (result.success) {
+        M.showToast('⬇️ ' + modelName + ' download started (' + result.fileCount + ' files, ' + storage.formatBytes(result.totalSize) + ') — check your Downloads folder', 'success');
+        buildManagerTab(); // Refresh
+      } else if (result.cancelled) {
+        // User cancelled — do nothing
+      }
+    } catch (err) {
+      M.showToast('❌ Download failed: ' + err.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+
+  // --- Manager Upload Handler ---
+  async function handleManagerImport(modelId, btn) {
+    const storage = M._ai && M._ai.modelStorage;
+    if (!storage) return;
+    const cfg = _models[modelId];
+    const modelName = cfg ? cfg.dropdownName : modelId;
+
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ai-status-spinner"></span>';
+
+    try {
+      const result = await storage.uploadToCache(modelId, (pct, msg) => {
+        btn.innerHTML = '<span class="ai-status-spinner"></span> ' + pct + '%';
+        btn.title = msg;
+      });
+      if (result.success) {
+        M.showToast('📦 ' + modelName + ' uploaded (' + result.fileCount + ' files) — ready to use offline!', 'success');
+        buildManagerTab(); // Refresh
+      } else if (result.cancelled) {
+        // User cancelled picker — do nothing
+      }
+    } catch (err) {
+      M.showToast('❌ Upload failed: ' + err.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+
+  // --- Manager Delete Handler ---
+  async function handleManagerDelete(modelId, btn) {
+    const cfg = _models[modelId];
+    const modelName = cfg ? cfg.dropdownName : modelId;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ai-status-spinner"></span>';
+
+    try {
+      const cleared = await deleteModelCache(modelId);
+      // Also clear download tracking
+      const storage = M._ai && M._ai.modelStorage;
+      if (storage) localStorage.removeItem(storage.DOWNLOADED_PREFIX + modelId);
+      M.showToast('🗑️ ' + modelName + ' deleted (' + cleared + ' cache entries cleared)', 'success');
+      buildManagerTab(); // Refresh
+      if (currentAiModel === modelId) {
+        addAiStatusBar('loading', modelName + ' deleted — click AI button to re-download');
+      }
+    } catch (err) {
+      M.showToast('❌ Delete failed: ' + err.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-trash3"></i>';
+  }
+
   initModelSelectorUI();
+  initModelDropdownTabs();
 
   function updateModelUI(mid) {
     const cfg = _models[mid];
@@ -1162,7 +1382,7 @@
   // M._ai — Internal namespace for cross-module access
   // Used by ai-chat.js, ai-actions.js, ai-image.js
   // =============================================
-  M._ai = {};
+  if (!M._ai) M._ai = {};
   Object.defineProperties(M._ai, {
     isGenerating: {
       get: function () { return aiIsGenerating; },
