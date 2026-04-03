@@ -118,7 +118,8 @@ async function loadModel() {
 
 // ============================================
 // Task-specific token limits (mirrors Qwen worker)
-// Gemma 4 context window: 8192 tokens
+// Gemma 4 E4B: 128K context window, sliding_window=512
+// But WebGPU memory is the real limit for the E4B quant
 // ============================================
 const TOKEN_LIMITS = {
     summarize:  2048,
@@ -184,6 +185,20 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
     // ai-assistant.js sends `userPrompt`; ai-docgen sends `prompt` — handle both
     const userText = userPrompt || prompt || context || 'Hello!';
 
+    // When context is provided (QA mode, connectors, web search), build a
+    // combined prompt so the model sees the data THEN the question.
+    // Trim context to ~6000 chars to stay within safe WebGPU memory for E4B
+    let fullUserText = userText;
+    if (context && userText !== context) {
+        let trimmedContext = context;
+        const CONTEXT_CHAR_LIMIT = 6000;
+        if (trimmedContext.length > CONTEXT_CHAR_LIMIT) {
+            trimmedContext = trimmedContext.substring(0, CONTEXT_CHAR_LIMIT) + '\n... [context trimmed for model size limit]';
+        }
+        fullUserText = trimmedContext + '\n\n---\nUser question: ' + userText;
+    }
+
+
     if (!model || !processor) {
         self.postMessage({
             type: 'error',
@@ -208,11 +223,13 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
 
         // ── 1. Build the messages array ──────────────────────────
         // System message so Gemma 4 knows its role
+        let systemContent = 'You are Gemma, a helpful, accurate, and friendly AI assistant made by Google. You can understand text, images, and audio. Answer clearly and concisely.';
+        // When context is provided (connectors, search, docs), tell the model to use it
+        if (context) {
+            systemContent += ' When the user provides data or context before their question, you MUST answer based on that data. The data is real and live — do not claim you cannot access it.';
+        }
         const messages = [
-            {
-                role: 'system',
-                content: 'You are Gemma, a helpful, accurate, and friendly AI assistant made by Google. You can understand text, images, and audio. Answer clearly and concisely.',
-            },
+            { role: 'system', content: systemContent },
         ];
 
         // Multi-turn chat history (from ai-assistant chatHistory)
@@ -253,8 +270,8 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
             loadedAudio = await read_audio(url, 16000);
         }
 
-        // Text always last
-        userContent.push({ type: 'text', text: userText });
+        // Text always last — use fullUserText which includes context when available
+        userContent.push({ type: 'text', text: fullUserText });
         messages.push({ role: 'user', content: userContent });
 
         // ── 2. Apply chat template → formatted prompt string ──────

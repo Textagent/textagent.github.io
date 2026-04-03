@@ -53,6 +53,7 @@ import '../css/echarts.css';
 import '../css/chart-docgen.css';
 import '../css/ai-tags.css';
 import '../css/spaces.css';
+import '../css/connectors.css';
 import '../css/link-analytics.css';
 import '../css/research-loop.css';
 
@@ -83,6 +84,14 @@ async function loadModules() {
     // Phase 2b: Space Manager (depends on M.db from cloud-share, M.KEYS from storage-keys)
     // Must load before app-init.js which calls loadSharedMarkdown()
     await import('../js/space-manager.js');
+
+    // Space Manager depends on M.db from cloud-share
+    // Connectors Manager — third-party data source integrations (Slack, GitHub, Notion, Linear)
+    try {
+        await import('../js/connectors.js');
+    } catch (e) {
+        console.warn('[TextAgent] connectors.js failed to load:', e);
+    }
 
     // app-init.js must load after Phase 2 — it wires event handlers
     // and calls setViewMode('split') at the end.

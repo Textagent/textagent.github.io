@@ -1,0 +1,685 @@
+/* ============================================
+   connectors.css — My Connectors Modal + Card Styles
+   ============================================ */
+
+/* --- AI Panel Connector Context Strip --- */
+.ai-connector-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: rgba(88, 166, 255, 0.06);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 8px;
+    margin: 0 6px 4px;
+    font-size: 12px;
+    color: var(--text-color);
+    flex-wrap: wrap;
+}
+.ai-connector-strip-label {
+    font-weight: 600;
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+.ai-connector-strip-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(46, 160, 67, 0.12);
+    border: 1px solid rgba(46, 160, 67, 0.3);
+    color: var(--text-color);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+.ai-connector-strip-pill i {
+    color: #2ea043;
+    font-size: 10px;
+}
+.ai-connector-strip-manage {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.ai-connector-strip-manage:hover {
+    background: var(--button-hover);
+}
+
+
+
+/* --- "Free · No key" chip on keyless cards --- */
+.connector-free-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: rgba(46, 160, 67, 0.18);
+    color: #2ea043;
+    border: 1px solid rgba(46, 160, 67, 0.35);
+    margin-top: 4px;
+    align-self: flex-start;
+}
+
+/* --- "No API key required" notice in detail view --- */
+.connector-keyless-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(46, 160, 67, 0.08);
+    border: 1px solid rgba(46, 160, 67, 0.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-color);
+    margin-bottom: 14px;
+}
+.connector-keyless-notice i {
+    color: #2ea043;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* --- GitHub OAuth Device Flow block --- */
+.connector-oauth-section {
+    margin-bottom: 14px;
+}
+.connector-oauth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.4;
+    margin: 12px 0;
+}
+.connector-oauth-divider::before,
+.connector-oauth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+.connector-oauth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 16px;
+    background: #24292e;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.connector-oauth-btn:hover {
+    background: #2f363d;
+    transform: translateY(-1px);
+}
+.connector-device-code-block {
+    background: var(--editor-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 13px;
+}
+.connector-device-code-value {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--accent-color);
+    text-align: center;
+    display: block;
+    margin: 8px 0;
+}
+
+
+/* --- Modal Overlay (mirrors spaces-modal pattern) --- */
+.connectors-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.connectors-modal.active {
+    display: flex;
+}
+.connectors-modal-content {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: connectors-slide-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes connectors-slide-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* --- Modal Header --- */
+.connectors-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.05), rgba(139, 92, 246, 0.05));
+}
+.connectors-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.connectors-header-icon {
+    font-size: 1.4rem;
+    color: var(--accent-color);
+    background: rgba(88, 166, 255, 0.12);
+    padding: 8px;
+    border-radius: 10px;
+}
+.connectors-modal-title h5 {
+    margin: 0 0 2px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+.connectors-active-badge {
+    font-size: 11px;
+    color: var(--text-color);
+    opacity: 0.55;
+    display: block;
+}
+.connectors-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px;
+    border-radius: 8px;
+    opacity: 0.6;
+    transition: all 0.15s;
+}
+.connectors-modal-close:hover {
+    background-color: var(--button-hover);
+    opacity: 1;
+}
+
+/* --- Modal Body --- */
+.connectors-modal-body {
+    padding: 20px 22px;
+}
+.connectors-intro {
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.6;
+    margin: 0 0 18px;
+    line-height: 1.5;
+}
+
+/* --- Connector Card Grid --- */
+.connectors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.connector-card {
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: var(--bg-color);
+}
+.connector-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+.connector-card-connected {
+    border-color: rgba(46, 160, 67, 0.4);
+}
+.connector-card-connected:hover {
+    border-color: rgba(46, 160, 67, 0.7);
+}
+
+/* Card Header Gradient */
+.connector-card-header {
+    position: relative;
+    padding: 18px 16px 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+.connector-card-icon {
+    font-size: 1.7rem;
+    color: rgba(255, 255, 255, 0.95);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Status Dot */
+.connector-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+}
+.connector-status-on {
+    background: #2ea043;
+    box-shadow: 0 0 0 2px rgba(46,160,67,0.3), 0 0 8px rgba(46,160,67,0.6);
+    animation: connectors-pulse 2s infinite;
+}
+.connector-status-off {
+    background: rgba(255,255,255,0.4);
+}
+@keyframes connectors-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(46,160,67,0.3), 0 0 8px rgba(46,160,67,0.6); }
+    50%       { box-shadow: 0 0 0 4px rgba(46,160,67,0.15), 0 0 16px rgba(46,160,67,0.4); }
+}
+
+/* Card Body */
+.connector-card-body {
+    padding: 10px 14px;
+}
+.connector-card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+.connector-card-desc {
+    font-size: 11.5px;
+    color: var(--text-color);
+    opacity: 0.55;
+    line-height: 1.4;
+}
+.connector-card-user {
+    font-size: 11px;
+    color: #2ea043;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+/* Card Footer */
+.connector-card-footer {
+    padding: 8px 14px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* Connect Button */
+.connector-connect-btn {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--button-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.connector-connect-btn:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+}
+
+/* Manage Button */
+.connector-manage-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    opacity: 0.4;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.connector-manage-btn:hover {
+    opacity: 1;
+    background-color: var(--button-hover);
+}
+
+/* Enable Toggle (on/off for context injection) */
+.connector-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+}
+.connector-enable-check {
+    display: none;
+}
+.connector-toggle-slider {
+    position: relative;
+    width: 28px;
+    height: 16px;
+    background: var(--border-color);
+    border-radius: 8px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+.connector-toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+}
+.connector-enable-check:checked + .connector-toggle-slider {
+    background: #2ea043;
+}
+.connector-enable-check:checked + .connector-toggle-slider::after {
+    transform: translateX(12px);
+}
+.connector-toggle-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+/* --- Detail View --- */
+.connectors-detail-back-bar {
+    margin-bottom: 16px;
+}
+.connector-back-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.connector-back-btn:hover {
+    background-color: var(--button-hover);
+}
+
+/* Detail header */
+.connector-detail-header {
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    position: relative;
+}
+.connector-detail-icon {
+    font-size: 2rem;
+    color: rgba(255,255,255,0.95);
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    flex-shrink: 0;
+}
+.connector-detail-info {
+    flex: 1;
+}
+.connector-detail-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+.connector-detail-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 3px;
+}
+.connector-detail-badge {
+    background: rgba(46,160,67,0.9);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+.connector-detail-badge-off {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Detail Body */
+.connector-detail-body {
+    background: var(--editor-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+}
+.connector-detail-section {
+    margin-bottom: 16px;
+}
+.connector-detail-section:last-child {
+    margin-bottom: 0;
+}
+.connector-detail-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-color);
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+/* Config Form Groups */
+.connector-form-group {
+    margin-bottom: 12px;
+}
+.connector-form-group:last-child {
+    margin-bottom: 0;
+}
+.connector-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 6px;
+}
+.connector-form-group small {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-color);
+    opacity: 0.5;
+    margin-top: 5px;
+    line-height: 1.5;
+}
+.connector-form-group small a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+.connector-form-group small a:hover {
+    text-decoration: underline;
+}
+.connector-token-input,
+.connector-config-input {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+.connector-token-input:focus,
+.connector-config-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+/* Error and status messages */
+.connector-error {
+    padding: 8px 12px;
+    background: rgba(248, 81, 73, 0.1);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #f85149;
+    margin-top: 10px;
+}
+.connector-status-msg {
+    padding: 8px 12px;
+    background: rgba(46, 160, 67, 0.1);
+    border: 1px solid rgba(46, 160, 67, 0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-color);
+    margin-top: 10px;
+}
+
+/* Detail Footer (action buttons) */
+.connector-detail-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.connector-btn-primary {
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.connector-btn-primary:hover {
+    background: #4b94e8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(88,166,255,0.3);
+}
+.connector-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.connector-btn-danger {
+    background: transparent;
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.4);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.connector-btn-danger:hover {
+    background: rgba(248, 81, 73, 0.1);
+    border-color: #f85149;
+}
+
+/* Loading spinner inside button */
+.connector-spin {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: connector-spin 0.7s linear infinite;
+}
+@keyframes connector-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Toolbar Button Sparkle (connected state) --- */
+.connectors-toolbar-btn.has-active-connectors {
+    color: #2ea043;
+    position: relative;
+}
+.connectors-toolbar-btn.has-active-connectors::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    background: #2ea043;
+    border-radius: 50%;
+    border: 1.5px solid var(--bg-color);
+}
+
+/* --- Responsive --- */
+@media (max-width: 500px) {
+    .connectors-modal-content {
+        max-height: 95vh;
+        border-radius: 14px;
+    }
+    .connectors-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (max-width: 360px) {
+    .connectors-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -255,6 +255,12 @@
                     <i class="bi bi-globe-americas"></i>
                     <span class="ai-search-label">Search</span>
                 </label>
+                <label class="ai-search-toggle ai-connector-toggle-btn" id="ai-connector-toggle-label" title="Toggle Connector Context" style="display:none">
+                    <input type="checkbox" id="ai-connector-toggle" checked>
+                    <span class="ai-search-slider"></span>
+                    <i class="bi bi-plug-fill"></i>
+                    <span class="ai-search-label" id="ai-connector-toggle-label-text">Connectors</span>
+                </label>
                 <button class="ai-mobile-options-toggle" id="ai-mobile-options-toggle" title="Show quick actions"><i class="bi bi-grid-3x3-gap"></i></button>
                 <button class="ai-panel-btn" id="ai-clear-chat" title="Clear chat"><i class="bi bi-trash3"></i></button>
                 <button class="ai-panel-btn" id="ai-panel-close" title="Close"><i class="bi bi-x-lg"></i></button>
@@ -985,6 +991,43 @@ const chatResponse = await openai.chat.completions.create({
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Connectors Modal -->
+    <div id="connectors-modal" class="connectors-modal" role="dialog" aria-modal="true" aria-label="My Connectors">
+        <div class="connectors-modal-content">
+            <div class="connectors-modal-header">
+                <div class="connectors-modal-title">
+                    <i class="bi bi-plug-fill connectors-header-icon"></i>
+                    <div>
+                        <h5>My Connectors</h5>
+                        <span id="connectors-active-badge" class="connectors-active-badge">None connected</span>
+                    </div>
+                </div>
+                <button class="connectors-modal-close" id="connectors-modal-close" title="Close" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="connectors-modal-body">
+
+                <!-- Grid View (default) -->
+                <div id="connectors-grid-view">
+                    <p class="connectors-intro">Connect third-party tools and let the AI Assistant pull live data as context when you ask questions.</p>
+                    <div id="connectors-grid" class="connectors-grid"></div>
+                </div>
+
+                <!-- Detail / Auth View (hidden by default) -->
+                <div id="connectors-detail-view" style="display:none">
+                    <div class="connectors-detail-back-bar">
+                        <button id="connectors-detail-back" class="connector-back-btn">
+                            <i class="bi bi-arrow-left me-1"></i> All Connectors
+                        </button>
+                    </div>
+                    <div id="connectors-detail-content"></div>
+                </div>
+
             </div>
         </div>
     </div>

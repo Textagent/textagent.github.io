@@ -1326,4 +1326,30 @@
   M.initLocalAiWorker = function (modelId) { showModelDownloadPopup(modelId || currentAiModel); };
   M.initCloudWorker = initCloudWorker;
 
+  // ── Connector context injection ──────────────────────────────────────────────
+  // Wrap M.requestAiTask so that ALL callers (DocGen tags, Agent Flow, AI Chat)
+  // automatically get active connector data prepended to the context parameter.
+  // This is the single authoritative hook — no per-call-site changes needed.
+  // ─────────────────────────────────────────────────────────────────────────────
+  (function wrapRequestAiTaskWithConnectors() {
+    var _orig = M.requestAiTask;
+    M.requestAiTask = function (opts) {
+      // Only inject when connectors exist and have active sources
+      if (!M.connectors || !M.connectors.hasActiveConnectors()) {
+        return _orig.call(M, opts);
+      }
+      // Fetch connector context async, then call the original
+      return M.connectors.getActiveContext(opts.userPrompt || '').then(function (connCtx) {
+        if (!connCtx) return _orig.call(M, opts);
+        // Prepend connector context to the existing context (never replace it)
+        var enrichedContext = connCtx + (opts.context ? '\n\n' + opts.context : '');
+        var enrichedOpts = Object.assign({}, opts, { context: enrichedContext });
+        return _orig.call(M, enrichedOpts);
+      }).catch(function () {
+        // Connector fetch failed — fall through to normal request
+        return _orig.call(M, opts);
+      });
+    };
+  })();
+
 })(window.MDView);

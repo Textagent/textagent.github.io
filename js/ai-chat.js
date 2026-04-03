@@ -681,50 +681,62 @@
         var editorContent = markdownEditor.value;
         var isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
 
-        // Web search integration
+
+        function buildFinalContext(connectorCtx, searchContext) {
+            var parts = [];
+            if (connectorCtx) parts.push(connectorCtx);
+            if (searchContext) parts.push('[Web Search Results]\n' + searchContext);
+            if (editorContent.trim()) parts.push('[Document Content]\n' + editorContent);
+            if (parts.length === 0) return null;
+            // Prepend a strong grounding instruction so the AI uses the data, not training memory
+            var header = 'The following is LIVE DATA fetched right now. Answer the user\'s question using this data as your primary source. Do not rely on your training knowledge for facts that should come from this data.\n\n';
+            return header + parts.join('\n\n');
+        }
+
+        // ── Unified pipeline: fetch connector data + web search in parallel ──────
+        var _hasConnectors = M.connectors && M.connectors.hasActiveConnectors();
+
+        var connectorPromise = _hasConnectors
+            ? M.connectors.getActiveContext(text).catch(function () { return null; })
+            : Promise.resolve(null);
+
         if (M.webSearch && M.webSearch.isSearchEnabled()) {
-            // Show the thinking block — if model is ready, show "Rewriting…" phase first
+            // Show thinking block — rewrite query in parallel with connector fetch
             var willRewrite = M.isCurrentModelReady && M.isCurrentModelReady() && !M.isAiGenerating();
             createSearchThinkingBlock(text, willRewrite);
 
-            // Rewrite the search query for better results (async — may use the LLM)
-            refineSearchQuery(text).then(function (searchQuery) {
-                // Update the thinking block to show the rewritten query
-                if (searchQuery !== text) {
-                    updateThinkingBlockQuery(searchQuery);
-                }
-
+            var searchPromise = refineSearchQuery(text).then(function (searchQuery) {
+                if (searchQuery !== text) updateThinkingBlockQuery(searchQuery);
                 return M.webSearch.performMultiSearch(searchQuery).then(function (results) {
-                    var searchContext = M.webSearch.formatResultsForLLM(results);
-
-                    // Populate the thinking block with actual results (or "no results" msg)
                     populateSearchThinkingBlock(results, searchQuery);
-
-                    var context = searchContext;
-                    if (editorContent.trim()) {
-                        context = searchContext + '\n\n[Document Content]\n' + editorContent;
-                    }
-
-                    _ai.sendToAi(editorContent.trim() ? 'qa' : 'generate', context || null, text, workerAttachments, historySnapshot);
+                    return M.webSearch.formatResultsForLLM(results);
                 });
-            }).catch(function (err) {
-                // Populate thinking block with "no results" state
+            }).catch(function () {
                 populateSearchThinkingBlock([], text);
+                return null;
+            });
 
-                if (isQuestion && editorContent.trim()) {
-                    _ai.sendToAi('qa', editorContent, text, workerAttachments, historySnapshot);
-                } else {
-                    _ai.sendToAi('generate', null, text, workerAttachments, historySnapshot);
-                }
+            // Wait for both connector data AND web search
+            Promise.all([connectorPromise, searchPromise]).then(function (results) {
+                var connectorCtx = results[0];
+                var searchCtx    = results[1];
+                var context = buildFinalContext(connectorCtx, searchCtx);
+                _ai.sendToAi(context ? 'qa' : 'generate', context || null, text, workerAttachments, historySnapshot);
             });
             return;
         }
 
-        if (isQuestion && editorContent.trim()) {
-            _ai.sendToAi('qa', editorContent, text, workerAttachments, historySnapshot);
-        } else {
-            _ai.sendToAi('generate', null, text, workerAttachments, historySnapshot);
-        }
+        // No web search — connector only (or neither)
+        connectorPromise.then(function (connectorCtx) {
+            var context = buildFinalContext(connectorCtx, null);
+            if (context) {
+                _ai.sendToAi('qa', context, text, workerAttachments, historySnapshot);
+            } else if (isQuestion && editorContent.trim()) {
+                _ai.sendToAi('qa', editorContent, text, workerAttachments, historySnapshot);
+            } else {
+                _ai.sendToAi('generate', null, text, workerAttachments, historySnapshot);
+            }
+        });
     }
 
     // --- Track editor selection ---
