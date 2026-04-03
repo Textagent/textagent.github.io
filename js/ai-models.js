@@ -103,6 +103,7 @@
             category: 'local-multimodal',
             localModelId: 'onnx-community/gemma-4-E2B-it-ONNX',
             workerFile: 'ai-worker-gemma4.js',
+            workerType: 'classic', // Must be classic — uses dynamic import() of CDN URL
             downloadSize: '~2 GB',
             requiresWebGPU: true,
             supportsVision: true,
@@ -124,6 +125,7 @@
             category: 'local-multimodal',
             localModelId: 'onnx-community/gemma-4-E4B-it-ONNX',
             workerFile: 'ai-worker-gemma4.js',
+            workerType: 'classic', // Must be classic — uses dynamic import() of CDN URL
             downloadSize: '~4 GB',
             requiresWebGPU: true,
             requiresHighEnd: true,

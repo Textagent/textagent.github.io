@@ -697,7 +697,11 @@
     const workerPath = (cfg && cfg.workerFile) || 'ai-worker.js';
     // Add cache-buster for local workers in dev mode so edits are always picked up
     const workerUrl = workerPath + '?v=' + (window._workerVersion || Date.now());
-    const worker = new Worker(workerUrl, { type: 'module' });
+    // Some workers (e.g. gemma4) use dynamic import() of external CDN URLs.
+    // These MUST be classic workers — module workers in Vite dev mode have their
+    // imports intercepted by the module bundler, causing CDN imports to fail.
+    const workerType = (cfg && cfg.workerType) || 'module';
+    const worker = new Worker(workerUrl, { type: workerType });
     ls.worker = worker;
 
     // Send model ID before loading
