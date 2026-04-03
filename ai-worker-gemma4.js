@@ -25,19 +25,6 @@ let processor = null;
 self.postMessage({ type: "status", message: `[Gemma4] Loading transformers.js ${TRANSFORMERS_URL.split('@').pop()}...` });
 console.log(`[Gemma4 worker] TRANSFORMERS_URL = ${TRANSFORMERS_URL}`);
 
-// ── Global safety net ────────────────────────────────────────────────────────
-// Catch any uncaught async rejection (e.g. from the message handler's async fn)
-// and convert it to a postMessage error so the UI shows a readable status
-// instead of firing worker.onerror → "AI Worker error: Event".
-self.addEventListener('unhandledrejection', (event) => {
-    const msg = event.reason && event.reason.message
-        ? event.reason.message
-        : String(event.reason || 'Unknown error in Gemma4 worker');
-    console.error('[Gemma4 worker] Unhandled rejection:', msg);
-    self.postMessage({ type: 'error', message: `Gemma 4 worker error: ${msg}` });
-    event.preventDefault();
-});
-
 // ============================================
 // Progress callback factory
 // ============================================
@@ -85,16 +72,6 @@ async function loadModel() {
         load_image = transformers.load_image;
         read_audio = transformers.read_audio;
         TextStreamer = transformers.TextStreamer;
-
-        // ── Verify Gemma 4 classes are available in this version ──
-        if (!Gemma4ForConditionalGeneration || !Gemma4Processor) {
-            const ver = TRANSFORMERS_URL.split('@').pop();
-            throw new Error(
-                `Gemma 4 classes not found in transformers.js@${ver}. ` +
-                `The loaded version does not support Gemma 4 yet. ` +
-                `Try clearing site data and reloading.`
-            );
-        }
 
         // 2. WebGPU detection
         let device = "wasm";
@@ -261,47 +238,36 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
 self.addEventListener("message", async (event) => {
     const { type } = event.data;
 
-    try {
-        switch (type) {
-            case "setModelId":
-                MODEL_ID = event.data.modelId || MODEL_ID;
-                MODEL_LABEL = event.data.modelLabel || MODEL_LABEL;
-                break;
+    switch (type) {
+        case "setModelId":
+            MODEL_ID = event.data.modelId || MODEL_ID;
+            MODEL_LABEL = event.data.modelLabel || MODEL_LABEL;
+            break;
 
-            case "load":
-                await loadModel();
-                break;
+        case "load":
+            await loadModel();
+            break;
 
-            case "generate":
-                await generate(event.data);
-                break;
+        case "generate":
+            await generate(event.data);
+            break;
 
-            // Compatibility alias used by ai-docgen-generate.js
-            case "process":
-                await generate({
-                    prompt: event.data.prompt || event.data.task,
-                    attachments: event.data.attachments || [],
-                    context: event.data.context,
-                    messageId: event.data.messageId,
-                    options: event.data.options || {},
-                });
-                break;
+        // Compatibility alias used by ai-docgen-generate.js
+        case "process":
+            await generate({
+                prompt: event.data.prompt || event.data.task,
+                attachments: event.data.attachments || [],
+                context: event.data.context,
+                messageId: event.data.messageId,
+                options: event.data.options || {},
+            });
+            break;
 
-            case "ping":
-                self.postMessage({ type: "pong" });
-                break;
+        case "ping":
+            self.postMessage({ type: "pong" });
+            break;
 
-            default:
-                console.warn("Gemma4 worker — unknown message type:", type);
-        }
-    } catch (err) {
-        // Catch synchronous throws from any case and route them as error messages
-        // so they don't escape to worker.onerror (which shows generic "Model unavailable")
-        console.error('[Gemma4 worker] Uncaught in message handler:', err);
-        self.postMessage({
-            type: 'error',
-            message: `Gemma 4 worker error (${type}): ${err.message}`,
-            messageId: event.data.messageId,
-        });
+        default:
+            console.warn("Gemma4 worker — unknown message type:", type);
     }
 });
