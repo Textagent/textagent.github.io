@@ -213,7 +213,8 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
 
         await model.generate({
             ...inputs,
-            max_new_tokens: options.maxTokens || 2048,
+            max_new_tokens: options.maxTokens || 4096,
+
 
             do_sample: true,
             temperature: options.temperature || 0.7,
