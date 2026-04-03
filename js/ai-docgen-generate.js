@@ -19,195 +19,6 @@
     }
 
     // ==============================================
-    // RT-DETR DETECTION — Stage 1 of two-stage Vision pipeline
-    // ==============================================
-
-    // Color palette for detection bounding boxes (COCO classes cycle through these)
-    var DETR_COLORS = [
-        '#00d4ff', '#ff6b6b', '#51cf66', '#ffd43b', '#cc5de8',
-        '#ff922b', '#20c997', '#f06595', '#74c0fc', '#a9e34b'
-    ];
-
-    /**
-     * runDetrDetection(imageDataUrl, blockIndex)
-     *
-     * Spins up a transient ai-worker-detr.js, loads RT-DETR, runs detection
-     * on the provided image data-URL, renders the bbox canvas + pill strip
-     * into the card's .ai-vision-detections panel, then terminates the worker.
-     *
-     * Returns: Promise<Array<{label, score, box}>> (sorted by confidence desc)
-     */
-    async function runDetrDetection(imageDataUrl, blockIndex) {
-        return new Promise(function (resolve, reject) {
-            var worker;
-            try {
-                worker = new Worker('ai-worker-detr.js');
-            } catch (e) {
-                reject(new Error('Could not create RT-DETR worker: ' + e.message));
-                return;
-            }
-
-            var loadedModel = false;
-            var timeout = setTimeout(function () {
-                worker.terminate();
-                reject(new Error('RT-DETR timed out after 120 s'));
-            }, 120000);
-
-            worker.onmessage = function (event) {
-                var msg = event.data;
-
-                if (msg.type === 'status') {
-                    // Show progress in the detections panel
-                    var detPanel = document.querySelector('.ai-vision-detections[data-ai-index="' + blockIndex + '"]');
-                    if (detPanel) {
-                        detPanel.style.display = 'block';
-                        if (!detPanel.querySelector('.ai-detr-status')) {
-                            detPanel.innerHTML = '<div class="ai-detr-status">' + msg.message + '</div>';
-                        } else {
-                            detPanel.querySelector('.ai-detr-status').textContent = msg.message;
-                        }
-                    }
-                } else if (msg.type === 'loaded') {
-                    loadedModel = true;
-                    // Model loaded — start detection
-                    worker.postMessage({ type: 'detect', imageData: imageDataUrl, threshold: 0.3 });
-                } else if (msg.type === 'progress') {
-                    // Show file progress
-                    var detPanel2 = document.querySelector('.ai-vision-detections[data-ai-index="' + blockIndex + '"]');
-                    if (detPanel2 && msg.total > 0) {
-                        var pct = Math.round((msg.loaded / msg.total) * 100);
-                        detPanel2.style.display = 'block';
-                        detPanel2.innerHTML = '<div class="ai-detr-status">\ud83d\udce6 Loading RT-DETR: ' + msg.file + ' (' + pct + '%)</div>'
-                            + '<div class="ai-detr-progress"><div class="ai-detr-progress-bar" style="width:' + pct + '%"></div></div>';
-                    }
-                } else if (msg.type === 'detections') {
-                    clearTimeout(timeout);
-                    var detections = msg.detections || [];
-                    worker.terminate();
-
-                    // ── Render detections into the card panel ──
-                    renderDetrDetections(imageDataUrl, detections, blockIndex);
-                    resolve(detections);
-                } else if (msg.type === 'error') {
-                    clearTimeout(timeout);
-                    worker.terminate();
-                    reject(new Error(msg.message));
-                }
-            };
-
-            worker.onerror = function (e) {
-                clearTimeout(timeout);
-                reject(new Error('DETR worker error: ' + e.message));
-            };
-
-            // Load model
-            worker.postMessage({ type: 'load' });
-        });
-    }
-
-    /**
-     * renderDetrDetections(imageDataUrl, detections, blockIndex)
-     *
-     * Draws the image onto a Canvas with colour-coded bounding boxes,
-     * then renders confidence pill badges below it.
-     */
-    function renderDetrDetections(imageDataUrl, detections, blockIndex) {
-        var detPanel = document.querySelector('.ai-vision-detections[data-ai-index="' + blockIndex + '"]');
-        if (!detPanel) return;
-
-        if (detections.length === 0) {
-            detPanel.innerHTML = '<div class="ai-detr-empty">\ud83d\udd0d No objects detected above threshold.</div>';
-            return;
-        }
-
-        // Build label→color map (stable per label name)
-        var labelColors = {};
-        var colorIdx = 0;
-        detections.forEach(function (d) {
-            if (!labelColors[d.label]) {
-                labelColors[d.label] = DETR_COLORS[colorIdx % DETR_COLORS.length];
-                colorIdx++;
-            }
-        });
-
-        // Draw canvas with bboxes
-        var img = new Image();
-        img.onload = function () {
-            var maxW = 520;
-            var scale = Math.min(1, maxW / img.width);
-            var w = Math.round(img.width * scale);
-            var h = Math.round(img.height * scale);
-
-            var canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            canvas.className = 'ai-detr-canvas';
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-
-            // Draw each bounding box
-            detections.forEach(function (d) {
-                var box = d.box;
-                var color = labelColors[d.label];
-                var x = Math.round(box.xmin * scale);
-                var y = Math.round(box.ymin * scale);
-                var bw = Math.round((box.xmax - box.xmin) * scale);
-                var bh = Math.round((box.ymax - box.ymin) * scale);
-
-                // Box stroke
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, bw, bh);
-
-                // Label background
-                var label = d.label + ' ' + Math.round(d.score * 100) + '%';
-                ctx.font = 'bold 11px Inter, sans-serif';
-                var tw = ctx.measureText(label).width;
-                var labelY = y > 18 ? y - 4 : y + bh + 14;
-                ctx.fillStyle = color;
-                ctx.globalAlpha = 0.85;
-                ctx.fillRect(x, labelY - 12, tw + 8, 16);
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = '#0a1628';
-                ctx.fillText(label, x + 4, labelY);
-            });
-
-            // Build detection panel HTML
-            var pillsHtml = '<div class="ai-detr-pills">';
-            detections.slice(0, 20).forEach(function (d) {
-                var color = labelColors[d.label];
-                var pct = Math.round(d.score * 100);
-                pillsHtml += '<span class="ai-detr-pill" style="--detr-color:' + color + '">'
-                    + '<span class="ai-detr-pill-dot" style="background:' + color + '"></span>'
-                    + d.label + ' <strong>' + pct + '%</strong></span>';
-            });
-            pillsHtml += '</div>';
-
-            var countLabel = detections.length + ' object' + (detections.length !== 1 ? 's' : '') + ' detected';
-            detPanel.innerHTML = '<div class="ai-detr-header">\ud83d\udd0d <strong>' + countLabel + '</strong> <span class="ai-detr-model-badge">RT-DETR</span></div>'
-                + pillsHtml;
-            detPanel.insertBefore(canvas, detPanel.firstChild);
-            detPanel.style.display = 'block';
-        };
-
-        img.onerror = function () {
-            // Canvas fallback — just show pills
-            var pillsHtml = '<div class="ai-detr-pills">';
-            detections.forEach(function (d) {
-                var color = labelColors[d.label];
-                pillsHtml += '<span class="ai-detr-pill" style="--detr-color:' + color + '">'
-                    + '<span class="ai-detr-pill-dot" style="background:' + color + '"></span>'
-                    + d.label + ' <strong>' + Math.round(d.score * 100) + '%</strong></span>';
-            });
-            pillsHtml += '</div>';
-            detPanel.innerHTML = '<div class="ai-detr-header">\ud83d\udd0d <strong>' + detections.length + ' objects detected</strong></div>' + pillsHtml;
-            detPanel.style.display = 'block';
-        };
-
-        img.src = imageDataUrl;
-    }
-
-    // ==============================================
     // MODEL READINESS — ensure model is loaded before generation
     // ==============================================
 
@@ -1021,20 +832,16 @@
                         attachments: workerAttachments
                     });
                 } else if (block.type === 'Vision') {
-                    // ── Vision — Two-stage: RT-DETR object detection → Gemma 4 description ──
+                    // Vision — always uses Gemma 4 (E2B or E4B per card selector)
                     var visionPromptEl = document.querySelector('.ai-card-prompt-input[data-ai-index="' + blockIndex + '"]');
                     var visionPrompt = visionPromptEl ? visionPromptEl.value.trim() : (block.prompt || 'Describe what you see.');
-
-                    // Check if RT-DETR detection is enabled on this card
-                    var visionCard = document.querySelector('.ai-placeholder-card[data-ai-index="' + blockIndex + '"]');
-                    var detectEnabled = visionCard && (visionCard.dataset.detect === 'true');
 
                     // Map uploads to typed attachments
                     var visionAttachments = uploads.map(function (u) {
                         var type = u.mimeType.startsWith('audio/') ? 'audio'
-                            : (u.isVideoFrame || u.mimeType.startsWith('video/')) ? 'video_frame'
+                            : u.mimeType.startsWith('video/') ? 'video_frame'
                             : 'image';
-                        return { type: type, data: u.data, mimeType: u.mimeType, name: u.name, isVideoFrame: u.isVideoFrame };
+                        return { type: type, data: u.data, mimeType: u.mimeType, name: u.name };
                     });
 
                     // Temporarily switch to the selected Gemma 4 model for this block
@@ -1053,39 +860,12 @@
                         throw new Error('Gemma 4 is loading — please try again in a moment.');
                     }
 
-                    // ── Stage 1: RT-DETR detection (only when detect is enabled + image present) ──
-                    var detrDetections = null;
-                    var firstImageAtt = visionAttachments.find(function (a) { return a.type === 'image' || a.type === 'video_frame'; });
-                    if (detectEnabled && firstImageAtt) {
-                        _dg.showToast('🔍 Running RT-DETR object detection…', 'info');
-                        try {
-                            detrDetections = await runDetrDetection(
-                                'data:' + (firstImageAtt.mimeType || 'image/jpeg') + ';base64,' + firstImageAtt.data,
-                                blockIndex
-                            );
-                        } catch (detrErr) {
-                            console.warn('[Vision] RT-DETR detection failed (continuing with Gemma 4 only):', detrErr);
-                            _dg.showToast('⚠️ Detection skipped: ' + detrErr.message, 'warning');
-                        }
-                    }
-
-                    // ── Stage 2: Gemma 4 — inject detection context into prompt ──
-                    var finalPrompt = visionPrompt;
-                    if (detrDetections && detrDetections.length > 0) {
-                        var detectionList = detrDetections
-                            .slice(0, 15)
-                            .map(function (d) { return d.label + ' (' + Math.round(d.score * 100) + '%)'; })
-                            .join(', ');
-                        finalPrompt = 'Detected objects (from RT-DETR): ' + detectionList + '\n\n' + visionPrompt;
-                    }
-
-                    _dg.showToast('🤖 Running Gemma 4 analysis…', 'info');
                     if (M.switchToModel) M.switchToModel(visionModelId);
                     try {
                         result = await M.requestAiTask({
                             taskType: 'generate',
                             context: '',
-                            userPrompt: finalPrompt,
+                            userPrompt: visionPrompt,
                             enableThinking: false,
                             silent: true,
                             attachments: visionAttachments
@@ -1096,7 +876,6 @@
                             M.switchToModel(prevModel);
                         }
                     }
-
                 } else if (block.type === 'Translate') {
 
                     // Read target lang from the card's dropdown (may have been changed)

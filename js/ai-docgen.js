@@ -667,17 +667,12 @@
                 // Vision card — always routes to Gemma 4 (omni-modal: image, audio, video, text)
                 // Strip all @-field metadata from the raw prompt — each regex must use proper \s not \\s
                 var visionRaw = prompt;
-                // Remove @model:, @upload:, @think:, @var:, @detect: lines
+                // Remove @model:, @upload:, @think:, @var: lines
                 visionRaw = visionRaw.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '');
                 visionRaw = visionRaw.replace(/^\s*@upload:\s*.+$/gmi, '');
                 visionRaw = visionRaw.replace(/^\s*(?:@think|Think):\s*\S+$/mi, '');
                 visionRaw = visionRaw.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '');
-                visionRaw = visionRaw.replace(/^\s*(?:@detect|Detect):\s*\S+$/mi, '');
                 visionRaw = visionRaw.trim();
-
-                // Extract @detect: yes/no — enables RT-DETR first-pass detection
-                var visionDetectMatch = prompt.match(/^\s*(?:@detect|Detect):\s*(yes|true|on)$/mi);
-                var visionDetectOn = !!visionDetectMatch;
 
                 // Extract @prompt: value (the user-editable instruction)
                 var visionPromptMatch = visionRaw.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
@@ -709,14 +704,13 @@
                     }
                 });
 
-                result += '<div class="ai-placeholder-card ai-vision-card" data-ai-type="Vision" data-ai-index="' + blockIndex + '"' + (visionDetectOn ? ' data-detect="true"' : '') + '>'
+                result += '<div class="ai-placeholder-card ai-vision-card" data-ai-type="Vision" data-ai-index="' + blockIndex + '">'
                     + '<div class="ai-placeholder-header">'
                     + '<span class="ai-placeholder-icon">' + icon + '</span>'
                     + '<span class="ai-placeholder-label">' + label + '</span>'
                     + '<div class="ai-placeholder-actions">'
                     + '<button class="ai-placeholder-btn ai-camera-btn" data-ai-index="' + blockIndex + '" title="Capture from camera">📷</button>'
                     + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image, audio, or video" data-accept="image/*,audio/*,video/*">📎</button>'
-                    + '<button class="ai-placeholder-btn ai-vision-detect-toggle' + (visionDetectOn ? ' active' : '') + '" data-ai-index="' + blockIndex + '" title="' + (visionDetectOn ? 'Disable RT-DETR object detection' : 'Enable RT-DETR object detection (first-pass detector)') + '">🔍' + (visionDetectOn ? ' On' : '') + '</button>'
                     + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Gemma 4 model">'
                     + visionModelOpts + '</select>'
                     + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run Vision analysis">▶</button>'
@@ -724,8 +718,7 @@
                     + '</div></div>'
                     + visionUploadThumbs
                     + '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="What should Gemma 4 analyze or describe?" rows="2">' + escapeHtml(visionPromptVal) + '</textarea></div>'
-                    + '<div class="ai-vision-detections" data-ai-index="' + blockIndex + '" style="display:none"></div>'
-                    + '<div class="ai-vision-modality-hint">Supports: 🖼 Image · 🎤 Audio · 🎬 Video frames · 📝 Text' + (visionDetectOn ? ' · 🔍 <strong>RT-DETR detect</strong> → Gemma 4 describe' : '') + '</div>'
+                    + '<div class="ai-vision-modality-hint">Supports: 🖼 Image · 🎤 Audio · 🎬 Video frames · 📝 Text</div>'
                     + '</div>';
             } else if (type === 'Agent') {
 
@@ -2410,30 +2403,6 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 var isActive = this.classList.toggle('active');
                 updateBlockField(idx, '@think', isActive ? 'Yes' : 'No');
-            });
-        });
-
-        // Detect toggle — 🔍 button (Vision cards — enables RT-DETR first-pass)
-        container.querySelectorAll('.ai-vision-detect-toggle').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var idx = parseInt(this.dataset.aiIndex, 10);
-                var isActive = this.classList.toggle('active');
-                this.textContent = isActive ? '🔍 On' : '🔍';
-                this.title = isActive
-                    ? 'Disable RT-DETR object detection'
-                    : 'Enable RT-DETR object detection (first-pass detector)';
-                var card = container.querySelector('.ai-placeholder-card[data-ai-index="' + idx + '"]');
-                if (card) {
-                    card.dataset.detect = isActive ? 'true' : 'false';
-                    var hint = card.querySelector('.ai-vision-modality-hint');
-                    if (hint) {
-                        hint.innerHTML = 'Supports: 🖼 Image · 🎤 Audio · 🎬 Video frames · 📝 Text'
-                            + (isActive ? ' · 🔍 <strong>RT-DETR detect</strong> → Gemma 4 describe' : '');
-                    }
-                }
-                updateBlockField(idx, '@detect', isActive ? 'yes' : 'no');
             });
         });
 
