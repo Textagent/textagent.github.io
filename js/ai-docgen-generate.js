@@ -831,7 +831,53 @@
                         silent: true,
                         attachments: workerAttachments
                     });
+                } else if (block.type === 'Vision') {
+                    // Vision — always uses Gemma 4 (E2B or E4B per card selector)
+                    var visionPromptEl = document.querySelector('.ai-card-prompt-input[data-ai-index="' + blockIndex + '"]');
+                    var visionPrompt = visionPromptEl ? visionPromptEl.value.trim() : (block.prompt || 'Describe what you see.');
+
+                    // Map uploads to typed attachments
+                    var visionAttachments = uploads.map(function (u) {
+                        var type = u.mimeType.startsWith('audio/') ? 'audio'
+                            : u.mimeType.startsWith('video/') ? 'video_frame'
+                            : 'image';
+                        return { type: type, data: u.data, mimeType: u.mimeType, name: u.name };
+                    });
+
+                    // Temporarily switch to the selected Gemma 4 model for this block
+                    var prevModel = M.getCurrentAiModel ? M.getCurrentAiModel() : null;
+                    var visionModelSelect = document.querySelector('.ai-card-model-select[data-ai-index="' + blockIndex + '"]');
+                    var visionModelId = perCardModel || (visionModelSelect ? visionModelSelect.value : 'gemma4-e2b') || 'gemma4-e2b';
+
+                    // Load Gemma 4 if not already loaded
+                    if (M._ai && M._ai.initAiWorker && !M._ai.getLocalState(visionModelId).loaded) {
+                        var consentKey = (M.KEYS && M.KEYS.AI_CONSENTED_PREFIX) ? M.KEYS.AI_CONSENTED_PREFIX + visionModelId : 'ai_consented_' + visionModelId;
+                        if (!localStorage.getItem(consentKey)) {
+                            if (M.showModelDownloadPopup) M.showModelDownloadPopup(visionModelId);
+                            throw new Error('Please download Gemma 4 first by clicking "Load model" in the download dialog.');
+                        }
+                        M._ai.initAiWorker(visionModelId);
+                        throw new Error('Gemma 4 is loading — please try again in a moment.');
+                    }
+
+                    if (M.switchToModel) M.switchToModel(visionModelId);
+                    try {
+                        result = await M.requestAiTask({
+                            taskType: 'generate',
+                            context: '',
+                            userPrompt: visionPrompt,
+                            enableThinking: false,
+                            silent: true,
+                            attachments: visionAttachments
+                        });
+                    } finally {
+                        // Restore previous model after Vision generation
+                        if (prevModel && prevModel !== visionModelId && M.switchToModel) {
+                            M.switchToModel(prevModel);
+                        }
+                    }
                 } else if (block.type === 'Translate') {
+
                     // Read target lang from the card's dropdown (may have been changed)
                     var langSelect = document.querySelector('.ai-translate-lang-select[data-ai-index="' + blockIndex + '"]');
                     if (langSelect) block.targetLang = langSelect.value;

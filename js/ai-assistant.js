@@ -695,7 +695,9 @@
     const modelLabel = (cfg && cfg.label) || 'Qwen 3.5';
 
     const workerPath = (cfg && cfg.workerFile) || 'ai-worker.js';
-    const worker = new Worker(workerPath, { type: 'module' });
+    // Add cache-buster for local workers in dev mode so edits are always picked up
+    const workerUrl = workerPath + '?v=' + (window._workerVersion || Date.now());
+    const worker = new Worker(workerUrl, { type: 'module' });
     ls.worker = worker;
 
     // Send model ID before loading

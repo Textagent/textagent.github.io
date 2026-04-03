@@ -91,6 +91,48 @@
             dtype: 'q4',
         },
 
+        // ── Local: Gemma 4 E2B (Google DeepMind) — Omni-modal, lighter ──
+        'gemma4-e2b': {
+            label: 'Gemma 4 E2B · Local',
+            badge: 'Gemma 4 E2B · Local',
+            icon: 'bi bi-stars',
+            statusReady: 'Gemma 4 E2B · Local',
+            dropdownName: 'Gemma 4 E2B',
+            dropdownDesc: 'Local · Text + Image + Audio · WebGPU · ~2 GB',
+            isLocal: true,
+            category: 'local-multimodal',
+            localModelId: 'onnx-community/gemma-4-E2B-it-ONNX',
+            workerFile: 'ai-worker-gemma4.js',
+            downloadSize: '~2 GB',
+            requiresWebGPU: true,
+            supportsVision: true,
+            supportsAudio: true,
+            architecture: 'gemma4',
+            dtype: 'q4f16',
+        },
+
+        // ── Local: Gemma 4 E4B (Google DeepMind) — Omni-modal ──
+
+        'gemma4-e4b': {
+            label: 'Gemma 4 E4B · Local',
+            badge: 'Gemma 4 E4B · Local',
+            icon: 'bi bi-stars',
+            statusReady: 'Gemma 4 E4B · Local',
+            dropdownName: 'Gemma 4 E4B',
+            dropdownDesc: 'Local · Text + Image + Audio · WebGPU · ~4 GB',
+            isLocal: true,
+            category: 'local-multimodal',
+            localModelId: 'onnx-community/gemma-4-E4B-it-ONNX',
+            workerFile: 'ai-worker-gemma4.js',
+            downloadSize: '~4 GB',
+            requiresWebGPU: true,
+            requiresHighEnd: true,
+            supportsVision: true,
+            supportsAudio: true,
+            architecture: 'gemma4',
+            dtype: 'q4f16',
+        },
+
         // ── Cloud: Groq ────────────────────────────────────────
         'groq-llama': {
             label: 'Llama 3.3 · Groq',

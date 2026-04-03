@@ -67,6 +67,95 @@
         return pageNames;
     }
 
+    // ==============================================
+    // VIDEO → FRAMES EXTRACTOR — for Vision blocks
+    // Extracts N evenly-spaced frames from a video file
+    // using HTMLVideoElement + Canvas, stores as PNG base64
+    // ==============================================
+    var MAX_VIDEO_FRAMES = 4;
+
+    async function extractVideoFrames(file, blockIdx, numFrames) {
+        numFrames = numFrames || MAX_VIDEO_FRAMES;
+        var frameNames = [];
+
+        return new Promise(function (resolve, reject) {
+            var url = URL.createObjectURL(file);
+            var video = document.createElement('video');
+            video.src = url;
+            video.muted = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+
+            video.addEventListener('error', function () {
+                URL.revokeObjectURL(url);
+                reject(new Error('Could not load video file.'));
+            });
+
+            video.addEventListener('loadedmetadata', function () {
+                var duration = video.duration;
+                if (!duration || duration === Infinity) {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Cannot determine video duration.'));
+                    return;
+                }
+
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                var frames = [];
+
+                // Compute evenly-spaced seek times (avoid start/end black frames)
+                for (var i = 0; i < numFrames; i++) {
+                    frames.push(((i + 0.5) / numFrames) * duration);
+                }
+
+                var frameIdx = 0;
+
+                function captureNext() {
+                    if (frameIdx >= frames.length) {
+                        URL.revokeObjectURL(url);
+                        resolve(frameNames);
+                        return;
+                    }
+                    video.currentTime = frames[frameIdx];
+                }
+
+                video.addEventListener('seeked', function onSeeked() {
+                    // Draw frame to canvas
+                    canvas.width  = Math.min(video.videoWidth,  1280);
+                    canvas.height = Math.round(canvas.width * video.videoHeight / video.videoWidth);
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    var base64  = dataUrl.split(',')[1];
+                    var frameName = file.name + ' · frame ' + (frameIdx + 1) + '/' + frames.length;
+
+                    if (!blockUploads.has(blockIdx)) blockUploads.set(blockIdx, []);
+                    blockUploads.get(blockIdx).push({
+                        data: base64,
+                        mimeType: 'image/jpeg',
+                        name: frameName,
+                        isVideoFrame: true
+                    });
+                    frameNames.push(frameName);
+
+                    frameIdx++;
+                    if (frameIdx < frames.length) {
+                        captureNext();
+                    } else {
+                        video.removeEventListener('seeked', onSeeked);
+                        URL.revokeObjectURL(url);
+                        resolve(frameNames);
+                    }
+                });
+
+                captureNext();
+            });
+
+            // Trigger load
+            video.load();
+        });
+    }
+
 
     // ==============================================
     // TAGGING — wrap selection with {{AI:}}, {{Image:}}, etc.
@@ -108,6 +197,10 @@
         }
         if (type === 'STT') {
             M.wrapSelectionWith('{{@STT:\n  @model: voxtral-stt\n  @lang: ', '\n}}', 'en-US');
+            return;
+        }
+        if (type === 'Vision') {
+            M.wrapSelectionWith('{{@Vision:\n  @model: gemma4-e2b\n  @prompt: ', '\n}}', 'Describe what you see in this image/audio/video');
             return;
         }
 
@@ -154,7 +247,7 @@
     function parseDocgenBlocks(markdown) {
         var blocks = [];
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT|Research):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT|Research|Vision):\s*([\s\S]*?)\}\}/g;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             if (!isInsideFence(match.index, fencedRanges)) {
@@ -377,7 +470,7 @@
         // Auto-rename duplicate Memory names in editor + input
         markdown = deduplicateMemoryNames(markdown);
         var fencedRanges = getFencedRanges(markdown);
-        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT|Research):\s*([\s\S]*?)\}\}/g;
+        var re = /\{\{@?(AI|Image|Agent|Memory|OCR|Translate|TTS|STT|Research|Vision):\s*([\s\S]*?)\}\}/g;
         var result = '';
         var lastIndex = 0;
         var blockIndex = 0;
@@ -462,8 +555,8 @@
             var hasCloud = cloudFieldMatch ? cloudFieldMatch[1].toLowerCase() === 'yes' : false;
             var agentTypeMatch = prompt.match(/^(?:@agenttype|agenttype):\s*(\S+)$/mi);
             var agentTypeName = agentTypeMatch ? agentTypeMatch[1].trim() : '';
-            var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : '✨';
-            var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : 'AI Generate';
+            var icon = type === 'STT' ? '🎤' : type === 'TTS' ? '🔊' : type === 'Translate' ? '🌐' : type === 'OCR' ? '🔍' : type === 'Image' ? '🖼️' : type === 'Agent' ? '🔗' : type === 'Memory' ? '📚' : type === 'Vision' ? '👁️' : '✨';
+            var label = type === 'STT' ? 'Speech to Text' : type === 'TTS' ? 'Text to Speech' : type === 'Translate' ? 'Translate' : type === 'OCR' ? 'OCR Scan' : type === 'Image' ? 'Image Generate' : type === 'Agent' ? 'Agent Flow' : type === 'Memory' ? 'Memory' : type === 'Vision' ? 'Vision · Gemma 4' : 'AI Generate';
             var agentTypeBadge = (type === 'Agent' && agentTypeName) ? '<span class="ai-agenttype-badge" title="External agent: ' + escapeHtml(agentTypeName) + '">' + escapeHtml(agentTypeName) + '</span>' : '';
             var cloudBadge = (type === 'Agent' && agentTypeName) ? '<span class="ai-cloud-badge' + (hasCloud ? ' cloud-enabled' : ' cloud-disabled') + '" title="' + (hasCloud ? 'Runs on GitHub Codespaces' : 'Runs locally via Docker') + '">' + (hasCloud ? '☁️ Cloud' : '🖥️ Local') + '</span>' : '';
 
@@ -570,7 +663,65 @@
                         ? '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="Optional: describe what to extract…" rows="2">' + escapeHtml(ocrPromptValue) + '</textarea></div>'
                         : '')
                     + '</div>';
+            } else if (type === 'Vision') {
+                // Vision card — always routes to Gemma 4 (omni-modal: image, audio, video, text)
+                // Strip all @-field metadata from the raw prompt — each regex must use proper \s not \\s
+                var visionRaw = prompt;
+                // Remove @model:, @upload:, @think:, @var: lines
+                visionRaw = visionRaw.replace(/^\s*(?:@model|Model):\s*\S+$/mi, '');
+                visionRaw = visionRaw.replace(/^\s*@upload:\s*.+$/gmi, '');
+                visionRaw = visionRaw.replace(/^\s*(?:@think|Think):\s*\S+$/mi, '');
+                visionRaw = visionRaw.replace(/^\s*(?:@var|Var):\s*\S+$/mi, '');
+                visionRaw = visionRaw.trim();
+
+                // Extract @prompt: value (the user-editable instruction)
+                var visionPromptMatch = visionRaw.match(/^\s*(?:@prompt|Prompt):\s*(.*)$/m);
+                var visionPromptVal = visionPromptMatch ? visionPromptMatch[1].trim() : visionRaw.trim();
+                // visionPromptVal is now ONLY the clean prompt text — no @-fields
+
+                // Thumbnail strip for already-uploaded files
+                var visionUploadThumbs = '';
+                var visionUploads = blockUploads.get(blockIndex);
+                if (visionUploads && visionUploads.length > 0) {
+                    visionUploadThumbs = '<div class="ai-card-uploads" data-ai-index="' + blockIndex + '">';
+                    visionUploads.forEach(function (u, ui) {
+                        var thumb = u.mimeType.startsWith('image/')
+                            ? '<img src="data:' + u.mimeType + ';base64,' + u.data + '" alt="' + escapeHtml(u.name) + '">'
+                            : '<span class="ai-vision-file-label">' + (u.mimeType.startsWith('audio/') ? '🎤' : '🎬') + ' ' + escapeHtml(u.name) + '</span>';
+                        visionUploadThumbs += '<div class="ai-card-upload-thumb">' + thumb
+                            + '<button class="ai-card-upload-remove" data-ai-index="' + blockIndex + '" data-upload-index="' + ui + '" title="Remove">✕</button></div>';
+                    });
+                    visionUploadThumbs += '</div>';
+                }
+
+                // Model selector — only gemma4 models
+                var visionModelId = blockModelId || 'gemma4-e2b';
+                var visionModelOpts = '';
+                ['gemma4-e2b', 'gemma4-e4b'].forEach(function (mid) {
+                    if (models[mid]) {
+                        var sel = mid === visionModelId ? ' selected' : '';
+                        visionModelOpts += '<option value="' + mid + '"' + sel + '>' + (models[mid].dropdownName || mid) + '</option>';
+                    }
+                });
+
+                result += '<div class="ai-placeholder-card ai-vision-card" data-ai-type="Vision" data-ai-index="' + blockIndex + '">'
+                    + '<div class="ai-placeholder-header">'
+                    + '<span class="ai-placeholder-icon">' + icon + '</span>'
+                    + '<span class="ai-placeholder-label">' + label + '</span>'
+                    + '<div class="ai-placeholder-actions">'
+                    + '<button class="ai-placeholder-btn ai-camera-btn" data-ai-index="' + blockIndex + '" title="Capture from camera">📷</button>'
+                    + '<button class="ai-placeholder-btn ai-upload-btn" data-ai-index="' + blockIndex + '" title="Upload image, audio, or video" data-accept="image/*,audio/*,video/*">📎</button>'
+                    + '<select class="ai-card-model-select" data-ai-index="' + blockIndex + '" title="Gemma 4 model">'
+                    + visionModelOpts + '</select>'
+                    + '<button class="ai-placeholder-btn ai-fill-one" data-ai-index="' + blockIndex + '" title="Run Vision analysis">▶</button>'
+                    + '<button class="ai-placeholder-btn ai-remove-tag" data-ai-index="' + blockIndex + '" title="Remove tag">✕</button>'
+                    + '</div></div>'
+                    + visionUploadThumbs
+                    + '<div class="ai-placeholder-prompt"><textarea class="ai-card-prompt-input" data-ai-index="' + blockIndex + '" placeholder="What should Gemma 4 analyze or describe?" rows="2">' + escapeHtml(visionPromptVal) + '</textarea></div>'
+                    + '<div class="ai-vision-modality-hint">Supports: 🖼 Image · 🎤 Audio · 🎬 Video frames · 📝 Text</div>'
+                    + '</div>';
             } else if (type === 'Agent') {
+
                 // Render pipeline card for Agent blocks
                 var steps = parseAgentSteps(prompt);
                 var stepsHtml = '';
@@ -1492,7 +1643,7 @@
             });
         });
 
-        // Upload button — 📎 opens file picker for image/PDF attachments
+        // Upload button — 📎 opens file picker for image/PDF/audio/video attachments
         container.querySelectorAll('.ai-upload-btn').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1500,27 +1651,41 @@
                 var idx = parseInt(this.dataset.aiIndex, 10);
                 var existing = blockUploads.get(idx) || [];
                 if (existing.length >= MAX_UPLOADS_PER_BLOCK) {
-                    M.showToast('Maximum ' + MAX_UPLOADS_PER_BLOCK + ' images per block.', 'warning');
+                    M.showToast('Maximum ' + MAX_UPLOADS_PER_BLOCK + ' attachments per block.', 'warning');
                     return;
                 }
-                // Check if this is an OCR card — if so, also accept PDFs
+                // Determine card type for accept filter
                 var card = this.closest('.ai-placeholder-card');
-                var isOcr = card && card.dataset.aiType === 'OCR';
+                var cardType = card ? card.dataset.aiType : '';
+                var isOcr    = cardType === 'OCR';
+                var isVision = cardType === 'Vision';
                 var input = document.createElement('input');
                 input.type = 'file';
-                input.accept = isOcr ? 'image/*,application/pdf' : 'image/*';
-                input.multiple = true;
+                if (isVision) {
+                    input.accept = 'image/*,audio/*,video/*';
+                    input.multiple = true;
+                } else if (isOcr) {
+                    input.accept = 'image/*,application/pdf';
+                    input.multiple = true;
+                } else {
+                    input.accept = 'image/*';
+                    input.multiple = true;
+                }
                 input.addEventListener('change', function () {
                     var files = Array.from(input.files || []);
                     var remaining = MAX_UPLOADS_PER_BLOCK - existing.length;
                     files = files.slice(0, remaining);
 
-                    // Separate PDFs from images
-                    var pdfFiles = files.filter(function (f) { return f.type === 'application/pdf'; });
-                    var imageFiles = files.filter(function (f) { return f.type !== 'application/pdf'; });
+                    // Separate by category
+                    var pdfFiles   = files.filter(function (f) { return f.type === 'application/pdf'; });
+                    var videoFiles = files.filter(function (f) { return f.type.startsWith('video/'); });
+                    var audioFiles = files.filter(function (f) { return f.type.startsWith('audio/'); });
+                    var imageFiles = files.filter(function (f) {
+                        return !f.type.startsWith('video/') && !f.type.startsWith('audio/') && f.type !== 'application/pdf';
+                    });
 
                     var allNames = [];
-                    var totalExpected = imageFiles.length + pdfFiles.length;
+                    var totalExpected = imageFiles.length + pdfFiles.length + videoFiles.length + audioFiles.length;
                     var totalProcessed = 0;
 
                     function checkDone() {
@@ -1528,11 +1693,11 @@
                         if (totalProcessed === totalExpected) {
                             addUploadFieldsToBlock(idx, allNames);
                             var count = (blockUploads.get(idx) || []).length - existing.length;
-                            M.showToast('📎 ' + count + ' page(s) attached', 'success');
+                            M.showToast('📎 ' + count + ' item(s) attached', 'success');
                         }
                     }
 
-                    // Process image files normally
+                    // Process regular image files
                     imageFiles.forEach(function (file) {
                         var reader = new FileReader();
                         reader.onload = function () {
@@ -1554,6 +1719,32 @@
                             checkDone();
                         }).catch(function (err) {
                             M.showToast('❌ PDF error: ' + err.message, 'error');
+                            checkDone();
+                        });
+                    });
+
+                    // Process audio files (Vision only) — store directly as base64
+                    audioFiles.forEach(function (file) {
+                        var reader = new FileReader();
+                        reader.onload = function () {
+                            var dataUrl = reader.result;
+                            var base64 = dataUrl.split(',')[1];
+                            var mimeType = file.type || 'audio/wav';
+                            if (!blockUploads.has(idx)) blockUploads.set(idx, []);
+                            blockUploads.get(idx).push({ data: base64, mimeType: mimeType, name: file.name });
+                            allNames.push(file.name);
+                            checkDone();
+                        };
+                        reader.readAsDataURL(file);
+                    });
+
+                    // Process video files (Vision only) — extract N evenly-spaced frames
+                    videoFiles.forEach(function (file) {
+                        extractVideoFrames(file, idx, 4).then(function (frameNames) {
+                            allNames = allNames.concat(frameNames);
+                            checkDone();
+                        }).catch(function (err) {
+                            M.showToast('❌ Video error: ' + err.message, 'error');
                             checkDone();
                         });
                     });
@@ -2736,6 +2927,7 @@
     M.registerFormattingAction('translate-tag', function () { insertDocgenTag('Translate'); });
     M.registerFormattingAction('tts-tag', function () { insertDocgenTag('TTS'); });
     M.registerFormattingAction('stt-tag', function () { insertDocgenTag('STT'); });
+    M.registerFormattingAction('vision-tag', function () { insertDocgenTag('Vision'); });
 
     // ==============================================
     // EXPOSE FOR RENDERER
