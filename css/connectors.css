@@ -74,6 +74,20 @@
     align-self: flex-start;
 }
 
+/* --- "Coming Soon" badge on stub connectors --- */
+.connector-coming-soon-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
 /* --- "No API key required" notice in detail view --- */
 .connector-keyless-notice {
     display: flex;

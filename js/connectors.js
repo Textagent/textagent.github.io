@@ -67,6 +67,7 @@
             testEndpoint: 'https://api.notion.com/v1/users/me',
             testHeaders: function (token) { return { 'Authorization': 'Bearer ' + token, 'Notion-Version': '2022-06-28' }; },
             corsProxy: true, // Notion blocks CORS — use proxy hint
+            comingSoon: true,
         },
         linear: {
             id: 'linear',
@@ -120,6 +121,7 @@
             configFields: [
                 { key: 'query', label: 'Search Query', placeholder: 'e.g. meeting notes Q1', hint: 'Pre-set a search query to always pull from this source' }
             ],
+            comingSoon: true,
         },
 
         // ----- FREE / KEYLESS CONNECTORS (no signup needed) -----
@@ -604,7 +606,9 @@
                     (userName ? '<div class="connector-card-user"><i class="bi bi-person-circle me-1"></i>' + escapeHtml(userName) + '</div>' : '') +
                 '</div>' +
                 '<div class="connector-card-footer">' +
-                    (connected ?
+                    (def.comingSoon && !connected ?
+                        '<span class="connector-coming-soon-badge">Coming Soon</span>' :
+                    connected ?
                         '<label class="connector-toggle" title="' + (enabled ? 'Disable' : 'Enable') + ' context injection">' +
                             '<input type="checkbox" class="connector-enable-check" data-id="' + id + '"' + (enabled ? ' checked' : '') + '>' +
                             '<span class="connector-toggle-slider"></span>' +
@@ -979,8 +983,33 @@
         REGISTRY: REGISTRY,
     };
 
+    // --- Auto-Connect Free Connectors ---
+    // On first-ever visit, automatically connect keyless connectors (HN, Weather)
+    // so users get live data immediately without any manual setup.
+    function autoConnectFreeConnectors() {
+        Object.keys(REGISTRY).forEach(function (id) {
+            var def = REGISTRY[id];
+            if (def.authType !== 'none') return;        // only keyless
+            if (def.comingSoon) return;                  // skip stubs
+            var existing = getConnectorState(id);
+            if (existing) return;                        // user already interacted
+            // First-ever visit — auto-connect
+            var state = {
+                token: 'KEYLESS',
+                config: {},
+                connected: true,
+                enabled: true,
+                userName: 'Active',
+                connectedAt: Date.now()
+            };
+            localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(state));
+            console.log('[Connectors] Auto-connected free connector:', def.name);
+        });
+    }
+
     // --- Init ---
     function init() {
+        autoConnectFreeConnectors();
         wireModalEvents();
         refreshAiStrip();
 
