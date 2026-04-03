@@ -117,9 +117,70 @@ async function loadModel() {
 }
 
 // ============================================
+// Task-specific token limits (mirrors Qwen worker)
+// Gemma 4 context window: 8192 tokens
+// ============================================
+const TOKEN_LIMITS = {
+    summarize:  2048,
+    expand:     4096,
+    rephrase:   2048,
+    grammar:    2048,
+    polish:     2048,
+    formalize:  2048,
+    elaborate:  4096,
+    shorten:    1024,
+    autocomplete: 512,
+    generate:   8192,
+    markdown:   8192,
+    explain:    4096,
+    simplify:   2048,
+    qa:         4096,
+    chat:       8192,
+    translate:  4096,
+    ocr:        2048,
+    research:   8192,
+};
+
+// ============================================
+// Degenerate-output circuit breaker (mirrors Qwen worker)
+// Detects repetition loops and stops generation early
+// ============================================
+const DEGEN_WINDOW = 200;
+const DEGEN_CHECK_INTERVAL = 40;
+const DEGEN_UNIQUE_RATIO = 0.30;
+let _degenTokenCount = 0;
+let _degenAborted = false;
+
+function resetDegen() { _degenTokenCount = 0; _degenAborted = false; }
+
+function isDegenerate(text) {
+    _degenTokenCount++;
+    if (_degenTokenCount % DEGEN_CHECK_INTERVAL !== 0) return false;
+    if (text.length < DEGEN_WINDOW) return false;
+    const win = text.slice(-DEGEN_WINDOW).toLowerCase();
+    const words = win.split(/\s+/).filter(w => w.length > 0);
+    if (words.length < 15) return false;
+    const ratio = new Set(words).size / words.length;
+    if (ratio < DEGEN_UNIQUE_RATIO) {
+        console.warn('[Gemma4] Degenerate output detected (ratio=' + ratio.toFixed(2) + '). Aborting.');
+        _degenAborted = true;
+        return true;
+    }
+    return false;
+}
+
+function trimToLastSentence(text) {
+    const match = text.match(/.*[.!?\n](?:\s|$)/s);
+    if (match && match[0].trim().length > 50) return match[0].trim();
+    const cut = Math.floor(text.length * 0.75);
+    const sp = text.lastIndexOf(' ', cut);
+    return sp > 50 ? text.substring(0, sp).trim() : text.trim();
+}
+
+// ============================================
 // Generate — text + image + audio + video frames
 // ============================================
-async function generate({ userPrompt, prompt, attachments = [], context, chatHistory = [], messageId, enableThinking, options = {} }) {
+async function generate({ userPrompt, prompt, attachments = [], context, chatHistory = [], messageId, enableThinking, taskType, maxTokensOverride, options = {} }) {
     // ai-assistant.js sends `userPrompt`; ai-docgen sends `prompt` — handle both
     const userText = userPrompt || prompt || context || 'Hello!';
 
@@ -132,8 +193,18 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
         return;
     }
 
+    // ── Dynamic token limit ──────────────────────────────────────────────────
+    // Priority: explicit override → taskType map → options.maxTokens → 4096
+    let maxTokens = maxTokensOverride
+        || TOKEN_LIMITS[taskType]
+        || options.maxTokens
+        || 4096;
+    // Thinking mode needs more headroom
+    if (enableThinking) maxTokens = Math.max(maxTokens * 2, 4096);
+
     try {
         self.postMessage({ type: 'status', message: 'Processing...', messageId });
+        resetDegen();
 
         // ── 1. Build the messages array ──────────────────────────
         // System message so Gemma 4 knows its role
@@ -206,23 +277,27 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
             skip_prompt: true,
             skip_special_tokens: true,
             callback_function: (token) => {
+                if (_degenAborted) return;
                 fullText += token;
+                if (isDegenerate(fullText)) return;
                 self.postMessage({ type: 'token', token, messageId });
             },
         });
 
         await model.generate({
             ...inputs,
-            max_new_tokens: options.maxTokens || 4096,
-
-
+            max_new_tokens: maxTokens,
             do_sample: true,
             temperature: options.temperature || 0.7,
             top_p: options.topP || 0.9,
             streamer,
         });
 
-        self.postMessage({ type: 'complete', text: fullText, messageId });
+        // Final cleanup — trim degenerate tail if circuit breaker fired
+        let finalText = fullText.trim();
+        if (_degenAborted) finalText = trimToLastSentence(finalText);
+
+        self.postMessage({ type: 'complete', text: finalText, messageId });
 
     } catch (error) {
         self.postMessage({
@@ -232,7 +307,6 @@ async function generate({ userPrompt, prompt, attachments = [], context, chatHis
         });
     }
 }
-
 
 // ============================================
 // Message handler
