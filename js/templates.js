@@ -21,6 +21,7 @@
     window.__MDV_TEMPLATES_FINANCE || [],
     window.__MDV_TEMPLATES_GAMES || [],
     window.__MDV_TEMPLATES_SKILLS || [],
+    window.__MDV_TEMPLATES_SCIENCE || [],
     window.__MDV_TEMPLATES_API_EXPLORER || [],
     window.__MDV_TEMPLATES_FORMS || [],
     window.__MDV_TEMPLATES_CHARTS || [],
@@ -68,6 +69,7 @@
       case 'api-explorer': return 'technical';
       case 'forms': return 'project';
       case 'charts': return 'technical';
+      case 'science': return 'technical';
       default: return 'doc';
     }
   }
@@ -91,6 +93,7 @@
       case 'api-explorer': return 'bi-plug';
       case 'forms': return 'bi-ui-checks-grid';
       case 'charts': return 'bi-bar-chart-line';
+      case 'science': return 'bi-atom';
       default: return 'bi-file-earmark';
     }
   }

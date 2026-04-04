@@ -174,6 +174,7 @@ async function loadModules() {
         import('../js/templates/skills.js'),
         import('../js/templates/api-explorer.js'),
         import('../js/templates/forms.js'),
+        import('../js/templates/science.js'),
         import('../js/templates/charts.js'),
         import('../js/templates/charts-line-gallery.js'),
         import('../js/templates/charts-bar-gallery.js'),
