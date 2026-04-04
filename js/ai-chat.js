@@ -163,6 +163,7 @@
     }
 
     function addTypingIndicator() {
+        removeTypingIndicator(); // Prevent duplicates (e.g. tool calling Pass 1 → Pass 2)
         var indicator = document.createElement('div');
         indicator.className = 'ai-message ai-message-ai';
         indicator.id = 'ai-typing';
@@ -681,27 +682,121 @@
         var editorContent = markdownEditor.value;
         var isQuestion = /^(what|who|where|when|why|how|is |are |do |does |can |could |would |should |explain|tell me|describe)/i.test(text);
 
+        // ── Determine model type ──
+        var _isLocal = _ai.isLocalModel && _ai.isLocalModel(_ai.currentModel);
+        var _isCloud = !_isLocal;
+
+        // Check if the current cloud model supports tool calling (OpenAI-compatible API)
+        // Groq uses the OpenAI-compatible API format with native tool calling support
+        var _supportsToolCalling = _isCloud && (
+            (_ai.currentModel || '').indexOf('groq') === 0
+        );
+
+        // ══════════════════════════════════════════════════════════════════
+        // PATH A: Cloud model with Tool Calling (Groq)
+        // The model decides which tools to call based on the user's query.
+        // Toggles (Search ON/OFF, Connectors ON/OFF) control tool AVAILABILITY.
+        // ══════════════════════════════════════════════════════════════════
+        if (_supportsToolCalling) {
+            var tools = buildToolDefinitions();
+
+            // If tools are available, let the model decide — no firehose
+            if (tools.length > 0) {
+                // Include editor content as context if present
+                var editorContext = editorContent.trim()
+                    ? '[Document Content]\n' + editorContent.substring(0, 8000)
+                    : null;
+
+                _ai.sendToAi(
+                    editorContext ? 'qa' : 'generate',
+                    editorContext,
+                    text,
+                    workerAttachments,
+                    historySnapshot,
+                    tools  // Pass tool definitions to the worker
+                );
+                return;
+            }
+
+            // No tools available (search off, connectors off) — direct generation
+            if (isQuestion && editorContent.trim()) {
+                _ai.sendToAi('qa', editorContent, text, workerAttachments, historySnapshot);
+            } else {
+                _ai.sendToAi('generate', null, text, workerAttachments, historySnapshot);
+            }
+            return;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // PATH B: Firehose fallback (Local models + cloud without tool calling)
+        // Fetch all enabled connectors + search, bundle into context, send.
+        // ══════════════════════════════════════════════════════════════════
+        var CONTEXT_BUDGET = _isLocal ? 4000 : 30000;  // local WebGPU tight budget vs cloud
 
         function buildFinalContext(connectorCtx, searchContext) {
             var parts = [];
-            if (connectorCtx) parts.push(connectorCtx);
-            if (searchContext) parts.push('[Web Search Results]\n' + searchContext);
-            if (editorContent.trim()) parts.push('[Document Content]\n' + editorContent);
+            var budgetRemaining = CONTEXT_BUDGET;
+
+            // Priority 1: search results (user explicitly toggled search on)
+            if (searchContext) {
+                var truncSearch = searchContext.substring(0, Math.min(searchContext.length, Math.floor(budgetRemaining * 0.5)));
+                parts.push('[Web Search Results]\n' + truncSearch);
+                budgetRemaining -= truncSearch.length;
+            }
+
+            // Priority 2: connector data (may be very large — HN stories + comments)
+            if (connectorCtx && budgetRemaining > 200) {
+                var connectorBudget = Math.min(connectorCtx.length, Math.floor(budgetRemaining * 0.5));
+                parts.push(connectorCtx.substring(0, connectorBudget));
+                budgetRemaining -= connectorBudget;
+            }
+
+            // Priority 3: editor/document content
+            if (editorContent.trim() && budgetRemaining > 200) {
+                parts.push('[Document Content]\n' + editorContent.substring(0, budgetRemaining));
+            }
+
             if (parts.length === 0) return null;
-            // Prepend a strong grounding instruction so the AI uses the data, not training memory
-            var header = 'The following is LIVE DATA fetched right now. Answer the user\'s question using this data as your primary source. Do not rely on your training knowledge for facts that should come from this data.\n\n';
+            // Grounding header — tells the model to USE the data when relevant,
+            // but still allows answering general questions from its own knowledge.
+            var header = 'The following is LIVE DATA fetched right now. Use this data to answer the user\'s question when it is relevant. If the user asks about topics covered by this data (weather, news, etc.), answer from the data. If the user asks about something unrelated to this data, answer from your general knowledge.\n\n';
             return header + parts.join('\n\n');
         }
 
-        // ── Unified pipeline: fetch connector data + web search in parallel ──────
-        var _hasConnectors = M.connectors && M.connectors.hasActiveConnectors();
+        // --- Query-relevance check for connector injection ---
+        // Only inject connector data if the query seems related to what connectors provide.
+        // This prevents "what is algebra?" from being polluted with weather+HN data.
+        function queryNeedsConnectors(q) {
+            if (!q) return false;
+            var lower = q.toLowerCase();
+            // Weather-related keywords
+            var weatherWords = ['weather', 'temperature', 'temp', 'forecast', 'rain', 'snow', 'wind', 'humid', 'hot', 'cold', 'warm', 'celsius', 'fahrenheit', 'climate', 'sunny', 'cloudy'];
+            // News/HN-related keywords
+            var newsWords = ['news', 'hacker news', 'hackernews', 'top stories', 'trending', 'latest', 'headlines', 'tech news', 'startup'];
+            // GitHub-related keywords
+            var ghWords = ['github', 'issues', 'pull request', 'commits', 'repository', 'repo', 'pr', 'merge'];
+            // Slack-related keywords
+            var slackWords = ['slack', 'messages', 'channel', 'team chat'];
+            // General data-seeking queries
+            var dataWords = ['what is happening', 'update', 'current', 'right now', 'today', 'live'];
+            var allKeywords = weatherWords.concat(newsWords, ghWords, slackWords, dataWords);
 
-        var connectorPromise = _hasConnectors
+            for (var i = 0; i < allKeywords.length; i++) {
+                if (lower.indexOf(allKeywords[i]) !== -1) return true;
+            }
+            return false;
+        }
+
+        // Fetch connector data + web search in parallel
+        var _hasConnectors = M.connectors && M.connectors.hasActiveConnectors();
+        var _queryRelevant = queryNeedsConnectors(text);
+
+        // Only inject connector data when the query is relevant to connector topics
+        var connectorPromise = (_hasConnectors && _queryRelevant)
             ? M.connectors.getActiveContext(text).catch(function () { return null; })
             : Promise.resolve(null);
 
         if (M.webSearch && M.webSearch.isSearchEnabled()) {
-            // Show thinking block — rewrite query in parallel with connector fetch
             var willRewrite = M.isCurrentModelReady && M.isCurrentModelReady() && !M.isAiGenerating();
             createSearchThinkingBlock(text, willRewrite);
 
@@ -716,7 +811,6 @@
                 return null;
             });
 
-            // Wait for both connector data AND web search
             Promise.all([connectorPromise, searchPromise]).then(function (results) {
                 var connectorCtx = results[0];
                 var searchCtx    = results[1];
@@ -738,6 +832,223 @@
             }
         });
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Tool Definitions — built from enabled toggles + connectors
+    // These are passed to cloud model APIs via the 'tools' param.
+    // The MODEL decides which tools to call (or none at all).
+    // ══════════════════════════════════════════════════════════════════
+    function buildToolDefinitions() {
+        var tools = [];
+
+        // Web Search tool — available when search toggle is ON
+        if (M.webSearch && M.webSearch.isSearchEnabled()) {
+            tools.push({
+                type: 'function',
+                function: {
+                    name: 'web_search',
+                    description: 'Search the web for current information, recent events, news, facts, or anything you are unsure about',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            query: { type: 'string', description: 'The search query' }
+                        },
+                        required: ['query']
+                    }
+                }
+            });
+        }
+
+        // Connector tools — each enabled connector becomes a tool
+        if (M.connectors) {
+            if (M.connectors.isEnabled('openmeteo')) {
+                tools.push({
+                    type: 'function',
+                    function: {
+                        name: 'get_weather',
+                        description: 'Get current weather conditions and forecast for any city in the world',
+                        parameters: {
+                            type: 'object',
+                            properties: {
+                                city: { type: 'string', description: 'City name, e.g. "New Delhi", "Paris", "Tokyo"' }
+                            },
+                            required: ['city']
+                        }
+                    }
+                });
+            }
+
+            if (M.connectors.isEnabled('hackernews')) {
+                tools.push({
+                    type: 'function',
+                    function: {
+                        name: 'get_tech_news',
+                        description: 'Get top stories from Hacker News (tech and startup news)',
+                        parameters: {
+                            type: 'object',
+                            properties: {
+                                count: { type: 'number', description: 'Number of stories to fetch (1-10, default 3)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (M.connectors.isEnabled('github')) {
+                tools.push({
+                    type: 'function',
+                    function: {
+                        name: 'get_github',
+                        description: 'Get recent GitHub issues, pull requests, and commits',
+                        parameters: {
+                            type: 'object',
+                            properties: {
+                                repo: { type: 'string', description: 'Repository name (optional)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (M.connectors.isEnabled('slack')) {
+                tools.push({
+                    type: 'function',
+                    function: {
+                        name: 'get_slack',
+                        description: 'Get recent Slack messages from connected channels',
+                        parameters: {
+                            type: 'object',
+                            properties: {}
+                        }
+                    }
+                });
+            }
+        }
+
+        return tools;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Tool Execution — runs the actual API calls for each tool_call
+    // ══════════════════════════════════════════════════════════════════
+    function executeToolCall(call) {
+        var args = {};
+        try { args = JSON.parse(call.function.arguments); } catch (e) { /* empty args */ }
+
+        switch (call.function.name) {
+            case 'web_search':
+                if (!M.webSearch) return Promise.resolve('[Search unavailable]');
+                return M.webSearch.performMultiSearch(args.query || '').then(function (results) {
+                    return M.webSearch.formatResultsForLLM(results);
+                }).catch(function () { return '[Search failed]'; });
+
+            case 'get_weather':
+                if (!M.connectors) return Promise.resolve('[Weather unavailable]');
+                var weatherConfig = M.connectors.getConfig('openmeteo') || {};
+                // Override city with model's chosen city
+                var cityConfig = Object.assign({}, weatherConfig, { city: args.city || weatherConfig.city || 'Tokyo' });
+                // Use geocoding to resolve city → lat/lon
+                return fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(args.city || 'Tokyo') + '&count=1&language=en')
+                    .then(function (r) { return r.json(); })
+                    .then(function (geo) {
+                        if (geo.results && geo.results.length > 0) {
+                            cityConfig.lat = geo.results[0].latitude;
+                            cityConfig.lon = geo.results[0].longitude;
+                            cityConfig.city = geo.results[0].name + (geo.results[0].country ? ', ' + geo.results[0].country : '');
+                        }
+                        // Fetch weather with resolved coordinates
+                        return M.connectors.fetchWeatherDirect(cityConfig);
+                    }).catch(function () { return '[Weather fetch failed]'; });
+
+            case 'get_tech_news':
+                if (!M.connectors) return Promise.resolve('[HN unavailable]');
+                var hnConfig = M.connectors.getConfig('hackernews') || {};
+                hnConfig.count = args.count || hnConfig.count || 3;
+                return M.connectors.fetchHNDirect(hnConfig).catch(function () { return '[HN fetch failed]'; });
+
+            case 'get_github':
+                if (!M.connectors) return Promise.resolve('[GitHub unavailable]');
+                var ghToken = M.connectors.getToken('github');
+                var ghConfig = M.connectors.getConfig('github') || {};
+                return M.connectors.fetchGitHubDirect(ghToken, ghConfig).catch(function () { return '[GitHub fetch failed]'; });
+
+            case 'get_slack':
+                if (!M.connectors) return Promise.resolve('[Slack unavailable]');
+                var slackToken = M.connectors.getToken('slack');
+                var slackConfig = M.connectors.getConfig('slack') || {};
+                return M.connectors.fetchSlackDirect(slackToken, slackConfig).catch(function () { return '[Slack fetch failed]'; });
+
+            default:
+                return Promise.resolve('[Unknown tool: ' + call.function.name + ']');
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Handle Tool Calls — called when the worker reports tool_calls
+    // Executes tools in parallel, then sends results back for Pass 2
+    // ══════════════════════════════════════════════════════════════════
+    function handleToolCalls(toolCalls, assistantMessage, conversationMessages, messageId) {
+        // Show tool execution feedback in UI
+        var toolNames = toolCalls.map(function (tc) { return tc.function.name; });
+        console.log('[AI Chat] Model requested tools:', toolNames);
+
+        // Show a status indicator
+        var statusParts = toolNames.map(function (name) {
+            switch (name) {
+                case 'web_search': return '🔍 Searching web...';
+                case 'get_weather': return '☁️ Fetching weather...';
+                case 'get_tech_news': return '📰 Fetching news...';
+                case 'get_github': return '🐙 Fetching GitHub data...';
+                case 'get_slack': return '💬 Fetching Slack messages...';
+                default: return '⚡ Calling ' + name + '...';
+            }
+        });
+        if (typeof M.showToast === 'function') {
+            M.showToast(statusParts.join('  '), 'info', 3000);
+        }
+
+        // Execute all tool calls in parallel
+        var toolPromises = toolCalls.map(function (tc) {
+            return executeToolCall(tc).then(function (result) {
+                return { id: tc.id, name: tc.function.name, result: result };
+            });
+        });
+
+        Promise.all(toolPromises).then(function (results) {
+            // Build the updated conversation with tool results
+            var updatedMessages = conversationMessages.slice();
+
+            // Add the assistant's tool_call message
+            updatedMessages.push({
+                role: 'assistant',
+                content: assistantMessage.content || null,
+                tool_calls: toolCalls
+            });
+
+            // Add each tool result
+            results.forEach(function (r) {
+                updatedMessages.push({
+                    role: 'tool',
+                    tool_call_id: r.id,
+                    content: typeof r.result === 'string' ? r.result : JSON.stringify(r.result)
+                });
+            });
+
+            // Reset generating state so sendToAi can fire Pass 2
+            _ai.isGenerating = false;
+
+            // Pass 2: send the full conversation (with tool results) back to the model
+            // No tools this time — just generate the final answer
+            _ai.sendToAi('qa', null, null, null, null, null, updatedMessages);
+        }).catch(function (err) {
+            console.error('[AI Chat] Tool execution failed:', err);
+            _ai.isGenerating = false;
+            _ai.handleAiError('Tool execution failed: ' + err.message, messageId);
+        });
+    }
+
+    // Wire handleToolCalls onto M._ai for the worker bridge in ai-assistant.js
+    M._ai.handleToolCalls = handleToolCalls;
 
     // --- Track editor selection ---
     var savedSelection = { start: 0, end: 0 };

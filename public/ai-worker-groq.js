@@ -67,7 +67,7 @@ async function validateApiKey() {
 /**
  * Generate text via Groq API with SSE streaming
  */
-async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = [], maxTokensOverride = 0) {
+async function generate(taskType, context, userPrompt, messageId, enableThinking = false, attachments = [], chatHistory = [], maxTokensOverride = 0, tools = null, rawMessages = null) {
     if (!apiKey) {
         self.postMessage({
             type: 'error',
@@ -78,10 +78,11 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
     }
 
     try {
-        const messages = buildMessages(taskType, context, userPrompt, chatHistory);
+        // If rawMessages provided (Pass 2 with tool results), use them directly
+        const messages = rawMessages || buildMessages(taskType, context, userPrompt, chatHistory);
 
         // If there are image attachments, convert the last user message to multipart content
-        if (attachments && attachments.length > 0) {
+        if (!rawMessages && attachments && attachments.length > 0) {
             const lastUserMsg = messages[messages.length - 1];
             if (lastUserMsg && lastUserMsg.role === 'user') {
                 const parts = [{ type: 'text', text: lastUserMsg.content }];
@@ -102,19 +103,28 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
         let maxTokens = maxTokensOverride || TOKEN_LIMITS[taskType] || 512;
         if (enableThinking) maxTokens = Math.max(maxTokens * 2, 1024);
 
+        const body = {
+            model: MODEL_ID,
+            messages: messages,
+            max_tokens: maxTokens,
+            stream: true,
+            temperature: 0.7,
+        };
+
+        // Add tools if provided
+        if (tools && tools.length > 0) {
+            body.tools = tools;
+            body.tool_choice = 'auto';
+            body.stream = false; // Tool calling requires non-streaming for tool_calls detection
+        }
+
         const response = await fetch(GROQ_API_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                model: MODEL_ID,
-                messages: messages,
-                max_tokens: maxTokens,
-                stream: true,
-                temperature: 0.7,
-            }),
+            body: JSON.stringify(body),
         });
 
         if (!response.ok) {
@@ -132,7 +142,33 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             throw new Error(errorMsg);
         }
 
-        // Read the SSE stream
+        // === Non-streaming path: tool calling ===
+        if (tools && tools.length > 0) {
+            const data = await response.json();
+            const choice = data.choices?.[0];
+            const msg = choice?.message;
+
+            if (msg && msg.tool_calls && msg.tool_calls.length > 0) {
+                // Model wants to call tools — send back to main thread for execution
+                self.postMessage({
+                    type: 'tool_calls',
+                    toolCalls: msg.tool_calls,
+                    assistantMessage: msg,
+                    messages: messages, // send conversation state for Pass 2
+                    messageId,
+                });
+                return;
+            }
+
+            // No tool calls — model answered directly
+            if (msg && msg.content) {
+                self.postMessage({ type: 'token', token: msg.content, messageId });
+                self.postMessage({ type: 'complete', text: msg.content.trim(), messageId });
+                return;
+            }
+        }
+
+        // === Streaming path: normal generation ===
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
@@ -209,7 +245,7 @@ self.addEventListener('message', async (event) => {
             await validateApiKey();
             break;
         case 'generate':
-            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory, event.data.maxTokensOverride || 0);
+            await generate(taskType, context, userPrompt, messageId, enableThinking, attachments, chatHistory, event.data.maxTokensOverride || 0, event.data.tools || null, event.data.rawMessages || null);
             break;
         case 'ping':
             self.postMessage({ type: 'pong' });

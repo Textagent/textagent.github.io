@@ -1151,6 +1151,13 @@
           M._ai.handleGroqComplete(msg.text, msg.messageId);
           break;
 
+        case 'tool_calls':
+          // Model wants to call tools — forward to main thread for execution
+          if (M._ai.handleToolCalls) {
+            M._ai.handleToolCalls(msg.toolCalls, msg.assistantMessage, msg.messages, msg.messageId);
+          }
+          break;
+
         case 'image-complete':
           M._ai.handleImageComplete(msg.imageBase64, msg.mimeType, msg.prompt, msg.messageId);
           break;
@@ -1294,7 +1301,7 @@
     }
   }
 
-  function sendToAi(taskType, context, userPrompt, attachments, chatHistory) {
+  function sendToAi(taskType, context, userPrompt, attachments, chatHistory, tools, rawMessages) {
     // If a local model is selected but not loaded yet, show inline consent before downloading
     if (isLocalModel(currentAiModel)) {
       const ls = getLocalState(currentAiModel);
@@ -1358,11 +1365,14 @@
     const enableThinking = thinkingToggle ? thinkingToggle.checked : false;
 
     // Show user message in chat (if not already shown by sendChatMessage)
-    const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
-    const allUserBubbles = aiChatArea.querySelectorAll('.ai-message-user .ai-msg-bubble');
-    const lastUserBubble = allUserBubbles.length > 0 ? allUserBubbles[allUserBubbles.length - 1] : null;
-    if (!lastUserBubble || lastUserBubble.textContent.trim() !== displayText.trim()) {
-      M._ai.addUserMessage(displayText);
+    // Skip for Pass 2 (rawMessages means we're continuing after tool execution)
+    if (!rawMessages) {
+      const displayText = userPrompt || `[${taskType}] ${context ? context.substring(0, 80) + '...' : ''}`;
+      const allUserBubbles = aiChatArea.querySelectorAll('.ai-message-user .ai-msg-bubble');
+      const lastUserBubble = allUserBubbles.length > 0 ? allUserBubbles[allUserBubbles.length - 1] : null;
+      if (!lastUserBubble || lastUserBubble.textContent.trim() !== displayText.trim()) {
+        M._ai.addUserMessage(displayText);
+      }
     }
     M._ai.addTypingIndicator();
 
@@ -1374,7 +1384,9 @@
       messageId,
       enableThinking,
       attachments: attachments || [],
-      chatHistory: chatHistory || []
+      chatHistory: chatHistory || [],
+      tools: tools || null,
+      rawMessages: rawMessages || null
     });
   }
 

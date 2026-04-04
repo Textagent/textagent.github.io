@@ -422,10 +422,97 @@
         }
     }
 
-    async function fetchWeatherContext(config) {
+    /**
+     * Extract a location/city name from a natural language query.
+     * Examples:
+     *   "what is the temp on new delhi"  → "new delhi"
+     *   "weather in Paris"               → "Paris"
+     *   "temperature of Tokyo"           → "Tokyo"
+     *   "how's the weather for London?"  → "London"
+     *   "New York forecast"              → "New York"
+     */
+    function extractLocationFromQuery(query) {
+        if (!query) return null;
+        var q = query.trim();
+
+        // Strategy 1: Preposition-based extraction — most reliable
+        // Match "in/of/for/at/on + location" at end of query
+        var prepMatch = q.match(/\b(?:in|of|for|at|on|near)\s+([A-Za-z][A-Za-z\s.''-]{1,40}?)\s*[?.!]*$/i);
+        if (prepMatch) {
+            var loc = prepMatch[1].trim().replace(/[?.!]+$/, '').trim();
+            // Filter out common non-location words
+            if (loc && !/^(the|this|that|my|your|our|today|tomorrow|now|here|there)$/i.test(loc)) {
+                return loc;
+            }
+        }
+
+        // Strategy 2: "weather [city]" or "[city] weather" pattern
+        var weatherMatch = q.match(/\bweather\s+(?:in\s+|of\s+|for\s+|at\s+)?([A-Za-z][A-Za-z\s.''-]{1,40}?)(?:\s*[?.!]*$)/i);
+        if (weatherMatch) return weatherMatch[1].trim();
+        var weatherMatch2 = q.match(/^([A-Za-z][A-Za-z\s.''-]{1,40}?)\s+weather/i);
+        if (weatherMatch2) return weatherMatch2[1].trim();
+
+        // Strategy 3: "temp/temperature [city]" pattern
+        var tempMatch = q.match(/\b(?:temp|temperature|forecast|climate)\s+(?:in\s+|of\s+|for\s+|at\s+|on\s+)?([A-Za-z][A-Za-z\s.''-]{1,40}?)(?:\s*[?.!]*$)/i);
+        if (tempMatch) return tempMatch[1].trim();
+
+        // Strategy 4: Detect capitalized multi-word sequences (likely proper nouns)
+        // e.g. "tell me about New Delhi" → "New Delhi"
+        var capsMatches = q.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g);
+        if (capsMatches) {
+            // Filter out common English words that happen to be capitalized at sentence start
+            var stopWords = ['What', 'How', 'Tell', 'Show', 'Please', 'Can', 'Could', 'Would', 'The', 'Is', 'Are', 'Get', 'Fetch'];
+            var locations = capsMatches.filter(function (m) {
+                return stopWords.indexOf(m.split(' ')[0]) === -1;
+            });
+            if (locations.length > 0) {
+                // Return the longest match (more likely to be "New Delhi" vs "New")
+                locations.sort(function (a, b) { return b.length - a.length; });
+                return locations[0];
+            }
+        }
+
+        // Strategy 5: Take the last 2-3 meaningful words (often the location)
+        var words = q.replace(/[?.!,]+/g, '').trim().split(/\s+/);
+        var filler = ['what', 'is', 'the', 'temp', 'temperature', 'weather', 'how', 'whats', "what's", 'of', 'in', 'for', 'at', 'on', 'tell', 'me', 'about', 'get', 'show', 'please', 'give', 'check', 'current', 'right', 'now', 'today', 'forecast'];
+        var meaningful = words.filter(function (w) { return filler.indexOf(w.toLowerCase()) === -1 && w.length > 1; });
+        if (meaningful.length > 0 && meaningful.length <= 4) {
+            return meaningful.join(' ');
+        }
+
+        return null; // Could not extract location — will use default city
+    }
+
+    async function fetchWeatherContext(config, query) {
         var lat = parseFloat(config.lat) || 35.6762;  // default Tokyo
         var lon = parseFloat(config.lon) || 139.6503;
         var city = config.city || 'Tokyo';
+
+        // --- Query-aware geocoding ---
+        // Extract the likely location name from the user's query, then geocode.
+        // Open-Meteo's geocoding API expects a place name, NOT a full sentence.
+        if (query) {
+            try {
+                var locationGuess = extractLocationFromQuery(query);
+                if (locationGuess) {
+                    var geoResp = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(locationGuess) + '&count=1&language=en');
+                    var geoData = await geoResp.json();
+                    if (geoData.results && geoData.results.length > 0) {
+                        var geo = geoData.results[0];
+                        lat = geo.latitude;
+                        lon = geo.longitude;
+                        city = geo.name + (geo.country ? ', ' + geo.country : '');
+                        console.log('[Weather] Geocoded "' + locationGuess + '" → ' + city + ' (' + lat + ',' + lon + ')');
+                    } else {
+                        console.log('[Weather] Geocoding found no results for "' + locationGuess + '", using default: ' + city);
+                    }
+                }
+            } catch (geoErr) {
+                console.warn('[Weather] Geocoding failed:', geoErr.message);
+                // Fall through to default city
+            }
+        }
+
         try {
             var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
                 '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m' +
@@ -493,7 +580,7 @@
                 case 'jira': fetchPromise = fetchJiraContext(token, config); break;
                 case 'google_drive': fetchPromise = fetchGoogleDriveContext(token, config); break;
                 case 'hackernews': fetchPromise = fetchHackerNewsContext(config); break;
-                case 'openmeteo': fetchPromise = fetchWeatherContext(config); break;
+                case 'openmeteo': fetchPromise = fetchWeatherContext(config, query); break;
                 default: fetchPromise = Promise.resolve(null);
             }
 
@@ -505,14 +592,29 @@
 
         console.log('[Connectors] Enabled connectors:', enabledIds);
         var results = await Promise.all(promises);
+
+        // Collect non-null results with their IDs
+        var contextParts = [];
         results.forEach(function (r, i) {
             console.log('[Connectors] Result', enabledIds[i], ':', r ? r.substring(0, 100) : 'NULL');
-            if (r) parts.push(r);
+            if (r) contextParts.push({ id: enabledIds[i], text: r });
         });
 
-        if (parts.length === 0) return null;
+        if (contextParts.length === 0) return null;
 
-        return '--- Connected Data Sources ---\n' + parts.join('\n\n') + '\n--- End Connected Data ---';
+        // Sort shortest first so smaller connectors (Weather) survive truncation
+        // when the chat layer applies its context budget
+        contextParts.sort(function (a, b) { return a.text.length - b.text.length; });
+
+        // Cap each connector's contribution so all sources get fair representation
+        var PER_CONNECTOR_CAP = 2000;
+        var cappedParts = contextParts.map(function (p) {
+            return p.text.length > PER_CONNECTOR_CAP
+                ? p.text.substring(0, PER_CONNECTOR_CAP) + '\n[... truncated]'
+                : p.text;
+        });
+
+        return '--- Connected Data Sources ---\n' + cappedParts.join('\n\n') + '\n--- End Connected Data ---';
     }
 
     // --- Validate Token via Test Endpoint ---
@@ -925,32 +1027,24 @@
         var activeIds = Object.keys(REGISTRY).filter(function (id) { return isConnected(id); });
         var enabledIds = Object.keys(REGISTRY).filter(function (id) { return isEnabled(id); });
 
-        // Auto-repair: if connectors are connected but none enabled, re-enable them.
-        // This fixes state corruption from a previous bug where clicking the label
-        // accidentally toggled the checkbox and wrote enabled:false to localStorage.
-        if (activeIds.length > 0 && enabledIds.length === 0) {
-            console.log('[Connectors] Auto-repairing paused connectors:', activeIds);
-            activeIds.forEach(function (id) {
-                var state = getConnectorState(id) || {};
-                state.enabled = true;
-                localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(state));
-            });
-            enabledIds = activeIds.slice(); // now all are enabled
-        }
-
         if (activeIds.length === 0) {
             // No connected connectors at all — hide the toggle
             toggleLabel.style.display = 'none';
             return;
         }
 
-        // Show toggle, label with count
+        // Show toggle — reflect enabled (not just connected) state
         toggleLabel.style.display = '';
         if (toggleCheck) toggleCheck.checked = enabledIds.length > 0;
         if (toggleText) {
-            toggleText.textContent = activeIds.length === 1
-                ? REGISTRY[activeIds[0]].name
-                : activeIds.length + ' Connectors';
+            if (enabledIds.length === 0) {
+                // All paused — show "Paused" so the user knows context injection is off
+                toggleText.textContent = activeIds.length + ' Paused';
+            } else if (enabledIds.length === 1) {
+                toggleText.textContent = REGISTRY[enabledIds[0]].name;
+            } else {
+                toggleText.textContent = enabledIds.length + ' Connectors';
+            }
         }
 
         // Wire checkbox to pause/resume all connected connectors
@@ -958,12 +1052,14 @@
             toggleCheck._connectorWired = true;
             toggleCheck.addEventListener('change', function () {
                 var checked = toggleCheck.checked;
-                activeIds = Object.keys(REGISTRY).filter(function (id) { return isConnected(id); });
-                activeIds.forEach(function (id) {
+                var connectedNow = Object.keys(REGISTRY).filter(function (id) { return isConnected(id); });
+                connectedNow.forEach(function (id) {
                     var state = getConnectorState(id) || {};
                     state.enabled = checked;
                     localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(state));
                 });
+                // Re-sync the label text immediately
+                refreshAiStrip();
                 if (M.showToast) {
                     M.showToast(checked ? '⚡ Connector context enabled' : '⏸ Connector context paused', 'info');
                 }
@@ -981,6 +1077,13 @@
         getActiveContext: getActiveContext,
         refreshAiStrip: refreshAiStrip,
         REGISTRY: REGISTRY,
+        // Exposed for tool calling — ai-chat.js calls these directly
+        getConfig: getConfig,
+        getToken: getToken,
+        fetchWeatherDirect: function (config) { return fetchWeatherContext(config); },
+        fetchHNDirect: function (config) { return fetchHackerNewsContext(config); },
+        fetchGitHubDirect: function (token, config) { return fetchGitHubContext(token, config); },
+        fetchSlackDirect: function (token, config) { return fetchSlackContext(token, config); },
     };
 
     // --- Auto-Connect Free Connectors ---
@@ -993,10 +1096,15 @@
             if (def.comingSoon) return;                  // skip stubs
             var existing = getConnectorState(id);
             if (existing) return;                        // user already interacted
-            // First-ever visit — auto-connect
+            // First-ever visit — auto-connect with sensible defaults.
+            // Use lean config for HN to keep context small for local models.
+            var defaultConfig = {};
+            if (id === 'hackernews') {
+                defaultConfig = { count: '3', comments: 'false' };
+            }
             var state = {
                 token: 'KEYLESS',
-                config: {},
+                config: defaultConfig,
                 connected: true,
                 enabled: true,
                 userName: 'Active',
@@ -1013,13 +1121,25 @@
         wireModalEvents();
         refreshAiStrip();
 
-        // Clicking the plug icon/text in the toggle label opens the modal.
-        // e.preventDefault() stops the <label> from also toggling the checkbox.
+        // Clicking the plug icon/text opens the modal.
+        // Clicking the slider/switch toggles the checkbox (pause/resume).
         var toggleLabel = document.getElementById('ai-connector-toggle-label');
         if (toggleLabel) {
             toggleLabel.addEventListener('click', function (e) {
-                if (e.target.tagName === 'INPUT') return; // checkbox click: let it toggle
-                e.preventDefault(); // prevent label from flipping checkbox when clicking text/icon
+                // Direct checkbox click: let it toggle naturally
+                if (e.target.tagName === 'INPUT') return;
+                // Click on the slider switch: toggle the checkbox
+                if (e.target.classList.contains('ai-search-slider')) {
+                    e.preventDefault();
+                    var chk = document.getElementById('ai-connector-toggle');
+                    if (chk) {
+                        chk.checked = !chk.checked;
+                        chk.dispatchEvent(new Event('change'));
+                    }
+                    return;
+                }
+                // Click on text/icon: open the connector modal
+                e.preventDefault();
                 openConnectorsModal();
             });
         }

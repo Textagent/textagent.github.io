@@ -479,9 +479,14 @@ async function generate(taskType, context, userPrompt, messageId, enableThinking
             });
         }
     } catch (error) {
+        // Translate WebGPU buffer overflow errors into actionable messages
+        let userMessage = error.message;
+        if (error.message.includes('mapAsync') || error.message.includes('Invalid Buffer') || error.message.includes('GPUBuffer')) {
+            userMessage = 'Input too large for this model\'s GPU memory. Try a shorter message, disable live data connectors, or switch to a cloud model.';
+        }
         self.postMessage({
             type: "error",
-            message: `Generation failed: ${error.message}`,
+            message: `Generation failed: ${userMessage}`,
             messageId,
         });
     }
@@ -539,9 +544,15 @@ function buildMessages(taskType, context, userPrompt, chatHistory) {
         });
     }
 
-    // Limit context size — Qwen 3.5 supports 256K context; send generous document context
+    // Limit context size — model-size-aware to prevent WebGPU buffer overflow.
+    // Smaller local models (0.8B, 2B) can't handle 32K chars via WebGPU; the
+    // tokenized input overflows the GPU buffer allocation causing ONNX Runtime
+    // 'Invalid Buffer' crashes.  Use MODEL_ID to infer model capacity.
+    const isSmallModel = /0\.8B|0_8B/i.test(MODEL_ID);
+    const isMediumModel = /2B/i.test(MODEL_ID) && !/E2B/i.test(MODEL_ID);
+    const baseLimit = isSmallModel ? 4000 : isMediumModel ? 8000 : 32000;
     const contextLimit =
-        taskType === "summarize" || taskType === "grammar" ? 16000 : 32000;
+        taskType === "summarize" || taskType === "grammar" ? Math.min(baseLimit, 8000) : baseLimit;
 
     // Detect if context contains web search results
     const hasSearchResults = context && context.indexOf('[Web Search Results') !== -1;
