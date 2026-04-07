@@ -2,6 +2,24 @@
    help-mode.css — Help Mode Toggle & Popover
    ============================================ */
 
+/* ── Star on GitHub Pill — gold accent ── */
+.star-github-pill {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3) !important;
+}
+.star-github-pill:hover {
+    background: linear-gradient(135deg, #b45309, #d97706) !important;
+    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.5) !important;
+}
+[data-theme="dark"] .star-github-pill {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+}
+[data-theme="dark"] .star-github-pill:hover {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.6) !important;
+}
+
 /* ── Help Mode Pill Button (mirrors .demo-badge) ── */
 .help-mode-pill {
     display: inline-flex;
