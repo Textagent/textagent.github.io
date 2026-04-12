@@ -86,7 +86,7 @@
     // ---- Code block scanner ----
     function scanCodeBlocks(markdown, blocks, seenIds) {
         // Capture optional @var: annotation after language: ```javascript @var: result
-        var re = /^(`{3,})(bash|sh|shell|math|python|py|html|html-autorun|javascript|js|sql)(?:\s+@var:\s*(\S+))?\s*\n([\s\S]*?)^\1\s*$/gm;
+        var re = /^(`{3,})(bash|sh|shell|math|python|py|html|html-autorun|javascript|js|jsx|jsx-autorun|sql)(?:\s+@var:\s*(\S+))?\s*\n([\s\S]*?)^\1\s*$/gm;
         var match;
         while ((match = re.exec(markdown)) !== null) {
             var lang = match[2].toLowerCase();
@@ -123,6 +123,7 @@
             case 'python': case 'py': return 'python';
             case 'html': case 'html-autorun': return 'html';
             case 'javascript': case 'js': return 'javascript';
+            case 'jsx': case 'jsx-autorun': return 'jsx';
             case 'sql': return 'sql';
             default: return null;
         }

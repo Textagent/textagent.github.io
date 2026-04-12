@@ -175,7 +175,7 @@
         },
         '[data-action="codeblock"]': {
             name: 'Code Block',
-            desc: 'Insert a fenced code block with syntax highlighting. Run code live in 6 languages — Bash, Math, Python, HTML, JS, and SQL.',
+            desc: 'Insert a fenced code block with syntax highlighting. Run code live in 7 languages — Bash, Math, Python, HTML, React JSX, JS, and SQL.',
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
@@ -376,6 +376,17 @@
             shortcut: null,
             demo: 'assets/demos/04_code_execution.webp'
         },
+        '[data-action="coding-jsx"]': {
+            name: 'React JSX Live Block',
+            desc: 'Write interactive React components with live preview. Auto-detects and loads Recharts, Tailwind CSS, Lucide icons, Framer Motion, and 10+ libraries from CDN. Uses Babel for in-browser JSX transpilation.',
+            shortcut: null,
+            demo: 'assets/demos/04_code_execution.webp',
+            faq: [
+                { q: 'Simple counter component', code: '```jsx-autorun\nimport { useState } from "react";\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n  return <div style={{padding:24}}>\n    <h2>Count: {count}</h2>\n    <button onClick={() => setCount(c=>c+1)}>+1</button>\n  </div>;\n}\n```' },
+                { q: 'Chart with Recharts', code: '```jsx-autorun\nimport { LineChart, Line, XAxis, YAxis } from "recharts";\nconst data = [{x:"Jan",v:10},{x:"Feb",v:25},{x:"Mar",v:18}];\nfunction App() {\n  return <LineChart width={400} height={250} data={data}>\n    <XAxis dataKey="x"/><Line dataKey="v"/>\n  </LineChart>;\n}\n```' },
+                { q: 'Styled with Tailwind CSS', code: '```jsx-autorun\nfunction App() {\n  return <div className="flex flex-col items-center gap-4 p-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl">\n    <h1 className="text-3xl font-bold">Tailwind + React</h1>\n    <p className="opacity-80">Auto-detected from className patterns</p>\n  </div>;\n}\n```' }
+            ]
+        },
         '#docgen-fill-btn': {
             name: 'Fill All AI Blocks',
             desc: 'Process every {{AI:}}, {{Image:}}, {{Agent:}}, and {{API:}} tag at once. Accept, reject, or regenerate each result.',
@@ -566,7 +577,7 @@
         },
         '#run-all-btn': {
             name: 'Run All',
-            desc: 'Execute every code block in document order — Bash, Python, JS, SQL, Math, HTML, and compiled languages. Notebook-style inline results.',
+            desc: 'Execute every code block in document order — Bash, Python, JS, React JSX, SQL, Math, HTML, and compiled languages. Notebook-style inline results.',
             shortcut: null,
             demo: 'assets/demos/25_run_all.png',
             faq: [

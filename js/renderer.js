@@ -66,6 +66,13 @@
             return `<div class="executable-python-container"${varAttr}><pre><code class="hljs python">${highlightedPy}</code></pre></div>`;
         }
 
+        // Detect executable React JSX code blocks
+        if (langLower === 'jsx' || langLower === 'jsx-autorun') {
+            const highlightedJsx = hljs.highlight(code, { language: 'javascript' }).value;
+            const autorunJsx = langLower === 'jsx-autorun' ? ' data-autorun="true"' : '';
+            return `<div class="executable-jsx-container"${autorunJsx}${varAttr}><pre><code class="hljs javascript">${highlightedJsx}</code></pre></div>`;
+        }
+
         // Detect executable JavaScript code blocks
         if (langLower === 'javascript' || langLower === 'js') {
             const highlightedJs = hljs.highlight(code, { language: 'javascript' }).value;
@@ -397,12 +404,13 @@
             if (M.addHtmlBlockToolbars) M.addHtmlBlockToolbars();
             if (M.addPythonBlockToolbars) M.addPythonBlockToolbars();
             if (M.addJsBlockToolbars) M.addJsBlockToolbars();
+            if (M.addJsxBlockToolbars) M.addJsxBlockToolbars();
             if (M.addSqlBlockToolbars) M.addSqlBlockToolbars();
 
             // Add copy button to ALL code blocks that don't already have a toolbar
             M.markdownPreview.querySelectorAll('pre').forEach(function (pre) {
                 // Skip if inside an executable container (already has toolbar)
-                if (pre.closest('.executable-code-container, .executable-math-container, .executable-html-container, .executable-python-container, .executable-js-container, .executable-sql-container')) return;
+                if (pre.closest('.executable-code-container, .executable-math-container, .executable-html-container, .executable-python-container, .executable-js-container, .executable-jsx-container, .executable-sql-container')) return;
                 // Skip if already has a copy button
                 if (pre.querySelector('.pre-copy-btn')) return;
 

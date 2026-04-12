@@ -123,6 +123,7 @@
             case 'python': case 'py': return 'executable-python-container';
             case 'html': case 'html-autorun': return 'executable-html-container';
             case 'javascript': case 'js': return 'executable-js-container';
+            case 'jsx': case 'jsx-autorun': return 'executable-jsx-container';
             case 'sql': return 'executable-sql-container';
             default: return null;
         }
