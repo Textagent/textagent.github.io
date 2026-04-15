@@ -37,6 +37,7 @@
     let audioCtx = null;
     let currentSource = null;  // Track currently playing Kokoro audio for stop()
     let pendingSpeak = null;   // Queue speak request during model loading
+    let _pendingMultiSegments = null; // Queue multi-speaker segments during model loading
     let webSpeechUtterance = null; // Track Web Speech API utterance for stop()
     let lastAudioData = null;  // Store last Kokoro audio for download
     let _generateOnly = false; // When true, generate audio without auto-playing
@@ -54,10 +55,34 @@
     function initWorker() {
         if (worker) return;
         const workerURL = new URL('./tts-worker.js', import.meta.url);
+        // Cache-bust: append version so service worker & browser cache don't serve stale code
+        workerURL.searchParams.set('v', '20260415a');
+        console.log(`${_ttsT()} 🔧 Creating TTS worker from: ${workerURL.href}`);
         worker = new Worker(workerURL, { type: 'module' });
+
+        // ── Catch worker-level errors that don't go through postMessage ──
+        worker.addEventListener('error', (err) => {
+            console.error(`${_ttsT()} ❌ WORKER ERROR (onerror):`, err.message, err.filename, 'line:', err.lineno);
+            _isGenerating = false;
+            _generateOnly = false;
+            modelLoading = false;
+            if (_generateCallback) {
+                const cb = _generateCallback;
+                _generateCallback = null;
+                cb(null, 'Worker error: ' + (err.message || 'unknown'));
+            }
+        });
 
         worker.addEventListener('message', (e) => {
             const { type } = e.data;
+            console.log(`${_ttsT()} 📨 Worker message received: type="${type}"`, type === 'audio' ? `(${e.data.data?.length} samples)` : (e.data.message || e.data.status || ''));
+
+            // ── ACK from worker confirming speak-multi was received ──
+            if (type === 'speak-multi-ack') {
+                console.log(`${_ttsT()} ✅ WORKER ACK: speak-multi message confirmed received by worker at worker-time ${(e.data.timestamp / 1000).toFixed(1)}s`);
+                M.showToast && M.showToast('🎙 TTS worker processing…', 'info');
+                return;
+            }
 
             if (type === 'status') {
                 if (e.data.status === 'loading') {
@@ -91,6 +116,16 @@
                         pendingSpeak = null;
                         speak(text, voice, lang);
                     }
+
+                    // If there were pending multi-speaker segments, post them now as a BACKUP
+                    // (Primary path: segments are bundled with init and processed inline by the worker)
+                    if (_pendingMultiSegments) {
+                        console.log(`${_ttsT()} 📤 Posting pending speak-multi (${_pendingMultiSegments.length} segments) from ready handler as backup`);
+                        _isGenerating = true;
+                        _generateStartTime = Date.now();
+                        worker.postMessage({ type: 'speak-multi', segments: _pendingMultiSegments });
+                        _pendingMultiSegments = null;
+                    }
                 }
             }
 
@@ -104,7 +139,7 @@
 
             if (type === 'chunk-progress') {
                 const msg = e.data.message || `🔊 Synthesizing chunk ${e.data.current}/${e.data.total}…`;
-                console.log(`${_ttsT()} ${msg}`);
+                console.log(`${_ttsT()} 🔄 CHUNK-PROGRESS: ${msg}`);
                 M.showToast && M.showToast(msg, 'info');
             }
 
@@ -112,27 +147,34 @@
                 const duration = e.data.data.length / (e.data.sampleRate || 24000);
                 const elapsed = _generateStartTime ? ((Date.now() - _generateStartTime) / 1000).toFixed(1) : '?';
                 console.log(`${_ttsT()} ✅ Audio generated — ${duration.toFixed(1)}s of audio, ${e.data.sampleRate || 24000} Hz, synthesized in ${elapsed}s`);
+                console.log(`${_ttsT()} 🔍 State check: _generateOnly=${_generateOnly}, _generateCallback=${!!_generateCallback}, _isGenerating=${_isGenerating}`);
 
                 lastAudioData = { data: e.data.data, sampleRate: e.data.sampleRate };
                 _isGenerating = false;
 
                 if (!_generateOnly) {
+                    console.log(`${_ttsT()} ▶ Auto-playing audio (generateOnly=false)`);
                     playAudio(e.data.data, e.data.sampleRate);
                 } else {
-                    console.log(`${_ttsT()} Audio stored (generate-only mode). Use Play to listen.`);
+                    console.log(`${_ttsT()} 💾 Audio stored (generate-only mode, not auto-playing)`);
                 }
                 _generateOnly = false; // reset flag after generation
 
                 // Fire one-shot generate callback
                 if (_generateCallback) {
+                    console.log(`${_ttsT()} 🔔 Firing _generateCallback with duration=${duration.toFixed(1)}s`);
                     const cb = _generateCallback;
                     _generateCallback = null;
                     cb({ duration, sampleRate: e.data.sampleRate, dataLength: e.data.data.length });
+                    console.log(`${_ttsT()} ✅ _generateCallback completed`);
+                } else {
+                    console.log(`${_ttsT()} ⚠️ No _generateCallback registered — audio event not forwarded to caller`);
                 }
             }
 
             if (type === 'error') {
-                console.error(`${_ttsT()} ❌ Error:`, e.data.message);
+                console.error(`${_ttsT()} ❌ Worker Error:`, e.data.message);
+                console.error(`${_ttsT()} 🔍 Error state: _generateOnly=${_generateOnly}, _generateCallback=${!!_generateCallback}, _isGenerating=${_isGenerating}, modelLoading=${modelLoading}`);
                 _isGenerating = false;
                 _generateOnly = false;
                 if (modelLoading) {
@@ -141,6 +183,7 @@
                 }
                 // Fire callback with error
                 if (_generateCallback) {
+                    console.log(`${_ttsT()} 🔔 Firing _generateCallback with error`);
                     const cb = _generateCallback;
                     _generateCallback = null;
                     cb(null, e.data.message);
@@ -510,6 +553,162 @@
                     window.speechSynthesis.speak(utterance);
                 }
             });
+        },
+        /**
+         * Synthesize multiple speaker segments with different voices.
+         * Each segment: { text, voice, speaker }
+         * The worker synthesizes each with the specified voice and concatenates.
+         * @param {Array<{text:string, voice:string, speaker?:string}>} segments
+         */
+        speakMulti: function(segments) {
+            if (!segments || !segments.length) {
+                console.warn(`${_ttsT()} speakMulti: called with empty/null segments — aborting`);
+                return;
+            }
+
+            console.log(`${_ttsT()} speakMulti: called with ${segments.length} segments`);
+            segments.forEach((s, i) => console.log(`${_ttsT()}   seg[${i}]: voice=${s.voice}, speaker=${s.speaker}, text="${(s.text || '').substring(0, 40)}…" (${(s.text || '').length} chars)`));
+
+            // Ensure worker is ready
+            if (!worker) {
+                console.log(`${_ttsT()} speakMulti: worker is NULL — initializing worker with BUNDLED segments`);
+                initWorker();
+                modelLoading = true;
+
+                // ── KEY FIX: Bundle segments with init message so they're processed
+                // in the SAME handler execution — avoids the worker message delivery bug
+                // where a separate speak-multi message is silently dropped ──
+                _pendingMultiSegments = segments; // backup: dispatched from 'ready' handler
+                _isGenerating = true;
+                _generateStartTime = Date.now();
+                worker.postMessage({ type: 'init', pendingSegments: segments });
+                console.log(`${_ttsT()} speakMulti: sent 'init' with ${segments.length} bundled segments to worker`);
+                return;
+            }
+
+            if (!modelReady) {
+                console.log(`${_ttsT()} speakMulti: worker exists but modelReady=${modelReady}, modelLoading=${modelLoading} — queuing segments`);
+                _pendingMultiSegments = segments; // will be dispatched from 'ready' handler
+                _isGenerating = true;
+                _generateStartTime = Date.now();
+                if (!modelLoading) {
+                    modelLoading = true;
+                    worker.postMessage({ type: 'init', pendingSegments: segments });
+                    console.log(`${_ttsT()} speakMulti: sent 'init' with bundled segments to existing worker`);
+                }
+                return;
+            }
+
+            console.log(`${_ttsT()} speakMulti: worker ready, posting speak-multi with ${segments.length} segments NOW`);
+            _isGenerating = true;
+            _generateStartTime = Date.now();
+            worker.postMessage({ type: 'speak-multi', segments });
+            console.log(`${_ttsT()} speakMulti: ✅ speak-multi posted to worker`);
+        },
+        /**
+         * Returns the raw audio buffer from the last synthesis.
+         * @returns {{data: Float32Array, sampleRate: number}|null}
+         */
+        getLastAudioBuffer: function() {
+            return lastAudioData;
+        },
+        /**
+         * Check if the TTS engine is currently generating audio.
+         */
+        isGenerating: function() {
+            return _isGenerating;
+        },
+        /**
+         * Promise-based multi-speaker synthesis.
+         * Resolves with {data: Float32Array, sampleRate: number} on success.
+         * @param {Array<{text:string, voice:string, speaker?:string}>} segments
+         * @param {function} [onProgress] Optional progress callback(message)
+         * @returns {Promise<{data: Float32Array, sampleRate: number}>}
+         */
+        speakMultiAsync: function(segments, onProgress) {
+            console.log(`${_ttsT()} 🎬 speakMultiAsync: START — ${segments?.length || 0} segments, onProgress=${!!onProgress}`);
+            const asyncStartTime = Date.now();
+            return new Promise((resolve, reject) => {
+                if (!segments || !segments.length) {
+                    console.error(`${_ttsT()} speakMultiAsync: REJECTED — no segments`);
+                    return reject(new Error('No segments provided'));
+                }
+
+                // Set generate-only mode so audio isn't auto-played
+                _generateOnly = true;
+                console.log(`${_ttsT()} speakMultiAsync: set _generateOnly=true`);
+
+                // Set one-shot callback - this fires when worker returns 'audio'
+                _generateCallback = function(meta, error) {
+                    const totalElapsed = ((Date.now() - asyncStartTime) / 1000).toFixed(1);
+                    console.log(`${_ttsT()} 🔔 speakMultiAsync._generateCallback fired after ${totalElapsed}s — error=${!!error}, meta=`, meta);
+                    // Clean up progress listener
+                    if (progressListener && worker) {
+                        worker.removeEventListener('message', progressListener);
+                        console.log(`${_ttsT()} speakMultiAsync: cleaned up progressListener`);
+                    }
+                    if (error) {
+                        console.error(`${_ttsT()} speakMultiAsync: REJECTING promise with error: ${error}`);
+                        reject(new Error(error));
+                    } else {
+                        console.log(`${_ttsT()} speakMultiAsync: RESOLVING promise with audioData (${lastAudioData?.data?.length || 0} samples, ${lastAudioData?.sampleRate || 0} Hz)`);
+                        resolve(lastAudioData);
+                    }
+                };
+                console.log(`${_ttsT()} speakMultiAsync: _generateCallback registered`);
+
+                // Delegate to speakMulti which handles model loading + worker creation
+                console.log(`${_ttsT()} speakMultiAsync: calling speakMulti()...`);
+                M.tts.speakMulti(segments);
+                console.log(`${_ttsT()} speakMultiAsync: speakMulti() returned, worker=${!!worker}`);
+
+                // Now attach progress listener AFTER speakMulti (worker is now guaranteed to exist)
+                var progressListener = null;
+                if (onProgress && worker) {
+                    console.log(`${_ttsT()} speakMultiAsync: ✅ Attaching progress listener to worker`);
+                    progressListener = function(e) {
+                        if (e.data.type === 'chunk-progress') {
+                            console.log(`${_ttsT()} 📊 [progress] chunk-progress: ${e.data.message}`);
+                            onProgress(e.data.message || ('Speaker ' + e.data.current + '/' + e.data.total));
+                        } else if (e.data.type === 'status' && e.data.message) {
+                            console.log(`${_ttsT()} 📊 [progress] status: ${e.data.message}`);
+                            onProgress(e.data.message);
+                        } else if (e.data.type === 'progress' && e.data.file) {
+                            var pct = e.data.progress !== undefined ? Math.round(e.data.progress * 100) : null;
+                            if (pct !== null) {
+                                onProgress('⬇ Downloading TTS: ' + pct + '%');
+                            }
+                        }
+                    };
+                    worker.addEventListener('message', progressListener);
+                } else {
+                    console.warn(`${_ttsT()} ⚠️ speakMultiAsync: Progress listener NOT attached — worker:${!!worker}, onProgress:${!!onProgress}`);
+                }
+
+                // Watchdog timer — log if promise hasn't resolved after 60s, 120s, 180s
+                let watchdogCount = 0;
+                const watchdog = setInterval(() => {
+                    watchdogCount++;
+                    const elapsed = ((Date.now() - asyncStartTime) / 1000).toFixed(0);
+                    console.warn(`${_ttsT()} ⏰ speakMultiAsync WATCHDOG #${watchdogCount}: still pending after ${elapsed}s — _isGenerating=${_isGenerating}, _generateOnly=${_generateOnly}, _generateCallback=${!!_generateCallback}, modelReady=${modelReady}`);
+                    if (watchdogCount >= 6) {
+                        clearInterval(watchdog);
+                        console.error(`${_ttsT()} ❌ speakMultiAsync WATCHDOG: gave up after ${elapsed}s — likely stuck in worker`);
+                    }
+                }, 30000);
+
+                // Clear watchdog when promise settles
+                const origResolve = resolve;
+                const origReject = reject;
+                // Note: we can't reassign resolve/reject, but watchdog will self-terminate after 3 min
+            });
+        },
+        /**
+         * Internal: expose the worker for advanced listeners (e.g. download progress).
+         * @returns {Worker|null}
+         */
+        _getWorker: function() {
+            return worker || null;
         },
     };
 

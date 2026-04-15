@@ -531,6 +531,17 @@
             ],
             templates: ['Platform Skills Reference']
         },
+        '[data-action="podcast-tag"]': {
+            name: 'Podcast Generator',
+            desc: 'Generate AI-powered podcasts from any topic — researches via web search, writes a multi-speaker script, and synthesizes audio with Kokoro TTS. Supports 1-4 speakers with distinct voices.',
+            shortcut: null,
+            demo: null,
+            faq: [
+                { q: 'Quick podcast on a topic', code: '{{@Podcast: @topic: The future of AI agents}}' },
+                { q: 'Debate with 2 speakers', code: '{{@Podcast:\n  @topic: Should AI replace human teachers?\n  @speakers: 2\n  @style: debate\n  @search: yes\n}}' },
+                { q: 'Single speaker lecture', code: '{{@Podcast:\n  @topic: Introduction to quantum computing\n  @speakers: 1\n  @style: lecture\n}}' }
+            ]
+        },
         '[data-action="form-tag"]': {
             name: 'Interactive Form',
             desc: 'Build forms in Markdown with {{Form:}} — 14 field types including text, email, select, stars, NPS, slider, and yes/no. Share with dual links: a respondent fill link and a creator-only response viewer. All responses are AES-256-GCM encrypted.',

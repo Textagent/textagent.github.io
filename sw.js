@@ -4,7 +4,7 @@
 // Strategy: Cache app shell for offline use, network-first for everything else.
 // CDN libraries are cached on first fetch for full offline capability.
 
-const CACHE_NAME = 'textagent-v2';
+const CACHE_NAME = 'textagent-v3';
 
 // Core app shell files to precache on install
 const APP_SHELL = [
@@ -139,6 +139,8 @@ self.addEventListener('fetch', (event) => {
 // Determine if a same-origin response should be runtime-cached
 function shouldCacheResponse(url) {
     const path = url.pathname;
+    // Never cache worker files — they need to be fresh
+    if (path.includes('worker') || path.includes('tts-worker')) return false;
     return path.endsWith('.js') ||
            path.endsWith('.css') ||
            path.endsWith('.html') ||

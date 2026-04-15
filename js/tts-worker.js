@@ -3,6 +3,8 @@
 // Runs textagent/Kokoro-82M-v1.0-ONNX via kokoro-js
 // off the main thread for jank-free speech synthesis.
 // Supports 9 languages with voice auto-selection.
+const TTS_WORKER_VERSION = '20260415a';
+console.log(`[TTS Worker] 🚀 Module loaded — version ${TTS_WORKER_VERSION}, time: ${new Date().toISOString()}`);
 //
 // NOTE: We bypass KokoroTTS.from_pretrained() because it internally
 // calls StyleTextToSpeech2Model.from_pretrained() which requires
@@ -133,8 +135,182 @@ async function loadKokoroManual(modelId, progressCb) {
     return new KokoroTTS(model, tokenizer);
 }
 
+/**
+ * Multi-speaker synthesis — extracted as a standalone function so it can be
+ * called from BOTH the 'init' handler (bundled segments) and the 'speak-multi'
+ * handler. This avoids the Web Worker message delivery bug where a second
+ * postMessage is silently dropped after an async init handler completes.
+ */
+async function processMultiSegments(segments) {
+    const _wt = () => `[TTS Worker +${(performance.now() / 1000).toFixed(1)}s]`;
+
+    console.log(`${_wt()} 🎙 ===== processMultiSegments START =====`);
+    console.log(`${_wt()} tts instance: ${!!tts}, segments: ${segments.length}`);
+
+    if (!tts) {
+        console.error(`${_wt()} ❌ TTS model is null — aborting`);
+        self.postMessage({ type: 'error', message: 'TTS model not loaded yet' });
+        return;
+    }
+
+    segments.forEach((s, i) => {
+        console.log(`${_wt()}   [${i}] voice=${s.voice}, speaker=${s.speaker}, chars=${(s.text||'').length}, text="${(s.text||'').substring(0, 60)}…"`);
+    });
+
+    let heartbeat;
+    try {
+        self.postMessage({
+            type: 'status',
+            status: 'loading',
+            message: `🎙 Synthesizing ${segments.length} speaker segments…`,
+            loadingPhase: 'synthesizing',
+        });
+
+        const synthStart = performance.now();
+        const audioSegments = [];
+        let sampleRate = 24000;
+
+        // Small silence gap between speakers (~0.3s)
+        const silenceGap = new Float32Array(Math.floor(sampleRate * 0.35));
+
+        // Heartbeat logger every 10s
+        let heartbeatCount = 0;
+        heartbeat = setInterval(() => {
+            heartbeatCount++;
+            const elapsed = ((performance.now() - synthStart) / 1000).toFixed(0);
+            console.log(`${_wt()} 💓 HEARTBEAT #${heartbeatCount}: ${elapsed}s elapsed, ${audioSegments.length} chunks done`);
+            self.postMessage({
+                type: 'chunk-progress',
+                current: audioSegments.length,
+                total: segments.length,
+                message: `💓 Still synthesizing… ${elapsed}s elapsed`,
+            });
+        }, 10000);
+
+        // ── Pre-fetch all unique voice files before synthesis ──
+        const uniqueVoices = [...new Set(segments.map(s => s.voice || VOICE_MAP['en']))];
+        console.log(`${_wt()} 📥 Pre-fetching ${uniqueVoices.length} voice files: ${uniqueVoices.join(', ')}`);
+        self.postMessage({
+            type: 'chunk-progress', current: 0, total: segments.length,
+            message: `📥 Pre-loading ${uniqueVoices.length} voice${uniqueVoices.length > 1 ? 's' : ''}…`,
+        });
+
+        for (const v of uniqueVoices) {
+            try {
+                console.log(`${_wt()} 📥 Pre-fetching voice: ${v}`);
+                const testResult = await tts.generate("test", { voice: v });
+                console.log(`${_wt()} ✅ Voice ${v} ready (test: ${testResult?.audio?.length || 0} samples)`);
+            } catch (voiceErr) {
+                console.error(`${_wt()} ❌ Voice ${v} pre-fetch FAILED: ${voiceErr.message}`);
+                self.postMessage({
+                    type: 'chunk-progress', current: 0, total: segments.length,
+                    message: `⚠️ Voice ${v} failed: ${voiceErr.message}`,
+                });
+            }
+            await new Promise(r => setTimeout(r, 0)); // yield
+        }
+
+        console.log(`${_wt()} ✅ All voices pre-fetched. Starting synthesis…`);
+        self.postMessage({
+            type: 'chunk-progress', current: 0, total: segments.length,
+            message: `✅ Voices loaded. Starting synthesis…`,
+        });
+        await new Promise(r => setTimeout(r, 10)); // yield
+
+        for (let si = 0; si < segments.length; si++) {
+            const seg = segments[si];
+            const segVoice = seg.voice || VOICE_MAP['en'];
+            const segText = (seg.text || '').trim();
+            if (!segText) { console.warn(`${_wt()} ⏭ Segment ${si+1} — EMPTY, skipping`); continue; }
+
+            const segStart = performance.now();
+            console.log(`${_wt()} ──── SEGMENT ${si+1}/${segments.length} START ────`);
+            console.log(`${_wt()}   voice: ${segVoice}, speaker: ${seg.speaker || '?'}, ${segText.length} chars`);
+
+            self.postMessage({
+                type: 'chunk-progress', current: si+1, total: segments.length,
+                message: `🎙 Speaker ${si+1}/${segments.length}: ${seg.speaker || segVoice}…`,
+            });
+            await new Promise(r => setTimeout(r, 0)); // yield so postMessage flushes
+
+            const subChunks = splitIntoChunks(segText, 500);
+            console.log(`${_wt()}   ${subChunks.length} sub-chunk(s)`);
+
+            for (let ci = 0; ci < subChunks.length; ci++) {
+                const chunk = subChunks[ci];
+                const chunkStart = performance.now();
+                const elapsed = ((chunkStart - synthStart) / 1000).toFixed(1);
+
+                console.log(`${_wt()}   🔊 chunk ${ci+1}/${subChunks.length} (${chunk.length} chars) — calling tts.generate()… [${elapsed}s]`);
+                self.postMessage({
+                    type: 'chunk-progress', current: si+1, total: segments.length,
+                    message: `🎙 Speaker ${si+1}/${segments.length}${subChunks.length > 1 ? ' chunk '+(ci+1)+'/'+subChunks.length : ''} — synthesizing… ${elapsed}s`,
+                });
+                await new Promise(r => setTimeout(r, 0)); // yield before WASM
+
+                let audio;
+                try {
+                    audio = await Promise.race([
+                        tts.generate(chunk, { voice: segVoice }),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error(`Timeout >90s: seg ${si+1} chunk ${ci+1}`)), 90000)),
+                    ]);
+                } catch (chunkErr) {
+                    console.error(`${_wt()}   ❌ chunk ${ci+1} FAILED: ${chunkErr.message}`);
+                    self.postMessage({
+                        type: 'chunk-progress', current: si+1, total: segments.length,
+                        message: `❌ Speaker ${si+1} chunk ${ci+1} failed: ${chunkErr.message}`,
+                    });
+                    continue; // skip failed chunk
+                }
+
+                const chunkTime = ((performance.now() - chunkStart) / 1000).toFixed(2);
+                console.log(`${_wt()}   ✅ chunk ${ci+1}/${subChunks.length} done in ${chunkTime}s — ${audio?.audio?.length || 0} samples`);
+
+                sampleRate = audio.sampling_rate || 24000;
+                audioSegments.push(audio.audio);
+
+                self.postMessage({
+                    type: 'chunk-progress', current: si+1, total: segments.length,
+                    message: `✅ Speaker ${si+1}/${segments.length}${subChunks.length > 1 ? ' chunk '+(ci+1) : ''} done — ${((performance.now() - synthStart)/1000).toFixed(0)}s`,
+                });
+                await new Promise(r => setTimeout(r, 0)); // yield after WASM
+            }
+
+            console.log(`${_wt()} ──── SEGMENT ${si+1}/${segments.length} COMPLETE in ${((performance.now()-segStart)/1000).toFixed(2)}s ────`);
+            if (si < segments.length - 1) audioSegments.push(silenceGap);
+        }
+
+        clearInterval(heartbeat);
+
+        if (audioSegments.length === 0) {
+            throw new Error('No audio segments produced — all chunks failed or were empty');
+        }
+
+        console.log(`${_wt()} 🔗 Concatenating ${audioSegments.length} audio pieces…`);
+        const totalLength = audioSegments.reduce((sum, seg) => sum + seg.length, 0);
+        const audioData = new Float32Array(totalLength);
+        let offset = 0;
+        for (const seg of audioSegments) { audioData.set(seg, offset); offset += seg.length; }
+
+        const synthTime = ((performance.now() - synthStart) / 1000).toFixed(2);
+        const duration = (audioData.length / sampleRate).toFixed(1);
+
+        console.log(`${_wt()} ✅ ===== processMultiSegments COMPLETE =====`);
+        console.log(`${_wt()}   ${duration}s audio, ${totalLength} samples, synthesized in ${synthTime}s`);
+
+        self.postMessage({ type: 'audio', data: audioData, sampleRate }, [audioData.buffer]);
+        console.log(`${_wt()}   ✅ 'audio' posted to main thread`);
+    } catch (err) {
+        if (heartbeat) clearInterval(heartbeat);
+        console.error(`${_wt()} ❌ processMultiSegments FAILED: ${err.message}`);
+        console.error(`${_wt()}   Stack:`, err.stack || '(no stack)');
+        self.postMessage({ type: 'error', message: err.message || String(err) });
+    }
+}
+
 self.addEventListener('message', async (e) => {
     const { type, text, voice, lang } = e.data;
+
 
     if (type === 'init') {
         try {
@@ -279,6 +455,14 @@ self.addEventListener('message', async (e) => {
                 message: '🔊 Kokoro TTS ready',
                 voices,
             });
+
+            // ── KEY FIX: If segments were bundled with init, process them NOW ──
+            // This runs in the SAME event handler execution as init, avoiding
+            // the issue where a separate speak-multi message is silently dropped.
+            if (e.data.pendingSegments && e.data.pendingSegments.length > 0) {
+                console.log(`[TTS] 🎙 Init includes ${e.data.pendingSegments.length} bundled segments — processing inline`);
+                await processMultiSegments(e.data.pendingSegments);
+            }
         } catch (err) {
             self.postMessage({ type: 'error', message: err.message || String(err) });
         }
@@ -363,6 +547,25 @@ self.addEventListener('message', async (e) => {
             console.error(`[TTS Worker] ❌ Synthesis failed:`, err.message || String(err));
             self.postMessage({ type: 'error', message: err.message || String(err) });
         }
+        return;
+    }
+
+    // ── Multi-speaker synthesis ──────────────────────────
+    // Receives segments: [{text, voice}, ...] and synthesizes each
+    // with the specified voice, then concatenates into a single buffer.
+    if (type === 'speak-multi') {
+        // ACK + delegate to shared function
+        self.postMessage({
+            type: 'speak-multi-ack',
+            message: 'Worker received speak-multi message',
+            timestamp: performance.now(),
+        });
+        const segments = e.data.segments;
+        if (!segments || !segments.length) {
+            self.postMessage({ type: 'error', message: 'No segments provided' });
+            return;
+        }
+        await processMultiSegments(segments);
         return;
     }
 

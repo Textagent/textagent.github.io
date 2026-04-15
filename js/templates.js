@@ -34,7 +34,8 @@
     window.__MDV_TEMPLATES_ADVANCED_GALLERY || [],
     window.__MDV_TEMPLATES_SANKEY_GALLERY || [],
     window.__MDV_TEMPLATES_PARALLEL_GALLERY || [],
-    window.__MDV_TEMPLATES_GRAPH_GALLERY || []
+    window.__MDV_TEMPLATES_GRAPH_GALLERY || [],
+    window.__MDV_TEMPLATES_PODCASTS || []
   );
 
 
@@ -70,6 +71,7 @@
       case 'forms': return 'project';
       case 'charts': return 'technical';
       case 'science': return 'technical';
+      case 'podcasts': return 'creative';
       default: return 'doc';
     }
   }
@@ -94,6 +96,7 @@
       case 'forms': return 'bi-ui-checks-grid';
       case 'charts': return 'bi-bar-chart-line';
       case 'science': return 'bi-atom';
+      case 'podcasts': return 'bi-mic-fill';
       default: return 'bi-file-earmark';
     }
   }

@@ -56,6 +56,8 @@ import '../css/spaces.css';
 import '../css/connectors.css';
 import '../css/link-analytics.css';
 import '../css/research-loop.css';
+import '../css/podcast-marketplace.css';
+import '../css/podcast-docgen.css';
 
 // 3. Local modules — must use dynamic import so they
 //    execute AFTER vendor-globals has set window.*
@@ -187,6 +189,7 @@ async function loadModules() {
         import('../js/templates/charts-sankey-gallery.js'),
         import('../js/templates/charts-parallel-gallery.js'),
         import('../js/templates/charts-graph-gallery.js'),
+        import('../js/templates/podcasts.js'),
     ]);
     await import('../js/templates.js');
 
@@ -254,6 +257,12 @@ async function loadModules() {
 
     // 3m: Recording Studio (standalone — remove to disable feature)
     await import('../js/rec-studio.js');
+
+    // 3n: Podcast Marketplace (standalone — remove to disable feature)
+    await import('../js/podcast-marketplace.js');
+
+    // 3o: Podcast DocGen Tag (depends on M.requestAiTask, M.webSearch, M.tts)
+    await import('../js/podcast-docgen.js');
 }
 
 loadModules();

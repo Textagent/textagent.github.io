@@ -325,16 +325,6 @@
                         <i class="bi bi-columns-gap"></i>
                     </button>
                     <span class="toolbar-separator"></span>
-                    <button id="toggle-sync" class="tool-button sync-enabled"
-                        title="Toggle Sync Scrolling (Ctrl+Shift+S)">
-                        <i class="bi bi-link"></i>
-                    </button>
-                    <button id="workspace-toggle" class="tool-button" title="File Tree">
-                        <i class="bi bi-folder2-open"></i>
-                    </button>
-                    <button id="toc-toggle" class="tool-button" title="Table of Contents">
-                        <i class="bi bi-list-nested"></i>
-                    </button>
                     <input type="file" id="file-input" class="file-input"
                         accept=".md,.markdown,.txt,.text,.log,.rst,.ini,.conf,.cfg,.env,.properties,.docx,.xlsx,.xls,.csv,.tsv,.html,.htm,.json,.xml,.yaml,.yml,.toml,.pdf,text/markdown,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/tab-separated-values,text/html,application/json,text/xml,application/x-yaml,application/pdf">
 
@@ -355,21 +345,31 @@
                         </ul>
                     </div>
 
-                    <button id="copy-markdown-button" class="tool-button" title="Copy Markdown">
-                        <i class="bi bi-clipboard"></i>
-                    </button>
-
                     <button id="share-button" class="tool-button" title="Share Markdown">
                         <i class="bi bi-share"></i>
                     </button>
 
-                    <button id="spaces-btn" class="tool-button" title="My Spaces">
-                        <i class="bi bi-collection"></i>
-                    </button>
-
-                    <button id="connectors-btn" class="tool-button connectors-toolbar-btn" title="My Connectors">
-                        <i class="bi bi-plug-fill"></i>
-                    </button>
+                    <div class="dropdown">
+                        <button class="tool-button dropdown-toggle" type="button" id="toolsHubDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false" title="Tools & Hubs">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="toolsHubDropdown">
+                            <li class="dropdown-header">Editor</li>
+                            <li><button class="dropdown-item" type="button" id="toggle-sync"><i class="bi bi-link me-2"></i>Sync Scroll</button></li>
+                            <li><button class="dropdown-item" type="button" id="workspace-toggle"><i class="bi bi-folder2-open me-2"></i>File Tree</button></li>
+                            <li><button class="dropdown-item" type="button" id="toc-toggle"><i class="bi bi-list-nested me-2"></i>Table of Contents</button></li>
+                            <li><button class="dropdown-item" type="button" id="copy-markdown-button"><i class="bi bi-clipboard me-2"></i>Copy Markdown</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header">Hubs</li>
+                            <li><button class="dropdown-item" type="button" id="spaces-btn"><i class="bi bi-collection me-2"></i>Spaces</button></li>
+                            <li><button class="dropdown-item" type="button" id="connectors-btn"><i class="bi bi-plug-fill me-2"></i>Connectors</button></li>
+                            <li><button class="dropdown-item" type="button" id="podcast-btn"><i class="bi bi-mic-fill me-2"></i>Podcasts</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header">AI</li>
+                            <li><button class="dropdown-item" type="button" id="ai-model-select-btn"><i class="bi bi-cpu me-2"></i>Select AI Model</button></li>
+                        </ul>
+                    </div>
 
                     <!-- Overflow group: lower-priority buttons hidden at narrow widths -->
                     <span class="toolbar-separator"></span>
@@ -377,10 +377,6 @@
 
                     <button id="ai-toggle-button" class="tool-button ai-sparkle-btn" title="AI Assistant">
                         <i class="bi bi-stars"></i> <span>AI</span>
-                    </button>
-
-                    <button id="ai-model-select-btn" class="tool-button" title="Select AI Model">
-                        <i class="bi bi-cpu"></i>
                     </button>
 
                     <div class="toolbar-overflow-wrapper">
@@ -539,6 +535,10 @@
                                 <i class="bi bi-plug-fill me-2"></i> Connectors
                             </button>
 
+                            <button id="mobile-podcast-btn" class="mobile-menu-item" title="Podcast Marketplace">
+                                <i class="bi bi-mic-fill me-2"></i> Podcasts
+                            </button>
+
                             <button id="mobile-speech-btn" class="mobile-menu-item" title="Voice Dictation">
                                 <i class="bi bi-mic me-2"></i> Voice Dictation
                             </button>
@@ -664,6 +664,9 @@
                 </button>
                 <button id="qab-connectors" class="qab-btn" title="My Connectors">
                     <i class="bi bi-plug-fill"></i> Connectors
+                </button>
+                <button id="qab-podcast" class="qab-btn" title="Podcast Marketplace">
+                    <i class="bi bi-mic-fill"></i> Podcasts
                 </button>
                 <div class="dropdown qab-dropdown">
                     <button class="qab-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
