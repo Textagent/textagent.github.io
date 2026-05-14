@@ -101,6 +101,32 @@ test.describe('Template System', () => {
         expect(filteredCount).toBeGreaterThanOrEqual(1);
     });
 
+    test('tools category pill exists and Calculator template loads', async ({ page }) => {
+        await page.evaluate(() => {
+            /** @type {any} */ (window).MDView.openTemplateModal();
+        });
+        await page.waitForTimeout(500);
+
+        const toolsPillExists = await page.evaluate(() => {
+            return !!document.querySelector('#template-categories .template-cat-btn[data-category="tools"]');
+        });
+        expect(toolsPillExists).toBe(true);
+
+        await page.evaluate(() => {
+            const btn = /** @type {HTMLButtonElement} */ (
+                document.querySelector('#template-categories .template-cat-btn[data-category="tools"]')
+            );
+            btn.click();
+        });
+        await page.waitForTimeout(400);
+
+        const calcCount = await page.evaluate(() => {
+            const cards = document.querySelectorAll('#template-modal .template-card');
+            return Array.from(cards).filter((c) => /Calculator/i.test(c.textContent || '')).length;
+        });
+        expect(calcCount).toBeGreaterThanOrEqual(1);
+    });
+
     test('closeTemplateModal closes the modal', async ({ page }) => {
         await page.evaluate(() => {
             /** @type {any} */ (window).MDView.openTemplateModal();
