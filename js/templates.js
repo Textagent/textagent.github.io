@@ -35,7 +35,8 @@
     window.__MDV_TEMPLATES_SANKEY_GALLERY || [],
     window.__MDV_TEMPLATES_PARALLEL_GALLERY || [],
     window.__MDV_TEMPLATES_GRAPH_GALLERY || [],
-    window.__MDV_TEMPLATES_PODCASTS || []
+    window.__MDV_TEMPLATES_PODCASTS || [],
+    window.__MDV_TEMPLATES_TOOLS || []
   );
 
 
@@ -72,6 +73,7 @@
       case 'charts': return 'technical';
       case 'science': return 'technical';
       case 'podcasts': return 'creative';
+      case 'tools': return 'technical';
       default: return 'doc';
     }
   }
@@ -97,6 +99,7 @@
       case 'charts': return 'bi-bar-chart-line';
       case 'science': return 'bi-atom';
       case 'podcasts': return 'bi-mic-fill';
+      case 'tools': return 'bi-tools';
       default: return 'bi-file-earmark';
     }
   }
