@@ -143,24 +143,22 @@ A **history panel** on the right lists every calculation. Edit the expression *o
 
     function show() {
       // iOS-style 2-line display:
-      //   top (small, dim)  = full typed expression so far
-      //   bottom (big)      = current operand, running result, or final = result
+      //   top (small, dim)  = full expression as you type it
+      //   bottom (big)      = live running result while typing, final result after =
       var topExpr, bottomNum;
       if (justEvaled && chain.length === 0) {
         // Just pressed =: top = "expr =", bottom = result
         var last = history[history.length - 1];
         topExpr   = last ? (last.expr + ' =') : '';
         bottomNum = cur;
-      } else if (pending) {
-        // Operator just pressed: top = chain so far, bottom = running total of chain
-        topExpr = chain.join('');
-        var partial = chain.slice(0, -1).join('');
+      } else {
+        // Typing — top shows the entire expression so far (chain + current operand).
+        // Bottom shows a live partial-evaluation result; falls back to the current operand
+        // when the expression isn't yet complete (e.g. half-open brackets, trailing operator).
+        topExpr = chain.join('') + (pending ? '' : cur);
+        var partial = pending ? chain.slice(0, -1).join('') : topExpr;
         var rv = partial ? safeEval(partial) : null;
         bottomNum = (rv === null || !isFinite(rv)) ? cur : String(rv);
-      } else {
-        // Typing an operand
-        topExpr   = chain.join('');
-        bottomNum = cur;
       }
       if (exprLine) exprLine.textContent = topExpr;
       if (resultLine) resultLine.textContent = bottomNum;
@@ -432,17 +430,20 @@ A **history panel** on the right lists every calculation. Edit the expression *o
     function commitExprEdit() {
       var raw = (exprLine.textContent || '').replace(/=\\s*$/, '').trim();
       if (!raw) return;
+      // Skip if the line already matches the latest history entry's "expr =" view
+      // (i.e. user blurred without actually editing anything).
+      var last = history[history.length - 1];
+      if (last && last.expr === raw) return;
       applyPasted(raw);
     }
     exprLine.addEventListener('paste', function (e) {
       e.preventDefault();
       var txt = (e.clipboardData || window.clipboardData).getData('text');
-      exprLine.textContent = (exprLine.textContent || '').replace(/=\\s*$/, '') + txt;
-      // Place caret at end (best-effort)
-      try {
-        var r = document.createRange(); r.selectNodeContents(exprLine); r.collapse(false);
-        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-      } catch (_) {}
+      if (!txt) return;
+      // Replace the line entirely and evaluate immediately — pasting a full
+      // expression should not require a follow-up Enter/blur.
+      applyPasted(txt);
+      exprLine.blur();
     });
     exprLine.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
