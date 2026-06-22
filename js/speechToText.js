@@ -18,6 +18,7 @@
     // ── WebGPU Detection ──────────────────────────
     // Determines whether to use Voxtral (WebGPU) or Whisper (WASM)
     let hasWebGPU = false;
+    let webGPUResolved = false;             // true once detection has completed
     let sttModelName = 'Whisper V3 Turbo';  // default, updated after detection
     const webGPUPromise = (async () => {
         if (typeof navigator !== 'undefined' && navigator.gpu) {
@@ -26,7 +27,24 @@
                 if (adapter) { hasWebGPU = true; sttModelName = 'Voxtral Mini 3B'; }
             } catch (_) { /* no WebGPU */ }
         }
+        webGPUResolved = true;
+        // Detection finished after the UI may have rendered with the default model
+        // name — refresh any visible engine label so it reflects the real engine.
+        try { updateEngineIndicator(); } catch (_) { /* indicator not built yet */ }
     })();
+
+    // ── Low-end device probe (for the WASM/Whisper fallback only) ──
+    // On low-RAM / few-core devices the ~800 MB Whisper-Large model is impractical,
+    // so we ask speech-worker.js to load multilingual whisper-tiny (~75 MB) instead.
+    // Returns 'tiny' | 'turbo'. WebGPU devices use Voxtral and ignore this.
+    function pickWhisperTier() {
+        const mem = navigator.deviceMemory;        // GB, Chromium-only
+        const cores = navigator.hardwareConcurrency;
+        if ((typeof mem === 'number' && mem <= 4) || (typeof cores === 'number' && cores <= 4)) {
+            return 'tiny';
+        }
+        return 'turbo';
+    }
 
     // ── State ──────────────────────────────────────
     let isListening = false;
@@ -627,7 +645,22 @@
             processorNode.connect(audioContext.destination);
             console.log('🧠 Audio capture started at', audioContext.sampleRate, 'Hz');
         } catch (err) {
+            // The mic for the neural engine (Whisper/Voxtral) is opened separately from the
+            // Web Speech API's internal stream. On mobile, this second getUserMedia() can be
+            // denied or fail while Web Speech keeps working — previously this failed silently,
+            // leaving the user to believe the higher-quality engine was running. Surface it.
             console.warn('🧠 Audio capture failed:', err);
+            // Clean up any partially-created nodes/stream so a retry starts fresh.
+            if (processorNode) { try { processorNode.disconnect(); } catch (_) {} processorNode = null; }
+            if (sourceNode) { try { sourceNode.disconnect(); } catch (_) {} sourceNode = null; }
+            if (audioContext) { audioContext.close().catch(() => {}); audioContext = null; }
+            if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+            const denied = err && (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || err.name === 'SecurityError');
+            const msg = denied
+                ? `🎙️ ${sttModelName} couldn't access the mic — using Web Speech only`
+                : `🎙️ ${sttModelName} audio capture failed — using Web Speech only`;
+            if (interimText) interimText.textContent = msg;
+            if (M.showToast) M.showToast(msg, 'warning');
         }
     }
 
@@ -921,8 +954,12 @@
     // ── STT Model Download Consent Popup ────────────
     function showSttConsentPopup(modelType) {
         const isVoxtral = modelType === 'voxtral';
-        const modelName = isVoxtral ? 'Voxtral Mini 3B' : 'Whisper Large V3 Turbo';
-        const downloadSize = isVoxtral ? '~2.7 GB' : '~800 MB';
+        // On low-end devices the Whisper path loads the lightweight tiny model —
+        // reflect that in the consent popup so the size estimate is honest.
+        const whisperTier = isVoxtral ? null : pickWhisperTier();
+        const isTiny = whisperTier === 'tiny';
+        const modelName = isVoxtral ? 'Voxtral Mini 3B' : (isTiny ? 'Whisper Tiny' : 'Whisper Large V3 Turbo');
+        const downloadSize = isVoxtral ? '~2.7 GB' : (isTiny ? '~75 MB' : '~800 MB');
         const deviceLabel = isVoxtral ? 'GPU (WebGPU)' : 'CPU (WASM)';
 
         // Create overlay
@@ -964,7 +1001,7 @@
             // Proceed with model download
             initWorker();
             if (!modelReady && !modelLoading) {
-                worker.postMessage({ type: 'init' });
+                worker.postMessage({ type: 'init', tier: hasWebGPU ? undefined : pickWhisperTier() });
             }
         });
 
@@ -1008,7 +1045,8 @@
                 // Already consented or model cached — proceed directly
                 initWorker();
                 if (!modelReady && !modelLoading) {
-                    worker.postMessage({ type: 'init' });
+                    // tier only matters for the Whisper (WASM) worker; Voxtral ignores it
+                    worker.postMessage({ type: 'init', tier: hasWebGPU ? undefined : pickWhisperTier() });
                 } else if (modelReady) {
                     startAudioCapture();
                 }
@@ -1114,8 +1152,11 @@
             sttModel: sttModelName,
             sttReady: modelReady,
             webGPU: hasWebGPU,
+            webGPUResolved: webGPUResolved,
             aiRefine: aiRefineEnabled,
         }),
+        /** Resolves once WebGPU detection has completed (engine choice is final). */
+        ready: () => webGPUPromise.then(() => M.speechToText.getEngines()),
         /** Start recording in card mode — text routes to callbacks instead of editor */
         startForCard: (onText, onInterim) => {
             // Force-stop any active session first (allows re-recording after Clear)
