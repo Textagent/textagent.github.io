@@ -33,11 +33,15 @@
         try { updateEngineIndicator(); } catch (_) { /* indicator not built yet */ }
     })();
 
-    // ── Low-end device probe (for the WASM/Whisper fallback only) ──
-    // On low-RAM / few-core devices the ~800 MB Whisper-Large model is impractical,
-    // so we ask speech-worker.js to load multilingual whisper-tiny (~75 MB) instead.
-    // Returns 'tiny' | 'turbo'. WebGPU devices use Voxtral and ignore this.
+    // ── WASM-worker tier selection ──
+    // A caller (e.g. an {{@STT:}} card set to the Moonshine engine) can force a
+    // specific worker tier; otherwise we probe the device. On low-RAM / few-core
+    // devices the ~800 MB Whisper-Large model is impractical, so we load
+    // multilingual whisper-tiny (~75 MB) instead.
+    // Returns 'tiny' | 'turbo' | 'moonshine'. WebGPU devices use Voxtral and ignore this.
+    let forcedTier = null;  // 'moonshine' | 'tiny' | 'turbo' | null (auto)
     function pickWhisperTier() {
+        if (forcedTier) return forcedTier;
         const mem = navigator.deviceMemory;        // GB, Chromium-only
         const cores = navigator.hardwareConcurrency;
         if ((typeof mem === 'number' && mem <= 4) || (typeof cores === 'number' && cores <= 4)) {
@@ -1157,6 +1161,19 @@
         }),
         /** Resolves once WebGPU detection has completed (engine choice is final). */
         ready: () => webGPUPromise.then(() => M.speechToText.getEngines()),
+        /**
+         * Force the WASM worker tier ('moonshine' | 'tiny' | 'turbo'), or null to
+         * auto-pick by device. Used by the {{@STT:}} card's engine selector to
+         * route to Moonshine (fast English). Takes effect on the next worker init,
+         * so reset the worker if one is already running with a different tier.
+         */
+        setWhisperTier: (tier) => {
+            const next = (tier === 'moonshine' || tier === 'tiny' || tier === 'turbo') ? tier : null;
+            if (next === forcedTier) return;
+            forcedTier = next;
+            // Drop any worker built for the previous tier so the next start reloads.
+            if (worker) { try { worker.terminate(); } catch (_) {} worker = null; modelReady = false; modelLoading = false; }
+        },
         /** Start recording in card mode — text routes to callbacks instead of editor */
         startForCard: (onText, onInterim) => {
             // Force-stop any active session first (allows re-recording after Clear)

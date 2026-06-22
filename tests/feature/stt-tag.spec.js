@@ -73,7 +73,7 @@ test.describe('STT Tag Block', () => {
         expect(card).toBe(true);
     });
 
-    test('STT card has engine selector with 3 options', async ({ page }) => {
+    test('STT card has engine selector with 4 options', async ({ page }) => {
         await page.locator('#markdown-editor').fill('{{@STT:\n  @lang: en-US\n}}');
         await page.waitForTimeout(2000);
 
@@ -83,10 +83,10 @@ test.describe('STT Tag Block', () => {
             const select = preview.querySelector('.ai-stt-engine-select');
             return select ? select.querySelectorAll('option').length : 0;
         });
-        expect(optionCount).toBe(3);
+        expect(optionCount).toBe(4);
     });
 
-    test('STT card engine options include whisper, voxtral, webspeech', async ({ page }) => {
+    test('STT card engine options include whisper, voxtral, moonshine, webspeech', async ({ page }) => {
         await page.locator('#markdown-editor').fill('{{@STT:\n  @lang: en-US\n}}');
         await page.waitForTimeout(2000);
 
@@ -99,6 +99,7 @@ test.describe('STT Tag Block', () => {
         });
         expect(values).toContain('whisper');
         expect(values).toContain('voxtral');
+        expect(values).toContain('moonshine');
         expect(values).toContain('webspeech');
     });
 

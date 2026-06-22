@@ -33,7 +33,7 @@
   "license": "MIT",
   "dependencies": {
     "@chenglou/pretext": "^0.0.4",
-    "@huggingface/transformers": "^3.8.1",
+    "@huggingface/transformers": "^4.2.0",
     "bootstrap": "5.3.8",
     "bootstrap-icons": "1.13.1",
     "dompurify": "3.0.9",
