@@ -636,6 +636,44 @@
             requiresWebGPU: true,
         },
 
+        // ── Local: SmolVLM 256M/500M (Hugging Face) — Lightweight Vision ──
+        // Small vision-language models for image understanding on low-end devices —
+        // a far lighter alternative to Gemma 4 Vision (~2–4 GB) / Florence-2 for
+        // basic captioning & visual Q&A. image-text-to-text architecture.
+        'smolvlm-256m': {
+            label: 'SmolVLM 256M · Local',
+            badge: 'SmolVLM 256M · Local',
+            icon: 'bi bi-image',
+            statusReady: 'SmolVLM (256M) · Local',
+            dropdownName: 'SmolVLM (256M)',
+            dropdownDesc: 'Local · Lightweight Vision · ~270 MB',
+            isLocal: true,
+            category: 'local-multimodal',
+            localModelId: 'onnx-community/SmolVLM-256M-Instruct-ONNX',
+            workerFile: 'ai-worker-smolvlm.js',
+            downloadSize: '~270 MB',
+            supportsVision: true,
+            architecture: 'smolvlm',
+            dtype: 'q4',
+        },
+
+        'smolvlm-500m': {
+            label: 'SmolVLM 500M · Local',
+            badge: 'SmolVLM 500M · Local',
+            icon: 'bi bi-image',
+            statusReady: 'SmolVLM (500M) · Local',
+            dropdownName: 'SmolVLM (500M)',
+            dropdownDesc: 'Local · Lightweight Vision · ~500 MB',
+            isLocal: true,
+            category: 'local-multimodal',
+            localModelId: 'onnx-community/SmolVLM-500M-Instruct-ONNX',
+            workerFile: 'ai-worker-smolvlm.js',
+            downloadSize: '~500 MB',
+            supportsVision: true,
+            architecture: 'smolvlm',
+            dtype: 'q4',
+        },
+
         // ── Local: Kokoro 82M TTS (Text-to-Speech) ────────────
         'kokoro-tts': {
             label: 'Kokoro TTS · Local',

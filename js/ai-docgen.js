@@ -1026,7 +1026,7 @@
                 var sttLangMatch = prompt.match(/^\s*(?:@lang|Lang):\s*(.+)$/mi);
                 var sttCurrentLang = sttLangMatch ? sttLangMatch[1].trim() : 'en-US';
 
-                // Parse @engine (whisper | voxtral | webspeech)
+                // Parse @engine (whisper | voxtral | webspeech | moonshine)
                 var sttEngineMatch = prompt.match(/^\s*(?:@engine|Engine):\s*(.+)$/mi);
                 var sttEngines = M.speechToText && M.speechToText.getEngines ? M.speechToText.getEngines() : {};
                 var sttDefaultEngine = sttEngines.webGPU ? 'voxtral' : 'whisper';
@@ -1036,6 +1036,7 @@
                 var sttEngineOptions = [
                     { id: 'whisper', name: '🧠 Whisper V3 Turbo', desc: 'WASM · Offline' },
                     { id: 'voxtral', name: '🚀 Voxtral Mini 3B', desc: 'WebGPU · Offline' },
+                    { id: 'moonshine', name: '🌙 Moonshine (EN)', desc: 'WASM · Fast · English' },
                     { id: 'webspeech', name: '🌐 Web Speech API', desc: 'Browser · Online' },
                 ];
                 var sttEngineHtml = '<select class="ai-stt-engine-select" data-ai-index="' + blockIndex + '" title="STT Engine">';

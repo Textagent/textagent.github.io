@@ -22,11 +22,15 @@ env.remoteHost = MODEL_HOST;
 let transcriber = null;
 let activeTier = 'turbo';
 
-// Tier definitions. dtype/model id chosen per tier; both resolve under the
-// textagent org first, then fall back to onnx-community.
+// Tier definitions. dtype/model id chosen per tier.
+//   turbo/tiny → Whisper (multilingual). `id` is under textagent org first,
+//                falling back to onnx-community (orgFallback: true).
+//   moonshine  → onnx-community/moonshine-base (MIT), a fast real-time ENGLISH
+//                model — only hosted on onnx-community, so no org fallback.
 const TIERS = {
-    turbo: { id: 'textagent/whisper-large-v3-turbo', dtype: 'q8', label: 'Whisper V3 Turbo', dlMsg: '⏳ Downloading Whisper Large V3 Turbo (WASM)…' },
-    tiny: { id: 'textagent/whisper-tiny', dtype: 'q4', label: 'Whisper Tiny', dlMsg: '⏳ Downloading Whisper Tiny (low-end, WASM)…' },
+    turbo: { id: 'textagent/whisper-large-v3-turbo', dtype: 'q8', label: 'Whisper V3 Turbo', dlMsg: '⏳ Downloading Whisper Large V3 Turbo (WASM)…', orgFallback: true },
+    tiny: { id: 'textagent/whisper-tiny', dtype: 'q4', label: 'Whisper Tiny', dlMsg: '⏳ Downloading Whisper Tiny (low-end, WASM)…', orgFallback: true },
+    moonshine: { id: 'onnx-community/moonshine-base-ONNX', dtype: 'q8', label: 'Moonshine Base (EN)', dlMsg: '⏳ Downloading Moonshine Base (fast English, WASM)…', orgFallback: false, englishOnly: true },
 };
 
 // Decide a tier from device capability when the caller doesn't force one.
@@ -46,8 +50,8 @@ self.addEventListener('message', async (e) => {
 
     if (type === 'init') {
         try {
-            // Caller may force a tier ('tiny' | 'turbo'); otherwise probe the device.
-            activeTier = (e.data.tier === 'tiny' || e.data.tier === 'turbo') ? e.data.tier : pickTier();
+            // Caller may force a tier ('tiny' | 'turbo' | 'moonshine'); otherwise probe the device.
+            activeTier = TIERS[e.data.tier] ? e.data.tier : pickTier();
             const tier = TIERS[activeTier];
 
             self.postMessage({ type: 'status', status: 'loading', message: tier.dlMsg });
@@ -82,7 +86,9 @@ self.addEventListener('message', async (e) => {
                 },
             };
 
-            // Try primary org (textagent), fall back to onnx-community
+            // Try primary org (textagent), fall back to onnx-community — but only
+            // for tiers that are mirrored under textagent. Moonshine lives solely
+            // on onnx-community, so skip the fallback path for it.
             try {
                 transcriber = await pipeline(
                     'automatic-speech-recognition',
@@ -90,6 +96,7 @@ self.addEventListener('message', async (e) => {
                     pipelineOpts,
                 );
             } catch (primaryErr) {
+                if (!tier.orgFallback) throw primaryErr;
                 console.warn(`textagent model failed: ${primaryErr.message}. Falling back to onnx-community…`);
                 self.postMessage({ type: 'status', status: 'loading', message: '⚠️ Falling back to onnx-community models…' });
                 whisperModelId = whisperModelId.replace('textagent/', MODEL_ORG_FALLBACK + '/');
@@ -133,6 +140,17 @@ self.addEventListener('message', async (e) => {
                 for (let i = 0; i < audio.length; i++) {
                     normalizedAudio[i] = audio[i] * gain;
                 }
+            }
+
+            // Moonshine is a non-Whisper, English-only ASR model: it has its own
+            // tokenizer (incompatible with WhisperTextStreamer) and takes no
+            // `language` option. The Whisper tiers stream partials and pass language.
+            const isMoonshine = activeTier === 'moonshine';
+
+            if (isMoonshine) {
+                const result = await transcriber(normalizedAudio, { return_timestamps: false });
+                self.postMessage({ type: 'result', text: result.text });
+                return;
             }
 
             // Use language from caller, default to 'en'

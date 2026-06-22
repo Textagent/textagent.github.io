@@ -119,20 +119,53 @@ function splitIntoChunks(text, maxLen = 500) {
     return chunks.filter(c => c.length > 0);
 }
 
+// Track which device the loaded model is running on (for status reporting).
+let ttsDevice = 'wasm';
+
+// Probe WebGPU availability inside the worker.
+async function detectWebGPU() {
+    try {
+        if (typeof navigator === 'undefined' || !navigator.gpu) return false;
+        const adapter = await navigator.gpu.requestAdapter();
+        return !!adapter;
+    } catch (_) {
+        return false;
+    }
+}
+
 /**
  * Load model + tokenizer separately, then construct KokoroTTS directly.
  * This avoids the preprocessor_config.json fetch that fails in
  * KokoroTTS.from_pretrained() → StyleTextToSpeech2Model.from_pretrained().
+ *
+ * Runs on WebGPU when available (Kokoro v1.0 supports it — ~10s of speech in
+ * ~1s vs 5–15s/chunk on CPU/WASM), falling back to WASM if WebGPU is missing
+ * or the GPU load fails at runtime. WebGPU prefers fp32 weights; WASM uses q8.
  */
 async function loadKokoroManual(modelId, progressCb) {
-    const model = await StyleTextToSpeech2Model.from_pretrained(modelId, {
-        dtype: 'q8',
-        progress_callback: progressCb,
-    });
-    const tokenizer = await AutoTokenizer.from_pretrained(modelId, {
-        progress_callback: progressCb,
-    });
-    return new KokoroTTS(model, tokenizer);
+    const useGPU = await detectWebGPU();
+
+    async function build(device, dtype) {
+        const model = await StyleTextToSpeech2Model.from_pretrained(modelId, {
+            dtype,
+            device,
+            progress_callback: progressCb,
+        });
+        const tokenizer = await AutoTokenizer.from_pretrained(modelId, {
+            progress_callback: progressCb,
+        });
+        ttsDevice = device;
+        return new KokoroTTS(model, tokenizer);
+    }
+
+    if (useGPU) {
+        try {
+            return await build('webgpu', 'fp32');
+        } catch (gpuErr) {
+            console.warn('[TTS Worker] WebGPU load failed, falling back to WASM:', gpuErr);
+        }
+    }
+    return await build('wasm', 'q8');
 }
 
 /**
@@ -452,7 +485,8 @@ self.addEventListener('message', async (e) => {
             self.postMessage({
                 type: 'status',
                 status: 'ready',
-                message: '🔊 Kokoro TTS ready',
+                message: ttsDevice === 'webgpu' ? '🔊 Kokoro TTS ready (GPU)' : '🔊 Kokoro TTS ready',
+                device: ttsDevice,
                 voices,
             });
 
