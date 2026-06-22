@@ -26,14 +26,16 @@ jobs:
 
       - name: Check for CHANGELOG file in commit
         run: |
-          # Get files changed in this push/PR
+          # Get files changed in this push/PR.
+          # Use --diff-filter=ACMR so deletions don't count — removing a file
+          # shouldn't fail a rule that's checking for file presence.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD)
+            FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD 2>/dev/null || git diff --name-only --diff-filter=ACMR ${{ github.event.pull_request.base.sha }} HEAD)
           else
-            FILES=$(git diff --name-only HEAD~1 HEAD)
+            FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD)
           fi
 
-          echo "Changed files:"
+          echo "Changed files (added/modified/copied/renamed):"
           echo "$FILES"
 
           # Check if any code files changed (ignore docs-only)
@@ -44,7 +46,8 @@ jobs:
             exit 0
           fi
 
-          # Reject changelogs placed in repo root instead of changelogs/
+          # Reject changelogs placed in repo root instead of changelogs/.
+          # Only checks added/modified files (see --diff-filter above); pure deletions are allowed.
           ROOT_CHANGELOG=$(echo "$FILES" | grep -E '^CHANGELOG-.*\.md$' || true)
           if [ -n "$ROOT_CHANGELOG" ]; then
             echo ""

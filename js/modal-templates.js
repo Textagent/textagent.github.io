@@ -797,6 +797,7 @@ const chatResponse = await openai.chat.completions.create({
                     <button class="template-cat-btn" data-category="forms">Forms</button>
                     <button class="template-cat-btn" data-category="charts">Charts</button>
                     <button class="template-cat-btn" data-category="podcasts">Podcasts</button>
+                    <button class="template-cat-btn" data-category="tools">Tools</button>
                 </div>
             </div>
             <div class="template-grid" id="template-grid"></div>

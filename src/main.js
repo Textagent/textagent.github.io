@@ -190,6 +190,7 @@ async function loadModules() {
         import('../js/templates/charts-parallel-gallery.js'),
         import('../js/templates/charts-graph-gallery.js'),
         import('../js/templates/podcasts.js'),
+        import('../js/templates/tools.js'),
     ]);
     await import('../js/templates.js');
 
