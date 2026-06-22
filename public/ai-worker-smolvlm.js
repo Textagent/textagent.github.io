@@ -1,6 +1,6 @@
 // ============================================
 // ai-worker-smolvlm.js — SmolVLM (256M / 500M) Lightweight Vision Worker
-// Models: onnx-community/SmolVLM-256M-Instruct-ONNX, SmolVLM-500M-Instruct-ONNX
+// Models: HuggingFaceTB/SmolVLM-256M-Instruct, HuggingFaceTB/SmolVLM-500M-Instruct
 // Supports: text + image (image-text-to-text). A far lighter alternative to
 // Gemma 4 Vision (~2–4 GB) and Florence-2 for captioning & visual Q&A.
 //
@@ -11,7 +11,7 @@
 // SmolVLM (Idefics3 architecture) is supported in transformers.js v4.
 const TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1";
 
-let MODEL_ID = "onnx-community/SmolVLM-256M-Instruct-ONNX";
+let MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct";
 let MODEL_LABEL = "SmolVLM 256M";
 
 // Dynamically imported from transformers.js
@@ -67,9 +67,15 @@ async function loadModel() {
         });
 
         self.postMessage({ type: "status", message: `Loading ${MODEL_LABEL} model (${device.toUpperCase()})...` });
+        // SmolVLM ships as three ONNX components; transformers.js needs a per-component
+        // dtype map (a single string mis-resolves the merged decoder). This mirrors the
+        // official transformers.js SmolVLM WebGPU example.
         model = await AutoModelForImageTextToText.from_pretrained(MODEL_ID, {
-            // WebGPU prefers fp16; WASM uses q4 to keep the download small.
-            dtype: device === "webgpu" ? "fp16" : "q4",
+            dtype: {
+                embed_tokens: "fp16",
+                vision_encoder: device === "webgpu" ? "q4" : "fp16",
+                decoder_model_merged: "q4",
+            },
             device: device,
             progress_callback: makeProgressCb("model"),
         });

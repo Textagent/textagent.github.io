@@ -26,8 +26,9 @@ A batch of upgrades sourced from the `onnx-community` HuggingFace org, each filt
 
 ## 3. SmolVLM Lightweight Vision
 **Files:** `js/ai-models.js`, `public/ai-worker-smolvlm.js` (new)
-**What:** Registered `smolvlm-256m` and `smolvlm-500m` model entries and added a dedicated worker mirroring the gemma4 worker's message protocol (setModelId/load/generate/process/ping), using `AutoModelForImageTextToText` + `AutoProcessor` with WebGPU/WASM auto-selection and streaming tokens.
+**What:** Registered `smolvlm-256m` and `smolvlm-500m` model entries (`HuggingFaceTB/SmolVLM-256M-Instruct` / `-500M-Instruct`) and added a dedicated worker mirroring the gemma4 worker's message protocol (setModelId/load/generate/process/ping), using `AutoModelForImageTextToText` + `AutoProcessor` with WebGPU/WASM auto-selection and streaming tokens. SmolVLM ships as three ONNX components, so the worker passes a per-component dtype map (`embed_tokens` fp16, `vision_encoder`/`decoder_model_merged` q4) rather than a single dtype string.
 **Impact:** Image captioning and visual Q&A on devices that can't fit the multi-GB Gemma 4 Vision models.
+**Verified:** loaded the 256M model on WebGPU in-browser and captioned a test image end-to-end ("The image displays a red circle…") — confirms the vision encoder + decoder pipeline runs.
 
 ## 4. transformers.js v4 Upgrade
 **Files:** `package.json`, `package-lock.json` (+ all workers importing `@huggingface/transformers`: tts/voxtral/speech/florence/docling/glm-ocr)
