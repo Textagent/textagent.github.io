@@ -203,6 +203,24 @@
             }
             localStorage.setItem(AUTOSAVE_TIME_KEY, Date.now().toString());
 
+            // Write back to an individually-linked single file (independent of folder mode).
+            // Checked BEFORE the folder branch so a single-linked file is never written
+            // through the folder path (which would target the wrong directory).
+            if (M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(M.wsActiveFileId)) {
+                M._disk.writeSingleFile(M.wsActiveFileId, M.markdownEditor.value).then(function (ok) {
+                    if (ok) {
+                        showAutosaveIndicator('💾 Saved to disk');
+                    } else {
+                        // Permission lost / link dropped — tell the user it's NOT on disk.
+                        showAutosaveIndicator('⚠️ Not saved to disk');
+                    }
+                }).catch(function (e) {
+                    console.warn('Single-file disk autosave failed:', e);
+                    showAutosaveIndicator('⚠️ Not saved to disk');
+                });
+                return; // indicator shown in .then()
+            }
+
             // Also write to disk when in folder-backed mode
             if (M.wsDiskMode && M._disk && M._disk.isConnected() && M.wsActiveFileId) {
                 var file = M._wsFindFileById ? M._wsFindFileById(M.wsActiveFileId) : null;
@@ -327,6 +345,14 @@
         var content = M.markdownEditor.value;
         if (!content.trim() || content === lastCloudContent) { cloudSaveDirty = false; return; }
         if (M.markdownEditor.readOnly) return;
+        // Don't auto-publish a NEW encrypted cloud copy of a file the user opened from disk
+        // to keep local — it autosaves to their disk file instead. (If a cloud doc already
+        // exists for this document, keep syncing it; only suppress first-time publication.)
+        if (M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(M.wsActiveFileId)
+            && !localStorage.getItem(CLOUD_DOC_KEY)) {
+            cloudSaveDirty = false;
+            return;
+        }
         // Don't auto-save if we're on someone else's shared URL and haven't established our own cloud doc
         // Exception: study copies (have &study= in URL) should create their own cloud doc
         var hash = window.location.hash;
@@ -392,6 +418,21 @@
         scheduleCloudSave();
     }
     M.markdownEditor.addEventListener('input', debouncedAutosave);
+
+    // Flush any pending autosave when the page is being hidden/closed, so edits made
+    // right before reload/close still reach disk (for single-linked files especially —
+    // their debounce window could otherwise drop the last keystrokes from disk).
+    // pagehide fires more reliably than beforeunload on mobile/bfcache; handle both.
+    function flushPendingSave() {
+        if (autosaveTimeout) {
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = null;
+            // Synchronously kicks off the write (the disk write itself is async/best-effort).
+            saveToLocalStorage();
+        }
+    }
+    window.addEventListener('pagehide', flushPendingSave);
+    window.addEventListener('beforeunload', flushPendingSave);
 
     // ========================================
     // SHARE FLOW
