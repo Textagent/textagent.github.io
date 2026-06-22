@@ -119,8 +119,16 @@
             console.warn('File save failed:', e);
             if (M.showToast) M.showToast('⚠️ Save failed — browser storage is full. Free space or connect a folder.', 'error');
         }
-        // Also write to disk when in disk mode
-        if (diskMode && M._disk && M._disk.isConnected()) {
+        // Write back to an individually-linked disk file (works independently of folder mode)
+        if (M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(id)) {
+            M._disk.writeSingleFile(id, content).then(function (ok) {
+                if (!ok) console.warn('Single-file write skipped — permission lost for', id);
+            }).catch(function (e) {
+                console.warn('Single-file disk write failed:', e);
+            });
+        }
+        // Also write to disk when in disk (folder) mode
+        else if (diskMode && M._disk && M._disk.isConnected()) {
             var file = findFileById(id);
             if (file) {
                 M._disk.writeFileToPath(file.name, content).catch(function (e) {
@@ -132,6 +140,9 @@
 
     function removeFileContent(id) {
         localStorage.removeItem(FILE_PREFIX + id);
+        // Forget any individually-linked disk file (don't touch the file on disk —
+        // removing it from the workspace shouldn't delete the user's original file)
+        if (M._disk && M._disk.unlinkSingleFile) M._disk.unlinkSingleFile(id);
         if (diskMode && M._disk && M._disk.isConnected()) {
             var file = findFileById(id);
             if (file) {
@@ -567,7 +578,10 @@
         function commitRename() {
             var newName = input.value.trim();
             if (!newName) newName = displayName;
-            if (!newName.endsWith('.md')) newName += '.md';
+            // Don't force '.md' onto an individually-linked file — its real on-disk file may
+            // be .txt/.log, and the name would then diverge from what's actually written.
+            var isSingleLinked = M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(fileId);
+            if (!isSingleLinked && !newName.endsWith('.md')) newName += '.md';
             // Preserve directory prefix for path-based names
             var dirPrefix = file.name.lastIndexOf('/') >= 0
                 ? file.name.substring(0, file.name.lastIndexOf('/') + 1) : '';
@@ -627,6 +641,81 @@
         return id;
     };
 
+    // Open a single file directly from disk and keep it linked so edits autosave
+    // back to that exact file (independent of folder/disk-workspace mode).
+    M.wsOpenDiskFile = async function () {
+        if (!M._disk || !M._disk.isFileSupported || !M._disk.isFileSupported()) {
+            M.showToast('Opening files from disk is not supported in this browser.', 'warning');
+            return;
+        }
+        var picked;
+        try {
+            picked = await M._disk.openSingleFile();
+        } catch (e) {
+            if (e && e.name === 'AbortError') return; // user cancelled the picker
+            console.error('Open file from disk failed:', e);
+            M.showToast('Failed to open file: ' + e.message, 'error');
+            return;
+        }
+
+        // If we were viewing a shared doc, break out of that session
+        if (M.isViewingSharedDoc) M.clearCloudSession();
+        else if (M.resetCloudForFileSwitch) M.resetCloudForFileSwitch();
+        // Save the current document before switching
+        M.wsSaveCurrent();
+        resetFileSessionState();
+
+        // Create a workspace entry, deduplicating the display name
+        var id = generateId();
+        var fileName = picked.name || 'Untitled.md';
+        var existingNames = workspace.files.map(function (f) { return f.name.toLowerCase(); });
+        if (existingNames.indexOf(fileName.toLowerCase()) >= 0) {
+            var dot = fileName.lastIndexOf('.');
+            var base = dot > 0 ? fileName.substring(0, dot) : fileName;
+            var ext = dot > 0 ? fileName.substring(dot) : '';
+            var counter = 2;
+            var candidate = base + ' ' + counter + ext;
+            while (existingNames.indexOf(candidate.toLowerCase()) >= 0) {
+                counter++;
+                candidate = base + ' ' + counter + ext;
+            }
+            fileName = candidate;
+        }
+        workspace.files.push({ id: id, name: fileName, createdAt: Date.now() });
+        workspace.activeFileId = id;
+        M.wsActiveFileId = id;
+        // Mark as manually named so auto-naming doesn't rename the linked file
+        manuallyRenamed[id] = true;
+
+        // Link the disk handle. linkSingleFile resolves false if IndexedDB persistence
+        // failed (e.g. incognito/quota) — in that case the link won't survive a reload,
+        // so warn the user rather than letting it fail silently later.
+        Promise.resolve(M._disk.linkSingleFile(id, picked.handle)).then(function (persisted) {
+            if (persisted === false) {
+                M.showToast('Opened, but this link won\'t survive a page reload (storage unavailable).', 'warning');
+            }
+        });
+
+        // Cache content in localStorage directly. We deliberately do NOT route through
+        // setFileContent here — the content is identical to what's on disk, so echoing it
+        // back via writeSingleFile would just bump the file's mtime for no reason.
+        try {
+            localStorage.setItem(FILE_PREFIX + id, picked.content);
+        } catch (e) {
+            console.warn('Failed to cache opened file content:', e);
+        }
+        saveWorkspace();
+
+        // Load into the editor
+        M.markdownEditor.value = picked.content;
+        M.renderMarkdown();
+        if (M.updateDocumentStats) M.updateDocumentStats();
+        renderFileList();
+        if (!sidebarOpen) M.wsToggleSidebar();
+        updatePageTitle(fileName);
+        M.showToast('📄 Opened from disk: ' + fileName + ' (edits autosave to disk)', 'success');
+    };
+
     M.wsOpenFile = function (id) {
         if (id === workspace.activeFileId) return;
         var file = findFileById(id);
@@ -661,6 +750,20 @@
         manuallyRenamed[id] = true;
         var oldName = file.name;
         newName = newName.trim();
+
+        // Individually-linked single files: the on-disk file can't be renamed through the
+        // File System Access API (no folder handle to move within), and we must NOT run the
+        // folder rename path (it would create/delete inside the connected folder by basename).
+        // So rename only the workspace label; the handle keeps writing to the same real file.
+        if (M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(id)) {
+            file.name = newName; // preserve whatever extension the user typed (.txt/.log/etc.)
+            saveWorkspace();
+            renderFileList();
+            if (id === workspace.activeFileId) updatePageTitle(newName);
+            if (diskMode) loadDiskTree();
+            return;
+        }
+
         if (!newName.endsWith('.md')) newName += '.md';
         // Preserve directory prefix for path-based names
         var dirPrefix = oldName.lastIndexOf('/') >= 0
@@ -760,6 +863,10 @@
         }
         if (idx < 0) return;
         var deletedName = workspace.files[idx].name;
+        // Capture whether this was an individually-linked single file BEFORE removeFileContent
+        // unlinks it — a single-linked file must NOT be deleted via the folder path (its name
+        // could collide with a real file inside a connected folder).
+        var wasSingleLinked = M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(id);
         workspace.files.splice(idx, 1);
         removeFileContent(id);
         // Switch to nearest neighbor if deleting active file
@@ -775,8 +882,11 @@
         }
         saveWorkspace();
         renderFileList();
-        // Delete from disk, then reload tree
-        if (diskMode && M._disk && M._disk.isConnected()) {
+        // Delete from disk, then reload tree.
+        // Skip the folder delete for single-linked files — removing the workspace entry
+        // should only forget the link (already done), never delete the user's real file,
+        // and never touch a same-named file inside the connected folder.
+        if (diskMode && M._disk && M._disk.isConnected() && !wasSingleLinked) {
             M._disk.deleteFileFromPath(deletedName).then(function () {
                 loadDiskTree();
             }).catch(function (e) {
@@ -791,9 +901,14 @@
 
     M.wsDeleteFile = function (id) {
         if (workspace.files.length <= 1) {
-            // Don't delete the last file — just clear it
+            // Don't delete the last file — just clear it.
             var file = findFileById(id);
             if (file) {
+                // If it's a single-linked disk file, forget the link FIRST so clearing the
+                // editor doesn't truncate the user's real file on disk to empty.
+                if (M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(id)) {
+                    M._disk.unlinkSingleFile(id);
+                }
                 M.markdownEditor.value = '';
                 setFileContent(id, '');
                 M.renderMarkdown();
@@ -835,6 +950,11 @@
             await M._disk.pickFolder();
             diskMode = true;
             M.wsDiskMode = true;
+            // Switching into folder mode rebuilds the workspace from the folder; any
+            // individually-linked single files are about to vanish from the list, so forget
+            // their handles now to avoid orphaning them in IndexedDB. (wsSaveCurrent above
+            // already flushed the active linked file to disk, so no edits are lost.)
+            if (M._disk.unlinkAllSingleFiles) M._disk.unlinkAllSingleFiles();
 
             // Try to load existing manifest
             var manifest = await M._disk.loadManifest();
@@ -965,6 +1085,9 @@
         if (!M._disk || !M._disk.isConnected()) return;
         diskMode = true;
         M.wsDiskMode = true;
+        // The workspace is about to be rebuilt from the folder manifest; forget any
+        // single-file links so their handles aren't orphaned in IndexedDB.
+        if (M._disk.unlinkAllSingleFiles) M._disk.unlinkAllSingleFiles();
 
         // Load workspace from disk manifest
         var manifest = await M._disk.loadManifest();

@@ -6,11 +6,16 @@
 
     // --- Feature Detection ---
     var supported = typeof window.showDirectoryPicker === 'function';
+    // Single-file open uses showOpenFilePicker (ships alongside showDirectoryPicker,
+    // but feature-detect independently to be safe).
+    var fileSupported = typeof window.showOpenFilePicker === 'function';
 
     // --- IndexedDB helpers for storing FileSystemDirectoryHandle ---
     var DB_NAME = 'textagent-disk';
     var DB_STORE = 'handles';
     var DB_KEY = 'root';
+    // Key prefix for individually-linked single-file handles (id → FileSystemFileHandle)
+    var FILE_HANDLE_PREFIX = 'file:';
 
     function openDB() {
         return new Promise(function (resolve, reject) {
@@ -62,19 +67,188 @@
         });
     }
 
+    // Return all [key, value] pairs whose key starts with the given prefix.
+    function idbGetByPrefix(prefix) {
+        return openDB().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var tx = db.transaction(DB_STORE, 'readonly');
+                var store = tx.objectStore(DB_STORE);
+                var out = [];
+                var req = store.openCursor();
+                req.onsuccess = function () {
+                    var cursor = req.result;
+                    if (cursor) {
+                        if (typeof cursor.key === 'string' && cursor.key.indexOf(prefix) === 0) {
+                            out.push([cursor.key, cursor.value]);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(out);
+                    }
+                };
+                req.onerror = function () { reject(req.error); };
+            });
+        });
+    }
+
     // --- State ---
     var dirHandle = null;   // FileSystemDirectoryHandle
     var textagentDir = null; // .textagent sub-directory handle
+    // Individually-linked single files: workspace file id → FileSystemFileHandle.
+    // Independent of folder mode — a single file stays linked even with no folder open.
+    var singleFileHandles = {};
 
     // --- Public API ---
     var disk = {};
 
     disk.isSupported = function () { return supported; };
 
+    // Single-file open/save is available independently of folder support
+    disk.isFileSupported = function () { return fileSupported; };
+
     disk.isConnected = function () { return !!dirHandle; };
 
     disk.getFolderName = function () {
         return dirHandle ? dirHandle.name : '';
+    };
+
+    // --- Single-file (individual) handles ---
+    // Prompt the user to pick one file from disk. Returns { name, content, handle }.
+    // Requests readwrite up front so the write grant happens inside the click gesture
+    // (otherwise the first autosave write would prompt — or silently fail — out of context).
+    disk.openSingleFile = async function () {
+        if (!fileSupported) throw new Error('File open is not supported in this browser');
+        var handles = await window.showOpenFilePicker({
+            multiple: false,
+            types: [{
+                description: 'Text & Markdown',
+                accept: {
+                    'text/markdown': ['.md', '.markdown'],
+                    'text/plain': ['.txt', '.text', '.log']
+                }
+            }],
+            excludeAcceptAllOption: false
+        });
+        var handle = handles[0];
+        // Ask for write permission now, while we still have the user gesture from the click.
+        if (handle.requestPermission) {
+            try {
+                var perm = await handle.queryPermission({ mode: 'readwrite' });
+                if (perm !== 'granted') {
+                    await handle.requestPermission({ mode: 'readwrite' });
+                }
+            } catch (e) {
+                // Non-fatal: we can still read; writes will re-request lazily.
+                console.warn('readwrite permission request on open failed:', e);
+            }
+        }
+        var file = await handle.getFile();
+        var content = await file.text();
+        return { name: handle.name, content: content, handle: handle };
+    };
+
+    // Link a picked file handle to a workspace file id and persist it for reconnection.
+    // Returns a Promise that resolves true if persisted, false if persistence failed
+    // (caller can warn the user that the link won't survive a reload).
+    disk.linkSingleFile = function (id, handle) {
+        singleFileHandles[id] = handle;
+        return idbSet(FILE_HANDLE_PREFIX + id, handle).then(function () {
+            return true;
+        }).catch(function (e) {
+            console.warn('Failed to persist single-file handle:', e);
+            return false;
+        });
+    };
+
+    disk.hasSingleFile = function (id) {
+        return !!singleFileHandles[id];
+    };
+
+    // Per-id write queues so concurrent writeSingleFile() calls for the same file
+    // can't interleave and land out of order (which would corrupt the file on disk).
+    var writeChains = {};
+
+    // Low-level write: assumes permission is handled by the caller chain.
+    async function doWriteSingleFile(handle, content) {
+        var writable = await handle.createWritable();
+        await writable.write(content);
+        await writable.close();
+    }
+
+    // Write content back to the linked single file. Returns true on success.
+    // Writes for the same id are serialized through a promise chain.
+    disk.writeSingleFile = function (id, content) {
+        var handle = singleFileHandles[id];
+        if (!handle) return Promise.resolve(false);
+
+        var prev = writeChains[id] || Promise.resolve();
+        var next = prev.then(async function () {
+            // Re-fetch in case the link changed/cleared while queued
+            var h = singleFileHandles[id];
+            if (!h) return false;
+            // Ensure we still have write permission (may have lapsed across sessions)
+            if (h.queryPermission) {
+                var perm = await h.queryPermission({ mode: 'readwrite' });
+                if (perm !== 'granted') {
+                    perm = await h.requestPermission({ mode: 'readwrite' });
+                    if (perm !== 'granted') return false;
+                }
+            }
+            await doWriteSingleFile(h, content);
+            return true;
+        });
+
+        // Keep the chain alive even if this write rejects, so the next write still runs.
+        writeChains[id] = next.catch(function () {});
+        return next;
+    };
+
+    // Forget a single-file link (e.g. when its workspace file is deleted).
+    disk.unlinkSingleFile = function (id) {
+        delete singleFileHandles[id];
+        delete writeChains[id];
+        idbDelete(FILE_HANDLE_PREFIX + id).catch(function () {});
+    };
+
+    // Forget ALL single-file links (e.g. when switching into folder mode, which rebuilds
+    // the workspace and would otherwise orphan these handles in IndexedDB). Returns the count.
+    disk.unlinkAllSingleFiles = function () {
+        var ids = Object.keys(singleFileHandles);
+        ids.forEach(function (id) { disk.unlinkSingleFile(id); });
+        return ids.length;
+    };
+
+    // Restore previously-linked single-file handles into memory on load.
+    // Permission is NOT re-requested here (no user gesture) — it's requested
+    // lazily on the first write via writeSingleFile(). Resolves to the count restored.
+    // If `validIds` (an array/Set of workspace file ids) is provided, handles whose id
+    // is no longer in the workspace are pruned from IndexedDB to avoid an unbounded leak.
+    disk.restoreSingleFiles = async function (validIds) {
+        if (!fileSupported) return 0;
+        var valid = null;
+        if (validIds) {
+            valid = (typeof validIds.has === 'function') ? validIds : new Set(validIds);
+        }
+        try {
+            var pairs = await idbGetByPrefix(FILE_HANDLE_PREFIX);
+            var restored = 0;
+            pairs.forEach(function (pair) {
+                var id = pair[0].substring(FILE_HANDLE_PREFIX.length);
+                if (valid && !valid.has(id)) {
+                    // Orphaned handle — its workspace entry is gone. Drop it.
+                    idbDelete(FILE_HANDLE_PREFIX + id).catch(function () {});
+                    return;
+                }
+                if (pair[1]) {
+                    singleFileHandles[id] = pair[1];
+                    restored++;
+                }
+            });
+            return restored;
+        } catch (e) {
+            console.warn('Failed to restore single-file handles:', e);
+            return 0;
+        }
     };
 
     // Prompt user to pick a folder
@@ -309,8 +483,13 @@
     // Show/hide disk-specific UI elements based on support & connection state
     disk.updateUI = function () {
         var openFolderBtn = document.getElementById('ws-open-folder');
+        var openFileBtn = document.getElementById('ws-open-file');
         var headerRefresh = document.getElementById('ws-header-refresh');
         var headerDisconnect = document.getElementById('ws-header-disconnect');
+
+        // "Open File" is available whenever single-file open is supported,
+        // regardless of folder connection state.
+        if (openFileBtn) openFileBtn.style.display = fileSupported ? '' : 'none';
 
         if (!supported) {
             if (openFolderBtn) openFolderBtn.style.display = 'none';
@@ -335,6 +514,7 @@
     // Wire button event listeners
     disk.wireUI = function () {
         var openFolderBtn = document.getElementById('ws-open-folder');
+        var openFileBtn = document.getElementById('ws-open-file');
         var headerRefresh = document.getElementById('ws-header-refresh');
         var headerDisconnect = document.getElementById('ws-header-disconnect');
         var headerTitle = document.getElementById('ws-header-title');
@@ -343,6 +523,13 @@
             openFolderBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 if (M.wsConnectFolder) M.wsConnectFolder();
+            });
+        }
+
+        if (openFileBtn) {
+            openFileBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (M.wsOpenDiskFile) M.wsOpenDiskFile();
             });
         }
 
@@ -371,6 +558,18 @@
     // --- Init ---
     disk.wireUI();
     disk.updateUI();
+
+    // Restore any individually-linked single files so their edits keep autosaving
+    // to disk across reloads (permission is re-requested lazily on first write).
+    // Pass the current workspace file ids so orphaned handles get pruned from IndexedDB.
+    // workspace.js loads before this module, so M.wsGetFiles() is already available.
+    (function () {
+        var validIds = null;
+        if (typeof M.wsGetFiles === 'function') {
+            validIds = M.wsGetFiles().map(function (f) { return f.id; });
+        }
+        disk.restoreSingleFiles(validIds);
+    })();
 
     // Attempt reconnection on load if disk mode was previously active
     if (supported && localStorage.getItem(M.KEYS.DISK_MODE) === 'true') {
