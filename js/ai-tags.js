@@ -19,13 +19,16 @@
     var LABEL_OPTIONS = ['key concept', 'review later', 'exam', 'confusing', 'important', 'todo'];
 
     // --- State ---
+    // Legacy single-panel refs kept for the non-Q&A info popups (showTagInfo).
     var activeThreadPanel = null;
     var activeThreadOverlay = null;
     var activePromptOverlay = null;
-    var threadPanelTagData = null;
-    var threadPanelStreaming = false;
-    var threadSearchEnabled = false;
-    var threadAttachments = [];
+    // Multi-panel Q&A threads: each open thread is a non-modal, draggable panel
+    // (or a card docked in the right rail). State lives on the panel element so
+    // many conversations can stream in parallel. Keyed by tag id.
+    var openPanels = {};        // id -> panel element
+    var panelZ = 10010;         // running z-index for bring-to-front
+    var threadDock = null;      // right-rail dock element (lazy-created)
 
     // ========================================
     // PARSING & SERIALIZATION
@@ -748,7 +751,6 @@
         createOverlay();
         document.body.appendChild(panel);
         activeThreadPanel = panel;
-        threadPanelTagData = tagData;
 
         panel.querySelector('.ai-tag-thread-close').addEventListener('click', closeThreadPanel);
         panel.querySelector('.ai-tag-thread-delete').addEventListener('click', function () {
@@ -762,14 +764,22 @@
     // THREAD PANEL (Deep Dive Q&A)
     // ========================================
 
-    function openThreadPanel(tagData, anchorEl) {
-        closeThreadPanel();
-        threadPanelTagData = tagData;
-        threadSearchEnabled = false;
-        threadAttachments = [];
+    function openThreadPanel(tagData, anchorEl, opts) {
+        opts = opts || {};
+        // If this annotation's thread is already open, just focus it (don't duplicate).
+        if (openPanels[tagData.id]) {
+            focusPanel(openPanels[tagData.id]);
+            return openPanels[tagData.id];
+        }
 
         var panel = document.createElement('div');
         panel.className = 'ai-tag-thread-panel';
+        // Per-panel state — lets many threads stream in parallel without clobbering.
+        panel._tagData = tagData;
+        panel._streaming = false;
+        panel._search = false;
+        panel._attachments = [];
+        panel._docked = !!opts.docked;
 
         // Build model options
         var models = window.AI_MODELS || {};
@@ -794,9 +804,14 @@
             messagesHtml = '<div style="text-align:center;color:#6e7681;font-size:12px;padding:20px 0"><i class="bi bi-stars" style="font-size:18px;display:block;margin-bottom:6px"></i>Ask anything about this passage</div>';
         }
 
+        // Header carries a drag grip + a dock/pop-out toggle alongside close.
+        var dockIcon = panel._docked ? 'bi-box-arrow-up-right' : 'bi-layout-sidebar-reverse';
+        var dockTitle = panel._docked ? 'Pop out to floating window' : 'Dock to side panel';
         panel.innerHTML =
             '<div class="ai-tag-thread-header">' +
+            '<span class="ai-tag-thread-grip" title="Drag"><i class="bi bi-grip-vertical"></i></span>' +
             '<div class="ai-tag-thread-anchor">' + escapeHtml((tagData.anchor || '').substring(0, 120)) + '</div>' +
+            '<button class="ai-tag-thread-dock" title="' + dockTitle + '"><i class="bi ' + dockIcon + '"></i></button>' +
             '<button class="ai-tag-thread-close" title="Close"><i class="bi bi-x-lg"></i></button>' +
             '</div>' +
             '<div class="ai-tag-thread-toolbar">' +
@@ -814,10 +829,20 @@
             '<button class="ai-tag-thread-delete"><i class="bi bi-trash3"></i> Remove</button>' +
             '</div>';
 
-        positionPanel(panel, anchorEl);
-        createOverlay();
-        document.body.appendChild(panel);
-        activeThreadPanel = panel;
+        // Register and place: either into the side dock, or floating (cascaded).
+        openPanels[tagData.id] = panel;
+        if (panel._docked) {
+            appendToDock(panel);
+        } else {
+            positionFloatingPanel(panel, anchorEl);
+            document.body.appendChild(panel);
+            makeDraggable(panel);
+        }
+        focusPanel(panel);
+        updateDockBadge();
+
+        // Bring-to-front on any interaction with a floating panel.
+        panel.addEventListener('mousedown', function () { if (!panel._docked) focusPanel(panel); });
 
         // Scroll to bottom
         var messagesArea = panel.querySelector('.ai-tag-thread-messages');
@@ -825,11 +850,14 @@
 
         // Event handlers
         panel.querySelector('.ai-tag-thread-close').addEventListener('click', function () {
-            saveAndCloseThread();
+            closePanel(panel);
+        });
+        panel.querySelector('.ai-tag-thread-dock').addEventListener('click', function () {
+            togglePanelDock(panel);
         });
         panel.querySelector('.ai-tag-thread-delete').addEventListener('click', function () {
             removeTagFromEditor(tagData.id);
-            closeThreadPanel();
+            closePanel(panel);
             if (M.showToast) M.showToast('🗑️ Annotation removed', 'success');
         });
 
@@ -839,7 +867,7 @@
             if (M.switchToModel) M.switchToModel(this.value);
         });
 
-        // Search toggle
+        // Search toggle (per-panel)
         var searchBtn = panel.querySelector('.ai-tag-search-toggle');
         searchBtn.addEventListener('click', function () {
             // Check if web search is actually configured
@@ -847,21 +875,21 @@
                 if (M.showToast) M.showToast('🔍 Web Search not configured — set up a search API key in the AI panel first', 'warning');
                 return;
             }
-            threadSearchEnabled = !threadSearchEnabled;
-            searchBtn.classList.toggle('active', threadSearchEnabled);
-            if (M.showToast) M.showToast(threadSearchEnabled ? '🌐 Web Search enabled for this conversation' : '🌐 Web Search disabled', 'info');
+            panel._search = !panel._search;
+            searchBtn.classList.toggle('active', panel._search);
+            if (M.showToast) M.showToast(panel._search ? '🌐 Web Search enabled for this conversation' : '🌐 Web Search disabled', 'info');
         });
 
-        // Attach
+        // Attach (per-panel)
         var attachBtn = panel.querySelector('.ai-tag-attach-btn');
         var attachInput = panel.querySelector('.ai-tag-attach-input');
         attachBtn.addEventListener('click', function () { attachInput.click(); });
         attachInput.addEventListener('change', function () {
-            threadAttachments = [];
+            panel._attachments = [];
             Array.from(this.files).forEach(function (file) {
                 var reader = new FileReader();
                 reader.onload = function (e) {
-                    threadAttachments.push({
+                    panel._attachments.push({
                         type: file.type.startsWith('image/') ? 'image' : 'file',
                         mimeType: file.type, name: file.name,
                         data: e.target.result.split(',')[1] || ''
@@ -876,11 +904,11 @@
         var textarea = panel.querySelector('.ai-tag-thread-input textarea');
         var sendBtn = panel.querySelector('.ai-tag-thread-send');
 
-        sendBtn.addEventListener('click', function () { sendThreadMessage(textarea); });
+        sendBtn.addEventListener('click', function () { sendThreadMessage(textarea, panel); });
         textarea.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendThreadMessage(textarea);
+                sendThreadMessage(textarea, panel);
             }
         });
         textarea.addEventListener('input', function () {
@@ -890,11 +918,13 @@
         });
 
         setTimeout(function () { textarea.focus(); }, 150);
+        return panel;
     }
 
-    function sendThreadMessage(textarea) {
+    function sendThreadMessage(textarea, panel) {
+        if (!panel) return;
         var text = textarea.value.trim();
-        if (!text || threadPanelStreaming) return;
+        if (!text || panel._streaming) return;
         if (!M.isCurrentModelReady || !M.isCurrentModelReady()) {
             // Auto-load the selected model instead of just showing a toast
             var modelId = M.getCurrentAiModel ? M.getCurrentAiModel() : '';
@@ -910,7 +940,7 @@
                         clearInterval(retryTimer);
                         // Re-set the text in case user typed more while waiting
                         if (!textarea.value.trim()) textarea.value = text;
-                        sendThreadMessage(textarea);
+                        sendThreadMessage(textarea, panel);
                     } else if (retryCount >= maxRetries) {
                         clearInterval(retryTimer);
                         if (M.showToast) M.showToast('❌ Model failed to load. Try switching models.', 'error');
@@ -922,13 +952,13 @@
             return;
         }
 
-        var tagData = threadPanelTagData;
+        var tagData = panel._tagData;
         if (!tagData) return;
 
         textarea.value = '';
         textarea.style.height = 'auto';
 
-        var messagesArea = activeThreadPanel.querySelector('.ai-tag-thread-messages');
+        var messagesArea = panel.querySelector('.ai-tag-thread-messages');
 
         // Remove welcome message if present
         var welcome = messagesArea.querySelector('div[style*="text-align:center"]');
@@ -947,13 +977,13 @@
         messagesArea.appendChild(aiMsg);
         messagesArea.scrollTop = messagesArea.scrollHeight;
 
-        threadPanelStreaming = true;
-        var sendBtn = activeThreadPanel.querySelector('.ai-tag-thread-send');
+        panel._streaming = true;
+        var sendBtn = panel.querySelector('.ai-tag-thread-send');
         if (sendBtn) sendBtn.disabled = true;
 
         // Build context
         var contextPromise;
-        if (threadSearchEnabled && M.webSearch && M.webSearch.isSearchEnabled && M.webSearch.isSearchEnabled()) {
+        if (panel._search && M.webSearch && M.webSearch.isSearchEnabled && M.webSearch.isSearchEnabled()) {
             contextPromise = M.webSearch.performMultiSearch(text).then(function (results) {
                 return buildTagContext(tagData, results);
             }).catch(function () {
@@ -970,14 +1000,15 @@
                 userPrompt: text,
                 enableThinking: false,
                 onToken: function (token, accumulated) {
-                    if (!activeThreadPanel) return;
+                    // Panel may have been closed mid-stream — guard against a stale ref.
+                    if (!openPanels[tagData.id]) return;
                     aiMsg.innerHTML = '<span class="ai-tag-msg-label">AI</span>' + escapeHtml(accumulated);
                     messagesArea.scrollTop = messagesArea.scrollHeight;
                 },
-                attachments: threadAttachments
+                attachments: panel._attachments
             });
         }).then(function (fullResponse) {
-            threadPanelStreaming = false;
+            panel._streaming = false;
             if (sendBtn) sendBtn.disabled = false;
             aiMsg.classList.remove('ai-tag-thread-msg--streaming');
             aiMsg.innerHTML = '<span class="ai-tag-msg-label">AI</span>' + escapeHtml(fullResponse);
@@ -993,9 +1024,10 @@
             } else {
                 updateTagInEditor(tagData.id, serializeAiTag(tagData));
             }
+            updateDockBadge();
             // Don't re-render here — it would destroy the panel
         }).catch(function (err) {
-            threadPanelStreaming = false;
+            panel._streaming = false;
             if (sendBtn) sendBtn.disabled = false;
             aiMsg.classList.remove('ai-tag-thread-msg--streaming');
             aiMsg.innerHTML = '<span class="ai-tag-msg-label">AI</span><span style="color:#f87171">Error: ' + escapeHtml(err.message) + '</span>';
@@ -1057,18 +1089,171 @@
         return context;
     }
 
-    function saveAndCloseThread() {
-        if (threadPanelTagData && threadPanelTagData.thread && threadPanelTagData.thread.length > 0) {
-            // Already saved incrementally in sendThreadMessage
+    // ========================================
+    // MULTI-PANEL: floating windows + side dock
+    // ========================================
+
+    // Bring a floating panel to the front (no-op for docked panels).
+    function focusPanel(panel) {
+        if (!panel || panel._docked) {
+            if (panel && panel._docked) { panel.scrollIntoView({ block: 'nearest' }); }
+            return;
         }
-        closeThreadPanel();
+        panelZ += 1;
+        panel.style.zIndex = panelZ;
+    }
+
+    // Close a single thread panel (and tear down the dock if it empties).
+    function closePanel(panel) {
+        if (!panel) return;
+        var id = panel._tagData && panel._tagData.id;
+        panel.remove();
+        if (id) delete openPanels[id];
+        updateDockBadge();
+        maybeCollapseDock();
         if (M.renderMarkdown) M.renderMarkdown();
     }
 
-    // ========================================
-    // PANEL POSITIONING & OVERLAY
-    // ========================================
+    // Place a floating panel near its anchor, cascading so multiples don't stack
+    // exactly on top of each other.
+    function positionFloatingPanel(panel, anchorEl) {
+        var n = Object.keys(openPanels).length;
+        var offset = ((n - 1) % 6) * 28;
+        var panelWidth = 400, panelHeight = 520;
+        var left, top;
+        if (anchorEl) {
+            var rect = anchorEl.getBoundingClientRect();
+            left = Math.min(rect.right + 8, window.innerWidth - panelWidth - 16);
+            top = Math.min(rect.top - 20, window.innerHeight - panelHeight - 16);
+        } else {
+            left = (window.innerWidth - panelWidth) / 2;
+            top = (window.innerHeight - panelHeight) / 2;
+        }
+        left = Math.max(16, left - offset);
+        top = Math.max(16, top + offset);
+        panel.style.position = 'fixed';
+        panel.style.left = left + 'px';
+        panel.style.top = top + 'px';
+    }
 
+    // Single shared drag controller — the move/up listeners live on document once
+    // for the whole module (not per panel) so they never accumulate.
+    var dragState = null; // { panel, startX, startY, startLeft, startTop }
+    document.addEventListener('mousemove', function (e) {
+        if (!dragState) return;
+        var nl = dragState.startLeft + (e.clientX - dragState.startX);
+        var nt = dragState.startTop + (e.clientY - dragState.startY);
+        nl = Math.max(0, Math.min(nl, window.innerWidth - 80));
+        nt = Math.max(0, Math.min(nt, window.innerHeight - 40));
+        dragState.panel.style.left = nl + 'px';
+        dragState.panel.style.top = nt + 'px';
+    });
+    document.addEventListener('mouseup', function () {
+        if (dragState) {
+            dragState.panel.classList.remove('ai-tag-thread-panel--dragging');
+            dragState = null;
+        }
+    });
+
+    // Bind a panel's header as a drag handle (once per panel — guarded so a
+    // dock↔float round-trip doesn't double-bind).
+    function makeDraggable(panel) {
+        if (panel._dragBound) return;
+        panel._dragBound = true;
+        var header = panel.querySelector('.ai-tag-thread-header');
+        if (!header) return;
+        header.addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) return; // let close/dock buttons work
+            if (panel._docked) return;
+            focusPanel(panel);
+            var r = panel.getBoundingClientRect();
+            dragState = { panel: panel, startX: e.clientX, startY: e.clientY, startLeft: r.left, startTop: r.top };
+            panel.classList.add('ai-tag-thread-panel--dragging');
+            e.preventDefault();
+        });
+    }
+
+    // Move a panel between floating and docked states.
+    function togglePanelDock(panel) {
+        if (panel._docked) {
+            panel._docked = false;
+            document.body.appendChild(panel);
+            positionFloatingPanel(panel, null);
+            makeDraggable(panel);
+            setDockToggleIcon(panel);
+            focusPanel(panel);
+            maybeCollapseDock();
+        } else {
+            panel._docked = true;
+            panel.style.left = '';
+            panel.style.top = '';
+            panel.style.zIndex = '';
+            appendToDock(panel);
+            setDockToggleIcon(panel);
+        }
+        updateDockBadge();
+    }
+
+    function setDockToggleIcon(panel) {
+        var btn = panel.querySelector('.ai-tag-thread-dock i');
+        if (!btn) return;
+        if (panel._docked) {
+            btn.className = 'bi bi-box-arrow-up-right';
+            btn.parentNode.title = 'Pop out to floating window';
+        } else {
+            btn.className = 'bi bi-layout-sidebar-reverse';
+            btn.parentNode.title = 'Dock to side panel';
+        }
+    }
+
+    // ── Right-side Threads dock ──
+    function ensureDock() {
+        if (threadDock) return threadDock;
+        var dock = document.createElement('aside');
+        dock.className = 'ai-tag-thread-dock';
+        dock.innerHTML =
+            '<div class="ai-tag-dock-header">' +
+            '<span class="ai-tag-dock-title"><i class="bi bi-chat-left-dots"></i> Threads <span class="ai-tag-dock-count">0</span></span>' +
+            '<button class="ai-tag-dock-collapse" title="Collapse"><i class="bi bi-chevron-double-right"></i></button>' +
+            '</div>' +
+            '<div class="ai-tag-dock-body"></div>';
+        document.body.appendChild(dock);
+        dock.querySelector('.ai-tag-dock-collapse').addEventListener('click', function () {
+            document.body.classList.remove('ai-tag-dock-open');
+            maybeCollapseDock(true);
+        });
+        threadDock = dock;
+        return dock;
+    }
+
+    function appendToDock(panel) {
+        var dock = ensureDock();
+        dock.querySelector('.ai-tag-dock-body').appendChild(panel);
+        document.body.classList.add('ai-tag-dock-open');
+    }
+
+    function updateDockBadge() {
+        if (!threadDock) return;
+        var docked = threadDock.querySelectorAll('.ai-tag-thread-panel').length;
+        var total = Object.keys(openPanels).length;
+        var countEl = threadDock.querySelector('.ai-tag-dock-count');
+        if (countEl) countEl.textContent = total;
+        // hide the dock chrome when nothing is docked
+        threadDock.style.display = docked > 0 ? '' : 'none';
+        if (docked > 0) document.body.classList.add('ai-tag-dock-open');
+    }
+
+    // Remove the dock (and un-reflow the document) once it has no docked panels.
+    function maybeCollapseDock(force) {
+        if (!threadDock) return;
+        var docked = threadDock.querySelectorAll('.ai-tag-thread-panel').length;
+        if (docked === 0 || force) {
+            document.body.classList.remove('ai-tag-dock-open');
+            if (docked === 0) { threadDock.style.display = 'none'; }
+        }
+    }
+
+    // ── Legacy single-panel popup (used by showTagInfo for non-Q&A tags) ──
     function positionPanel(panel, anchorEl) {
         if (anchorEl) {
             var rect = anchorEl.getBoundingClientRect();
@@ -1081,7 +1266,6 @@
             panel.style.left = left + 'px';
             panel.style.top = top + 'px';
         } else {
-            // Center on screen
             panel.style.left = Math.max(16, (window.innerWidth - 400) / 2) + 'px';
             panel.style.top = Math.max(16, (window.innerHeight - 520) / 2) + 'px';
         }
@@ -1091,9 +1275,7 @@
         closeOverlay();
         var overlay = document.createElement('div');
         overlay.className = 'ai-tag-thread-overlay';
-        overlay.addEventListener('click', function () {
-            saveAndCloseThread();
-        });
+        overlay.addEventListener('click', function () { closeThreadPanel(); });
         document.body.appendChild(overlay);
         activeThreadOverlay = overlay;
     }
@@ -1111,9 +1293,6 @@
             activeThreadPanel = null;
         }
         closeOverlay();
-        threadPanelTagData = null;
-        threadPanelStreaming = false;
-        threadAttachments = [];
     }
 
     // ========================================

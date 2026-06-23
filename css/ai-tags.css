@@ -511,11 +511,121 @@ body.ai-tags-hidden .ai-tag-pill-anchor {
     color: #a78bfa;
 }
 
-/* --- Thread Panel Overlay (captures clicks outside) --- */
+/* --- Thread Panel Overlay (legacy info popup only — Q&A threads are non-modal) --- */
 .ai-tag-thread-overlay {
     position: fixed;
     inset: 0;
     z-index: 10000;
+}
+
+/* --- Drag grip + dock toggle in the panel header --- */
+.ai-tag-thread-grip {
+    cursor: grab;
+    color: #6e7681;
+    font-size: 13px;
+    padding: 0 4px 0 0;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+.ai-tag-thread-panel--dragging,
+.ai-tag-thread-panel--dragging .ai-tag-thread-grip {
+    cursor: grabbing;
+}
+.ai-tag-thread-panel--dragging {
+    animation: none;
+    opacity: 0.96;
+}
+.ai-tag-thread-dock {
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin-right: 2px;
+    border-radius: 6px;
+}
+.ai-tag-thread-dock:hover { color: #c9d1d9; background: rgba(110, 118, 129, 0.15); }
+
+/* --- Right-side Threads dock (Stage 2) --- */
+:root { --ai-tag-dock-width: 320px; }
+
+.ai-tag-thread-dock {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--ai-tag-dock-width);
+    height: 100vh;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    background: rgba(13, 17, 23, 0.98);
+    border-left: 1px solid rgba(99, 110, 123, 0.3);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+}
+[data-theme="light"] .ai-tag-thread-dock {
+    background: rgba(250, 251, 252, 0.99);
+    border-left-color: rgba(0, 0, 0, 0.1);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+}
+.ai-tag-dock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(99, 110, 123, 0.2);
+    flex-shrink: 0;
+}
+.ai-tag-dock-title { font-size: 13px; font-weight: 500; color: #c9d1d9; }
+[data-theme="light"] .ai-tag-dock-title { color: #24292f; }
+.ai-tag-dock-count {
+    display: inline-block;
+    min-width: 16px;
+    text-align: center;
+    font-size: 11px;
+    background: rgba(139, 92, 246, 0.25);
+    color: #a78bfa;
+    border-radius: 8px;
+    padding: 0 5px;
+    margin-left: 4px;
+}
+.ai-tag-dock-collapse {
+    background: none;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+.ai-tag-dock-collapse:hover { color: #c9d1d9; background: rgba(110, 118, 129, 0.15); }
+.ai-tag-dock-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Docked panels lose their fixed positioning and float-window chrome —
+   they become stacked cards inside the rail. */
+.ai-tag-thread-dock .ai-tag-thread-panel {
+    position: static !important;
+    width: 100% !important;
+    max-height: 420px;
+    z-index: auto !important;
+    box-shadow: none;
+    backdrop-filter: none;
+    animation: none;
+    border: 1px solid rgba(99, 110, 123, 0.25);
+}
+.ai-tag-thread-dock .ai-tag-thread-grip { display: none; }
+
+/* Reflow the document so the dock never overlaps the text (mirrors ai-panel-active) */
+body.ai-tag-dock-open .app-container {
+    width: calc(100% - var(--ai-tag-dock-width));
 }
 
 /* --- Responsive: mobile --- */
@@ -536,5 +646,12 @@ body.ai-tags-hidden .ai-tag-pill-anchor {
     }
     .ai-tag-prompt-card {
         width: 90vw;
+    }
+    /* Dock takes the full width on phones; don't reflow the (already narrow) doc. */
+    .ai-tag-thread-dock { width: 100vw; }
+    body.ai-tag-dock-open .app-container { width: 100%; }
+    .ai-tag-thread-dock .ai-tag-thread-panel {
+        width: 100% !important;
+        max-height: none;
     }
 }
