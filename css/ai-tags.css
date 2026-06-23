@@ -160,11 +160,12 @@ body.ai-tags-hidden .ai-tag-pill-anchor {
     z-index: 10001;
     width: 400px;
     max-height: 520px;
-    background: rgba(13, 17, 23, 0.96);
+    /* Solid background — backdrop-filter:blur on a fixed, draggable element caused
+       a compositing artifact that clipped content and painted an empty overlay box. */
+    background: #161b22;
     border: 1px solid rgba(99, 110, 123, 0.3);
     border-radius: 14px;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -175,7 +176,7 @@ body.ai-tags-hidden .ai-tag-pill-anchor {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 [data-theme="light"] .ai-tag-thread-panel {
-    background: rgba(255, 255, 255, 0.97);
+    background: #ffffff;
     border-color: rgba(0, 0, 0, 0.12);
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
 }
@@ -280,13 +281,15 @@ body.ai-tags-hidden .ai-tag-pill-anchor {
 
 /* Thread messages area */
 .ai-tag-thread-messages {
-    flex: 1;
+    /* Size to content (scroll past 300px) rather than flex-growing to fill an
+       oversized panel — otherwise a short thread leaves a large empty void. */
+    flex: 0 1 auto;
     overflow-y: auto;
     padding: 10px 14px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-height: 80px;
+    min-height: 60px;
     max-height: 300px;
 }
 .ai-tag-thread-msg {
@@ -558,11 +561,16 @@ body.ai-tags-hidden .ai-tag-pill-anchor {
     width: var(--ai-tag-dock-width);
     height: 100vh;
     z-index: 9000;
-    display: flex;
+    /* Hidden unless the dock actually holds a thread — body.ai-tag-dock-open shows it.
+       This prevents an empty dock from painting an overlay box over the document. */
+    display: none;
     flex-direction: column;
-    background: rgba(13, 17, 23, 0.98);
+    background: #161b22;
     border-left: 1px solid rgba(99, 110, 123, 0.3);
     box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+}
+body.ai-tag-dock-open .ai-tag-thread-dock {
+    display: flex;
 }
 [data-theme="light"] .ai-tag-thread-dock {
     background: rgba(250, 251, 252, 0.99);
@@ -632,8 +640,9 @@ body.ai-tag-dock-open .app-container {
 @media (max-width: 640px) {
     .ai-tag-thread-panel {
         width: 100vw;
-        height: 60vh;
-        max-height: 60vh;
+        height: auto;
+        max-height: 70vh;
+        min-height: 240px;
         bottom: 0;
         left: 0 !important;
         right: 0;
