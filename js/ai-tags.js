@@ -1115,22 +1115,32 @@
     }
 
     // Place a floating panel near its anchor, cascading so multiples don't stack
-    // exactly on top of each other.
+    // exactly on top of each other. Clamps to the viewport on all four edges so a
+    // panel never opens partly off-screen or taller than the window.
     function positionFloatingPanel(panel, anchorEl) {
+        var vw = window.innerWidth, vh = window.innerHeight;
+        var panelWidth = Math.min(400, vw - 24);
+        var panelHeight = Math.min(520, vh - 24);
         var n = Object.keys(openPanels).length;
         var offset = ((n - 1) % 6) * 28;
-        var panelWidth = 400, panelHeight = 520;
+
         var left, top;
         if (anchorEl) {
             var rect = anchorEl.getBoundingClientRect();
-            left = Math.min(rect.right + 8, window.innerWidth - panelWidth - 16);
-            top = Math.min(rect.top - 20, window.innerHeight - panelHeight - 16);
+            // Prefer to the right of the anchor; if no room, sit to its left.
+            left = rect.right + 8;
+            if (left + panelWidth > vw - 16) left = rect.left - panelWidth - 8;
+            top = rect.top - 20;
         } else {
-            left = (window.innerWidth - panelWidth) / 2;
-            top = (window.innerHeight - panelHeight) / 2;
+            left = (vw - panelWidth) / 2;
+            top = (vh - panelHeight) / 2;
         }
-        left = Math.max(16, left - offset);
-        top = Math.max(16, top + offset);
+        // Apply cascade, then hard-clamp inside the viewport on every edge.
+        left = left - offset;
+        top = top + offset;
+        left = Math.max(12, Math.min(left, vw - panelWidth - 12));
+        top = Math.max(12, Math.min(top, vh - panelHeight - 12));
+
         panel.style.position = 'fixed';
         panel.style.left = left + 'px';
         panel.style.top = top + 'px';
@@ -1238,18 +1248,16 @@
         var total = Object.keys(openPanels).length;
         var countEl = threadDock.querySelector('.ai-tag-dock-count');
         if (countEl) countEl.textContent = total;
-        // hide the dock chrome when nothing is docked
-        threadDock.style.display = docked > 0 ? '' : 'none';
-        if (docked > 0) document.body.classList.add('ai-tag-dock-open');
+        // Visibility is driven purely by the body class (CSS shows the dock only then).
+        document.body.classList.toggle('ai-tag-dock-open', docked > 0);
     }
 
-    // Remove the dock (and un-reflow the document) once it has no docked panels.
+    // Un-reflow the document once the dock has no docked panels.
     function maybeCollapseDock(force) {
         if (!threadDock) return;
         var docked = threadDock.querySelectorAll('.ai-tag-thread-panel').length;
         if (docked === 0 || force) {
             document.body.classList.remove('ai-tag-dock-open');
-            if (docked === 0) { threadDock.style.display = 'none'; }
         }
     }
 
