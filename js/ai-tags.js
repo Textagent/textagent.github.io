@@ -999,6 +999,15 @@
                 context: context,
                 userPrompt: text,
                 enableThinking: false,
+                onQueued: function (position) {
+                    // Another generation is running — show a waiting state instead of failing.
+                    if (!openPanels[tagData.id] || position <= 1) return;
+                    aiMsg.innerHTML = '<span class="ai-tag-msg-label">AI</span><span style="opacity:0.7">⏳ Queued (#' + (position - 1) + ')…</span>';
+                },
+                onQueueStart: function () {
+                    if (!openPanels[tagData.id]) return;
+                    aiMsg.innerHTML = '<span class="ai-tag-msg-label">AI</span>';
+                },
                 onToken: function (token, accumulated) {
                     // Panel may have been closed mid-stream — guard against a stale ref.
                     if (!openPanels[tagData.id]) return;
