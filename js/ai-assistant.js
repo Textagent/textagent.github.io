@@ -1584,4 +1584,47 @@
     };
   })();
 
+  // ── Serial generation queue ──────────────────────────────────────────────────
+  // The AI backend runs ONE generation at a time (aiIsGenerating gate). Without a
+  // queue, a second concurrent caller — e.g. asking in a second annotation thread
+  // while the first is still answering — was rejected with "Another AI generation
+  // is already in progress." Wrap requestAiTask so concurrent calls QUEUE and run
+  // in submission order instead of failing. Single authoritative hook for every
+  // caller (thread panels, DocGen, Agent Flow, AI Chat).
+  // ─────────────────────────────────────────────────────────────────────────────
+  (function wrapRequestAiTaskWithQueue() {
+    var _inner = M.requestAiTask;
+    var queue = [];
+    var draining = false;
+
+    function drain() {
+      if (draining) return;
+      var job = queue.shift();
+      if (!job) return;
+      draining = true;
+      // Let waiting callers reflect their queued position (e.g. show "Queued…").
+      if (job.opts && typeof job.opts.onQueueStart === 'function') {
+        try { job.opts.onQueueStart(); } catch (_) { /* ignore */ }
+      }
+      Promise.resolve()
+        .then(function () { return _inner.call(M, job.opts); })
+        .then(function (res) { job.resolve(res); }, function (err) { job.reject(err); })
+        .then(function () { draining = false; drain(); });
+    }
+
+    M.requestAiTask = function (opts) {
+      return new Promise(function (resolve, reject) {
+        queue.push({ opts: opts, resolve: resolve, reject: reject });
+        // Surface queue position to the caller (1 = next up behind the running one).
+        if (opts && typeof opts.onQueued === 'function') {
+          try { opts.onQueued(queue.length); } catch (_) { /* ignore */ }
+        }
+        drain();
+      });
+    };
+
+    // Expose queue depth for UI hints (0 = idle).
+    M.aiQueueLength = function () { return queue.length + (draining ? 1 : 0); };
+  })();
+
 })(window.MDView);
