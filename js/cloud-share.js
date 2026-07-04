@@ -203,6 +203,9 @@
             }
             localStorage.setItem(AUTOSAVE_TIME_KEY, Date.now().toString());
 
+            // Version history capture (module decides whether a snapshot is due)
+            if (M.versionHistory) M.versionHistory.onSave(M.wsActiveFileId, M.markdownEditor.value);
+
             // Write back to an individually-linked single file (independent of folder mode).
             // Checked BEFORE the folder branch so a single-linked file is never written
             // through the folder path (which would target the wrong directory).

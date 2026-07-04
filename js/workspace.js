@@ -119,6 +119,8 @@
             console.warn('File save failed:', e);
             if (M.showToast) M.showToast('⚠️ Save failed — browser storage is full. Free space or connect a folder.', 'error');
         }
+        // Version history capture (covers file-switch saves; module dedupes)
+        if (M.versionHistory) M.versionHistory.onSave(id, content);
         // Write back to an individually-linked disk file (works independently of folder mode)
         if (M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(id)) {
             M._disk.writeSingleFile(id, content).then(function (ok) {
@@ -510,6 +512,18 @@
         if (targetId) M.wsDeleteFile(targetId);
     });
 
+    var ctxHistory = document.getElementById('ws-ctx-history');
+    if (ctxHistory) ctxHistory.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var targetId = contextMenuTargetId;
+        hideContextMenu();
+        if (!targetId) return;
+        var file = findFileById(targetId);
+        // version-history.js loads in a later phase — guard until it's ready
+        if (M.versionHistory) M.versionHistory.open(targetId, file ? file.name : '');
+        else if (M.showToast) M.showToast('History is still loading — try again in a moment.', 'info');
+    });
+
     if (ctxDuplicate) ctxDuplicate.addEventListener('click', function (e) {
         e.stopPropagation();
         var targetId = contextMenuTargetId;
@@ -869,6 +883,9 @@
         var wasSingleLinked = M._disk && M._disk.hasSingleFile && M._disk.hasSingleFile(id);
         workspace.files.splice(idx, 1);
         removeFileContent(id);
+        // Deleting a file says "cannot be undone" — purge its version history too,
+        // so sensitive content isn't retained and orphans don't evict live history.
+        if (M.versionHistory && M.versionHistory.deleteFileHistory) M.versionHistory.deleteFileHistory(id);
         // Switch to nearest neighbor if deleting active file
         if (id === workspace.activeFileId) {
             var newIdx = Math.min(idx, workspace.files.length - 1);

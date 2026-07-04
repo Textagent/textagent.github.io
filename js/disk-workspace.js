@@ -203,6 +203,20 @@
         return next;
     };
 
+    // Read the current on-disk content of a linked single file (authoritative
+    // source for version-history diffs/restores). Resolves null if unavailable.
+    disk.readSingleFile = async function (id) {
+        var handle = singleFileHandles[id];
+        if (!handle) return null;
+        try {
+            var file = await handle.getFile();
+            return await file.text();
+        } catch (e) {
+            console.warn('readSingleFile failed (permission lost?):', e);
+            return null;
+        }
+    };
+
     // Forget a single-file link (e.g. when its workspace file is deleted).
     disk.unlinkSingleFile = function (id) {
         delete singleFileHandles[id];

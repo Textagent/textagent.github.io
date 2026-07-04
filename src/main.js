@@ -31,6 +31,7 @@ import '../css/ai-docgen.css';
 import '../css/feature-demos.css';
 import '../css/help-mode.css';
 import '../css/workspace.css';
+import '../css/version-history.css';
 import '../css/linux-terminal.css';
 import '../css/toast.css';
 import '../css/stock-widget.css';
@@ -250,6 +251,9 @@ async function loadModules() {
 
     // 3k: Web Tools Component — Scrape & Search via Jina (standalone — remove to disable feature)
     await import('../js/tools-docgen.js');
+
+    // 3k2: Local Version History — snapshot ring + restore panel (standalone)
+    await import('../js/version-history.js');
 
     // 3l: Agent Cloud Execution (standalone — depends on M.KEYS from storage-keys)
     await import('../js/github-auth.js');
