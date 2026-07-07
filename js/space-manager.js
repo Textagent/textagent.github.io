@@ -201,11 +201,22 @@
             }
         }
 
-        data.items.push({
+        // Passphrase-protected docs must be linked as '#id=<id>&secure=1' —
+        // a '#s=' link can't decrypt them (no stored key). Detect at add time
+        // so the hub renders the right link format. Shares are world-readable.
+        var isSecure = false;
+        try {
+            var shareDoc = await db.collection('shares').doc(shareId).get();
+            isSecure = !!(shareDoc.exists && shareDoc.data().secure);
+        } catch { /* offline read — default to compact link */ }
+
+        var newItem = {
             id: shareId,
             title: title || 'Untitled',
             added: Date.now()
-        });
+        };
+        if (isSecure) newItem.secure = true;
+        data.items.push(newItem);
         data.t = Date.now();
         data.wt = wt;
 
@@ -288,12 +299,12 @@
         } else {
             html += '<div class="space-hub-grid">';
             data.items.forEach(function (item, idx) {
-                var docUrl = SHARE_BASE + '#s=' + item.id;
+                var docUrl = SHARE_BASE + (item.secure ? '#id=' + item.id + '&secure=1' : '#s=' + item.id);
                 var added = item.added ? new Date(item.added) : null;
                 var timeStr = added ? added.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
                 html += '<a href="' + docUrl + '" class="space-hub-card" target="_blank" rel="noopener">';
-                html += '<div class="space-hub-card-icon"><i class="bi bi-file-earmark-text"></i></div>';
+                html += '<div class="space-hub-card-icon"><i class="bi ' + (item.secure ? 'bi-file-earmark-lock' : 'bi-file-earmark-text') + '"></i></div>';
                 html += '<div class="space-hub-card-body">';
                 html += '<div class="space-hub-card-title">' + escapeHtml(item.title) + '</div>';
                 if (timeStr) html += '<div class="space-hub-card-time"><i class="bi bi-clock me-1"></i>' + timeStr + '</div>';
@@ -472,7 +483,7 @@
             row.innerHTML =
                 '<span class="spaces-editor-item-num">' + (idx + 1) + '</span>' +
                 '<div class="spaces-editor-item-info">' +
-                    '<a href="' + (M.SHARE_BASE_URL || 'https://textagent.github.io/') + '#space=' + escapeHtml(slug) + '&s=' + escapeHtml(item.id) + '" target="_blank" class="spaces-editor-item-title">' + escapeHtml(item.title) + '</a>' +
+                    '<a href="' + (M.SHARE_BASE_URL || 'https://textagent.github.io/') + (item.secure ? '#id=' + escapeHtml(item.id) + '&secure=1' : '#space=' + escapeHtml(slug) + '&s=' + escapeHtml(item.id)) + '" target="_blank" class="spaces-editor-item-title">' + escapeHtml(item.title) + '</a>' +
                     '<span class="spaces-editor-item-time">' + timeStr + '</span>' +
                 '</div>' +
                 '<button class="spaces-list-btn spaces-list-delete" data-idx="' + idx + '" title="Remove"><i class="bi bi-x-lg"></i></button>';
@@ -762,10 +773,11 @@
             var link = linkInput.value.trim();
             var title = titleInput ? titleInput.value.trim() : 'Untitled';
 
-            // Extract share ID from link
+            // Extract share ID from link (compact '#s=' or secure '#id=…&secure=1')
             var shareId = '';
             var match = link.match(/#s=([^&]+)/);
             if (match) shareId = match[1];
+            else if ((match = link.match(/#id=([^&]+)/))) shareId = match[1];
             else if (/^[a-z0-9]{5,}$/i.test(link)) shareId = link; // bare ID
 
             if (!shareId) {

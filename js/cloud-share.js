@@ -707,6 +707,16 @@
                 if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
                     M.sharedViewLock = data.view;
                 }
+                if (data.secure && data.salt) {
+                    // Passphrase-protected doc reached via a '#s=' link (e.g. an
+                    // older Space hub item) — secure docs legitimately have no
+                    // stored key, so route to the passphrase flow instead of
+                    // failing below.
+                    pendingSecureDoc = { dataString: data.d, saltString: data.salt, docId: compactId, ekHash: data.ekHash || '', eWt: data.eWt || '' };
+                    hideShareLoader();
+                    showPassphrasePrompt();
+                    return;
+                }
                 var editKeyParam = params.get('ek');
                 var isEditMode = false;
                 var reclaimedDoc = false;
