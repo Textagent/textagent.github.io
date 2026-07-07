@@ -707,33 +707,77 @@
                 if (data.view && (data.view === 'ppt' || data.view === 'preview')) {
                     M.sharedViewLock = data.view;
                 }
-                if (!data.k) throw new Error('Missing encryption key — document may have been corrupted.');
-                var encrypted = base64UrlToUint8Array(data.d);
-                var key = await base64UrlToKey(data.k);
-                var compressed = await decryptData(key, encrypted);
-                var markdownContent = decompressData(compressed);
-
-                // --- Secure Edit Key Verification ---
                 var editKeyParam = params.get('ek');
                 var isEditMode = false;
-                if (editKeyParam && data.ekHash && data.eWt) {
-                    try {
-                        var computedEkHash = await hashEditKey(editKeyParam);
-                        if (computedEkHash === data.ekHash) {
-                            // Edit key verified — decrypt the write-token
-                            var recoveredWt = await decryptWriteToken(data.eWt, editKeyParam);
-                            // Establish cloud session for this document
-                            localStorage.setItem(CLOUD_DOC_KEY, compactId);
-                            localStorage.setItem(CLOUD_KEY_KEY, data.k);
-                            localStorage.setItem(CLOUD_WT_KEY, recoveredWt);
-                            localStorage.setItem(EDIT_KEY_KEY, editKeyParam);
-                            isEditMode = true;
-                            console.log('🔑 Edit key verified — editing enabled for:', compactId);
-                        } else {
-                            console.warn('Edit key hash mismatch — read-only mode');
+                var reclaimedDoc = false;
+                var recoveredFromLocal = false;
+                var markdownContent;
+
+                if (!data.k) {
+                    // Doc lost its stored key (an older auto-save bug could strip
+                    // it). A valid editor link can still reclaim the doc: verify
+                    // the edit key FIRST, rebind the session, and re-publish so
+                    // the next cloud save writes a fresh d+k pair and the share
+                    // link works again.
+                    var ekValid = false;
+                    if (editKeyParam && data.ekHash && data.eWt) {
+                        try { ekValid = (await hashEditKey(editKeyParam)) === data.ekHash; }
+                        catch { ekValid = false; }
+                    }
+                    if (!ekValid) throw new Error('Missing encryption key — document may have been corrupted.');
+
+                    var reclaimedWt = await decryptWriteToken(data.eWt, editKeyParam);
+
+                    // Best case: this browser still holds the key that encrypted
+                    // the cloud copy — then the content survives the reclaim intact.
+                    var storedKeyStr = localStorage.getItem(CLOUD_KEY_KEY);
+                    if (storedKeyStr) {
+                        try {
+                            var storedKey = await base64UrlToKey(storedKeyStr);
+                            markdownContent = decompressData(await decryptData(storedKey, base64UrlToUint8Array(data.d)));
+                        } catch { /* different doc's key — use local copy */ }
+                    }
+                    if (markdownContent === undefined) {
+                        // Cloud copy is undecryptable — restore from the local
+                        // autosave copy and re-key the document.
+                        markdownContent = (M.wsActiveFileId && localStorage.getItem(M.KEYS.FILE_PREFIX + M.wsActiveFileId))
+                            || localStorage.getItem(AUTOSAVE_KEY) || '';
+                        recoveredFromLocal = true;
+                        localStorage.setItem(CLOUD_KEY_KEY, await keyToBase64Url(await generateEncryptionKey()));
+                    }
+
+                    localStorage.setItem(CLOUD_DOC_KEY, compactId);
+                    localStorage.setItem(CLOUD_WT_KEY, reclaimedWt);
+                    localStorage.setItem(EDIT_KEY_KEY, editKeyParam);
+                    isEditMode = true;
+                    reclaimedDoc = true;
+                    console.log('🔧 Edit key verified — reclaimed corrupted doc:', compactId);
+                } else {
+                    var encrypted = base64UrlToUint8Array(data.d);
+                    var key = await base64UrlToKey(data.k);
+                    var compressed = await decryptData(key, encrypted);
+                    markdownContent = decompressData(compressed);
+
+                    // --- Secure Edit Key Verification ---
+                    if (editKeyParam && data.ekHash && data.eWt) {
+                        try {
+                            var computedEkHash = await hashEditKey(editKeyParam);
+                            if (computedEkHash === data.ekHash) {
+                                // Edit key verified — decrypt the write-token
+                                var recoveredWt = await decryptWriteToken(data.eWt, editKeyParam);
+                                // Establish cloud session for this document
+                                localStorage.setItem(CLOUD_DOC_KEY, compactId);
+                                localStorage.setItem(CLOUD_KEY_KEY, data.k);
+                                localStorage.setItem(CLOUD_WT_KEY, recoveredWt);
+                                localStorage.setItem(EDIT_KEY_KEY, editKeyParam);
+                                isEditMode = true;
+                                console.log('🔑 Edit key verified — editing enabled for:', compactId);
+                            } else {
+                                console.warn('Edit key hash mismatch — read-only mode');
+                            }
+                        } catch (ekError) {
+                            console.warn('Edit key verification failed:', ekError);
                         }
-                    } catch (ekError) {
-                        console.warn('Edit key verification failed:', ekError);
                     }
                 }
 
@@ -754,10 +798,26 @@
                     M.isViewingSharedDoc = false;
                     M.markdownEditor.readOnly = false;
                     document.body.classList.remove('editor-readonly');
-                    lastCloudContent = markdownContent; // Prevent immediate re-save
-                    scheduleCloudSave();
-                    hideShareLoader();
-                    if (M.showToast) M.showToast('🔑 Editor access — changes will sync to this document', 'success');
+                    if (reclaimedDoc) {
+                        // Force a re-publish so d+k are rewritten with the session key
+                        lastCloudContent = '';
+                        scheduleCloudSave();
+                        hideShareLoader();
+                        if (M.showToast) {
+                            if (recoveredFromLocal && !markdownContent.trim()) {
+                                M.showToast('🔧 Document reclaimed — no local copy found; start typing to re-publish it', 'warning');
+                            } else if (recoveredFromLocal) {
+                                M.showToast('🔧 Document reclaimed from your local copy — the share link will repair itself shortly', 'success');
+                            } else {
+                                M.showToast('🔧 Document reclaimed — the share link will repair itself shortly', 'success');
+                            }
+                        }
+                    } else {
+                        lastCloudContent = markdownContent; // Prevent immediate re-save
+                        scheduleCloudSave();
+                        hideShareLoader();
+                        if (M.showToast) M.showToast('🔑 Editor access — changes will sync to this document', 'success');
+                    }
                 } else {
                     var sharedMode = M.sharedViewLock || 'preview';
                     M.setViewMode(sharedMode);
