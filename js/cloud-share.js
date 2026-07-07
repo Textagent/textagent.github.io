@@ -273,7 +273,7 @@
     // ========================================
     // CLOUD AUTO-SAVE TO FIREBASE
     // ========================================
-    var CLOUD_SAVE_INTERVAL = 60000;
+    var CLOUD_SAVE_INTERVAL = 10000;
     var CLOUD_DOC_KEY = M.KEYS.CLOUD_DOC_ID;
     var CLOUD_KEY_KEY = M.KEYS.CLOUD_ENC_KEY;
     var CLOUD_WT_KEY = M.KEYS.CLOUD_WRITE_TOKEN;
@@ -373,6 +373,7 @@
             var keyString = await keyToBase64Url(key);
             var existingDocId = localStorage.getItem(CLOUD_DOC_KEY);
             var isCompact = window.location.hash.includes('s=');
+            var existingData = null;
             if (existingDocId) {
                 var wt = localStorage.getItem(CLOUD_WT_KEY) || '';
                 var updateData = { d: dataString, t: Date.now(), wt: wt };
@@ -380,16 +381,32 @@
                 // Preserve ALL original fields so .set() doesn't wipe them
                 try {
                     var existingDoc = await db.collection('shares').doc(existingDocId).get();
-                    if (existingDoc.exists) {
-                        var existingData = existingDoc.data();
-                        if (existingData.ekHash) updateData.ekHash = existingData.ekHash;
-                        if (existingData.eWt) updateData.eWt = existingData.eWt;
-                        if (existingData.rkHash) updateData.rkHash = existingData.rkHash;
-                        if (existingData.view) updateData.view = existingData.view;
-                        if (existingData.salt) updateData.salt = existingData.salt;
-                        if (existingData.secure) updateData.secure = existingData.secure;
+                } catch (readErr) {
+                    // Can't see the doc's schema — a blind full-replace .set() could
+                    // wipe fields or store 'k' on a passphrase doc. Keep the dirty
+                    // flag and let the next tick retry instead.
+                    return;
+                }
+                if (existingDoc.exists) {
+                    existingData = existingDoc.data();
+                    // The doc's own schema — not the URL hash — decides whether the
+                    // key lives in 'k'. 'd' above is encrypted with the session key,
+                    // so any non-passphrase doc must get that key written back or
+                    // #s= readers fail with "Missing encryption key". Also re-adds
+                    // 'k' to docs that lost it to older versions of this function,
+                    // which skipped 'k' whenever the hash lacked "s=".
+                    if (existingData.secure) {
+                        delete updateData.k; // passphrase doc — key is never stored
+                    } else {
+                        updateData.k = keyString;
                     }
-                } catch (readErr) { /* best-effort — save anyway */ }
+                    if (existingData.ekHash) updateData.ekHash = existingData.ekHash;
+                    if (existingData.eWt) updateData.eWt = existingData.eWt;
+                    if (existingData.rkHash) updateData.rkHash = existingData.rkHash;
+                    if (existingData.view) updateData.view = existingData.view;
+                    if (existingData.salt) updateData.salt = existingData.salt;
+                    if (existingData.secure) updateData.secure = existingData.secure;
+                }
                 await db.collection('shares').doc(existingDocId).set(updateData);
             } else {
                 var wt = generateWriteToken();
@@ -401,12 +418,23 @@
             }
             var docId = existingDocId || localStorage.getItem(CLOUD_DOC_KEY);
             var shareUrl = '#s=' + docId;
+            if (existingData && existingData.secure) {
+                // Passphrase doc: '#s=' links can't decrypt it (no stored key).
+                // Keep the secure URL format, with the edit key so a reload of
+                // this editing session stays editable after the passphrase prompt.
+                shareUrl = '#id=' + docId + '&secure=1';
+                var sessionEk = localStorage.getItem(EDIT_KEY_KEY);
+                if (sessionEk) shareUrl += '&ek=' + sessionEk;
+            }
             // Preserve parent reference for study copies
             var curParams = new URLSearchParams(window.location.hash.substring(1));
             var parentId = curParams.get('parent') || (curParams.get('study') ? curParams.get('s') : null);
             if (parentId && parentId !== docId) shareUrl += '&parent=' + parentId;
             if (window.location.hash !== shareUrl) history.replaceState(null, '', shareUrl);
-            lastCloudContent = content; cloudSaveDirty = false;
+            lastCloudContent = content;
+            // Keep the dirty flag if the user typed while this save was in flight,
+            // so the next tick picks up the newer content.
+            if (M.markdownEditor.value === content) cloudSaveDirty = false;
             if (autosaveText) {
                 autosaveText.textContent = '☁️ Synced';
                 setTimeout(function () { if (autosaveText.textContent === '☁️ Synced') autosaveText.textContent = 'Saved'; }, 3000);
@@ -421,6 +449,20 @@
         scheduleCloudSave();
     }
     M.markdownEditor.addEventListener('input', debouncedAutosave);
+
+    // Manual save: flush the local autosave debounce and force a cloud sync now
+    // instead of waiting for the next auto-save tick.
+    M.saveNow = async function () {
+        if (M.isViewingSharedDoc || M.markdownEditor.readOnly) return;
+        clearTimeout(autosaveTimeout);
+        saveToLocalStorage();
+        scheduleCloudSave();
+        await cloudAutoSave();
+    };
+    ['save-now-btn', 'mobile-save-btn'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function () { M.saveNow(); });
+    });
 
     // Flush any pending autosave when the page is being hidden/closed, so edits made
     // right before reload/close still reach disk (for single-linked files especially —
@@ -830,6 +872,11 @@
                     if (computedEkHash === pendingSecureDoc.ekHash) {
                         var recoveredWt = await decryptWriteToken(pendingSecureDoc.eWt, editKeyParam);
                         localStorage.setItem(CLOUD_DOC_KEY, pendingSecureDoc.docId);
+                        // Store the passphrase-derived key so cloud auto-save
+                        // re-encrypts 'd' with it — otherwise saves would use an
+                        // unrelated session key and passphrase readers could
+                        // never decrypt the doc again.
+                        localStorage.setItem(CLOUD_KEY_KEY, await keyToBase64Url(key));
                         localStorage.setItem(CLOUD_WT_KEY, recoveredWt);
                         localStorage.setItem(EDIT_KEY_KEY, editKeyParam);
                         isEditMode = true;
@@ -918,6 +965,7 @@
                 if (!M.markdownEditor.readOnly) return;
                 var target = e.target.closest(
                     '.fmt-btn, #new-document-btn, #template-btn, #share-button, ' +
+                    '#save-now-btn, #mobile-save-btn, ' +
                     '#mobile-share-button, #speech-to-text-btn, #run-all-btn, ' +
                     '#qab-new, #qab-template, #qab-share, #qab-voice, ' +
                     '#qab-copy, .ai-action-chip, .ai-ctx-btn, ' +
